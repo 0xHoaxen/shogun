@@ -50,7 +50,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Files: `pkg/version`, `pkg/config`, `pkg/logger`.
   Done when: `cd pkg && go test -race ./config/... ./logger/...` passes with tests for env parsing defaults and the required `DATABASE_URL` outside local.
 
-- [ ] **P1.2 Event envelope proto + codegen** (S) Needs: P0.6
+- [x] **P1.2 Event envelope proto + codegen** (S) Needs: P0.6
   Do: `proto/shogun/events/v1/envelope.proto` already exists from P0.6; create `gen/go/go.mod` and `go work use ./gen/go`; run codegen.
   Done when: `make proto` exits 0 and `cd gen/go && go build ./...` passes; `bin/buf lint` clean.
 
