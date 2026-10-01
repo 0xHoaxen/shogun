@@ -58,7 +58,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `server.Run(ctx, cfg, log, register)`: gRPC with health, reflection (off when `ENVIRONMENT=production`), recover and log interceptors; HTTP `/healthz` `/readyz` `/metrics`; graceful shutdown on SIGTERM with `ShutdownTimeout`.
   Done when: test starts the server on random ports, hits health over gRPC and HTTP, cancels the context and sees clean exit within the timeout.
 
-- [ ] **P1.4 pkg/postgres** (M) Needs: P1.1
+- [x] **P1.4 pkg/postgres** (M) Needs: P1.1
   Do: `Connect(ctx, url, schema)` pinning `search_path`; `Migrate(ctx, pool, embed.FS)` with goose; `InTx(ctx, pool, fn)` that commits or rolls back.
   Done when: integration test with testcontainers Postgres creates a schema, migrates a sample file, and shows a failed `InTx` rolls back.
 
