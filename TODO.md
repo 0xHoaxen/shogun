@@ -54,7 +54,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `proto/shogun/events/v1/envelope.proto` already exists from P0.6; create `gen/go/go.mod` and `go work use ./gen/go`; run codegen.
   Done when: `make proto` exits 0 and `cd gen/go && go build ./...` passes; `bin/buf lint` clean.
 
-- [ ] **P1.3 pkg/server** (M) Needs: P1.1
+- [x] **P1.3 pkg/server** (M) Needs: P1.1
   Do: `server.Run(ctx, cfg, log, register)`: gRPC with health, reflection (off when `ENVIRONMENT=production`), recover and log interceptors; HTTP `/healthz` `/readyz` `/metrics`; graceful shutdown on SIGTERM with `ShutdownTimeout`.
   Done when: test starts the server on random ports, hits health over gRPC and HTTP, cancels the context and sees clean exit within the timeout.
 
