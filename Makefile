@@ -48,7 +48,7 @@ migrate: ## apply all service migrations to the local database
 	@echo "not yet: migrations arrive in P2.1 and P3.3"
 
 new-service: ## generate a service skeleton: make new-service NAME=<name>
-	@echo "not yet: scripts/new-service.sh arrives in P2.2"
+	@scripts/new-service.sh "$(NAME)"
 
 rename-service: ## rename a service everywhere: make rename-service OLD=a NEW=b
-	@echo "not yet: scripts/rename-service.sh arrives in P2.2"
+	@scripts/rename-service.sh "$(OLD)" "$(NEW)"
