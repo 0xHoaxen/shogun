@@ -9,6 +9,9 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/0xHoaxen/shogun/pkg/logger"
+	"github.com/0xHoaxen/shogun/pkg/telemetry"
 )
 
 // recoverUnary turns a handler panic into codes.Internal and logs it.
@@ -48,6 +51,7 @@ func recovered(ctx context.Context, log *slog.Logger, method string, r any) erro
 func logUnary(log *slog.Logger) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, next grpc.UnaryHandler) (any, error) {
 		start := time.Now()
+		ctx = withTraceID(ctx)
 		resp, err := next(ctx, req)
 		logCall(ctx, log, info.FullMethod, err, start)
 		return resp, err
@@ -58,10 +62,20 @@ func logUnary(log *slog.Logger) grpc.UnaryServerInterceptor {
 func logStream(log *slog.Logger) grpc.StreamServerInterceptor {
 	return func(srv any, ss grpc.ServerStream, info *grpc.StreamServerInfo, next grpc.StreamHandler) error {
 		start := time.Now()
+		ctx := withTraceID(ss.Context())
 		err := next(srv, ss)
-		logCall(ss.Context(), log, info.FullMethod, err, start)
+		logCall(ctx, log, info.FullMethod, err, start)
 		return err
 	}
+}
+
+// withTraceID adds the active trace id, if any, to the logger context.
+func withTraceID(ctx context.Context) context.Context {
+	id := telemetry.TraceID(ctx)
+	if id == "" {
+		return ctx
+	}
+	return logger.WithAttrs(ctx, slog.String("trace_id", id))
 }
 
 func logCall(ctx context.Context, log *slog.Logger, method string, err error, start time.Time) {

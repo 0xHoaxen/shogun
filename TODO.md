@@ -82,7 +82,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `authz` signs and verifies the 60 s HMAC identity token in `x-shogun-identity` (owner_id, request_id) with unary and stream interceptors; `grpcclient.Dial` adds retries, deadlines, the identity header, and trace propagation.
   Done when: tests show a call without or with an expired token gets `Unauthenticated`, a valid token reaches the handler with `owner_id` in context.
 
-- [ ] **P1.8 pkg/telemetry** (S) Needs: P1.3
+- [x] **P1.8 pkg/telemetry** (S) Needs: P1.3
   Do: OTel tracer and meter setup from env, OTLP exporter, no-op when endpoint unset; wire into `server` and `grpcclient`.
   Done when: `go test ./telemetry/...` passes; running the server test with no endpoint produces no errors.
 
