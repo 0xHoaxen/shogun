@@ -66,8 +66,16 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `outbox.Write(ctx, tx, source, type, subject, payload)` returns the event id and issues `NOTIFY outbox`; `inbox.Handle(ctx, pool, env, fn)` inserts `inbox(event_id)` `ON CONFLICT DO NOTHING` and runs `fn` in the same transaction only if new. SQL for both tables as a reusable migration snippet in `pkg/postgres/sql/`.
   Done when: integration tests prove (a) outbox row appears only after commit, (b) the same event twice runs `fn` once.
 
-- [ ] **P1.6 pkg/bus and the relay** (L, split) Needs: P1.5
-  Do (a): `bus.Bus` interface + `routes.go` mapping event type to consumers. Do (b): River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered. Do (c): `EventSink.Deliver` gRPC service (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
+- [x] **P1.6a pkg/bus interface and routes** (S) Needs: P1.5
+  Do: `bus.Bus` interface + `routes.go` mapping event type to consumers.
+  Done when: `cd pkg && go test -race -count=1 ./bus/...` passes.
+
+- [ ] **P1.6b Outbox relay** (M) Needs: P1.6a
+  Do: River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered.
+  Done when: `cd pkg && go test -race -count=1 ./bus/...` passes, including a relay integration test against Postgres.
+
+- [ ] **P1.6c EventSink and gRPC bus** (M) Needs: P1.6b
+  Do: `EventSink.Deliver` gRPC service (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
   Done when: integration test with two in-process "services": a produced event is delivered once to each consumer, survives a consumer returning an error twice, and a duplicate delivery is ignored.
 
 - [x] **P1.7 pkg/authz and pkg/grpcclient** (M) Needs: P1.3
