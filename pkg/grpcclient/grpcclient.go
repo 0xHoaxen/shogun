@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -84,12 +85,12 @@ func Dial(_ context.Context, target string, opts ...Option) (*grpc.ClientConn, e
 		unary = append(unary, identityUnary(s.signer))
 		stream = append(stream, identityStream(s.signer))
 	}
-	// TODO(P1.8): add otelgrpc stats handler here for trace propagation.
 
 	dialOpts := []grpc.DialOption{
 		// Plaintext is acceptable only inside the cluster network for now;
 		// P10.3 replaces this with mTLS.
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithDefaultServiceConfig(retryServiceConfig),
 		grpc.WithChainUnaryInterceptor(unary...),
 		grpc.WithChainStreamInterceptor(stream...),
