@@ -1,6 +1,6 @@
 # Folder structure
 
-One Git repo (`github.com/sboy99/shogun`), one `go.work`, twelve Go modules: `gen/go`, `pkg`, and ten services. `tools/` is a separate module kept out of the workspace so tool versions never leak into service builds.
+One Git repo (`github.com/0xHoaxen/shogun`), one `go.work`, twelve Go modules: `gen/go`, `pkg`, and ten services. `tools/` is a separate module kept out of the workspace so tool versions never leak into service builds.
 
 ```text
 shogun/
@@ -128,5 +128,5 @@ services/A  ──✗──▶        services/B        (call it over gRPC inste
 ## Naming
 
 - Directory, proto package, schema, role and env prefix are the same word: `kagami` / `shogun.kagami.v1` / schema `kagami` / `KAGAMI_ADDR`.
-- Go module path for a service: `github.com/sboy99/shogun/services/kagami`.
-- Image: `ghcr.io/sboy99/shogun-kagami:<version>`. Tag: `services/kagami/v0.4.0`.
+- Go module path for a service: `github.com/0xHoaxen/shogun/services/kagami`.
+- Image: `ghcr.io/0xhoaxen/shogun-kagami:<version>`. Tag: `services/kagami/v0.4.0`.

@@ -1,0 +1,4 @@
+go 1.25.4
+
+// Modules are added as they are created: ./pkg in P1.1, ./gen/go in P1.2,
+// services in P2.3 (see TODO.md).
