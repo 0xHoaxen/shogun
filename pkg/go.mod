@@ -77,6 +77,7 @@ require (
 replace github.com/0xHoaxen/shogun/gen/go => ../gen/go
 
 require (
+	aidanwoods.dev/go-paseto v1.6.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/riverqueue/river v0.44.1
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.44.1
@@ -89,6 +90,7 @@ require (
 )
 
 require (
+	aidanwoods.dev/go-result v0.3.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
