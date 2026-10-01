@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package shogun.soroban.v1;
+
+// The RPCs of soroban are added with its first feature task.
+service SorobanService {}

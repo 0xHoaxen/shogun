@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package shogun.torii.v1;
+
+// The RPCs of torii are added with its first feature task.
+service ToriiService {}

@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package shogun.kagami.v1;
+
+// The RPCs of kagami are added with its first feature task.
+service KagamiService {}

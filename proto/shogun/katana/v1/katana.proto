@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package shogun.katana.v1;
+
+// The RPCs of katana are added with its first feature task.
+service KatanaService {}
