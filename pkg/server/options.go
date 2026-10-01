@@ -4,6 +4,8 @@ import (
 	"context"
 	"net"
 	"slices"
+
+	"google.golang.org/grpc"
 )
 
 // ReadinessCheck reports an error when a dependency is not ready to serve.
@@ -13,6 +15,8 @@ type settings struct {
 	grpcListener net.Listener
 	httpListener net.Listener
 	readiness    []ReadinessCheck
+	authUnary    grpc.UnaryServerInterceptor
+	authStream   grpc.StreamServerInterceptor
 }
 
 // Option customises Run. Options are pure: they return a modified copy.
@@ -32,6 +36,17 @@ func WithListeners(grpcListener, httpListener net.Listener) Option {
 func WithReadinessCheck(check ReadinessCheck) Option {
 	return func(s settings) settings {
 		s.readiness = append(slices.Clone(s.readiness), check)
+		return s
+	}
+}
+
+// WithAuth installs identity-checking interceptors (for example from
+// authz.Authority) after recover and log. Off by default: torii mints identity
+// and must not require it.
+func WithAuth(unary grpc.UnaryServerInterceptor, stream grpc.StreamServerInterceptor) Option {
+	return func(s settings) settings {
+		s.authUnary = unary
+		s.authStream = stream
 		return s
 	}
 }

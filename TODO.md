@@ -70,7 +70,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do (a): `bus.Bus` interface + `routes.go` mapping event type to consumers. Do (b): River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered. Do (c): `EventSink.Deliver` gRPC service (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
   Done when: integration test with two in-process "services": a produced event is delivered once to each consumer, survives a consumer returning an error twice, and a duplicate delivery is ignored.
 
-- [ ] **P1.7 pkg/authz and pkg/grpcclient** (M) Needs: P1.3
+- [x] **P1.7 pkg/authz and pkg/grpcclient** (M) Needs: P1.3
   Do: `authz` signs and verifies the 60 s HMAC identity token in `x-shogun-identity` (owner_id, request_id) with unary and stream interceptors; `grpcclient.Dial` adds retries, deadlines, the identity header, and trace propagation.
   Done when: tests show a call without or with an expired token gets `Unauthenticated`, a valid token reaches the handler with `owner_id` in context.
 

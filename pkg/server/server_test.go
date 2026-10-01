@@ -14,9 +14,13 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/metadata"
 	reflectionpb "google.golang.org/grpc/reflection/grpc_reflection_v1"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/config"
 )
 
@@ -201,4 +205,63 @@ func listServices(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 	_, err = stream.Recv()
 	return err
+}
+
+type authProbe interface{}
+
+var authProbeDesc = grpc.ServiceDesc{
+	ServiceName: "test.Probe",
+	HandlerType: (*authProbe)(nil),
+	Methods: []grpc.MethodDesc{{
+		MethodName: "Ping",
+		Handler: func(_ any, ctx context.Context, dec func(any) error, ic grpc.UnaryServerInterceptor) (any, error) {
+			in := new(emptypb.Empty)
+			if err := dec(in); err != nil {
+				return nil, err
+			}
+			h := func(ctx context.Context, _ any) (any, error) {
+				id, _ := authz.FromContext(ctx)
+				return wrapperspb.String(id.OwnerID), nil
+			}
+			return ic(ctx, in, &grpc.UnaryServerInfo{FullMethod: "/test.Probe/Ping"}, h)
+		},
+	}},
+}
+
+func TestWithAuth(t *testing.T) {
+	a, err := authz.New([]byte("0123456789abcdef0123456789abcdef"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	register := func(s *grpc.Server) { s.RegisterService(&authProbeDesc, struct{}{}) }
+	r := start(t, config.Base{Environment: config.EnvLocal}, register,
+		WithAuth(a.UnaryServerInterceptor(), a.StreamServerInterceptor()))
+	defer r.stop(t)
+	conn, err := grpc.NewClient(r.grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = conn.Close() }()
+	ctx, cancel := context.WithTimeout(context.Background(), testTimeout)
+	defer cancel()
+
+	if _, err := grpc_health_v1.NewHealthClient(conn).Check(ctx, &grpc_health_v1.HealthCheckRequest{}); err != nil {
+		t.Fatalf("health without token: %v", err)
+	}
+	out := new(wrapperspb.StringValue)
+	err = conn.Invoke(ctx, "/test.Probe/Ping", new(emptypb.Empty), out)
+	if status.Code(err) != codes.Unauthenticated {
+		t.Fatalf("no token: code = %v, want Unauthenticated", status.Code(err))
+	}
+	token, err := a.Sign(authz.Identity{OwnerID: "owner-1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	authed := metadata.AppendToOutgoingContext(ctx, authz.Header, token)
+	if err := conn.Invoke(authed, "/test.Probe/Ping", new(emptypb.Empty), out); err != nil {
+		t.Fatalf("valid token: %v", err)
+	}
+	if out.GetValue() != "owner-1" {
+		t.Fatalf("handler saw owner %q", out.GetValue())
+	}
 }

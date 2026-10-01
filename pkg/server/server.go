@@ -34,7 +34,7 @@ func Run(ctx context.Context, cfg config.Base, log *slog.Logger, register func(*
 		return err
 	}
 
-	grpcSrv := newGRPCServer(cfg, log, register)
+	grpcSrv := newGRPCServer(cfg, log, s, register)
 	httpSrv := newHTTPServer(s.readiness)
 
 	g, gctx := errgroup.WithContext(ctx)
@@ -59,10 +59,18 @@ func Run(ctx context.Context, cfg config.Base, log *slog.Logger, register func(*
 	return g.Wait()
 }
 
-func newGRPCServer(cfg config.Base, log *slog.Logger, register func(*grpc.Server)) *grpc.Server {
+func newGRPCServer(cfg config.Base, log *slog.Logger, s settings, register func(*grpc.Server)) *grpc.Server {
+	unary := []grpc.UnaryServerInterceptor{recoverUnary(log), logUnary(log)}
+	stream := []grpc.StreamServerInterceptor{recoverStream(log), logStream(log)}
+	if s.authUnary != nil {
+		unary = append(unary, s.authUnary)
+	}
+	if s.authStream != nil {
+		stream = append(stream, s.authStream)
+	}
 	srv := grpc.NewServer(
-		grpc.ChainUnaryInterceptor(recoverUnary(log), logUnary(log)),
-		grpc.ChainStreamInterceptor(recoverStream(log), logStream(log)),
+		grpc.ChainUnaryInterceptor(unary...),
+		grpc.ChainStreamInterceptor(stream...),
 	)
 	healthpb.RegisterHealthServer(srv, health.NewServer())
 	if !cfg.IsProduction() {
