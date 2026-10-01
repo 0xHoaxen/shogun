@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package shogun.events.v1;
+
+import "shogun/events/v1/envelope.proto";
+
+// EventSinkService (the "EventSink") is registered by every service that consumes events. The relay of
+// the producing service calls Deliver once per event and consumer; delivery is
+// at least once, so the sink dedupes on Envelope.id through the inbox.
+service EventSinkService {
+  // Deliver hands one event to the service. A successful response means the
+  // event was handled (or recognised as already handled, or of an unknown
+  // type); an error asks the producer to retry.
+  rpc Deliver(DeliverRequest) returns (DeliverResponse);
+}
+
+message DeliverRequest {
+  Envelope envelope = 1;
+}
+
+message DeliverResponse {}

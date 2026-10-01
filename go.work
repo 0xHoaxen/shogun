@@ -1,6 +1,9 @@
 go 1.25.4
 
-use ./pkg
+use (
+	./gen/go
+	./pkg
+)
 
-// Modules are added as they are created: ./gen/go in P1.2, services in P2.3
+// Modules are added as they are created: services in P2.3
 // (see TODO.md).

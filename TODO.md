@@ -50,35 +50,43 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Files: `pkg/version`, `pkg/config`, `pkg/logger`.
   Done when: `cd pkg && go test -race ./config/... ./logger/...` passes with tests for env parsing defaults and the required `DATABASE_URL` outside local.
 
-- [ ] **P1.2 Event envelope proto + codegen** (S) Needs: P0.6
+- [x] **P1.2 Event envelope proto + codegen** (S) Needs: P0.6
   Do: `proto/shogun/events/v1/envelope.proto` already exists from P0.6; create `gen/go/go.mod` and `go work use ./gen/go`; run codegen.
   Done when: `make proto` exits 0 and `cd gen/go && go build ./...` passes; `bin/buf lint` clean.
 
-- [ ] **P1.3 pkg/server** (M) Needs: P1.1
+- [x] **P1.3 pkg/server** (M) Needs: P1.1
   Do: `server.Run(ctx, cfg, log, register)`: gRPC with health, reflection (off when `ENVIRONMENT=production`), recover and log interceptors; HTTP `/healthz` `/readyz` `/metrics`; graceful shutdown on SIGTERM with `ShutdownTimeout`.
   Done when: test starts the server on random ports, hits health over gRPC and HTTP, cancels the context and sees clean exit within the timeout.
 
-- [ ] **P1.4 pkg/postgres** (M) Needs: P1.1
+- [x] **P1.4 pkg/postgres** (M) Needs: P1.1
   Do: `Connect(ctx, url, schema)` pinning `search_path`; `Migrate(ctx, pool, embed.FS)` with goose; `InTx(ctx, pool, fn)` that commits or rolls back.
   Done when: integration test with testcontainers Postgres creates a schema, migrates a sample file, and shows a failed `InTx` rolls back.
 
-- [ ] **P1.5 pkg/outbox and pkg/inbox** (M) Needs: P1.2, P1.4
+- [x] **P1.5 pkg/outbox and pkg/inbox** (M) Needs: P1.2, P1.4
   Do: `outbox.Write(ctx, tx, source, type, subject, payload)` returns the event id and issues `NOTIFY outbox`; `inbox.Handle(ctx, pool, env, fn)` inserts `inbox(event_id)` `ON CONFLICT DO NOTHING` and runs `fn` in the same transaction only if new. SQL for both tables as a reusable migration snippet in `pkg/postgres/sql/`.
   Done when: integration tests prove (a) outbox row appears only after commit, (b) the same event twice runs `fn` once.
 
-- [ ] **P1.6 pkg/bus and the relay** (L, split) Needs: P1.5
-  Do (a): `bus.Bus` interface + `routes.go` mapping event type to consumers. Do (b): River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered. Do (c): `EventSink.Deliver` gRPC service (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
+- [x] **P1.6a pkg/bus interface and routes** (S) Needs: P1.5
+  Do: `bus.Bus` interface + `routes.go` mapping event type to consumers.
+  Done when: `cd pkg && go test -race -count=1 ./bus/...` passes.
+
+- [x] **P1.6b Outbox relay** (M) Needs: P1.6a
+  Do: River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered.
+  Done when: `cd pkg && go test -race -count=1 ./bus/...` passes, including a relay integration test against Postgres.
+
+- [x] **P1.6c EventSink and gRPC bus** (M) Needs: P1.6b
+  Do: `EventSinkService.Deliver` gRPC service (named with the `Service` suffix to satisfy buf lint) (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
   Done when: integration test with two in-process "services": a produced event is delivered once to each consumer, survives a consumer returning an error twice, and a duplicate delivery is ignored.
 
-- [ ] **P1.7 pkg/authz and pkg/grpcclient** (M) Needs: P1.3
+- [x] **P1.7 pkg/authz and pkg/grpcclient** (M) Needs: P1.3
   Do: `authz` signs and verifies the 60 s HMAC identity token in `x-shogun-identity` (owner_id, request_id) with unary and stream interceptors; `grpcclient.Dial` adds retries, deadlines, the identity header, and trace propagation.
   Done when: tests show a call without or with an expired token gets `Unauthenticated`, a valid token reaches the handler with `owner_id` in context.
 
-- [ ] **P1.8 pkg/telemetry** (S) Needs: P1.3
+- [x] **P1.8 pkg/telemetry** (S) Needs: P1.3
   Do: OTel tracer and meter setup from env, OTLP exporter, no-op when endpoint unset; wire into `server` and `grpcclient`.
   Done when: `go test ./telemetry/...` passes; running the server test with no endpoint produces no errors.
 
-- [ ] **P1.9 pkg/hanko** (M) Needs: P1.1
+- [x] **P1.9 pkg/hanko** (M) Needs: P1.1
   Do: PASETO `v4.public` `Sign(claims, key)` / `Verify(token, pubkey, expected)` with claims jti, aud, iss, sub, draft_id, version, body_sha256, rcpt_sha256, iat, exp (5 min); key id support with two valid public keys.
   Done when: tests cover valid, expired, wrong audience, tampered hash, wrong key, rotated key.
 
