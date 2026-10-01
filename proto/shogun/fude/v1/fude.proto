@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package shogun.fude.v1;
+
+// The RPCs of fude are added with its first feature task.
+service FudeService {}

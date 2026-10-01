@@ -3,7 +3,16 @@ go 1.25.4
 use (
 	./gen/go
 	./pkg
+	./services/dojo
+	./services/fude
+	./services/kagami
+	./services/katana
+	./services/sensei
+	./services/shinobi
+	./services/soroban
+	./services/taiko
+	./services/torii
+	./services/tsubame
 )
 
-// Modules are added as they are created: services in P2.3
-// (see TODO.md).
+// New services are added by `make new-service NAME=<name>`.

@@ -94,17 +94,21 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 2: Service generator and skeletons
 
-- [ ] **P2.1 Service template** (M) Needs: P1.3, P1.4, P1.6
+- [x] **P2.1 Service template** (M) Needs: P1.3, P1.4, P1.6
   Do: `scripts/templates/service/` producing `go.mod` (replace to `../../pkg` and `../../gen/go`), `cmd/<name>/main.go` (config, logger, postgres, migrate, server.Run, EventSink), `internal/{app,domain,store,transport/grpc,events,jobs}` with one placeholder each, `migrations/00001_init.sql` creating `outbox` and `inbox`, embed of migrations, `Dockerfile` args.
   Done when: generated service compiles with `go build ./...` and its binary starts against local Postgres and answers health.
 
-- [ ] **P2.2 new-service and rename-service scripts** (M) Needs: P2.1
+- [x] **P2.2 new-service and rename-service scripts** (M) Needs: P2.1
   Do: `scripts/new-service.sh NAME` (adds module to `go.work`, a `svc-<name>` depguard rule in `.golangci.yml` and the new name to every other service's deny list, proto stub, Makefile and CI matrix entries, helm values, compose service); `scripts/rename-service.sh OLD NEW` rewrites folder, module path, proto package, schema, role, env prefix, values, release config.
   Done when: `make new-service NAME=demo` then `make rename-service OLD=demo NEW=demo2` builds; the script is idempotent-safe (refuses if target exists). Delete the demo after.
 
-- [ ] **P2.3 Generate the ten skeletons** (M) Needs: P2.2
+- [x] **P2.3 Generate the ten skeletons** (M) Needs: P2.2
   Do: run `make new-service` for `torii kagami tsubame fude taiko dojo katana shinobi sensei soroban`; add each to `go.work`.
   Done when: `make build` produces ten binaries; `make lint` and `make test` pass.
+
+- [ ] **P2.4 Wire the outbox relay into services** (S) Needs: P2.3
+  Do: in the service template and every generated service, call `relay.Migrate`, build `relay.New` with `bus.DialGRPCBus` over the `<NAME>_ADDR` targets, and start and stop it alongside `server.Run`. Required before the first producer (P4.5).
+  Done when: a generated service starts the relay and an outbox row written in a test is delivered to a fake consumer.
 
 ---
 
