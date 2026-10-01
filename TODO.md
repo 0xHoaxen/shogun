@@ -130,7 +130,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `scripts/changed-modules.sh <base>` prints a JSON matrix; a change under `pkg/`, `gen/`, `go.work` or `proto/` selects every module.
   Done when: unit-style shell test shows `services/kagami/x.go` selects only kagami and `pkg/config/x.go` selects all.
 
-- [ ] **P3.5 CI workflows** (M) Needs: P3.4
+- [x] **P3.5 CI workflows** (M) Needs: P3.4
   Do: `.github/workflows/ci.yml` (matrix lint, `go test -race`, build, Docker build without push), `proto.yml` (lint, breaking vs main, generate then `git diff --exit-code`), `pr-title.yml`, `codeql.yml`, `dependabot.yml`, `pull_request_template.md`. Actions pinned to SHAs; Go version from `.tool-versions`.
   Done when: `actionlint` passes locally; opening a draft PR shows all checks green.
 
