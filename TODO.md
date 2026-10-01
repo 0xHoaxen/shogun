@@ -21,8 +21,8 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Files: repo root.
   Done when: `go version` matches `.tool-versions`; `go work sync` exits 0.
 
-- [ ] **P0.2 Tools module** (S) Needs: P0.1
-  Do: `tools/go.mod` with `tool` directives for buf v1.57, protoc-gen-go v1.36, protoc-gen-go-grpc v1.5, goose v3.26, sqlc. Not in `go.work`.
+- [x] **P0.2 Tools module** (S) Needs: P0.1
+  Do: `tools/go.mod` with `tool` directives for buf v1.57, protoc-gen-go v1.36, protoc-gen-go-grpc v1.5, goose v3.26, sqlc v1.30 (v1.31+ needs Go 1.26). Not in `go.work`.
   Done when: `cd tools && GOWORK=off GOBIN=$PWD/../bin go install tool` puts `buf`, `goose`, `sqlc`, `protoc-gen-go`, `protoc-gen-go-grpc` in `bin/`.
 
 - [ ] **P0.3 Makefile** (S) Needs: P0.2
