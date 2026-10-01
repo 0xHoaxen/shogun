@@ -74,8 +74,8 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered.
   Done when: `cd pkg && go test -race -count=1 ./bus/...` passes, including a relay integration test against Postgres.
 
-- [ ] **P1.6c EventSink and gRPC bus** (M) Needs: P1.6b
-  Do: `EventSink.Deliver` gRPC service (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
+- [x] **P1.6c EventSink and gRPC bus** (M) Needs: P1.6b
+  Do: `EventSinkService.Deliver` gRPC service (named with the `Service` suffix to satisfy buf lint) (proto in `proto/shogun/events/v1/sink.proto`) that every service registers, calling `inbox.Handle`.
   Done when: integration test with two in-process "services": a produced event is delivered once to each consumer, survives a consumer returning an error twice, and a duplicate delivery is ignored.
 
 - [x] **P1.7 pkg/authz and pkg/grpcclient** (M) Needs: P1.3
