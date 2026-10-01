@@ -1,0 +1,282 @@
+version: "2"
+
+run:
+  go: "1.25.4"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - depguard
+    - errorlint
+    - gocritic
+    - misspell
+    - revive
+    - sloglint
+  settings:
+    depguard:
+      rules:
+        pkg-no-services:
+          list-mode: lax
+          files:
+            - "**/pkg/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services"
+              desc: pkg must not import services
+        anthropic-only-in-llm:
+          list-mode: lax
+          files:
+            - "$all"
+            - "!**/pkg/llm/**"
+          deny:
+            - pkg: "github.com/anthropics/anthropic-sdk-go"
+              desc: all Claude calls go through pkg/llm
+        svc-torii:
+          list-mode: lax
+          files:
+            - "**/services/torii/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-kagami:
+          list-mode: lax
+          files:
+            - "**/services/kagami/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-tsubame:
+          list-mode: lax
+          files:
+            - "**/services/tsubame/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-fude:
+          list-mode: lax
+          files:
+            - "**/services/fude/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-taiko:
+          list-mode: lax
+          files:
+            - "**/services/taiko/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-dojo:
+          list-mode: lax
+          files:
+            - "**/services/dojo/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-katana:
+          list-mode: lax
+          files:
+            - "**/services/katana/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-shinobi:
+          list-mode: lax
+          files:
+            - "**/services/shinobi/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-sensei:
+          list-mode: lax
+          files:
+            - "**/services/sensei/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/soroban"
+              desc: services must not import other services; use gRPC
+        svc-soroban:
+          list-mode: lax
+          files:
+            - "**/services/soroban/**"
+          deny:
+            - pkg: "github.com/0xHoaxen/shogun/services/torii"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/kagami"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/tsubame"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/fude"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/taiko"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/dojo"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/katana"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/shinobi"
+              desc: services must not import other services; use gRPC
+            - pkg: "github.com/0xHoaxen/shogun/services/sensei"
+              desc: services must not import other services; use gRPC
+  exclusions:
+    generated: lax
+    paths:
+      - gen/go
+      - internal/store/db
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/0xHoaxen/shogun
+  exclusions:
+    generated: lax
+    paths:
+      - gen/go
+      - internal/store/db

@@ -29,7 +29,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: targets `tools proto sqlc lint test build up down migrate new-service rename-service`; each module loop uses `go list -m -f '{{.Dir}}'` from `go.work`. Targets that need later phases print "not yet" and exit 0.
   Done when: `make tools` works; `make lint` and `make test` exit 0 on the empty workspace.
 
-- [ ] **P0.4 Lint config** (S) Needs: P0.1
+- [x] **P0.4 Lint config** (S) Needs: P0.1
   Do: `.golangci.yml` (v2: standard + bodyclose, errorlint, gocritic, misspell, revive, sloglint; gofumpt, goimports with local prefix) and a `depguard` rule set: services cannot import other services; `pkg` cannot import services; nobody imports the Anthropic SDK except `pkg/llm`.
   Done when: `golangci-lint config verify` exits 0.
 
@@ -91,7 +91,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: generated service compiles with `go build ./...` and its binary starts against local Postgres and answers health.
 
 - [ ] **P2.2 new-service and rename-service scripts** (M) Needs: P2.1
-  Do: `scripts/new-service.sh NAME` (adds module to `go.work`, proto stub, Makefile and CI matrix entries, helm values, compose service); `scripts/rename-service.sh OLD NEW` rewrites folder, module path, proto package, schema, role, env prefix, values, release config.
+  Do: `scripts/new-service.sh NAME` (adds module to `go.work`, a `svc-<name>` depguard rule in `.golangci.yml` and the new name to every other service's deny list, proto stub, Makefile and CI matrix entries, helm values, compose service); `scripts/rename-service.sh OLD NEW` rewrites folder, module path, proto package, schema, role, env prefix, values, release config.
   Done when: `make new-service NAME=demo` then `make rename-service OLD=demo NEW=demo2` builds; the script is idempotent-safe (refuses if target exists). Delete the demo after.
 
 - [ ] **P2.3 Generate the ten skeletons** (M) Needs: P2.2
