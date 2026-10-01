@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -169,5 +170,34 @@ func TestWriteRejectsInvalidInput(t *testing.T) {
 				t.Fatal("expected error")
 			}
 		})
+	}
+}
+
+func TestWriteStoresTraceparentOfActiveSpan(t *testing.T) {
+	ctx, pool := newPool(t)
+	sc := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID:    trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+		SpanID:     trace.SpanID{1, 2, 3, 4, 5, 6, 7, 8},
+		TraceFlags: trace.FlagsSampled,
+	})
+	spanCtx := trace.ContextWithSpanContext(ctx, sc)
+
+	var id string
+	err := postgres.InTx(spanCtx, pool, func(tx pgx.Tx) error {
+		got, err := outbox.Write(spanCtx, tx, "kagami", "job.added", "job/1", wrapperspb.String("x"))
+		id = got.String()
+		return err
+	})
+	if err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	var column string
+	if err := pool.QueryRow(ctx, `SELECT traceparent FROM outbox WHERE id = $1`, id).Scan(&column); err != nil {
+		t.Fatalf("select: %v", err)
+	}
+	const want = "00-0102030405060708090a0b0c0d0e0f10-0102030405060708-01"
+	if column != want {
+		t.Fatalf("traceparent = %q, want %q", column, want)
 	}
 }

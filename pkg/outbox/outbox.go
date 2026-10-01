@@ -16,6 +16,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	"github.com/0xHoaxen/shogun/pkg/telemetry"
 )
 
 // Channel is the Postgres NOTIFY channel signalled for every written event.
@@ -48,14 +49,14 @@ func Write(ctx context.Context, tx pgx.Tx, source, typ, subject string, payload 
 	}
 
 	now := time.Now().UTC()
-	// Traceparent stays empty until pkg/telemetry can supply it from ctx.
 	env := &eventsv1.Envelope{
-		Id:         id.String(),
-		Type:       typ,
-		Source:     source,
-		Subject:    subject,
-		OccurredAt: timestamppb.New(now),
-		Payload:    packed,
+		Id:          id.String(),
+		Type:        typ,
+		Source:      source,
+		Subject:     subject,
+		OccurredAt:  timestamppb.New(now),
+		Payload:     packed,
+		Traceparent: telemetry.Traceparent(ctx),
 	}
 	raw, err := proto.Marshal(env)
 	if err != nil {
