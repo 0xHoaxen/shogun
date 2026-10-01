@@ -78,7 +78,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: OTel tracer and meter setup from env, OTLP exporter, no-op when endpoint unset; wire into `server` and `grpcclient`.
   Done when: `go test ./telemetry/...` passes; running the server test with no endpoint produces no errors.
 
-- [ ] **P1.9 pkg/hanko** (M) Needs: P1.1
+- [x] **P1.9 pkg/hanko** (M) Needs: P1.1
   Do: PASETO `v4.public` `Sign(claims, key)` / `Verify(token, pubkey, expected)` with claims jti, aud, iss, sub, draft_id, version, body_sha256, rcpt_sha256, iat, exp (5 min); key id support with two valid public keys.
   Done when: tests cover valid, expired, wrong audience, tampered hash, wrong key, rotated key.
 
