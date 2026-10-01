@@ -102,7 +102,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `scripts/new-service.sh NAME` (adds module to `go.work`, a `svc-<name>` depguard rule in `.golangci.yml` and the new name to every other service's deny list, proto stub, Makefile and CI matrix entries, helm values, compose service); `scripts/rename-service.sh OLD NEW` rewrites folder, module path, proto package, schema, role, env prefix, values, release config.
   Done when: `make new-service NAME=demo` then `make rename-service OLD=demo NEW=demo2` builds; the script is idempotent-safe (refuses if target exists). Delete the demo after.
 
-- [ ] **P2.3 Generate the ten skeletons** (M) Needs: P2.2
+- [x] **P2.3 Generate the ten skeletons** (M) Needs: P2.2
   Do: run `make new-service` for `torii kagami tsubame fude taiko dojo katana shinobi sensei soroban`; add each to `go.work`.
   Done when: `make build` produces ten binaries; `make lint` and `make test` pass.
 
