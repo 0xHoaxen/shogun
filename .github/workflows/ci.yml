@@ -1,0 +1,124 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  GOTOOLCHAIN: local
+
+jobs:
+  modules:
+    name: modules
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+      golangci-lint: ${{ steps.versions.outputs.golangci-lint }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: .tool-versions
+          cache: false
+      - id: list
+        name: List workspace modules
+        run: |
+          dirs=$(go list -m -f '{{.Dir}}' | sed "s|^$PWD|.|; s|^\./||" | jq -R . | jq -sc '{dir: .}')
+          echo "matrix=$dirs" >> "$GITHUB_OUTPUT"
+      - id: versions
+        name: Read pinned tool versions
+        run: echo "golangci-lint=v$(awk '$1=="golangci-lint"{print $2}' .tool-versions)" >> "$GITHUB_OUTPUT"
+
+  lint:
+    name: lint (${{ matrix.dir }})
+    needs: modules
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.modules.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: .tool-versions
+      - uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9 # v8
+        with:
+          version: ${{ needs.modules.outputs.golangci-lint }}
+          working-directory: ${{ matrix.dir }}
+
+  lint-config:
+    name: lint config
+    needs: modules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: .tool-versions
+          cache: false
+      - name: golangci-lint config verify
+        env:
+          GOWORK: "off"
+        run: go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ needs.modules.outputs.golangci-lint }} config verify
+
+  test:
+    name: test (${{ matrix.dir }})
+    needs: modules
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.modules.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: .tool-versions
+      - name: go test -race
+        working-directory: ${{ matrix.dir }}
+        run: go test -race -count=1 ./...
+
+  isolated-build:
+    name: build (${{ matrix.dir }}, GOWORK=off)
+    needs: modules
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.modules.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: .tool-versions
+      - name: Build outside the workspace
+        working-directory: ${{ matrix.dir }}
+        env:
+          GOWORK: "off"
+        run: go build ./...
+
+  build:
+    name: build binaries
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: .tool-versions
+      - run: make build
+
+  ci-ok:
+    name: ci ok
+    if: always()
+    needs: [lint, lint-config, test, isolated-build, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e 'all(.[]; .result == "success")' > /dev/null
