@@ -25,7 +25,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `tools/go.mod` with `tool` directives for buf v1.57, protoc-gen-go v1.36, protoc-gen-go-grpc v1.5, goose v3.26, sqlc v1.30 (v1.31+ needs Go 1.26). Not in `go.work`.
   Done when: `cd tools && GOWORK=off GOBIN=$PWD/../bin go install tool` puts `buf`, `goose`, `sqlc`, `protoc-gen-go`, `protoc-gen-go-grpc` in `bin/`.
 
-- [ ] **P0.3 Makefile** (S) Needs: P0.2
+- [x] **P0.3 Makefile** (S) Needs: P0.2
   Do: targets `tools proto sqlc lint test build up down migrate new-service rename-service`; each module loop uses `go list -m -f '{{.Dir}}'` from `go.work`. Targets that need later phases print "not yet" and exit 0.
   Done when: `make tools` works; `make lint` and `make test` exit 0 on the empty workspace.
 
