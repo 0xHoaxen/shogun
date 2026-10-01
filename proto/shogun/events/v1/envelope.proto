@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package shogun.events.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+
+// Envelope wraps every event written to the outbox and delivered to consumers.
+message Envelope {
+  // Unique event id (UUIDv7). Consumers dedupe on this.
+  string id = 1;
+  // Domain noun and verb, for example "job.added". Never a service name.
+  string type = 2;
+  // Producing service, for example "kagami".
+  string source = 3;
+  // Id of the entity the event is about.
+  string subject = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+  // Payload message defined in the producer's events.proto.
+  google.protobuf.Any payload = 6;
+  // W3C trace context of the request that produced the event.
+  string traceparent = 7;
+}

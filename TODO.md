@@ -37,9 +37,9 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: copy `AGENTS.md`, `CLAUDE.md`, `docs/folder-structure.md`, this `TODO.md` into the repo; write `README.md` with quickstart and links to the LLD and System Design docs.
   Done when: files exist at the paths in `docs/folder-structure.md`.
 
-- [ ] **P0.6 Buf config** (S) Needs: P0.2
+- [x] **P0.6 Buf config** (S) Needs: P0.2
   Do: `buf.yaml` (STANDARD lint, FILE breaking), `buf.gen.yaml` (Go with `paths=source_relative`, managed `go_package_prefix github.com/0xHoaxen/shogun/gen/go`; TypeScript to `web/src/gen` with `@connectrpc/protoc-gen-connect-es` added in P7).
-  Done when: `bin/buf lint` exits 0 on an empty `proto/`.
+  Done when: `bin/buf lint` exits 0. (buf rejects a module with no `.proto` files, so the envelope proto from P1.2 is added here.)
 
 ---
 
@@ -51,7 +51,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `cd pkg && go test -race ./config/... ./logger/...` passes with tests for env parsing defaults and the required `DATABASE_URL` outside local.
 
 - [ ] **P1.2 Event envelope proto + codegen** (S) Needs: P0.6
-  Do: `proto/shogun/events/v1/envelope.proto` (id, type, source, subject, occurred_at, payload Any, traceparent); create `gen/go/go.mod` and `go work use ./gen/go`; run codegen.
+  Do: `proto/shogun/events/v1/envelope.proto` already exists from P0.6; create `gen/go/go.mod` and `go work use ./gen/go`; run codegen.
   Done when: `make proto` exits 0 and `cd gen/go && go build ./...` passes; `bin/buf lint` clean.
 
 - [ ] **P1.3 pkg/server** (M) Needs: P1.1
