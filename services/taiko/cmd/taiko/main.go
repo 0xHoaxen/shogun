@@ -10,11 +10,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
+	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/logger"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
@@ -39,11 +41,11 @@ func main() {
 func runMain() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
-	return run(ctx, os.LookupEnv)
+	return run(ctx, os.LookupEnv, relayOverrides{})
 }
 
 // run wires the service and blocks until ctx is cancelled or serving fails.
-func run(ctx context.Context, lookup config.LookupFunc, opts ...server.Option) error {
+func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides, opts ...server.Option) error {
 	cfg, err := config.LoadBase(serviceName, lookup)
 	if err != nil {
 		return err
@@ -72,7 +74,7 @@ func run(ctx context.Context, lookup config.LookupFunc, opts ...server.Option) e
 	defer pool.Close()
 
 	if config.String(lookup, migrateOnStartEnv, migrateOnStartDflt) == "true" {
-		if err := postgres.Migrate(ctx, pool, migrations.FS); err != nil {
+		if err := migrate(ctx, pool); err != nil {
 			return err
 		}
 	}
@@ -82,6 +84,12 @@ func run(ctx context.Context, lookup config.LookupFunc, opts ...server.Option) e
 		return err
 	}
 
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	if err != nil {
+		return err
+	}
+	defer stopRelay()
+
 	serverOpts := append([]server.Option{
 		server.WithAuth(authority.UnaryServerInterceptor(), authority.StreamServerInterceptor()),
 		server.WithReadinessCheck(pool.Ping),
@@ -90,6 +98,14 @@ func run(ctx context.Context, lookup config.LookupFunc, opts ...server.Option) e
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
+}
+
+// migrate applies the service's own migrations, then the relay's River tables.
+func migrate(ctx context.Context, pool *pgxpool.Pool) error {
+	if err := postgres.Migrate(ctx, pool, migrations.FS); err != nil {
+		return err
+	}
+	return relay.Migrate(ctx, pool)
 }
 
 func flushTelemetry(log *slog.Logger, timeout time.Duration, shutdown func(context.Context) error) {

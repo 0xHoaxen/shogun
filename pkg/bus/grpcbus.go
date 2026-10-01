@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 
 	"google.golang.org/grpc"
@@ -40,9 +41,7 @@ func WithIdentity(id authz.Identity) GRPCOption {
 // The map is copied. Closing is the caller's concern for these clients.
 func NewGRPCBus(clients map[string]eventsv1.EventSinkServiceClient, opts ...GRPCOption) *GRPCBus {
 	copied := make(map[string]eventsv1.EventSinkServiceClient, len(clients))
-	for name, c := range clients {
-		copied[name] = c
-	}
+	maps.Copy(copied, clients)
 	b := GRPCBus{clients: copied}
 	for _, opt := range opts {
 		b = opt(b)

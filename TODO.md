@@ -106,7 +106,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: run `make new-service` for `torii kagami tsubame fude taiko dojo katana shinobi sensei soroban`; add each to `go.work`.
   Done when: `make build` produces ten binaries; `make lint` and `make test` pass.
 
-- [ ] **P2.4 Wire the outbox relay into services** (S) Needs: P2.3
+- [x] **P2.4 Wire the outbox relay into services** (S) Needs: P2.3
   Do: in the service template and every generated service, call `relay.Migrate`, build `relay.New` with `bus.DialGRPCBus` over the `<NAME>_ADDR` targets, and start and stop it alongside `server.Run`. Required before the first producer (P4.5).
   Done when: a generated service starts the relay and an outbox row written in a test is delivered to a fake consumer.
 

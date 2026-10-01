@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -48,9 +49,7 @@ func NewSinkServer(pool *pgxpool.Pool, handlers map[string]Handler, logger *slog
 		logger = slog.Default()
 	}
 	copied := make(map[string]Handler, len(handlers))
-	for typ, h := range handlers {
-		copied[typ] = h
-	}
+	maps.Copy(copied, handlers)
 	return &SinkServer{pool: pool, handlers: copied, log: logger.With("component", "event_sink")}, nil
 }
 
