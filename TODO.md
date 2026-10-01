@@ -33,7 +33,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `.golangci.yml` (v2: standard + bodyclose, errorlint, gocritic, misspell, revive, sloglint; gofumpt, goimports with local prefix) and a `depguard` rule set: services cannot import other services; `pkg` cannot import services; nobody imports the Anthropic SDK except `pkg/llm`.
   Done when: `golangci-lint config verify` exits 0.
 
-- [ ] **P0.5 Project docs in place** (S) Needs: P0.1
+- [x] **P0.5 Project docs in place** (S) Needs: P0.1
   Do: copy `AGENTS.md`, `CLAUDE.md`, `docs/folder-structure.md`, this `TODO.md` into the repo; write `README.md` with quickstart and links to the LLD and System Design docs.
   Done when: files exist at the paths in `docs/folder-structure.md`.
 
