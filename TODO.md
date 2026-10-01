@@ -70,7 +70,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `bus.Bus` interface + `routes.go` mapping event type to consumers.
   Done when: `cd pkg && go test -race -count=1 ./bus/...` passes.
 
-- [ ] **P1.6b Outbox relay** (M) Needs: P1.6a
+- [x] **P1.6b Outbox relay** (M) Needs: P1.6a
   Do: River-based relay: periodic job reads undelivered rows `FOR UPDATE SKIP LOCKED` (batch 100), enqueues one `deliver_event` job per consumer, marks delivered.
   Done when: `cd pkg && go test -race -count=1 ./bus/...` passes, including a relay integration test against Postgres.
 
