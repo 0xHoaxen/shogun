@@ -62,7 +62,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `Connect(ctx, url, schema)` pinning `search_path`; `Migrate(ctx, pool, embed.FS)` with goose; `InTx(ctx, pool, fn)` that commits or rolls back.
   Done when: integration test with testcontainers Postgres creates a schema, migrates a sample file, and shows a failed `InTx` rolls back.
 
-- [ ] **P1.5 pkg/outbox and pkg/inbox** (M) Needs: P1.2, P1.4
+- [x] **P1.5 pkg/outbox and pkg/inbox** (M) Needs: P1.2, P1.4
   Do: `outbox.Write(ctx, tx, source, type, subject, payload)` returns the event id and issues `NOTIFY outbox`; `inbox.Handle(ctx, pool, env, fn)` inserts `inbox(event_id)` `ON CONFLICT DO NOTHING` and runs `fn` in the same transaction only if new. SQL for both tables as a reusable migration snippet in `pkg/postgres/sql/`.
   Done when: integration tests prove (a) outbox row appears only after commit, (b) the same event twice runs `fn` once.
 
