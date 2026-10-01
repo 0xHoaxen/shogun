@@ -45,7 +45,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 1: Shared platform (`pkg`)
 
-- [ ] **P1.1 pkg module + version, config, logger** (S) Needs: P0.1
+- [x] **P1.1 pkg module + version, config, logger** (S) Needs: P0.1
   Do: `pkg/go.mod` and `go work use ./pkg`; `version` (ldflags vars), `config.Base` + helpers, `logger.New` (slog JSON with service and version).
   Files: `pkg/version`, `pkg/config`, `pkg/logger`.
   Done when: `cd pkg && go test -race ./config/... ./logger/...` passes with tests for env parsing defaults and the required `DATABASE_URL` outside local.
