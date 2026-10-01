@@ -1,0 +1,4 @@
+golang 1.25.4
+golangci-lint 2.4.0
+nodejs 22
+helm 3

@@ -57,7 +57,7 @@ Run a single module: `cd services/kagami && go test -race ./...`. The repo is a 
 
 ## Conventions
 
-- **Go:** `gofumpt` and `goimports` (local prefix `github.com/sboy99/shogun`), `golangci-lint` clean. Wrap errors with `%w`. Pass `context.Context` first. No globals except in `main`.
+- **Go:** `gofumpt` and `goimports` (local prefix `github.com/0xHoaxen/shogun`), `golangci-lint` clean. Wrap errors with `%w`. Pass `context.Context` first. No globals except in `main`.
 - **Layers inside a service:** `cmd/<name>` wires; `internal/app` use cases; `internal/domain` pure types and state machines (no I/O); `internal/store` Postgres via sqlc; `internal/transport/grpc` handlers; `internal/events` inbox handlers; `internal/jobs` River workers. Dependencies point inward.
 - **IDs and data:** UUIDv7 generated in Go; `timestamptz` UTC; money as `bigint` micro-dollars; enums as `text` with `CHECK`; every user-facing table has `owner_id`, `version`, `created_at`, `updated_at`, `archived_at`.
 - **Errors:** gRPC status codes with a stable `ErrorInfo.reason` such as `JOB_STATUS_INVALID_TRANSITION`. Invalid state change is `FailedPrecondition`.

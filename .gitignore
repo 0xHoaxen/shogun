@@ -1,0 +1,15 @@
+# build output and local tools
+bin/
+dist/
+coverage.*
+*.out
+
+# local config and secrets
+.env
+
+# web
+node_modules/
+web/.next/
+
+# os
+.DS_Store

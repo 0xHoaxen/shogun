@@ -16,8 +16,8 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 0: Repo foundation
 
-- [ ] **P0.1 Workspace and tool pins** (S)
-  Do: create `go.work` (use `./gen/go ./pkg`, services added later), `.tool-versions` (go 1.24.7, golangci-lint 2.4.0, nodejs 22, helm 3), `.gitignore`, `.dockerignore`, `.editorconfig`, `.env.example`.
+- [x] **P0.1 Workspace and tool pins** (S)
+  Do: create `go.work` (no `use` lines yet: `./pkg` is added in P1.1, `./gen/go` in P1.2, services in P2.3), `.tool-versions` (go 1.25.4, golangci-lint 2.4.0, nodejs 22, helm 3), `.gitignore`, `.dockerignore`, `.editorconfig`, `.env.example`.
   Files: repo root.
   Done when: `go version` matches `.tool-versions`; `go work sync` exits 0.
 
@@ -38,7 +38,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: files exist at the paths in `docs/folder-structure.md`.
 
 - [ ] **P0.6 Buf config** (S) Needs: P0.2
-  Do: `buf.yaml` (STANDARD lint, FILE breaking), `buf.gen.yaml` (Go with `paths=source_relative`, managed `go_package_prefix github.com/sboy99/shogun/gen/go`; TypeScript to `web/src/gen` with `@connectrpc/protoc-gen-connect-es` added in P7).
+  Do: `buf.yaml` (STANDARD lint, FILE breaking), `buf.gen.yaml` (Go with `paths=source_relative`, managed `go_package_prefix github.com/0xHoaxen/shogun/gen/go`; TypeScript to `web/src/gen` with `@connectrpc/protoc-gen-connect-es` added in P7).
   Done when: `bin/buf lint` exits 0 on an empty `proto/`.
 
 ---
@@ -46,12 +46,12 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 ## Phase 1: Shared platform (`pkg`)
 
 - [ ] **P1.1 pkg module + version, config, logger** (S) Needs: P0.1
-  Do: `pkg/go.mod`; `version` (ldflags vars), `config.Base` + helpers, `logger.New` (slog JSON with service and version).
+  Do: `pkg/go.mod` and `go work use ./pkg`; `version` (ldflags vars), `config.Base` + helpers, `logger.New` (slog JSON with service and version).
   Files: `pkg/version`, `pkg/config`, `pkg/logger`.
   Done when: `cd pkg && go test -race ./config/... ./logger/...` passes with tests for env parsing defaults and the required `DATABASE_URL` outside local.
 
 - [ ] **P1.2 Event envelope proto + codegen** (S) Needs: P0.6
-  Do: `proto/shogun/events/v1/envelope.proto` (id, type, source, subject, occurred_at, payload Any, traceparent); create `gen/go/go.mod`; run codegen.
+  Do: `proto/shogun/events/v1/envelope.proto` (id, type, source, subject, occurred_at, payload Any, traceparent); create `gen/go/go.mod` and `go work use ./gen/go`; run codegen.
   Done when: `make proto` exits 0 and `cd gen/go && go build ./...` passes; `bin/buf lint` clean.
 
 - [ ] **P1.3 pkg/server** (M) Needs: P1.1
@@ -123,7 +123,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `actionlint` passes locally; opening a draft PR shows all checks green.
 
 - [ ] **P3.6 Release workflows** (M) Needs: P3.5
-  Do: `release-please-config.json` + manifest with one package per module and component names; `release.yml` builds and pushes `ghcr.io/sboy99/shogun-<svc>:<version>` with SBOM and provenance for released services; `deploy.yml` bumps `deploy/helm/values/<env>/<svc>.yaml`.
+  Do: `release-please-config.json` + manifest with one package per module and component names; `release.yml` builds and pushes `ghcr.io/0xhoaxen/shogun-<svc>:<version>` with SBOM and provenance for released services; `deploy.yml` bumps `deploy/helm/values/<env>/<svc>.yaml`.
   Done when: `actionlint` passes; a dry-run of release-please on a `feat(kagami):` commit proposes `services/kagami` only.
 
 - [ ] **P3.7 Helm chart** (M) Needs: P3.1
