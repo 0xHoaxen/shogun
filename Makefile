@@ -35,8 +35,8 @@ lint: ## golangci-lint on every module, buf lint
 test: ## go test -race on every module
 	@for m in $(MODULES); do echo "==> test $$m"; (cd $$m && go test -race ./...) || exit 1; done
 
-build: ## build every service binary into ./dist
-	@found=0; for d in services/*/cmd/*; do \
+build: ## build every service binary into ./dist (SERVICE=<name> limits it to one service)
+	@found=0; for d in services/$(if $(SERVICE),$(SERVICE),*)/cmd/*; do \
 		[ -d "$$d" ] || continue; found=1; \
 		echo "==> build $$d"; mkdir -p dist; \
 		(cd $$(dirname $$(dirname $$d)) && go build -o $(CURDIR)/dist/$$(basename $$d) ./cmd/$$(basename $$d)) || exit 1; \

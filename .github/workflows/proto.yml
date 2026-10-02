@@ -16,7 +16,31 @@ env:
   GOTOOLCHAIN: local
 
 jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.ci-only.outputs.skip }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: ci-only
+        name: Skip when every commit is a ci type
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+        run: |
+          zeros=0000000000000000000000000000000000000000
+          skip=false
+          if [ -n "$BASE" ] && [ "$BASE" != "$zeros" ] && git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            skip=$(scripts/ci-only-commits.sh "$BASE" "$HEAD")
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
   proto:
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

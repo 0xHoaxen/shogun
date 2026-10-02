@@ -19,6 +19,7 @@ jobs:
     name: modules
     runs-on: ubuntu-latest
     outputs:
+      skip: ${{ steps.list.outputs.skip }}
       matrix: ${{ steps.list.outputs.matrix }}
       any: ${{ steps.list.outputs.any }}
       services: ${{ steps.list.outputs.services }}
@@ -38,14 +39,22 @@ jobs:
           BEFORE: ${{ github.event.before }}
         run: |
           zeros=0000000000000000000000000000000000000000
+          skip=false
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "$zeros" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             # New branch or a base that no longer exists (force push): run everything.
             dirs=$(go list -m -f '{{.Dir}}' | sed "s|^$PWD/||" | jq -R . | jq -sc '{dir: .}')
           else
-            dirs=$(scripts/changed-modules.sh "$BEFORE")
+            # Skip when every pushed commit is a Conventional Commits "ci" type.
+            if [ "$(scripts/ci-only-commits.sh "$BEFORE")" = true ]; then
+              skip=true
+              dirs='{"dir":[]}'
+            else
+              dirs=$(scripts/changed-modules.sh "$BEFORE")
+            fi
           fi
           services=$(jq -c '{service: [.dir[] | select(startswith("services/")) | ltrimstr("services/")]}' <<<"$dirs")
           {
+            echo "skip=$skip"
             echo "matrix=$dirs"
             echo "any=$(jq '.dir | length > 0' <<<"$dirs")"
             echo "services=$services"
@@ -76,6 +85,7 @@ jobs:
   lint-config:
     name: lint config
     needs: modules
+    if: needs.modules.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -125,14 +135,19 @@ jobs:
         run: go build ./...
 
   build:
-    name: build binaries
+    name: build binaries (${{ matrix.service }})
+    needs: modules
+    if: needs.modules.outputs.any-service == 'true'
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.modules.outputs.services) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: .tool-versions
-      - run: make build
+      - run: make build SERVICE=${{ matrix.service }}
 
   docker-build:
     name: docker build (${{ matrix.service }})

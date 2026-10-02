@@ -5,8 +5,18 @@ name: release
 # pushed to ghcr.io with an SBOM and provenance, and deployed to staging.
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to release (optional)'
+        required: false
+        default: ''
+      version:
+        description: 'Version to release (optional)'
+        required: false
+        default: ''
 
 concurrency:
   group: release

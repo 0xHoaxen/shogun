@@ -17,7 +17,31 @@ env:
   GOTOOLCHAIN: local
 
 jobs:
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.ci-only.outputs.skip }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: ci-only
+        name: Skip pushes where every commit is a ci type
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          zeros=0000000000000000000000000000000000000000
+          skip=false
+          # The weekly schedule has no push range and always runs.
+          if [ "${{ github.event_name }}" = push ] && [ -n "$BEFORE" ] && [ "$BEFORE" != "$zeros" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            skip=$(scripts/ci-only-commits.sh "$BEFORE")
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
   analyze:
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
