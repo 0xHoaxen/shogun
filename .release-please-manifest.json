@@ -2,7 +2,7 @@
   "pkg": "0.0.0",
   "gen/go": "0.0.0",
   "services/torii": "0.0.0",
-  "services/kagami": "0.0.0",
+  "services/kagami": "1.0.0",
   "services/tsubame": "0.0.0",
   "services/fude": "0.0.0",
   "services/taiko": "1.0.0",
