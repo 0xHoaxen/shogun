@@ -118,9 +118,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `deploy/docker/Dockerfile` multi-stage, `ARG SERVICE`, builds from workspace root with `-ldflags` for version and commit, runs on distroless nonroot, healthcheck via the HTTP port.
   Done when: `docker build --build-arg SERVICE=kagami -f deploy/docker/Dockerfile .` succeeds and the image runs.
 
-- [ ] **P3.2 Postgres init** (S) Needs: P0.1
+- [x] **P3.2 Postgres init** (S) Needs: P0.1
   Do: `deploy/compose/postgres/init.sql`: extensions `vector` and `citext`; for each service a schema, a login role with password from env, `REVOKE ALL ON SCHEMA public`, `search_path` set.
   Done when: connecting as `kagami` shows only the `kagami` schema and cannot create objects in `fude`.
+
+- [ ] **P3.2b Extension operators on search_path** (S) Needs: P3.2
+  Do: `postgres.Connect` pins `search_path` to the service schema only, so the `vector` and `citext` operators installed in the `extensions` schema are invisible unqualified (`citext = citext` silently falls back to case-sensitive `text =`). Put `extensions` on the pool's `search_path` (for example `<schema>,extensions`) and keep `Migrate`'s schema lookup working.
+  Done when: a testcontainers test shows `'A'::citext = 'a'::citext` is true and `<->` on `vector` resolves from a service role with no qualification.
 
 - [ ] **P3.3 Compose stack** (M) Needs: P3.1, P3.2, P2.3
   Do: `deploy/compose/compose.yaml` (pgvector Postgres 17, ten services, env from `.env`, `MIGRATE_ON_START=true`); `compose.obs.yaml` profile. `make up`, `make down`, `make migrate`.
