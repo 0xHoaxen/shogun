@@ -130,7 +130,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `deploy/compose/compose.yaml` (pgvector Postgres 17, ten services, env from `.env`, `MIGRATE_ON_START=true`); `compose.obs.yaml` profile. `make up`, `make down`, `make migrate`.
   Done when: `make up` brings all containers healthy; `grpcurl -plaintext localhost:<port> grpc.health.v1.Health/Check` returns SERVING for each.
 
-- [ ] **P3.4 changed-modules script** (S) Needs: P2.3
+- [x] **P3.4 changed-modules script** (S) Needs: P2.3
   Do: `scripts/changed-modules.sh <base>` prints a JSON matrix; a change under `pkg/`, `gen/`, `go.work` or `proto/` selects every module.
   Done when: unit-style shell test shows `services/kagami/x.go` selects only kagami and `pkg/config/x.go` selects all.
 
