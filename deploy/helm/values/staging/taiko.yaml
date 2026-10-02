@@ -1,6 +1,6 @@
 # taiko, staging. image.tag is bumped by .github/workflows/deploy.yml.
 name: taiko
 image:
-  tag: "0.0.0"
+  tag: "1.0.0"
 env:
   ENVIRONMENT: staging
