@@ -1,7 +1,7 @@
 {
   "pkg": "1.0.0",
-  "services/torii": "1.0.0",
   "gen/go": "1.0.0",
+  "services/torii": "1.0.0",
   "services/kagami": "1.0.0",
   "services/tsubame": "1.0.0",
   "services/fude": "1.0.0",
