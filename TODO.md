@@ -126,7 +126,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `postgres.Connect` pins `search_path` to the service schema only, so the `vector` and `citext` operators installed in the `extensions` schema are invisible unqualified (`citext = citext` silently falls back to case-sensitive `text =`). Put `extensions` on the pool's `search_path` (for example `<schema>,extensions`) and keep `Migrate`'s schema lookup working.
   Done when: a testcontainers test shows `'A'::citext = 'a'::citext` is true and `<->` on `vector` resolves from a service role with no qualification.
 
-- [ ] **P3.3 Compose stack** (M) Needs: P3.1, P3.2, P2.3
+- [x] **P3.3 Compose stack** (M) Needs: P3.1, P3.2, P2.3
   Do: `deploy/compose/compose.yaml` (pgvector Postgres 17, ten services, env from `.env`, `MIGRATE_ON_START=true`); `compose.obs.yaml` profile. `make up`, `make down`, `make migrate`.
   Done when: `make up` brings all containers healthy; `grpcurl -plaintext localhost:<port> grpc.health.v1.Health/Check` returns SERVING for each.
 

@@ -5,9 +5,13 @@ export GOTOOLCHAIN := local
 GOLANGCI_LINT_VERSION := 2.4.0
 MODULES := $(shell go list -m -f '{{.Dir}}' 2>/dev/null)
 
+# Local stack: use .env when present, otherwise the dev placeholders.
+COMPOSE_ENV := $(if $(wildcard .env),.env,.env.example)
+COMPOSE := docker compose --env-file $(COMPOSE_ENV) -f deploy/compose/compose.yaml
+
 .DEFAULT_GOAL := help
 
-.PHONY: help tools proto sqlc lint test build up down migrate new-service rename-service
+.PHONY: help tools proto sqlc lint test build up down up-observability migrate new-service rename-service
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -38,14 +42,17 @@ build: ## build every service binary into ./dist
 		(cd $$(dirname $$(dirname $$d)) && go build -o $(CURDIR)/dist/$$(basename $$d) ./cmd/$$(basename $$d)) || exit 1; \
 	done; [ $$found = 1 ] || echo "not yet: no services (P2.3)"
 
-up: ## docker compose local stack
-	@echo "not yet: compose stack arrives in P3.3"
+up: ## build and start the local stack, waiting until every container is healthy
+	$(COMPOSE) up -d --build --wait
 
-down: ## stop the local stack
-	@echo "not yet: compose stack arrives in P3.3"
+up-observability: ## local stack plus Jaeger, services export traces to it
+	OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317 $(COMPOSE) -f deploy/compose/compose.obs.yaml up -d --build --wait
 
-migrate: ## apply all service migrations to the local database
-	@echo "not yet: migrations arrive in P2.1 and P3.3"
+down: ## stop the local stack (keeps the database volume)
+	$(COMPOSE) -f deploy/compose/compose.obs.yaml down --remove-orphans
+
+migrate: ## apply pending migrations: services migrate on start, so recreate them
+	$(COMPOSE) up -d --build --force-recreate --wait
 
 new-service: ## generate a service skeleton: make new-service NAME=<name>
 	@scripts/new-service.sh "$(NAME)"

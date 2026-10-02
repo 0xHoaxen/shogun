@@ -1,0 +1,230 @@
+# Local stack: Postgres 17 (pgvector) plus the ten services.
+#   make up / make down      (reads .env, falls back to .env.example)
+# Service blocks and the marked lines below are maintained by scripts/compose.py
+# (run by scripts/new-service.sh); keep the markers.
+
+name: shogun
+
+x-build: &build
+  context: ../..
+  dockerfile: deploy/docker/Dockerfile
+  args: &build-args
+    VERSION: ${VERSION:-dev}
+    COMMIT: ${COMMIT:-none}
+
+x-service: &service
+  restart: unless-stopped
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+# Every service dials the others at <NAME>_ADDR for event delivery.
+x-env: &env
+  ENVIRONMENT: ${ENVIRONMENT:-local}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  GRPC_PORT: "9090"
+  HTTP_PORT: "8080"
+  SHUTDOWN_TIMEOUT: ${SHUTDOWN_TIMEOUT:-15s}
+  MIGRATE_ON_START: "true"
+  IDENTITY_SIGNING_KEY: ${IDENTITY_SIGNING_KEY:?copy .env.example to .env}
+  OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  # addr-env begin
+  TORII_ADDR: torii:9090
+  KAGAMI_ADDR: kagami:9090
+  TSUBAME_ADDR: tsubame:9090
+  FUDE_ADDR: fude:9090
+  TAIKO_ADDR: taiko:9090
+  DOJO_ADDR: dojo:9090
+  KATANA_ADDR: katana:9090
+  SHINOBI_ADDR: shinobi:9090
+  SENSEI_ADDR: sensei:9090
+  SOROBAN_ADDR: soroban:9090
+  # addr-env end
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env}
+      POSTGRES_DB: shogun
+      # postgres-env begin
+      TORII_DB_PASSWORD: ${TORII_DB_PASSWORD:?copy .env.example to .env}
+      KAGAMI_DB_PASSWORD: ${KAGAMI_DB_PASSWORD:?copy .env.example to .env}
+      TSUBAME_DB_PASSWORD: ${TSUBAME_DB_PASSWORD:?copy .env.example to .env}
+      FUDE_DB_PASSWORD: ${FUDE_DB_PASSWORD:?copy .env.example to .env}
+      TAIKO_DB_PASSWORD: ${TAIKO_DB_PASSWORD:?copy .env.example to .env}
+      DOJO_DB_PASSWORD: ${DOJO_DB_PASSWORD:?copy .env.example to .env}
+      KATANA_DB_PASSWORD: ${KATANA_DB_PASSWORD:?copy .env.example to .env}
+      SHINOBI_DB_PASSWORD: ${SHINOBI_DB_PASSWORD:?copy .env.example to .env}
+      SENSEI_DB_PASSWORD: ${SENSEI_DB_PASSWORD:?copy .env.example to .env}
+      SOROBAN_DB_PASSWORD: ${SOROBAN_DB_PASSWORD:?copy .env.example to .env}
+      # postgres-env end
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sh:/docker-entrypoint-initdb.d/00-shogun.sh:ro
+      - ./postgres/init.sql:/opt/shogun/postgres/init.sql:ro
+      - ./postgres/service.sql:/opt/shogun/postgres/service.sql:ro
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-15432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres -d shogun"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # services begin
+  torii:
+    <<: *service
+    image: shogun-torii:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: torii
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://torii:${TORII_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:9091:9090"
+
+  kagami:
+    <<: *service
+    image: shogun-kagami:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: kagami
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://kagami:${KAGAMI_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8082:8080"
+      - "127.0.0.1:9092:9090"
+
+  tsubame:
+    <<: *service
+    image: shogun-tsubame:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: tsubame
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://tsubame:${TSUBAME_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8083:8080"
+      - "127.0.0.1:9093:9090"
+
+  fude:
+    <<: *service
+    image: shogun-fude:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: fude
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://fude:${FUDE_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8084:8080"
+      - "127.0.0.1:9094:9090"
+
+  taiko:
+    <<: *service
+    image: shogun-taiko:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: taiko
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://taiko:${TAIKO_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8085:8080"
+      - "127.0.0.1:9095:9090"
+
+  dojo:
+    <<: *service
+    image: shogun-dojo:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: dojo
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://dojo:${DOJO_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8086:8080"
+      - "127.0.0.1:9096:9090"
+
+  katana:
+    <<: *service
+    image: shogun-katana:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: katana
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://katana:${KATANA_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8087:8080"
+      - "127.0.0.1:9097:9090"
+
+  shinobi:
+    <<: *service
+    image: shogun-shinobi:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: shinobi
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://shinobi:${SHINOBI_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8088:8080"
+      - "127.0.0.1:9098:9090"
+
+  sensei:
+    <<: *service
+    image: shogun-sensei:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: sensei
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://sensei:${SENSEI_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8089:8080"
+      - "127.0.0.1:9099:9090"
+
+  soroban:
+    <<: *service
+    image: shogun-soroban:local
+    build:
+      <<: *build
+      args:
+        <<: *build-args
+        SERVICE: soroban
+    environment:
+      <<: *env
+      DATABASE_URL: postgres://soroban:${SOROBAN_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+    ports:
+      - "127.0.0.1:8090:8080"
+      - "127.0.0.1:9100:9090"
+
+  # services end
+
+volumes:
+  pgdata:
