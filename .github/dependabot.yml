@@ -10,11 +10,12 @@ updates:
       actions:
         patterns: ["*"]
 
-  # TODO: add /services/* once P2.3 generates the service modules, and /web in P7.
+  # TODO: add /web in P5.1.
   - package-ecosystem: gomod
     directories:
       - /pkg
       - /gen/go
+      - /services/*
       - /tools
     schedule:
       interval: weekly

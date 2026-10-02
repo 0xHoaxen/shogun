@@ -138,9 +138,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `.github/workflows/ci.yml` (matrix lint, `go test -race`, build, Docker build without push), `proto.yml` (lint, breaking vs main, generate then `git diff --exit-code`), `pr-title.yml`, `codeql.yml`, `dependabot.yml`, `pull_request_template.md`. Actions pinned to SHAs; Go version from `.tool-versions`.
   Done when: `actionlint` passes locally; opening a draft PR shows all checks green.
 
-- [ ] **P3.5b CI follow-ups** (S) Needs: P3.1, P3.4, P3.5
+- [x] **P3.5b CI follow-ups** (S) Needs: P3.1, P3.4, P3.5
   Do: add the Docker build job (no push) to `ci.yml` once the Dockerfile exists; switch the lint and test matrix to `scripts/changed-modules.sh`; add `/services/*` to `dependabot.yml`; mark `ci ok`, `proto` and `pr-title` as required checks on `main`.
   Done when: `actionlint` passes; a change under `services/kagami/` runs only the kagami matrix entry.
+  `TODO(owner)`: marking `ci ok`, `proto` and `pr-title` as required checks on `main` is a GitHub branch-protection setting, not repo code. `ci.yml` currently triggers only on `push` to `main` (the `pull_request` trigger was removed in `f7253d0`), so `ci ok` can never report on a PR; decide whether to restore the trigger before making it required.
 
 - [ ] **P3.6 Release workflows** (M) Needs: P3.5
   Do: `release-please-config.json` + manifest with one package per module and component names; `release.yml` builds and pushes `ghcr.io/0xhoaxen/shogun-<svc>:<version>` with SBOM and provenance for released services; `deploy.yml` bumps `deploy/helm/values/<env>/<svc>.yaml`.
