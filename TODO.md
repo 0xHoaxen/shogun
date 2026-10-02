@@ -114,7 +114,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 3: Local stack and CI/CD
 
-- [ ] **P3.1 Dockerfile** (S) Needs: P2.1
+- [x] **P3.1 Dockerfile** (S) Needs: P2.1
   Do: `deploy/docker/Dockerfile` multi-stage, `ARG SERVICE`, builds from workspace root with `-ldflags` for version and commit, runs on distroless nonroot, healthcheck via the HTTP port.
   Done when: `docker build --build-arg SERVICE=kagami -f deploy/docker/Dockerfile .` succeeds and the image runs.
 
