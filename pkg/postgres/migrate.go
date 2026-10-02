@@ -13,12 +13,12 @@ import (
 )
 
 // Migrate applies pending goose migrations found at the root of fsys. The
-// schema named in the pool's search_path is created if missing, and goose's
-// version table lives inside it.
+// service schema (the first entry of the pool's search_path) is created if
+// missing, and goose's version table lives inside it.
 func Migrate(ctx context.Context, pool *pgxpool.Pool, fsys fs.FS) (err error) {
-	schema := pool.Config().ConnConfig.RuntimeParams["search_path"]
-	if err := ValidateSchema(schema); err != nil {
-		return fmt.Errorf("postgres: pool not created by Connect: %w", err)
+	schema, err := SchemaOf(pool)
+	if err != nil {
+		return err
 	}
 	if err := ensureSchema(ctx, pool, schema); err != nil {
 		return err

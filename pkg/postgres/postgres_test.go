@@ -76,6 +76,47 @@ func TestMigrateCreatesTablesInServiceSchema(t *testing.T) {
 	}
 }
 
+func TestConnectResolvesExtensionOperatorsUnqualified(t *testing.T) {
+	url := postgrestest.NewDatabase(t)
+	ctx := context.Background()
+	admin, err := pgx.Connect(ctx, url)
+	if err != nil {
+		t.Fatalf("connect admin: %v", err)
+	}
+	defer func() { _ = admin.Close(ctx) }()
+	for _, stmt := range []string{
+		`CREATE SCHEMA extensions`,
+		`CREATE EXTENSION vector WITH SCHEMA extensions`,
+		`CREATE EXTENSION citext WITH SCHEMA extensions`,
+	} {
+		if _, err := admin.Exec(ctx, stmt); err != nil {
+			t.Fatalf("%s: %v", stmt, err)
+		}
+	}
+
+	pool, err := postgres.Connect(ctx, url, "kagami")
+	if err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	t.Cleanup(pool.Close)
+
+	var caseInsensitive bool
+	if err := pool.QueryRow(ctx, `SELECT 'A'::citext = 'a'::citext`).Scan(&caseInsensitive); err != nil {
+		t.Fatalf("citext comparison: %v", err)
+	}
+	if !caseInsensitive {
+		t.Error("'A'::citext = 'a'::citext is false; citext operator not resolved from search_path")
+	}
+
+	var distance float64
+	if err := pool.QueryRow(ctx, `SELECT '[1,2,3]'::vector <-> '[1,2,4]'::vector`).Scan(&distance); err != nil {
+		t.Fatalf("vector distance: %v", err)
+	}
+	if distance != 1 {
+		t.Errorf("vector distance = %v, want 1", distance)
+	}
+}
+
 func TestInTxCommitsOnSuccess(t *testing.T) {
 	ctx, pool := newMigratedPool(t)
 
