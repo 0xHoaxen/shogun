@@ -42,14 +42,10 @@ peers:
   - soroban
   # peers end
 
-# Services apply their migrations on start unless the migration job owns it.
-migrateOnStart: true
-
-# TODO(P3.7b): needs a `migrate` subcommand in the services. Until then the
-# job stays off and services migrate on start.
+# The pre-install/pre-upgrade Job runs `<binary> migrate`, so pods skip migrating on start.
+migrateOnStart: false
 migrationJob:
-  enabled: false
-
+  enabled: true
 resources:
   requests:
     cpu: 50m
