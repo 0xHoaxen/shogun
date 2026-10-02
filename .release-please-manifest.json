@@ -1,5 +1,5 @@
 {
-  "pkg": "0.0.0",
+  "pkg": "1.0.0",
   "gen/go": "0.0.0",
   "services/torii": "0.0.0",
   "services/kagami": "0.0.0",
