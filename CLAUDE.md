@@ -12,7 +12,8 @@ The rules, commands and architecture in `AGENTS.md` apply in full. This file add
 - **Verify before claiming done.** Run the exact commands in the task's `Done when:`. Report real output; if something fails, say so and fix it rather than loosening the check.
 - **Keep diffs small.** If a task grows past about 400 changed lines excluding generated code, split it and add the new tasks to `TODO.md`.
 - **Tick the box** for the task in the same commit and add any follow-up tasks you discovered under the right phase.
-- **Use subagents** for independent, read-heavy work (for example surveying how three services implement the same pattern). Do edits in the main session so changes stay coherent.
+- **No subagents, no worktrees.** Do not spawn subagents or create git worktrees. Do all work yourself in the main session, in the main checkout.
+- **Strictly sequential.** Perform tasks one at a time, in order. Finish a task (verified, ticked, committed) before starting the next. Do not parallelise tasks or run them concurrently.
 
 ## Where things are
 
