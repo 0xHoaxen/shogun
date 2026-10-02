@@ -4,7 +4,7 @@
   "gen/go": "1.0.0",
   "services/kagami": "1.0.0",
   "services/tsubame": "0.0.0",
-  "services/fude": "0.0.0",
+  "services/fude": "1.0.0",
   "services/taiko": "1.0.0",
   "services/dojo": "1.0.0",
   "services/katana": "0.0.0",
