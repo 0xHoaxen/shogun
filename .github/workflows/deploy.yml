@@ -1,0 +1,70 @@
+name: deploy
+
+# Bumps image.tag in deploy/helm/values/<environment>/<service>.yaml through a
+# pull request. Staging is called by the release workflow; production is only
+# ever bumped by running this by hand.
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        required: true
+      service:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [staging, production]
+        required: true
+      service:
+        description: Service name, for example kagami
+        type: string
+        required: true
+      version:
+        description: Released version without the v, for example 0.4.0
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  bump-values:
+    name: bump ${{ inputs.service }} ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      ENVIRONMENT: ${{ inputs.environment }}
+      SERVICE: ${{ inputs.service }}
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate inputs
+        run: |
+          [[ "$ENVIRONMENT" =~ ^(staging|production)$ ]] || { echo "bad environment: $ENVIRONMENT" >&2; exit 1; }
+          [[ "$SERVICE" =~ ^[a-z][a-z0-9]*$ ]] || { echo "bad service: $SERVICE" >&2; exit 1; }
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]] || { echo "bad version: $VERSION" >&2; exit 1; }
+          test -f "deploy/helm/values/$ENVIRONMENT/$SERVICE.yaml" || { echo "no values file for $SERVICE in $ENVIRONMENT" >&2; exit 1; }
+      - name: Set image.tag
+        run: yq -i '.image.tag = strenv(VERSION)' "deploy/helm/values/$ENVIRONMENT/$SERVICE.yaml"
+      - name: Open the pull request
+        run: |
+          branch="deploy/$ENVIRONMENT-$SERVICE-$VERSION"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -am "chore(deploy): $SERVICE $VERSION to $ENVIRONMENT"
+          git push -u origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore(deploy): $SERVICE $VERSION to $ENVIRONMENT" \
+            --body "Sets image.tag to $VERSION in deploy/helm/values/$ENVIRONMENT/$SERVICE.yaml."

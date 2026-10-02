@@ -1,0 +1,99 @@
+name: release
+
+# release-please opens one release PR per module. Merging it tags the module
+# (for example services/kagami/v0.4.0); released services are then built,
+# pushed to ghcr.io with an SBOM and provenance, and deployed to staging.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    name: release-please
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      services: ${{ steps.released.outputs.services }}
+      any-service: ${{ steps.released.outputs.any-service }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+      - id: released
+        name: List released services
+        env:
+          RELEASE_OUTPUTS: ${{ toJSON(steps.rp.outputs) }}
+        run: |
+          services=$(jq -c '
+            [to_entries[]
+              | select(.key | test("^services/[^/]+--version$"))
+              | {service: (.key | ltrimstr("services/") | rtrimstr("--version")), version: .value}]
+            | {include: .}' <<<"$RELEASE_OUTPUTS")
+          {
+            echo "services=$services"
+            echo "any-service=$(jq '.include | length > 0' <<<"$services")"
+          } >> "$GITHUB_OUTPUT"
+
+  publish:
+    name: publish (${{ matrix.service }} ${{ matrix.version }})
+    needs: release-please
+    if: needs.release-please.outputs.any-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.release-please.outputs.services) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: services/${{ matrix.service }}/v${{ matrix.version }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: deploy/docker/Dockerfile
+          push: true
+          sbom: true
+          provenance: mode=max
+          build-args: |
+            SERVICE=${{ matrix.service }}
+            VERSION=${{ matrix.version }}
+            COMMIT=${{ github.sha }}
+          tags: ghcr.io/0xhoaxen/shogun-${{ matrix.service }}:${{ matrix.version }}
+
+  deploy-staging:
+    name: deploy staging (${{ matrix.service }} ${{ matrix.version }})
+    needs: [release-please, publish]
+    if: needs.release-please.outputs.any-service == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.release-please.outputs.services) }}
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/deploy.yml
+    with:
+      environment: staging
+      service: ${{ matrix.service }}
+      version: ${{ matrix.version }}
