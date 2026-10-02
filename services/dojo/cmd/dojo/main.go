@@ -29,6 +29,7 @@ const (
 	serviceName        = "dojo"
 	migrateOnStartEnv  = "MIGRATE_ON_START"
 	migrateOnStartDflt = "true"
+	migrateCommand     = "migrate"
 )
 
 func main() {
@@ -41,7 +42,34 @@ func main() {
 func runMain() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
+	if len(os.Args) > 1 {
+		return runCommand(ctx, os.Args[1], os.LookupEnv)
+	}
 	return run(ctx, os.LookupEnv, relayOverrides{})
+}
+
+// runCommand runs a one-shot subcommand instead of serving.
+func runCommand(ctx context.Context, name string, lookup config.LookupFunc) error {
+	switch name {
+	case migrateCommand:
+		return runMigrate(ctx, lookup)
+	default:
+		return fmt.Errorf("unknown command %q", name)
+	}
+}
+
+// runMigrate applies migrations and exits; the Helm pre-upgrade Job runs it.
+func runMigrate(ctx context.Context, lookup config.LookupFunc) error {
+	cfg, err := config.LoadBase(serviceName, lookup)
+	if err != nil {
+		return err
+	}
+	pool, err := postgres.Connect(ctx, cfg.DatabaseURL, serviceName)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+	return migrate(ctx, pool)
 }
 
 // run wires the service and blocks until ctx is cancelled or serving fails.

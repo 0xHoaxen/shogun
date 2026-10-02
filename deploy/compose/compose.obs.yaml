@@ -1,0 +1,11 @@
+# Observability add-on: a Jaeger all-in-one that receives OTLP traces.
+#   make up-observability
+# Dashboards and alerts arrive with P10.2.
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "127.0.0.1:16686:16686"

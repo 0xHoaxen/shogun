@@ -1,4 +1,4 @@
-// Package postgrestest starts one postgres:17 testcontainer per test package
+// Package postgrestest starts one pgvector Postgres 17 testcontainer per test package
 // and hands each test its own empty database inside it.
 //
 // Usage in a package that needs Postgres:
@@ -28,7 +28,7 @@ import (
 )
 
 const (
-	image          = "postgres:17"
+	image          = "pgvector/pgvector:pg17"
 	startTimeout   = 2 * time.Minute
 	readyOccurence = 2 // postgres logs "ready" twice: init server, then final server
 )

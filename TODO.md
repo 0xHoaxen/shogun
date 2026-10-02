@@ -114,37 +114,47 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 3: Local stack and CI/CD
 
-- [ ] **P3.1 Dockerfile** (S) Needs: P2.1
+- [x] **P3.1 Dockerfile** (S) Needs: P2.1
   Do: `deploy/docker/Dockerfile` multi-stage, `ARG SERVICE`, builds from workspace root with `-ldflags` for version and commit, runs on distroless nonroot, healthcheck via the HTTP port.
   Done when: `docker build --build-arg SERVICE=kagami -f deploy/docker/Dockerfile .` succeeds and the image runs.
 
-- [ ] **P3.2 Postgres init** (S) Needs: P0.1
+- [x] **P3.2 Postgres init** (S) Needs: P0.1
   Do: `deploy/compose/postgres/init.sql`: extensions `vector` and `citext`; for each service a schema, a login role with password from env, `REVOKE ALL ON SCHEMA public`, `search_path` set.
   Done when: connecting as `kagami` shows only the `kagami` schema and cannot create objects in `fude`.
 
-- [ ] **P3.3 Compose stack** (M) Needs: P3.1, P3.2, P2.3
+- [x] **P3.2b Extension operators on search_path** (S) Needs: P3.2
+  Do: `postgres.Connect` pins `search_path` to the service schema only, so the `vector` and `citext` operators installed in the `extensions` schema are invisible unqualified (`citext = citext` silently falls back to case-sensitive `text =`). Put `extensions` on the pool's `search_path` (for example `<schema>,extensions`) and keep `Migrate`'s schema lookup working.
+  Done when: a testcontainers test shows `'A'::citext = 'a'::citext` is true and `<->` on `vector` resolves from a service role with no qualification.
+
+- [x] **P3.3 Compose stack** (M) Needs: P3.1, P3.2, P2.3
   Do: `deploy/compose/compose.yaml` (pgvector Postgres 17, ten services, env from `.env`, `MIGRATE_ON_START=true`); `compose.obs.yaml` profile. `make up`, `make down`, `make migrate`.
   Done when: `make up` brings all containers healthy; `grpcurl -plaintext localhost:<port> grpc.health.v1.Health/Check` returns SERVING for each.
 
-- [ ] **P3.4 changed-modules script** (S) Needs: P2.3
+- [x] **P3.4 changed-modules script** (S) Needs: P2.3
   Do: `scripts/changed-modules.sh <base>` prints a JSON matrix; a change under `pkg/`, `gen/`, `go.work` or `proto/` selects every module.
   Done when: unit-style shell test shows `services/kagami/x.go` selects only kagami and `pkg/config/x.go` selects all.
 
-- [ ] **P3.5 CI workflows** (M) Needs: P3.4
+- [x] **P3.5 CI workflows** (M) Needs: P3.4
   Do: `.github/workflows/ci.yml` (matrix lint, `go test -race`, build, Docker build without push), `proto.yml` (lint, breaking vs main, generate then `git diff --exit-code`), `pr-title.yml`, `codeql.yml`, `dependabot.yml`, `pull_request_template.md`. Actions pinned to SHAs; Go version from `.tool-versions`.
   Done when: `actionlint` passes locally; opening a draft PR shows all checks green.
 
-- [ ] **P3.5b CI follow-ups** (S) Needs: P3.1, P3.4, P3.5
+- [x] **P3.5b CI follow-ups** (S) Needs: P3.1, P3.4, P3.5
   Do: add the Docker build job (no push) to `ci.yml` once the Dockerfile exists; switch the lint and test matrix to `scripts/changed-modules.sh`; add `/services/*` to `dependabot.yml`; mark `ci ok`, `proto` and `pr-title` as required checks on `main`.
   Done when: `actionlint` passes; a change under `services/kagami/` runs only the kagami matrix entry.
+  `TODO(owner)`: marking `ci ok`, `proto` and `pr-title` as required checks on `main` is a GitHub branch-protection setting, not repo code. `ci.yml` currently triggers only on `push` to `main` (the `pull_request` trigger was removed in `f7253d0`), so `ci ok` can never report on a PR; decide whether to restore the trigger before making it required.
 
 - [ ] **P3.6 Release workflows** (M) Needs: P3.5
   Do: `release-please-config.json` + manifest with one package per module and component names; `release.yml` builds and pushes `ghcr.io/0xhoaxen/shogun-<svc>:<version>` with SBOM and provenance for released services; `deploy.yml` bumps `deploy/helm/values/<env>/<svc>.yaml`.
   Done when: `actionlint` passes; a dry-run of release-please on a `feat(kagami):` commit proposes `services/kagami` only.
+  Status: config, manifest, `release.yml` and `deploy.yml` are in place and `actionlint` is clean. Box stays open until the dry run is done, which needs a GitHub token (`gh auth login`): `npx release-please release-pr --dry-run --repo-url=0xHoaxen/shogun --token=$(gh auth token) --config-file=release-please-config.json --manifest-file=.release-please-manifest.json`. `deploy.yml` expects `image.tag` in each values file, which P3.7 creates. `TODO(owner)`: enable "Allow GitHub Actions to create and approve pull requests" in repo settings, and note PRs opened with `GITHUB_TOKEN` do not trigger other workflows.
 
-- [ ] **P3.7 Helm chart** (M) Needs: P3.1
+- [x] **P3.7 Helm chart** (M) Needs: P3.1
   Do: `deploy/helm/service` (Deployment, Service, HPA, PDB, ServiceMonitor, pre-upgrade migration Job), `values/staging` and `values/production` per service.
   Done when: `helm lint` and `helm template` pass for all ten values files.
+
+- [x] **P3.7b Migrate subcommand and migration Job** (M) Needs: P3.7
+  Do: add a `migrate` subcommand to the service template and the ten services that applies migrations and exits, then set `migrationJob.enabled: true` and `migrateOnStart: false` in the chart values. The chart's pre-install/pre-upgrade Job already exists but is off because the binaries cannot run migrations without starting the server.
+  Done when: `helm template` with the job on renders a hook Job running `migrate`, and `docker run <image> migrate` against compose Postgres exits 0 with the schema migrated.
 
 ---
 

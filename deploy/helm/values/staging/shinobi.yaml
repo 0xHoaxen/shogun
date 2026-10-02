@@ -1,0 +1,6 @@
+# shinobi, staging. image.tag is bumped by .github/workflows/deploy.yml.
+name: shinobi
+image:
+  tag: "0.0.0"
+env:
+  ENVIRONMENT: staging

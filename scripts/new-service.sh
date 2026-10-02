@@ -16,6 +16,8 @@ scripts/render-service.sh "$name" "services/$name"
 go work use "./services/$name"
 (cd "services/$name" && GOWORK=off go mod tidy)
 python3 scripts/depguard.py add "$name"
+python3 scripts/compose.py add "$name"
+python3 scripts/helm.py add "$name"
 
 title="$(tr '[:lower:]' '[:upper:]' <<<"${name:0:1}")${name:1}"
 proto_dir="proto/shogun/$name/v1"
@@ -29,4 +31,4 @@ package shogun.$name.v1;
 service ${title}Service {}
 PROTO
 
-echo "new-service: created services/$name (compose and helm entries arrive in P3.3 and P3.7)"
+echo "new-service: created services/$name"
