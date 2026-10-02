@@ -1,0 +1,77 @@
+# Defaults for every service. Per-service values live in
+# deploy/helm/values/<environment>/<service>.yaml.
+
+# Service name, for example kagami. Required.
+name: ""
+
+image:
+  # Empty means ghcr.io/0xhoaxen/shogun-<name>.
+  repository: ""
+  # Bumped by the deploy workflow after a release.
+  tag: "0.0.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+ports:
+  grpc: 9090
+  http: 8080
+
+# Plain environment variables, merged over the chart's own (ENVIRONMENT, ports).
+env:
+  ENVIRONMENT: production
+  LOG_LEVEL: info
+
+# Secret holding DATABASE_URL and IDENTITY_SIGNING_KEY. Empty means
+# shogun-<name>. The chart never creates it.
+existingSecret: ""
+
+# Every service, so each pod gets <NAME>_ADDR for event delivery. Kept in sync
+# by scripts/helm.py.
+peers:
+  # peers begin
+  - torii
+  - kagami
+  - tsubame
+  - fude
+  - taiko
+  - dojo
+  - katana
+  - shinobi
+  - sensei
+  - soroban
+  # peers end
+
+# Services apply their migrations on start unless the migration job owns it.
+migrateOnStart: true
+
+# TODO(P3.7b): needs a `migrate` subcommand in the services. Until then the
+# job stays off and services migrate on start.
+migrationJob:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+# Needs the Prometheus Operator CRDs in the cluster.
+serviceMonitor:
+  enabled: false
+  interval: 30s
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

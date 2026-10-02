@@ -148,9 +148,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `actionlint` passes; a dry-run of release-please on a `feat(kagami):` commit proposes `services/kagami` only.
   Status: config, manifest, `release.yml` and `deploy.yml` are in place and `actionlint` is clean. Box stays open until the dry run is done, which needs a GitHub token (`gh auth login`): `npx release-please release-pr --dry-run --repo-url=0xHoaxen/shogun --token=$(gh auth token) --config-file=release-please-config.json --manifest-file=.release-please-manifest.json`. `deploy.yml` expects `image.tag` in each values file, which P3.7 creates. `TODO(owner)`: enable "Allow GitHub Actions to create and approve pull requests" in repo settings, and note PRs opened with `GITHUB_TOKEN` do not trigger other workflows.
 
-- [ ] **P3.7 Helm chart** (M) Needs: P3.1
+- [x] **P3.7 Helm chart** (M) Needs: P3.1
   Do: `deploy/helm/service` (Deployment, Service, HPA, PDB, ServiceMonitor, pre-upgrade migration Job), `values/staging` and `values/production` per service.
   Done when: `helm lint` and `helm template` pass for all ten values files.
+
+- [ ] **P3.7b Migrate subcommand and migration Job** (M) Needs: P3.7
+  Do: add a `migrate` subcommand to the service template and the ten services that applies migrations and exits, then set `migrationJob.enabled: true` and `migrateOnStart: false` in the chart values. The chart's pre-install/pre-upgrade Job already exists but is off because the binaries cannot run migrations without starting the server.
+  Done when: `helm template` with the job on renders a hook Job running `migrate`, and `docker run <image> migrate` against compose Postgres exits 0 with the schema migrated.
 
 ---
 
