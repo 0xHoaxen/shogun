@@ -8,7 +8,7 @@
   "services/taiko": "0.0.0",
   "services/dojo": "0.0.0",
   "services/katana": "0.0.0",
-  "services/shinobi": "0.0.0",
+  "services/shinobi": "1.0.0",
   "services/sensei": "0.0.0",
   "services/soroban": "0.0.0"
 }
