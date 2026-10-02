@@ -122,7 +122,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `deploy/compose/postgres/init.sql`: extensions `vector` and `citext`; for each service a schema, a login role with password from env, `REVOKE ALL ON SCHEMA public`, `search_path` set.
   Done when: connecting as `kagami` shows only the `kagami` schema and cannot create objects in `fude`.
 
-- [ ] **P3.2b Extension operators on search_path** (S) Needs: P3.2
+- [x] **P3.2b Extension operators on search_path** (S) Needs: P3.2
   Do: `postgres.Connect` pins `search_path` to the service schema only, so the `vector` and `citext` operators installed in the `extensions` schema are invisible unqualified (`citext = citext` silently falls back to case-sensitive `text =`). Put `extensions` on the pool's `search_path` (for example `<schema>,extensions`) and keep `Migrate`'s schema lookup working.
   Done when: a testcontainers test shows `'A'::citext = 'a'::citext` is true and `<->` on `vector` resolves from a service role with no qualification.
 

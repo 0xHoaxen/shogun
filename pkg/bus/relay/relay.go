@@ -181,9 +181,9 @@ func (r *Relay) kick(ctx context.Context) {
 }
 
 func schemaOf(pool *pgxpool.Pool) (string, error) {
-	schema := pool.Config().ConnConfig.RuntimeParams["search_path"]
-	if err := postgres.ValidateSchema(schema); err != nil {
-		return "", fmt.Errorf("relay: pool not created by postgres.Connect: %w", err)
+	schema, err := postgres.SchemaOf(pool)
+	if err != nil {
+		return "", fmt.Errorf("relay: %w", err)
 	}
 	return schema, nil
 }
