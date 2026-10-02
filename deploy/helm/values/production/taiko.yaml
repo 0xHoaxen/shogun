@@ -1,0 +1,16 @@
+# taiko, production. image.tag is bumped by .github/workflows/deploy.yml.
+name: taiko
+image:
+  tag: "0.0.0"
+env:
+  ENVIRONMENT: production
+autoscaling:
+  enabled: true
+podDisruptionBudget:
+  enabled: true
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
