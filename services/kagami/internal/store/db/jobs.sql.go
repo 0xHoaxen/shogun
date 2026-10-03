@@ -80,6 +80,40 @@ func (q *Queries) GetJobByIdempotencyKey(ctx context.Context, arg GetJobByIdempo
 	return i, err
 }
 
+const getJobByURL = `-- name: GetJobByURL :one
+SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs WHERE owner_id = $1 AND url = $2::text
+`
+
+type GetJobByURLParams struct {
+	OwnerID uuid.UUID
+	Url     string
+}
+
+func (q *Queries) GetJobByURL(ctx context.Context, arg GetJobByURLParams) (Job, error) {
+	row := q.db.QueryRow(ctx, getJobByURL, arg.OwnerID, arg.Url)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CompanyID,
+		&i.Title,
+		&i.Url,
+		&i.Source,
+		&i.Status,
+		&i.AppliedOn,
+		&i.NextFollowUp,
+		&i.Location,
+		&i.SalaryText,
+		&i.Description,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
+}
+
 const insertJob = `-- name: InsertJob :one
 INSERT INTO jobs (
     id, owner_id, company_id, title, url, source, status, applied_on,

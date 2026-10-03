@@ -68,7 +68,7 @@ func (s *Service) today() time.Time {
 func parseID(field, value string) (uuid.UUID, error) {
 	id, err := uuid.Parse(value)
 	if err != nil {
-		return uuid.Nil, invalid("INVALID_ID", "%s is not a valid id", field)
+		return uuid.Nil, invalidField(field, "INVALID_ID", "%s is not a valid id", field)
 	}
 	return id, nil
 }
@@ -80,7 +80,7 @@ func parseDate(field, value string) (*time.Time, error) {
 	}
 	t, err := time.Parse(dateLayout, value)
 	if err != nil {
-		return nil, invalid("INVALID_DATE", "%s must be YYYY-MM-DD", field)
+		return nil, invalidField(field, "INVALID_DATE", "%s must be YYYY-MM-DD", field)
 	}
 	return &t, nil
 }

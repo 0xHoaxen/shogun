@@ -13,7 +13,9 @@ var ErrNoOwner = errors.New("app: call has no valid owner")
 // upper-case code for clients.
 type InvalidArgumentError struct {
 	Reason string
-	Msg    string
+	// Field names the offending field or CSV column when one is to blame.
+	Field string
+	Msg   string
 }
 
 func (e *InvalidArgumentError) Error() string {
@@ -22,4 +24,9 @@ func (e *InvalidArgumentError) Error() string {
 
 func invalid(reason, format string, args ...any) error {
 	return &InvalidArgumentError{Reason: reason, Msg: fmt.Sprintf(format, args...)}
+}
+
+// invalidField is invalid for an error caused by one field.
+func invalidField(field, reason, format string, args ...any) error {
+	return &InvalidArgumentError{Reason: reason, Field: field, Msg: fmt.Sprintf(format, args...)}
 }

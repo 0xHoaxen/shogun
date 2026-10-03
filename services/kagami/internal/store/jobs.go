@@ -33,6 +33,13 @@ func (r *Repo) GetJob(ctx context.Context, owner, id uuid.UUID) (db.Job, error) 
 	return j, mapErr(err)
 }
 
+// GetJobByURL returns the owner's job posted at url, as the CSV job_link
+// column names it.
+func (r *Repo) GetJobByURL(ctx context.Context, owner uuid.UUID, url string) (db.Job, error) {
+	j, err := r.q.GetJobByURL(ctx, db.GetJobByURLParams{OwnerID: owner, Url: url})
+	return j, mapErr(err)
+}
+
 // GetJobByIdempotencyKey returns the job a retried AddJob created earlier.
 func (r *Repo) GetJobByIdempotencyKey(ctx context.Context, owner uuid.UUID, key string) (db.Job, error) {
 	j, err := r.q.GetJobByIdempotencyKey(ctx, db.GetJobByIdempotencyKeyParams{OwnerID: owner, IdempotencyKey: key})

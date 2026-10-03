@@ -11,6 +11,9 @@ RETURNING *;
 -- name: GetJob :one
 SELECT * FROM jobs WHERE id = @id AND owner_id = @owner_id;
 
+-- name: GetJobByURL :one
+SELECT * FROM jobs WHERE owner_id = @owner_id AND url = @url::text;
+
 -- name: GetJobByIdempotencyKey :one
 SELECT * FROM jobs WHERE owner_id = @owner_id AND idempotency_key = @idempotency_key::text;
 

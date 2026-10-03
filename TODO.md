@@ -184,7 +184,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: Add/Update/List/Get contact, ChangeContactStatus writing `contact.status_changed`.
   Done when: handler tests pass including idempotency-key replay returning the same row.
 
-- [ ] **P4.7 CSV import** (M) Needs: P4.6
+- [x] **P4.7 CSV import** (M) Needs: P4.6
   Do: `ImportContacts` parsing the 17-column CSV, per-row validation, dry run, one transaction on commit, `imports` row, one `contact.added` per new contact.
   Done when: tests with a good file, a file with bad rows (per-row errors returned, nothing written on dry run), and re-import (updates not duplicates).
 

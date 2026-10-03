@@ -66,7 +66,7 @@ type contactValues struct {
 func parseContactFields(f ContactFields) (contactValues, error) {
 	v := contactValues{FullName: strings.TrimSpace(f.FullName)}
 	if v.FullName == "" {
-		return v, invalid("FULL_NAME_REQUIRED", "full_name is required")
+		return v, invalidField("full_name", "FULL_NAME_REQUIRED", "full_name is required")
 	}
 	var err error
 	if v.CompanyID, err = optionalID("company_id", f.CompanyID); err != nil {
@@ -125,7 +125,7 @@ func parseEmail(value string) (*string, error) {
 	}
 	addr, err := mail.ParseAddress(value)
 	if err != nil || addr.Address != value {
-		return nil, invalid("INVALID_EMAIL", "email is not a plain address")
+		return nil, invalidField("email", "INVALID_EMAIL", "email is not a plain address")
 	}
 	return &value, nil
 }
@@ -137,7 +137,7 @@ func parseWebURL(field, value string) (*string, error) {
 	}
 	u, err := url.Parse(value)
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-		return nil, invalid("INVALID_URL", "%s must be an http or https URL", field)
+		return nil, invalidField(field, "INVALID_URL", "%s must be an http or https URL", field)
 	}
 	return &value, nil
 }
@@ -148,7 +148,7 @@ func parseChoice(field, value string, allowed []string) (*string, error) {
 		return nil, nil
 	}
 	if !slices.Contains(allowed, value) {
-		return nil, invalid("INVALID_"+strings.ToUpper(field), "%s must be one of %v", field, allowed)
+		return nil, invalidField(field, "INVALID_"+strings.ToUpper(field), "%s must be one of %v", field, allowed)
 	}
 	return &value, nil
 }
