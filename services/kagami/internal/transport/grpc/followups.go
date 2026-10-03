@@ -12,13 +12,17 @@ func (s *Server) ListDueFollowUps(ctx context.Context, req *kagamiv1.ListDueFoll
 	if err != nil {
 		return nil, toStatus(err)
 	}
+	names, err := s.namesFor(ctx, due.Jobs, due.Contacts)
+	if err != nil {
+		return nil, toStatus(err)
+	}
 	jobs := make([]*kagamiv1.Job, 0, len(due.Jobs))
 	for _, j := range due.Jobs {
-		jobs = append(jobs, jobToProto(j))
+		jobs = append(jobs, jobToProto(j, names))
 	}
 	contacts := make([]*kagamiv1.Contact, 0, len(due.Contacts))
 	for _, c := range due.Contacts {
-		contacts = append(contacts, contactToProto(c))
+		contacts = append(contacts, contactToProto(c, names))
 	}
 	return &kagamiv1.ListDueFollowUpsResponse{Jobs: jobs, Contacts: contacts}, nil
 }

@@ -3,6 +3,7 @@ package grpc
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
@@ -12,6 +13,9 @@ import (
 )
 
 const dateLayout = "2006-01-02"
+
+// companyNames maps company ids to names for the jobs and contacts of a response.
+type companyNames map[uuid.UUID]string
 
 func deref(s *string) string {
 	if s == nil {
@@ -41,21 +45,22 @@ func companyToProto(c db.Company) *kagamiv1.Company {
 	}
 }
 
-func jobToProto(j db.Job) *kagamiv1.Job {
+func jobToProto(j db.Job, names companyNames) *kagamiv1.Job {
 	return &kagamiv1.Job{
 		Id: j.ID.String(), CompanyId: j.CompanyID.String(), Title: j.Title, Url: deref(j.Url),
 		Source: j.Source, Status: wire.JobStatusToProto(domain.JobStatus(j.Status)),
 		AppliedOn: dateString(j.AppliedOn), NextFollowUp: dateString(j.NextFollowUp),
 		SalaryText: deref(j.SalaryText), Location: deref(j.Location), Description: deref(j.Description),
 		Version: j.Version, CreatedAt: timestamppb.New(j.CreatedAt), UpdatedAt: timestamppb.New(j.UpdatedAt),
-		ArchivedAt: optionalTimestamp(j.ArchivedAt),
+		ArchivedAt: optionalTimestamp(j.ArchivedAt), CompanyName: names[j.CompanyID],
 	}
 }
 
-func contactToProto(c db.Contact) *kagamiv1.Contact {
-	var companyID, jobID string
+func contactToProto(c db.Contact, names companyNames) *kagamiv1.Contact {
+	var companyID, companyName, jobID string
 	if c.CompanyID != nil {
 		companyID = c.CompanyID.String()
+		companyName = names[*c.CompanyID]
 	}
 	if c.JobID != nil {
 		jobID = c.JobID.String()
@@ -69,7 +74,7 @@ func contactToProto(c db.Contact) *kagamiv1.Contact {
 		NextFollowUp: dateString(c.NextFollowUp), TargetRole: deref(c.TargetRole), JobId: jobID,
 		Tags: c.Tags, Notes: deref(c.Notes), Version: c.Version,
 		CreatedAt: timestamppb.New(c.CreatedAt), UpdatedAt: timestamppb.New(c.UpdatedAt),
-		ArchivedAt: optionalTimestamp(c.ArchivedAt),
+		ArchivedAt: optionalTimestamp(c.ArchivedAt), CompanyName: companyName,
 	}
 }
 

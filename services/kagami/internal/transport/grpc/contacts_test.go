@@ -32,6 +32,9 @@ func TestAddContactWritesOneOutboxEventAndATimelineEntry(t *testing.T) {
 		!slices.Equal(c.GetTags(), []string{"go"}) {
 		t.Fatalf("got %+v", c)
 	}
+	if c.GetCompanyName() != "Lumen" {
+		t.Fatalf("got company name %q, want Lumen", c.GetCompanyName())
+	}
 	if n := h.outboxCount(t, "contact.added"); n != 1 {
 		t.Fatalf("got %d contact.added rows, want 1", n)
 	}
@@ -206,7 +209,7 @@ func TestListContactsFiltersAndPaginates(t *testing.T) {
 	}
 
 	byQuery, err := h.client.ListContacts(h.ctx(t), &kagamiv1.ListContactsRequest{Query: "LUMEN"})
-	if err != nil || len(byQuery.GetContacts()) != 3 {
+	if err != nil || len(byQuery.GetContacts()) != 3 || byQuery.GetContacts()[0].GetCompanyName() != "Lumen" {
 		t.Fatalf("query on company name: %d contacts, %v", len(byQuery.GetContacts()), err)
 	}
 	_, err = h.client.GetContact(h.ctxFor(t, "0198f000-0000-7000-8000-0000000000aa"), &kagamiv1.GetContactRequest{Id: moved.GetId()})

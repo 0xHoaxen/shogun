@@ -39,7 +39,8 @@ func (s *Server) AddJob(ctx context.Context, req *kagamiv1.AddJobRequest) (*kaga
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.AddJobResponse{Job: jobToProto(res.Job), Company: companyToProto(res.Company)}, nil
+	names := companyNames{res.Company.ID: res.Company.Name}
+	return &kagamiv1.AddJobResponse{Job: jobToProto(res.Job, names), Company: companyToProto(res.Company)}, nil
 }
 
 // GetJob implements kagami.v1.KagamiService.
@@ -53,7 +54,8 @@ func (s *Server) GetJob(ctx context.Context, req *kagamiv1.GetJobRequest) (*kaga
 		events = append(events, jobEventToProto(e))
 	}
 	return &kagamiv1.GetJobResponse{
-		Job: jobToProto(detail.Job), Company: companyToProto(detail.Company), Events: events,
+		Job:     jobToProto(detail.Job, companyNames{detail.Company.ID: detail.Company.Name}),
+		Company: companyToProto(detail.Company), Events: events,
 	}, nil
 }
 
@@ -70,9 +72,13 @@ func (s *Server) ListJobs(ctx context.Context, req *kagamiv1.ListJobsRequest) (*
 	if err != nil {
 		return nil, toStatus(err)
 	}
+	names, err := s.namesFor(ctx, res.Jobs, nil)
+	if err != nil {
+		return nil, toStatus(err)
+	}
 	jobs := make([]*kagamiv1.Job, 0, len(res.Jobs))
 	for _, j := range res.Jobs {
-		jobs = append(jobs, jobToProto(j))
+		jobs = append(jobs, jobToProto(j, names))
 	}
 	return &kagamiv1.ListJobsResponse{Jobs: jobs, NextPageToken: res.NextPageToken}, nil
 }
@@ -93,7 +99,11 @@ func (s *Server) UpdateJob(ctx context.Context, req *kagamiv1.UpdateJobRequest) 
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.UpdateJobResponse{Job: jobToProto(job)}, nil
+	out, err := s.jobProto(ctx, job)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.UpdateJobResponse{Job: out}, nil
 }
 
 // ChangeJobStatus implements kagami.v1.KagamiService.
@@ -108,5 +118,9 @@ func (s *Server) ChangeJobStatus(ctx context.Context, req *kagamiv1.ChangeJobSta
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.ChangeJobStatusResponse{Job: jobToProto(job)}, nil
+	out, err := s.jobProto(ctx, job)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.ChangeJobStatusResponse{Job: out}, nil
 }

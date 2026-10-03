@@ -16,6 +16,23 @@ func (r *Repo) GetCompany(ctx context.Context, owner, id uuid.UUID) (db.Company,
 	return c, mapErr(err)
 }
 
+// CompanyNames returns the names of the owner's companies with the given ids,
+// by id. Ids that match nothing are left out.
+func (r *Repo) CompanyNames(ctx context.Context, owner uuid.UUID, ids []uuid.UUID) (map[uuid.UUID]string, error) {
+	names := make(map[uuid.UUID]string, len(ids))
+	if len(ids) == 0 {
+		return names, nil
+	}
+	rows, err := r.q.ListCompanyNames(ctx, db.ListCompanyNamesParams{OwnerID: owner, Ids: ids})
+	if err != nil {
+		return nil, fmt.Errorf("list company names: %w", mapErr(err))
+	}
+	for _, row := range rows {
+		names[row.ID] = row.Name
+	}
+	return names, nil
+}
+
 // UpsertCompanyByDomain returns the owner's company for domain, creating it
 // with name when there is none. The domain match ignores case.
 func (r *Repo) UpsertCompanyByDomain(ctx context.Context, owner uuid.UUID, name, domain string) (db.Company, error) {

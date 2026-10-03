@@ -50,7 +50,11 @@ func (s *Server) AddContact(ctx context.Context, req *kagamiv1.AddContactRequest
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.AddContactResponse{Contact: contactToProto(contact)}, nil
+	out, err := s.contactProto(ctx, contact)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.AddContactResponse{Contact: out}, nil
 }
 
 // UpdateContact implements kagami.v1.KagamiService.
@@ -64,7 +68,11 @@ func (s *Server) UpdateContact(ctx context.Context, req *kagamiv1.UpdateContactR
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.UpdateContactResponse{Contact: contactToProto(contact)}, nil
+	out, err := s.contactProto(ctx, contact)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.UpdateContactResponse{Contact: out}, nil
 }
 
 // ListContacts implements kagami.v1.KagamiService.
@@ -80,9 +88,13 @@ func (s *Server) ListContacts(ctx context.Context, req *kagamiv1.ListContactsReq
 	if err != nil {
 		return nil, toStatus(err)
 	}
+	names, err := s.namesFor(ctx, nil, res.Contacts)
+	if err != nil {
+		return nil, toStatus(err)
+	}
 	contacts := make([]*kagamiv1.Contact, 0, len(res.Contacts))
 	for _, c := range res.Contacts {
-		contacts = append(contacts, contactToProto(c))
+		contacts = append(contacts, contactToProto(c, names))
 	}
 	return &kagamiv1.ListContactsResponse{Contacts: contacts, NextPageToken: res.NextPageToken}, nil
 }
@@ -97,7 +109,11 @@ func (s *Server) GetContact(ctx context.Context, req *kagamiv1.GetContactRequest
 	for _, e := range detail.Timeline {
 		timeline = append(timeline, contactEventToProto(e))
 	}
-	return &kagamiv1.GetContactResponse{Contact: contactToProto(detail.Contact), Timeline: timeline}, nil
+	out, err := s.contactProto(ctx, detail.Contact)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.GetContactResponse{Contact: out, Timeline: timeline}, nil
 }
 
 // ChangeContactStatus implements kagami.v1.KagamiService.
@@ -112,5 +128,9 @@ func (s *Server) ChangeContactStatus(ctx context.Context, req *kagamiv1.ChangeCo
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.ChangeContactStatusResponse{Contact: contactToProto(contact)}, nil
+	out, err := s.contactProto(ctx, contact)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.ChangeContactStatusResponse{Contact: out}, nil
 }

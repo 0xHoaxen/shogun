@@ -58,6 +58,17 @@ func ownerFrom(ctx context.Context) (uuid.UUID, error) {
 	return owner, nil
 }
 
+// CompanyNames returns the names of the owner's companies with the given ids,
+// by id, so responses can show a company next to a job or contact without a
+// lookup per row.
+func (s *Service) CompanyNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error) {
+	owner, err := ownerFrom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return store.New(s.pool).CompanyNames(ctx, owner, ids)
+}
+
 // today returns the current UTC date at midnight.
 func (s *Service) today() time.Time {
 	y, m, d := s.now().UTC().Date()

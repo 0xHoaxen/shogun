@@ -1,6 +1,9 @@
 -- name: GetCompany :one
 SELECT * FROM companies WHERE id = @id AND owner_id = @owner_id;
 
+-- name: ListCompanyNames :many
+SELECT id, name FROM companies WHERE owner_id = @owner_id AND id = ANY (@ids::uuid[]);
+
 -- name: UpsertCompanyByDomain :one
 -- The domain is the upsert key; a repeat call returns the existing company.
 INSERT INTO companies (id, owner_id, name, domain)

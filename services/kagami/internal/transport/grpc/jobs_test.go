@@ -43,6 +43,9 @@ func TestAddJobWritesOneOutboxEvent(t *testing.T) {
 	if res.GetCompany().GetDomain() != "northwind.example" || res.GetJob().GetCompanyId() != res.GetCompany().GetId() {
 		t.Fatalf("company not linked: %+v", res)
 	}
+	if res.GetJob().GetCompanyName() != "Northwind" {
+		t.Fatalf("got company name %q, want Northwind", res.GetJob().GetCompanyName())
+	}
 	if n := h.outboxCount(t, "job.added"); n != 1 {
 		t.Fatalf("got %d job.added rows, want 1", n)
 	}
@@ -266,6 +269,9 @@ func TestListJobsFiltersAndPaginates(t *testing.T) {
 	})
 	if err != nil || len(first.GetJobs()) != 2 || first.GetNextPageToken() == "" {
 		t.Fatalf("first page: %d jobs, token %q, %v", len(first.GetJobs()), first.GetNextPageToken(), err)
+	}
+	if name := first.GetJobs()[0].GetCompanyName(); name != "Northwind" {
+		t.Fatalf("list lost the company name: %q", name)
 	}
 	second, err := h.client.ListJobs(h.ctx(t), &kagamiv1.ListJobsRequest{
 		Status: kagamiv1.JobStatus_JOB_STATUS_SAVED, PageSize: 2, PageToken: first.GetNextPageToken(),

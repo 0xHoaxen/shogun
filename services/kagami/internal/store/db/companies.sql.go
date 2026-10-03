@@ -101,6 +101,40 @@ func (q *Queries) InsertCompany(ctx context.Context, arg InsertCompanyParams) (C
 	return i, err
 }
 
+const listCompanyNames = `-- name: ListCompanyNames :many
+SELECT id, name FROM companies WHERE owner_id = $1 AND id = ANY ($2::uuid[])
+`
+
+type ListCompanyNamesParams struct {
+	OwnerID uuid.UUID
+	Ids     []uuid.UUID
+}
+
+type ListCompanyNamesRow struct {
+	ID   uuid.UUID
+	Name string
+}
+
+func (q *Queries) ListCompanyNames(ctx context.Context, arg ListCompanyNamesParams) ([]ListCompanyNamesRow, error) {
+	rows, err := q.db.Query(ctx, listCompanyNames, arg.OwnerID, arg.Ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListCompanyNamesRow{}
+	for rows.Next() {
+		var i ListCompanyNamesRow
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const upsertCompanyByDomain = `-- name: UpsertCompanyByDomain :one
 INSERT INTO companies (id, owner_id, name, domain)
 VALUES ($1, $2, $3, $4)
