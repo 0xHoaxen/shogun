@@ -17,12 +17,13 @@ const errorDomain = "kagami.shogun"
 
 // Reasons for errors that have no code of their own in app or domain.
 const (
-	reasonNotFound        = "RESOURCE_NOT_FOUND"
-	reasonVersionConflict = "VERSION_CONFLICT"
-	reasonAlreadyExists   = "ALREADY_EXISTS"
-	reasonInvalidToken    = "INVALID_PAGE_TOKEN"
-	reasonOwnerRequired   = "OWNER_REQUIRED"
-	reasonInternal        = "INTERNAL"
+	reasonNotFound         = "RESOURCE_NOT_FOUND"
+	reasonVersionConflict  = "VERSION_CONFLICT"
+	reasonAlreadyExists    = "ALREADY_EXISTS"
+	reasonContactDuplicate = "CONTACT_DUPLICATE"
+	reasonInvalidToken     = "INVALID_PAGE_TOKEN"
+	reasonOwnerRequired    = "OWNER_REQUIRED"
+	reasonInternal         = "INTERNAL"
 )
 
 // toStatus maps a use case error to a gRPC status carrying an ErrorInfo reason.
@@ -34,9 +35,12 @@ func toStatus(err error) error {
 	}
 	var te *domain.TransitionError
 	var ia *app.InvalidArgumentError
+	var dup *app.DuplicateContactError
 	switch {
 	case errors.As(err, &te):
 		return withReason(codes.FailedPrecondition, te.Reason, te.Error())
+	case errors.As(err, &dup):
+		return withReason(codes.AlreadyExists, reasonContactDuplicate, dup.Error())
 	case errors.As(err, &ia):
 		return withReason(codes.InvalidArgument, ia.Reason, ia.Msg)
 	case errors.Is(err, app.ErrNoOwner):

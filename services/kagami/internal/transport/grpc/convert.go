@@ -52,6 +52,34 @@ func jobToProto(j db.Job) *kagamiv1.Job {
 	}
 }
 
+func contactToProto(c db.Contact) *kagamiv1.Contact {
+	var companyID, jobID string
+	if c.CompanyID != nil {
+		companyID = c.CompanyID.String()
+	}
+	if c.JobID != nil {
+		jobID = c.JobID.String()
+	}
+	return &kagamiv1.Contact{
+		Id: c.ID.String(), FullName: c.FullName, CompanyId: companyID, Role: deref(c.Role),
+		Email: deref(c.Email), LinkedinUrl: deref(c.LinkedinUrl), XHandle: deref(c.XHandle), Phone: deref(c.Phone),
+		Relationship: deref(c.Relationship), HowWeMet: deref(c.HowWeMet),
+		Status:           wire.ContactStatusToProto(domain.ContactStatus(c.Status)),
+		PreferredChannel: deref(c.PreferredChannel), LastContacted: dateString(c.LastContacted),
+		NextFollowUp: dateString(c.NextFollowUp), TargetRole: deref(c.TargetRole), JobId: jobID,
+		Tags: c.Tags, Notes: deref(c.Notes), Version: c.Version,
+		CreatedAt: timestamppb.New(c.CreatedAt), UpdatedAt: timestamppb.New(c.UpdatedAt),
+		ArchivedAt: optionalTimestamp(c.ArchivedAt),
+	}
+}
+
+func contactEventToProto(e db.ContactEvent) *kagamiv1.ContactEvent {
+	return &kagamiv1.ContactEvent{
+		Id: e.ID.String(), ContactId: e.ContactID.String(), Kind: e.Kind, Channel: deref(e.Channel),
+		Payload: string(e.Payload), OccurredAt: timestamppb.New(e.OccurredAt),
+	}
+}
+
 func jobEventToProto(e db.JobEvent) *kagamiv1.JobEvent {
 	return &kagamiv1.JobEvent{
 		Id: e.ID.String(), JobId: e.JobID.String(), Kind: e.Kind,

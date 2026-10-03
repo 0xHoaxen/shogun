@@ -180,7 +180,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: AddJob (upsert company by domain, write `job.added` via outbox), ChangeJobStatus (writes `job_events` and `job.status_changed`), Get/List/Update; gRPC handlers with authz.
   Done when: handler tests pass; a test asserts exactly one outbox row per mutating call.
 
-- [ ] **P4.6 kagami use cases + handlers (contacts)** (M) Needs: P4.5
+- [x] **P4.6 kagami use cases + handlers (contacts)** (M) Needs: P4.5
   Do: Add/Update/List/Get contact, ChangeContactStatus writing `contact.status_changed`.
   Done when: handler tests pass including idempotency-key replay returning the same row.
 
