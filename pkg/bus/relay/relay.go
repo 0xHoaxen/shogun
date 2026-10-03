@@ -53,6 +53,15 @@ type Config struct {
 	RetryPolicy river.ClientRetryPolicy
 	// FetchPollInterval overrides how often River polls for runnable jobs.
 	FetchPollInterval time.Duration
+	// Workers registers a service's own River workers on the relay's client.
+	// A service runs one River client, because periodic jobs run only on the
+	// elected leader and two clients in one schema would compete for it.
+	Workers func(*river.Workers)
+	// Queues adds queues for the service's own jobs. The relay's queue names
+	// are reserved.
+	Queues map[string]river.QueueConfig
+	// PeriodicJobs are the service's own periodic jobs.
+	PeriodicJobs []*river.PeriodicJob
 	// Logger defaults to slog.Default().
 	Logger *slog.Logger
 }
@@ -107,24 +116,38 @@ func New(cfg Config) (*Relay, error) {
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &relayWorker{relay: r})
 	river.AddWorker(workers, &deliverWorker{relay: r})
+	if cfg.Workers != nil {
+		cfg.Workers(workers)
+	}
+
+	queues := map[string]river.QueueConfig{
+		queueRelay:   {MaxWorkers: 1},
+		queueDeliver: {MaxWorkers: cfg.DeliverWorkers},
+	}
+	for name, queue := range cfg.Queues {
+		if _, reserved := queues[name]; reserved {
+			return nil, fmt.Errorf("relay: queue %q is reserved for the relay", name)
+		}
+		queues[name] = queue
+	}
+
+	periodic := []*river.PeriodicJob{
+		river.NewPeriodicJob(
+			river.PeriodicInterval(cfg.Interval),
+			func() (river.JobArgs, *river.InsertOpts) { return relayArgs{}, relayInsertOpts() },
+			&river.PeriodicJobOpts{RunOnStart: true},
+		),
+	}
+	periodic = append(periodic, cfg.PeriodicJobs...)
 
 	client, err := river.NewClient(riverpgxv5.New(cfg.Pool), &river.Config{
 		Schema:            schema,
 		Logger:            r.log,
 		RetryPolicy:       cfg.RetryPolicy,
 		FetchPollInterval: cfg.FetchPollInterval,
-		Queues: map[string]river.QueueConfig{
-			queueRelay:   {MaxWorkers: 1},
-			queueDeliver: {MaxWorkers: cfg.DeliverWorkers},
-		},
-		Workers: workers,
-		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(
-				river.PeriodicInterval(cfg.Interval),
-				func() (river.JobArgs, *river.InsertOpts) { return relayArgs{}, relayInsertOpts() },
-				&river.PeriodicJobOpts{RunOnStart: true},
-			),
-		},
+		Queues:            queues,
+		Workers:           workers,
+		PeriodicJobs:      periodic,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("relay: create river client: %w", err)
