@@ -433,6 +433,116 @@ func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]C
 	return items, nil
 }
 
+const listContactsDueOn = `-- name: ListContactsDueOn :many
+SELECT id, owner_id, full_name, company_id, role, email, linkedin_url, x_handle, phone, relationship, how_we_met, status, preferred_channel, last_contacted, next_follow_up, target_role, job_id, tags, notes, idempotency_key, version, created_at, updated_at, archived_at FROM contacts
+WHERE next_follow_up = $1::date AND archived_at IS NULL
+ORDER BY owner_id, id
+`
+
+// Every owner's contacts with a follow-up on exactly this date.
+func (q *Queries) ListContactsDueOn(ctx context.Context, dueOn time.Time) ([]Contact, error) {
+	rows, err := q.db.Query(ctx, listContactsDueOn, dueOn)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Contact{}
+	for rows.Next() {
+		var i Contact
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.FullName,
+			&i.CompanyID,
+			&i.Role,
+			&i.Email,
+			&i.LinkedinUrl,
+			&i.XHandle,
+			&i.Phone,
+			&i.Relationship,
+			&i.HowWeMet,
+			&i.Status,
+			&i.PreferredChannel,
+			&i.LastContacted,
+			&i.NextFollowUp,
+			&i.TargetRole,
+			&i.JobID,
+			&i.Tags,
+			&i.Notes,
+			&i.IdempotencyKey,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDueContacts = `-- name: ListDueContacts :many
+SELECT id, owner_id, full_name, company_id, role, email, linkedin_url, x_handle, phone, relationship, how_we_met, status, preferred_channel, last_contacted, next_follow_up, target_role, job_id, tags, notes, idempotency_key, version, created_at, updated_at, archived_at FROM contacts
+WHERE owner_id = $1 AND next_follow_up <= $2::date AND archived_at IS NULL
+ORDER BY next_follow_up, id
+LIMIT $3
+`
+
+type ListDueContactsParams struct {
+	OwnerID    uuid.UUID
+	OnOrBefore time.Time
+	RowLimit   int32
+}
+
+func (q *Queries) ListDueContacts(ctx context.Context, arg ListDueContactsParams) ([]Contact, error) {
+	rows, err := q.db.Query(ctx, listDueContacts, arg.OwnerID, arg.OnOrBefore, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Contact{}
+	for rows.Next() {
+		var i Contact
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.FullName,
+			&i.CompanyID,
+			&i.Role,
+			&i.Email,
+			&i.LinkedinUrl,
+			&i.XHandle,
+			&i.Phone,
+			&i.Relationship,
+			&i.HowWeMet,
+			&i.Status,
+			&i.PreferredChannel,
+			&i.LastContacted,
+			&i.NextFollowUp,
+			&i.TargetRole,
+			&i.JobID,
+			&i.Tags,
+			&i.Notes,
+			&i.IdempotencyKey,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateContact = `-- name: UpdateContact :one
 UPDATE contacts SET
     full_name = $1,

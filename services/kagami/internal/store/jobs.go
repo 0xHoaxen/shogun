@@ -92,6 +92,42 @@ func (r *Repo) UpdateJobStatus(ctx context.Context, arg db.UpdateJobStatusParams
 	return j, nil
 }
 
+// ListJobsDueOn returns every owner's open jobs whose follow-up is on date.
+func (r *Repo) ListJobsDueOn(ctx context.Context, date time.Time) ([]db.Job, error) {
+	jobs, err := r.q.ListJobsDueOn(ctx, date)
+	if err != nil {
+		return nil, fmt.Errorf("list jobs due on %s: %w", date.Format(time.DateOnly), mapErr(err))
+	}
+	return jobs, nil
+}
+
+// ListStaleAppliedJobs returns applied jobs with no follow-up planned that
+// were applied for on or before appliedBy.
+func (r *Repo) ListStaleAppliedJobs(ctx context.Context, appliedBy time.Time) ([]db.Job, error) {
+	jobs, err := r.q.ListStaleAppliedJobs(ctx, appliedBy)
+	if err != nil {
+		return nil, fmt.Errorf("list stale applied jobs: %w", mapErr(err))
+	}
+	return jobs, nil
+}
+
+// MarkJobFollowUp plans a follow-up for a job that has none. It returns
+// ErrNotFound when the job is gone or already has one.
+func (r *Repo) MarkJobFollowUp(ctx context.Context, id uuid.UUID, date time.Time) (db.Job, error) {
+	j, err := r.q.MarkJobFollowUp(ctx, db.MarkJobFollowUpParams{ID: id, NextFollowUp: date})
+	return j, mapErr(err)
+}
+
+// ListDueJobs returns up to limit of the owner's open jobs with a follow-up on
+// or before date, the oldest first.
+func (r *Repo) ListDueJobs(ctx context.Context, owner uuid.UUID, date time.Time, limit int32) ([]db.Job, error) {
+	jobs, err := r.q.ListDueJobs(ctx, db.ListDueJobsParams{OwnerID: owner, OnOrBefore: date, RowLimit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("list due jobs: %w", mapErr(err))
+	}
+	return jobs, nil
+}
+
 // InsertJobEvent appends to a job's timeline.
 func (r *Repo) InsertJobEvent(ctx context.Context, arg db.InsertJobEventParams) (db.JobEvent, error) {
 	e, err := r.q.InsertJobEvent(ctx, arg)

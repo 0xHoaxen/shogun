@@ -222,6 +222,58 @@ func (q *Queries) InsertJobEvent(ctx context.Context, arg InsertJobEventParams) 
 	return i, err
 }
 
+const listDueJobs = `-- name: ListDueJobs :many
+SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
+WHERE owner_id = $1 AND next_follow_up <= $2::date
+  AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY next_follow_up, id
+LIMIT $3
+`
+
+type ListDueJobsParams struct {
+	OwnerID    uuid.UUID
+	OnOrBefore time.Time
+	RowLimit   int32
+}
+
+func (q *Queries) ListDueJobs(ctx context.Context, arg ListDueJobsParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listDueJobs, arg.OwnerID, arg.OnOrBefore, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.CompanyID,
+			&i.Title,
+			&i.Url,
+			&i.Source,
+			&i.Status,
+			&i.AppliedOn,
+			&i.NextFollowUp,
+			&i.Location,
+			&i.SalaryText,
+			&i.Description,
+			&i.IdempotencyKey,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listJobEvents = `-- name: ListJobEvents :many
 SELECT id, job_id, kind, from_status, to_status, source_event_id, payload, occurred_at FROM job_events WHERE job_id = $1 ORDER BY occurred_at DESC, id DESC
 `
@@ -326,6 +378,136 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, erro
 		return nil, err
 	}
 	return items, nil
+}
+
+const listJobsDueOn = `-- name: ListJobsDueOn :many
+SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
+WHERE next_follow_up = $1::date AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY owner_id, id
+`
+
+// Every owner's open jobs with a follow-up on exactly this date; the daily scan
+// emits one event for each. Rejected jobs need no follow-up.
+func (q *Queries) ListJobsDueOn(ctx context.Context, dueOn time.Time) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listJobsDueOn, dueOn)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.CompanyID,
+			&i.Title,
+			&i.Url,
+			&i.Source,
+			&i.Status,
+			&i.AppliedOn,
+			&i.NextFollowUp,
+			&i.Location,
+			&i.SalaryText,
+			&i.Description,
+			&i.IdempotencyKey,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStaleAppliedJobs = `-- name: ListStaleAppliedJobs :many
+SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
+WHERE status = 'applied' AND applied_on <= $1::date
+  AND next_follow_up IS NULL AND archived_at IS NULL
+ORDER BY owner_id, id
+`
+
+// Applied jobs with no follow-up planned that were applied for on or before
+// applied_by.
+func (q *Queries) ListStaleAppliedJobs(ctx context.Context, appliedBy time.Time) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listStaleAppliedJobs, appliedBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.CompanyID,
+			&i.Title,
+			&i.Url,
+			&i.Source,
+			&i.Status,
+			&i.AppliedOn,
+			&i.NextFollowUp,
+			&i.Location,
+			&i.SalaryText,
+			&i.Description,
+			&i.IdempotencyKey,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ArchivedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markJobFollowUp = `-- name: MarkJobFollowUp :one
+UPDATE jobs SET next_follow_up = $1::date, version = version + 1, updated_at = now()
+WHERE id = $2 AND next_follow_up IS NULL
+RETURNING id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at
+`
+
+type MarkJobFollowUpParams struct {
+	NextFollowUp time.Time
+	ID           uuid.UUID
+}
+
+// Plans a follow-up for a job that has none. Returns no row when one is set.
+func (q *Queries) MarkJobFollowUp(ctx context.Context, arg MarkJobFollowUpParams) (Job, error) {
+	row := q.db.QueryRow(ctx, markJobFollowUp, arg.NextFollowUp, arg.ID)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CompanyID,
+		&i.Title,
+		&i.Url,
+		&i.Source,
+		&i.Status,
+		&i.AppliedOn,
+		&i.NextFollowUp,
+		&i.Location,
+		&i.SalaryText,
+		&i.Description,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
 }
 
 const updateJob = `-- name: UpdateJob :one

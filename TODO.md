@@ -188,9 +188,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `ImportContacts` parsing the 17-column CSV, per-row validation, dry run, one transaction on commit, `imports` row, one `contact.added` per new contact.
   Done when: tests with a good file, a file with bad rows (per-row errors returned, nothing written on dry run), and re-import (updates not duplicates).
 
-- [ ] **P4.8 kagami follow-up scans** (S) Needs: P4.6
+- [x] **P4.8 kagami follow-up scans** (S) Needs: P4.6
   Do: River periodic jobs `follow_up_scan` and `stale_application_scan` at 08:00 Asia/Kolkata emitting `job.follow_up_due` and `contact.follow_up_due` once per due date; `ListDueFollowUps` RPC.
   Done when: tests with a fake clock show one event per due item per day.
+
+- [ ] **P4.8b Follow-up scan catch-up** (S) Needs: P4.8
+  Do: the scans run only at their scheduled minute, so a day on which kagami was down at 07:55 and 08:00 is never scanned. On start, enqueue today's scans when the clock is already past their time (the unique-by-date args keep it to one run). `TODO(owner)`: `staleAfterDays` (7) in `internal/app/followups.go` is a default to confirm.
+  Done when: a test starts the service at 09:00 IST on a day with no scan job and sees both scans run once.
 
 - [ ] **P4.9 torii proto + login** (L, split) Needs: P1.7, P3.3
   Do (a): `proto/shogun/api/v1` Jobs and Contacts services. Do (b): Google OAuth with PKCE, email allowlist from env, session in `torii.sessions` (token hash only), cookie HttpOnly Secure SameSite=Lax, sliding renewal. Do (c): ConnectRPC server, session middleware, internal identity signing, rate limit, request size cap.

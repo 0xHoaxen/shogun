@@ -79,6 +79,18 @@ UPDATE contacts SET
 WHERE id = @id AND owner_id = @owner_id AND version = @version
 RETURNING *;
 
+-- name: ListContactsDueOn :many
+-- Every owner's contacts with a follow-up on exactly this date.
+SELECT * FROM contacts
+WHERE next_follow_up = @due_on::date AND archived_at IS NULL
+ORDER BY owner_id, id;
+
+-- name: ListDueContacts :many
+SELECT * FROM contacts
+WHERE owner_id = @owner_id AND next_follow_up <= @on_or_before::date AND archived_at IS NULL
+ORDER BY next_follow_up, id
+LIMIT @row_limit;
+
 -- name: InsertContactEvent :one
 INSERT INTO contact_events (id, contact_id, kind, channel, from_status, to_status, source_event_id, payload, occurred_at)
 VALUES (@id, @contact_id, @kind, @channel, @from_status, @to_status, @source_event_id, @payload, @occurred_at)

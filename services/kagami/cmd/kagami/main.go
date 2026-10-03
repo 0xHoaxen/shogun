@@ -24,6 +24,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/app"
+	"github.com/0xHoaxen/shogun/services/kagami/internal/jobs"
 	kagamigrpc "github.com/0xHoaxen/shogun/services/kagami/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/kagami/migrations"
 )
@@ -115,7 +116,12 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	service := app.NewService(pool, nil)
+	scheduled, err := jobs.NewSetup(service, time.Now, log)
+	if err != nil {
+		return err
+	}
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err
 	}
@@ -125,7 +131,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		server.WithAuth(authority.UnaryServerInterceptor(), authority.StreamServerInterceptor()),
 		server.WithReadinessCheck(pool.Ping),
 	}, opts...)
-	kagami := kagamigrpc.New(app.NewService(pool, nil))
+	kagami := kagamigrpc.New(service)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
 		kagamiv1.RegisterKagamiServiceServer(s, kagami)

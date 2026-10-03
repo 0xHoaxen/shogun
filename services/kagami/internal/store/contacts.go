@@ -112,6 +112,25 @@ func (r *Repo) UpdateContactStatus(ctx context.Context, arg db.UpdateContactStat
 	return c, nil
 }
 
+// ListContactsDueOn returns every owner's contacts whose follow-up is on date.
+func (r *Repo) ListContactsDueOn(ctx context.Context, date time.Time) ([]db.Contact, error) {
+	contacts, err := r.q.ListContactsDueOn(ctx, date)
+	if err != nil {
+		return nil, fmt.Errorf("list contacts due on %s: %w", date.Format(time.DateOnly), mapErr(err))
+	}
+	return contacts, nil
+}
+
+// ListDueContacts returns up to limit of the owner's contacts with a follow-up
+// on or before date, the oldest first.
+func (r *Repo) ListDueContacts(ctx context.Context, owner uuid.UUID, date time.Time, limit int32) ([]db.Contact, error) {
+	contacts, err := r.q.ListDueContacts(ctx, db.ListDueContactsParams{OwnerID: owner, OnOrBefore: date, RowLimit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("list due contacts: %w", mapErr(err))
+	}
+	return contacts, nil
+}
+
 // InsertContactEvent appends to a contact's timeline.
 func (r *Repo) InsertContactEvent(ctx context.Context, arg db.InsertContactEventParams) (db.ContactEvent, error) {
 	e, err := r.q.InsertContactEvent(ctx, arg)

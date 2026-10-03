@@ -59,6 +59,34 @@ UPDATE jobs SET
 WHERE id = @id AND owner_id = @owner_id AND version = @version
 RETURNING *;
 
+-- name: ListJobsDueOn :many
+-- Every owner's open jobs with a follow-up on exactly this date; the daily scan
+-- emits one event for each. Rejected jobs need no follow-up.
+SELECT * FROM jobs
+WHERE next_follow_up = @due_on::date AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY owner_id, id;
+
+-- name: ListStaleAppliedJobs :many
+-- Applied jobs with no follow-up planned that were applied for on or before
+-- applied_by.
+SELECT * FROM jobs
+WHERE status = 'applied' AND applied_on <= @applied_by::date
+  AND next_follow_up IS NULL AND archived_at IS NULL
+ORDER BY owner_id, id;
+
+-- name: MarkJobFollowUp :one
+-- Plans a follow-up for a job that has none. Returns no row when one is set.
+UPDATE jobs SET next_follow_up = @next_follow_up::date, version = version + 1, updated_at = now()
+WHERE id = @id AND next_follow_up IS NULL
+RETURNING *;
+
+-- name: ListDueJobs :many
+SELECT * FROM jobs
+WHERE owner_id = @owner_id AND next_follow_up <= @on_or_before::date
+  AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY next_follow_up, id
+LIMIT @row_limit;
+
 -- name: InsertJobEvent :one
 INSERT INTO job_events (id, job_id, kind, from_status, to_status, source_event_id, payload, occurred_at)
 VALUES (@id, @job_id, @kind, @from_status, @to_status, @source_event_id, @payload, @occurred_at)
