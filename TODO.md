@@ -168,7 +168,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: migration `00002_core.sql` with `companies jobs job_events contacts contact_events imports` exactly as in the System Design "Table structures" tab.
   Done when: `make migrate` applies cleanly; `\d kagami.jobs` matches the DDL.
 
-- [ ] **P4.3 kagami domain** (M) Needs: P4.1
+- [x] **P4.3 kagami domain** (M) Needs: P4.1
   Do: `internal/domain` job and contact entities with transition tables from the System Design state machines; errors map to `JOB_STATUS_INVALID_TRANSITION` / `CONTACT_STATUS_INVALID_TRANSITION`.
   Done when: table-driven tests cover every allowed and one disallowed transition per state.
 
