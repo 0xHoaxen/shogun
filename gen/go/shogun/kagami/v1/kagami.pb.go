@@ -9,7 +9,10 @@ package kagamiv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +23,2631 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type JobStatus int32
+
+const (
+	JobStatus_JOB_STATUS_UNSPECIFIED JobStatus = 0
+	JobStatus_JOB_STATUS_SAVED       JobStatus = 1
+	JobStatus_JOB_STATUS_APPLIED     JobStatus = 2
+	JobStatus_JOB_STATUS_SHORTLISTED JobStatus = 3
+	JobStatus_JOB_STATUS_INTERVIEW   JobStatus = 4
+	JobStatus_JOB_STATUS_OFFER       JobStatus = 5
+	JobStatus_JOB_STATUS_REJECTED    JobStatus = 6
+)
+
+// Enum value maps for JobStatus.
+var (
+	JobStatus_name = map[int32]string{
+		0: "JOB_STATUS_UNSPECIFIED",
+		1: "JOB_STATUS_SAVED",
+		2: "JOB_STATUS_APPLIED",
+		3: "JOB_STATUS_SHORTLISTED",
+		4: "JOB_STATUS_INTERVIEW",
+		5: "JOB_STATUS_OFFER",
+		6: "JOB_STATUS_REJECTED",
+	}
+	JobStatus_value = map[string]int32{
+		"JOB_STATUS_UNSPECIFIED": 0,
+		"JOB_STATUS_SAVED":       1,
+		"JOB_STATUS_APPLIED":     2,
+		"JOB_STATUS_SHORTLISTED": 3,
+		"JOB_STATUS_INTERVIEW":   4,
+		"JOB_STATUS_OFFER":       5,
+		"JOB_STATUS_REJECTED":    6,
+	}
+)
+
+func (x JobStatus) Enum() *JobStatus {
+	p := new(JobStatus)
+	*p = x
+	return p
+}
+
+func (x JobStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (JobStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_kagami_v1_kagami_proto_enumTypes[0].Descriptor()
+}
+
+func (JobStatus) Type() protoreflect.EnumType {
+	return &file_shogun_kagami_v1_kagami_proto_enumTypes[0]
+}
+
+func (x JobStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use JobStatus.Descriptor instead.
+func (JobStatus) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{0}
+}
+
+type ContactStatus int32
+
+const (
+	ContactStatus_CONTACT_STATUS_UNSPECIFIED          ContactStatus = 0
+	ContactStatus_CONTACT_STATUS_NOT_REACHED          ContactStatus = 1
+	ContactStatus_CONTACT_STATUS_REACHED_OUT          ContactStatus = 2
+	ContactStatus_CONTACT_STATUS_CONVERSATION_STARTED ContactStatus = 3
+	ContactStatus_CONTACT_STATUS_REPLIED              ContactStatus = 4
+	ContactStatus_CONTACT_STATUS_REFERRAL_ASKED       ContactStatus = 5
+)
+
+// Enum value maps for ContactStatus.
+var (
+	ContactStatus_name = map[int32]string{
+		0: "CONTACT_STATUS_UNSPECIFIED",
+		1: "CONTACT_STATUS_NOT_REACHED",
+		2: "CONTACT_STATUS_REACHED_OUT",
+		3: "CONTACT_STATUS_CONVERSATION_STARTED",
+		4: "CONTACT_STATUS_REPLIED",
+		5: "CONTACT_STATUS_REFERRAL_ASKED",
+	}
+	ContactStatus_value = map[string]int32{
+		"CONTACT_STATUS_UNSPECIFIED":          0,
+		"CONTACT_STATUS_NOT_REACHED":          1,
+		"CONTACT_STATUS_REACHED_OUT":          2,
+		"CONTACT_STATUS_CONVERSATION_STARTED": 3,
+		"CONTACT_STATUS_REPLIED":              4,
+		"CONTACT_STATUS_REFERRAL_ASKED":       5,
+	}
+)
+
+func (x ContactStatus) Enum() *ContactStatus {
+	p := new(ContactStatus)
+	*p = x
+	return p
+}
+
+func (x ContactStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ContactStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_kagami_v1_kagami_proto_enumTypes[1].Descriptor()
+}
+
+func (ContactStatus) Type() protoreflect.EnumType {
+	return &file_shogun_kagami_v1_kagami_proto_enumTypes[1]
+}
+
+func (x ContactStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ContactStatus.Descriptor instead.
+func (ContactStatus) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{1}
+}
+
+type Company struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Domain        string                 `protobuf:"bytes,3,opt,name=domain,proto3" json:"domain,omitempty"`
+	Notes         string                 `protobuf:"bytes,4,opt,name=notes,proto3" json:"notes,omitempty"`
+	Version       int32                  `protobuf:"varint,5,opt,name=version,proto3" json:"version,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Company) Reset() {
+	*x = Company{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Company) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Company) ProtoMessage() {}
+
+func (x *Company) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Company.ProtoReflect.Descriptor instead.
+func (*Company) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Company) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Company) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Company) GetDomain() string {
+	if x != nil {
+		return x.Domain
+	}
+	return ""
+}
+
+func (x *Company) GetNotes() string {
+	if x != nil {
+		return x.Notes
+	}
+	return ""
+}
+
+func (x *Company) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Company) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Company) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+type Job struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	CompanyId     string                 `protobuf:"bytes,2,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Url           string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Source        string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	Status        JobStatus              `protobuf:"varint,6,opt,name=status,proto3,enum=shogun.kagami.v1.JobStatus" json:"status,omitempty"`
+	AppliedOn     string                 `protobuf:"bytes,7,opt,name=applied_on,json=appliedOn,proto3" json:"applied_on,omitempty"`
+	NextFollowUp  string                 `protobuf:"bytes,8,opt,name=next_follow_up,json=nextFollowUp,proto3" json:"next_follow_up,omitempty"`
+	SalaryText    string                 `protobuf:"bytes,9,opt,name=salary_text,json=salaryText,proto3" json:"salary_text,omitempty"`
+	Location      string                 `protobuf:"bytes,10,opt,name=location,proto3" json:"location,omitempty"`
+	Description   string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"`
+	Version       int32                  `protobuf:"varint,12,opt,name=version,proto3" json:"version,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ArchivedAt    *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Job) Reset() {
+	*x = Job{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Job) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Job) ProtoMessage() {}
+
+func (x *Job) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Job.ProtoReflect.Descriptor instead.
+func (*Job) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Job) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Job) GetCompanyId() string {
+	if x != nil {
+		return x.CompanyId
+	}
+	return ""
+}
+
+func (x *Job) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Job) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *Job) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *Job) GetStatus() JobStatus {
+	if x != nil {
+		return x.Status
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *Job) GetAppliedOn() string {
+	if x != nil {
+		return x.AppliedOn
+	}
+	return ""
+}
+
+func (x *Job) GetNextFollowUp() string {
+	if x != nil {
+		return x.NextFollowUp
+	}
+	return ""
+}
+
+func (x *Job) GetSalaryText() string {
+	if x != nil {
+		return x.SalaryText
+	}
+	return ""
+}
+
+func (x *Job) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *Job) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *Job) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Job) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Job) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *Job) GetArchivedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ArchivedAt
+	}
+	return nil
+}
+
+type JobEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	JobId string                 `protobuf:"bytes,2,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	// kind is one of status_changed, note, mail_linked, follow_up_set.
+	Kind       string    `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	FromStatus JobStatus `protobuf:"varint,4,opt,name=from_status,json=fromStatus,proto3,enum=shogun.kagami.v1.JobStatus" json:"from_status,omitempty"`
+	ToStatus   JobStatus `protobuf:"varint,5,opt,name=to_status,json=toStatus,proto3,enum=shogun.kagami.v1.JobStatus" json:"to_status,omitempty"`
+	// payload is a JSON object.
+	Payload       string                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
+	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *JobEvent) Reset() {
+	*x = JobEvent{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *JobEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*JobEvent) ProtoMessage() {}
+
+func (x *JobEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use JobEvent.ProtoReflect.Descriptor instead.
+func (*JobEvent) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *JobEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *JobEvent) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+func (x *JobEvent) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *JobEvent) GetFromStatus() JobStatus {
+	if x != nil {
+		return x.FromStatus
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *JobEvent) GetToStatus() JobStatus {
+	if x != nil {
+		return x.ToStatus
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *JobEvent) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+func (x *JobEvent) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
+}
+
+type Contact struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	FullName         string                 `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	CompanyId        string                 `protobuf:"bytes,3,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	Role             string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	Email            string                 `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	LinkedinUrl      string                 `protobuf:"bytes,6,opt,name=linkedin_url,json=linkedinUrl,proto3" json:"linkedin_url,omitempty"`
+	XHandle          string                 `protobuf:"bytes,7,opt,name=x_handle,json=xHandle,proto3" json:"x_handle,omitempty"`
+	Phone            string                 `protobuf:"bytes,8,opt,name=phone,proto3" json:"phone,omitempty"`
+	Relationship     string                 `protobuf:"bytes,9,opt,name=relationship,proto3" json:"relationship,omitempty"`
+	HowWeMet         string                 `protobuf:"bytes,10,opt,name=how_we_met,json=howWeMet,proto3" json:"how_we_met,omitempty"`
+	Status           ContactStatus          `protobuf:"varint,11,opt,name=status,proto3,enum=shogun.kagami.v1.ContactStatus" json:"status,omitempty"`
+	PreferredChannel string                 `protobuf:"bytes,12,opt,name=preferred_channel,json=preferredChannel,proto3" json:"preferred_channel,omitempty"`
+	LastContacted    string                 `protobuf:"bytes,13,opt,name=last_contacted,json=lastContacted,proto3" json:"last_contacted,omitempty"`
+	NextFollowUp     string                 `protobuf:"bytes,14,opt,name=next_follow_up,json=nextFollowUp,proto3" json:"next_follow_up,omitempty"`
+	TargetRole       string                 `protobuf:"bytes,15,opt,name=target_role,json=targetRole,proto3" json:"target_role,omitempty"`
+	JobId            string                 `protobuf:"bytes,16,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	Tags             []string               `protobuf:"bytes,17,rep,name=tags,proto3" json:"tags,omitempty"`
+	Notes            string                 `protobuf:"bytes,18,opt,name=notes,proto3" json:"notes,omitempty"`
+	Version          int32                  `protobuf:"varint,19,opt,name=version,proto3" json:"version,omitempty"`
+	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ArchivedAt       *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *Contact) Reset() {
+	*x = Contact{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Contact) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Contact) ProtoMessage() {}
+
+func (x *Contact) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Contact.ProtoReflect.Descriptor instead.
+func (*Contact) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Contact) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Contact) GetFullName() string {
+	if x != nil {
+		return x.FullName
+	}
+	return ""
+}
+
+func (x *Contact) GetCompanyId() string {
+	if x != nil {
+		return x.CompanyId
+	}
+	return ""
+}
+
+func (x *Contact) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *Contact) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *Contact) GetLinkedinUrl() string {
+	if x != nil {
+		return x.LinkedinUrl
+	}
+	return ""
+}
+
+func (x *Contact) GetXHandle() string {
+	if x != nil {
+		return x.XHandle
+	}
+	return ""
+}
+
+func (x *Contact) GetPhone() string {
+	if x != nil {
+		return x.Phone
+	}
+	return ""
+}
+
+func (x *Contact) GetRelationship() string {
+	if x != nil {
+		return x.Relationship
+	}
+	return ""
+}
+
+func (x *Contact) GetHowWeMet() string {
+	if x != nil {
+		return x.HowWeMet
+	}
+	return ""
+}
+
+func (x *Contact) GetStatus() ContactStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ContactStatus_CONTACT_STATUS_UNSPECIFIED
+}
+
+func (x *Contact) GetPreferredChannel() string {
+	if x != nil {
+		return x.PreferredChannel
+	}
+	return ""
+}
+
+func (x *Contact) GetLastContacted() string {
+	if x != nil {
+		return x.LastContacted
+	}
+	return ""
+}
+
+func (x *Contact) GetNextFollowUp() string {
+	if x != nil {
+		return x.NextFollowUp
+	}
+	return ""
+}
+
+func (x *Contact) GetTargetRole() string {
+	if x != nil {
+		return x.TargetRole
+	}
+	return ""
+}
+
+func (x *Contact) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+func (x *Contact) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *Contact) GetNotes() string {
+	if x != nil {
+		return x.Notes
+	}
+	return ""
+}
+
+func (x *Contact) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Contact) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Contact) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+func (x *Contact) GetArchivedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ArchivedAt
+	}
+	return nil
+}
+
+type ContactEvent struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContactId string                 `protobuf:"bytes,2,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
+	// kind is one of status_changed, message_sent, reply_received, note.
+	Kind    string `protobuf:"bytes,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	Channel string `protobuf:"bytes,4,opt,name=channel,proto3" json:"channel,omitempty"`
+	// payload is a JSON object.
+	Payload       string                 `protobuf:"bytes,5,opt,name=payload,proto3" json:"payload,omitempty"`
+	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContactEvent) Reset() {
+	*x = ContactEvent{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContactEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContactEvent) ProtoMessage() {}
+
+func (x *ContactEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContactEvent.ProtoReflect.Descriptor instead.
+func (*ContactEvent) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ContactEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetContactId() string {
+	if x != nil {
+		return x.ContactId
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetPayload() string {
+	if x != nil {
+		return x.Payload
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
+}
+
+type AddJobRequest struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Title       string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	CompanyName string                 `protobuf:"bytes,2,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
+	// company_domain is the upsert key for the company; optional.
+	CompanyDomain string `protobuf:"bytes,3,opt,name=company_domain,json=companyDomain,proto3" json:"company_domain,omitempty"`
+	Url           string `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Source        string `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	// status defaults to saved when unspecified.
+	Status      JobStatus `protobuf:"varint,6,opt,name=status,proto3,enum=shogun.kagami.v1.JobStatus" json:"status,omitempty"`
+	Location    string    `protobuf:"bytes,7,opt,name=location,proto3" json:"location,omitempty"`
+	SalaryText  string    `protobuf:"bytes,8,opt,name=salary_text,json=salaryText,proto3" json:"salary_text,omitempty"`
+	Description string    `protobuf:"bytes,9,opt,name=description,proto3" json:"description,omitempty"`
+	// idempotency_key makes a retried call return the original job.
+	IdempotencyKey string `protobuf:"bytes,10,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AddJobRequest) Reset() {
+	*x = AddJobRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddJobRequest) ProtoMessage() {}
+
+func (x *AddJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddJobRequest.ProtoReflect.Descriptor instead.
+func (*AddJobRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AddJobRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetCompanyName() string {
+	if x != nil {
+		return x.CompanyName
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetCompanyDomain() string {
+	if x != nil {
+		return x.CompanyDomain
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetSource() string {
+	if x != nil {
+		return x.Source
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetStatus() JobStatus {
+	if x != nil {
+		return x.Status
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *AddJobRequest) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetSalaryText() string {
+	if x != nil {
+		return x.SalaryText
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *AddJobRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+type AddJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	Company       *Company               `protobuf:"bytes,2,opt,name=company,proto3" json:"company,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddJobResponse) Reset() {
+	*x = AddJobResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddJobResponse) ProtoMessage() {}
+
+func (x *AddJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddJobResponse.ProtoReflect.Descriptor instead.
+func (*AddJobResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AddJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+func (x *AddJobResponse) GetCompany() *Company {
+	if x != nil {
+		return x.Company
+	}
+	return nil
+}
+
+type GetJobRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetJobRequest) Reset() {
+	*x = GetJobRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetJobRequest) ProtoMessage() {}
+
+func (x *GetJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetJobRequest.ProtoReflect.Descriptor instead.
+func (*GetJobRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetJobRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	Company       *Company               `protobuf:"bytes,2,opt,name=company,proto3" json:"company,omitempty"`
+	Events        []*JobEvent            `protobuf:"bytes,3,rep,name=events,proto3" json:"events,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetJobResponse) Reset() {
+	*x = GetJobResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetJobResponse) ProtoMessage() {}
+
+func (x *GetJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetJobResponse.ProtoReflect.Descriptor instead.
+func (*GetJobResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+func (x *GetJobResponse) GetCompany() *Company {
+	if x != nil {
+		return x.Company
+	}
+	return nil
+}
+
+func (x *GetJobResponse) GetEvents() []*JobEvent {
+	if x != nil {
+		return x.Events
+	}
+	return nil
+}
+
+type ListJobsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// status filters when set; unspecified means all.
+	Status    JobStatus `protobuf:"varint,1,opt,name=status,proto3,enum=shogun.kagami.v1.JobStatus" json:"status,omitempty"`
+	CompanyId string    `protobuf:"bytes,2,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	// due_before is a YYYY-MM-DD date; jobs with next_follow_up on or before it.
+	DueBefore     string `protobuf:"bytes,3,opt,name=due_before,json=dueBefore,proto3" json:"due_before,omitempty"`
+	PageSize      int32  `protobuf:"varint,4,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,5,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListJobsRequest) Reset() {
+	*x = ListJobsRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListJobsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListJobsRequest) ProtoMessage() {}
+
+func (x *ListJobsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListJobsRequest.ProtoReflect.Descriptor instead.
+func (*ListJobsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListJobsRequest) GetStatus() JobStatus {
+	if x != nil {
+		return x.Status
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *ListJobsRequest) GetCompanyId() string {
+	if x != nil {
+		return x.CompanyId
+	}
+	return ""
+}
+
+func (x *ListJobsRequest) GetDueBefore() string {
+	if x != nil {
+		return x.DueBefore
+	}
+	return ""
+}
+
+func (x *ListJobsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListJobsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListJobsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jobs          []*Job                 `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListJobsResponse) Reset() {
+	*x = ListJobsResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListJobsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListJobsResponse) ProtoMessage() {}
+
+func (x *ListJobsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListJobsResponse.ProtoReflect.Descriptor instead.
+func (*ListJobsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListJobsResponse) GetJobs() []*Job {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+func (x *ListJobsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type UpdateJobRequest struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Job        *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	UpdateMask *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	// version is the version the caller last read.
+	Version       int32 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateJobRequest) Reset() {
+	*x = UpdateJobRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateJobRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateJobRequest) ProtoMessage() {}
+
+func (x *UpdateJobRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateJobRequest.ProtoReflect.Descriptor instead.
+func (*UpdateJobRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UpdateJobRequest) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+func (x *UpdateJobRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+func (x *UpdateJobRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type UpdateJobResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateJobResponse) Reset() {
+	*x = UpdateJobResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateJobResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateJobResponse) ProtoMessage() {}
+
+func (x *UpdateJobResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateJobResponse.ProtoReflect.Descriptor instead.
+func (*UpdateJobResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *UpdateJobResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+type ChangeJobStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ToStatus      JobStatus              `protobuf:"varint,2,opt,name=to_status,json=toStatus,proto3,enum=shogun.kagami.v1.JobStatus" json:"to_status,omitempty"`
+	Note          string                 `protobuf:"bytes,3,opt,name=note,proto3" json:"note,omitempty"`
+	Version       int32                  `protobuf:"varint,4,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeJobStatusRequest) Reset() {
+	*x = ChangeJobStatusRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeJobStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeJobStatusRequest) ProtoMessage() {}
+
+func (x *ChangeJobStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeJobStatusRequest.ProtoReflect.Descriptor instead.
+func (*ChangeJobStatusRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ChangeJobStatusRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ChangeJobStatusRequest) GetToStatus() JobStatus {
+	if x != nil {
+		return x.ToStatus
+	}
+	return JobStatus_JOB_STATUS_UNSPECIFIED
+}
+
+func (x *ChangeJobStatusRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *ChangeJobStatusRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type ChangeJobStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Job           *Job                   `protobuf:"bytes,1,opt,name=job,proto3" json:"job,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeJobStatusResponse) Reset() {
+	*x = ChangeJobStatusResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeJobStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeJobStatusResponse) ProtoMessage() {}
+
+func (x *ChangeJobStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeJobStatusResponse.ProtoReflect.Descriptor instead.
+func (*ChangeJobStatusResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ChangeJobStatusResponse) GetJob() *Job {
+	if x != nil {
+		return x.Job
+	}
+	return nil
+}
+
+type AddContactRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Contact *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	// company_name creates or finds the company by name when company_id is empty.
+	CompanyName    string `protobuf:"bytes,2,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
+	IdempotencyKey string `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AddContactRequest) Reset() {
+	*x = AddContactRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddContactRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddContactRequest) ProtoMessage() {}
+
+func (x *AddContactRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddContactRequest.ProtoReflect.Descriptor instead.
+func (*AddContactRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *AddContactRequest) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+func (x *AddContactRequest) GetCompanyName() string {
+	if x != nil {
+		return x.CompanyName
+	}
+	return ""
+}
+
+func (x *AddContactRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
+}
+
+type AddContactResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddContactResponse) Reset() {
+	*x = AddContactResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddContactResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddContactResponse) ProtoMessage() {}
+
+func (x *AddContactResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddContactResponse.ProtoReflect.Descriptor instead.
+func (*AddContactResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *AddContactResponse) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+type UpdateContactRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	Version       int32                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateContactRequest) Reset() {
+	*x = UpdateContactRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateContactRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateContactRequest) ProtoMessage() {}
+
+func (x *UpdateContactRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateContactRequest.ProtoReflect.Descriptor instead.
+func (*UpdateContactRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *UpdateContactRequest) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+func (x *UpdateContactRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+func (x *UpdateContactRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type UpdateContactResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateContactResponse) Reset() {
+	*x = UpdateContactResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateContactResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateContactResponse) ProtoMessage() {}
+
+func (x *UpdateContactResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateContactResponse.ProtoReflect.Descriptor instead.
+func (*UpdateContactResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *UpdateContactResponse) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+type ListContactsRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Status    ContactStatus          `protobuf:"varint,1,opt,name=status,proto3,enum=shogun.kagami.v1.ContactStatus" json:"status,omitempty"`
+	Tag       string                 `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+	CompanyId string                 `protobuf:"bytes,3,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	// query matches name, email and company text.
+	Query         string `protobuf:"bytes,4,opt,name=query,proto3" json:"query,omitempty"`
+	PageSize      int32  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,6,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListContactsRequest) Reset() {
+	*x = ListContactsRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListContactsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListContactsRequest) ProtoMessage() {}
+
+func (x *ListContactsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListContactsRequest.ProtoReflect.Descriptor instead.
+func (*ListContactsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListContactsRequest) GetStatus() ContactStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ContactStatus_CONTACT_STATUS_UNSPECIFIED
+}
+
+func (x *ListContactsRequest) GetTag() string {
+	if x != nil {
+		return x.Tag
+	}
+	return ""
+}
+
+func (x *ListContactsRequest) GetCompanyId() string {
+	if x != nil {
+		return x.CompanyId
+	}
+	return ""
+}
+
+func (x *ListContactsRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *ListContactsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListContactsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListContactsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contacts      []*Contact             `protobuf:"bytes,1,rep,name=contacts,proto3" json:"contacts,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListContactsResponse) Reset() {
+	*x = ListContactsResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListContactsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListContactsResponse) ProtoMessage() {}
+
+func (x *ListContactsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListContactsResponse.ProtoReflect.Descriptor instead.
+func (*ListContactsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListContactsResponse) GetContacts() []*Contact {
+	if x != nil {
+		return x.Contacts
+	}
+	return nil
+}
+
+func (x *ListContactsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type GetContactRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetContactRequest) Reset() {
+	*x = GetContactRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetContactRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetContactRequest) ProtoMessage() {}
+
+func (x *GetContactRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetContactRequest.ProtoReflect.Descriptor instead.
+func (*GetContactRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *GetContactRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetContactResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	Timeline      []*ContactEvent        `protobuf:"bytes,2,rep,name=timeline,proto3" json:"timeline,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetContactResponse) Reset() {
+	*x = GetContactResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetContactResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetContactResponse) ProtoMessage() {}
+
+func (x *GetContactResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetContactResponse.ProtoReflect.Descriptor instead.
+func (*GetContactResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *GetContactResponse) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+func (x *GetContactResponse) GetTimeline() []*ContactEvent {
+	if x != nil {
+		return x.Timeline
+	}
+	return nil
+}
+
+type ChangeContactStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ToStatus      ContactStatus          `protobuf:"varint,2,opt,name=to_status,json=toStatus,proto3,enum=shogun.kagami.v1.ContactStatus" json:"to_status,omitempty"`
+	Version       int32                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeContactStatusRequest) Reset() {
+	*x = ChangeContactStatusRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeContactStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeContactStatusRequest) ProtoMessage() {}
+
+func (x *ChangeContactStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeContactStatusRequest.ProtoReflect.Descriptor instead.
+func (*ChangeContactStatusRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ChangeContactStatusRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ChangeContactStatusRequest) GetToStatus() ContactStatus {
+	if x != nil {
+		return x.ToStatus
+	}
+	return ContactStatus_CONTACT_STATUS_UNSPECIFIED
+}
+
+func (x *ChangeContactStatusRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type ChangeContactStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeContactStatusResponse) Reset() {
+	*x = ChangeContactStatusResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeContactStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeContactStatusResponse) ProtoMessage() {}
+
+func (x *ChangeContactStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeContactStatusResponse.ProtoReflect.Descriptor instead.
+func (*ChangeContactStatusResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ChangeContactStatusResponse) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+type ImportContactsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	Csv           []byte                 `protobuf:"bytes,2,opt,name=csv,proto3" json:"csv,omitempty"`
+	DryRun        bool                   `protobuf:"varint,3,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportContactsRequest) Reset() {
+	*x = ImportContactsRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportContactsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportContactsRequest) ProtoMessage() {}
+
+func (x *ImportContactsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportContactsRequest.ProtoReflect.Descriptor instead.
+func (*ImportContactsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ImportContactsRequest) GetFilename() string {
+	if x != nil {
+		return x.Filename
+	}
+	return ""
+}
+
+func (x *ImportContactsRequest) GetCsv() []byte {
+	if x != nil {
+		return x.Csv
+	}
+	return nil
+}
+
+func (x *ImportContactsRequest) GetDryRun() bool {
+	if x != nil {
+		return x.DryRun
+	}
+	return false
+}
+
+type ImportRowError struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// row is the 1-based CSV row number, counting the header as row 1.
+	Row           int32  `protobuf:"varint,1,opt,name=row,proto3" json:"row,omitempty"`
+	Column        string `protobuf:"bytes,2,opt,name=column,proto3" json:"column,omitempty"`
+	Message       string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportRowError) Reset() {
+	*x = ImportRowError{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportRowError) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportRowError) ProtoMessage() {}
+
+func (x *ImportRowError) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportRowError.ProtoReflect.Descriptor instead.
+func (*ImportRowError) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ImportRowError) GetRow() int32 {
+	if x != nil {
+		return x.Row
+	}
+	return 0
+}
+
+func (x *ImportRowError) GetColumn() string {
+	if x != nil {
+		return x.Column
+	}
+	return ""
+}
+
+func (x *ImportRowError) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+type ImportReport struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RowsTotal     int32                  `protobuf:"varint,1,opt,name=rows_total,json=rowsTotal,proto3" json:"rows_total,omitempty"`
+	RowsCreated   int32                  `protobuf:"varint,2,opt,name=rows_created,json=rowsCreated,proto3" json:"rows_created,omitempty"`
+	RowsUpdated   int32                  `protobuf:"varint,3,opt,name=rows_updated,json=rowsUpdated,proto3" json:"rows_updated,omitempty"`
+	RowsFailed    int32                  `protobuf:"varint,4,opt,name=rows_failed,json=rowsFailed,proto3" json:"rows_failed,omitempty"`
+	Errors        []*ImportRowError      `protobuf:"bytes,5,rep,name=errors,proto3" json:"errors,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportReport) Reset() {
+	*x = ImportReport{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportReport) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportReport) ProtoMessage() {}
+
+func (x *ImportReport) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportReport.ProtoReflect.Descriptor instead.
+func (*ImportReport) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ImportReport) GetRowsTotal() int32 {
+	if x != nil {
+		return x.RowsTotal
+	}
+	return 0
+}
+
+func (x *ImportReport) GetRowsCreated() int32 {
+	if x != nil {
+		return x.RowsCreated
+	}
+	return 0
+}
+
+func (x *ImportReport) GetRowsUpdated() int32 {
+	if x != nil {
+		return x.RowsUpdated
+	}
+	return 0
+}
+
+func (x *ImportReport) GetRowsFailed() int32 {
+	if x != nil {
+		return x.RowsFailed
+	}
+	return 0
+}
+
+func (x *ImportReport) GetErrors() []*ImportRowError {
+	if x != nil {
+		return x.Errors
+	}
+	return nil
+}
+
+type ImportContactsResponse struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Report *ImportReport          `protobuf:"bytes,1,opt,name=report,proto3" json:"report,omitempty"`
+	// import_id is empty on a dry run.
+	ImportId      string `protobuf:"bytes,2,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportContactsResponse) Reset() {
+	*x = ImportContactsResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportContactsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportContactsResponse) ProtoMessage() {}
+
+func (x *ImportContactsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportContactsResponse.ProtoReflect.Descriptor instead.
+func (*ImportContactsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ImportContactsResponse) GetReport() *ImportReport {
+	if x != nil {
+		return x.Report
+	}
+	return nil
+}
+
+func (x *ImportContactsResponse) GetImportId() string {
+	if x != nil {
+		return x.ImportId
+	}
+	return ""
+}
+
+type ListDueFollowUpsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// on_or_before is a YYYY-MM-DD date.
+	OnOrBefore    string `protobuf:"bytes,1,opt,name=on_or_before,json=onOrBefore,proto3" json:"on_or_before,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDueFollowUpsRequest) Reset() {
+	*x = ListDueFollowUpsRequest{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDueFollowUpsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDueFollowUpsRequest) ProtoMessage() {}
+
+func (x *ListDueFollowUpsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDueFollowUpsRequest.ProtoReflect.Descriptor instead.
+func (*ListDueFollowUpsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ListDueFollowUpsRequest) GetOnOrBefore() string {
+	if x != nil {
+		return x.OnOrBefore
+	}
+	return ""
+}
+
+type ListDueFollowUpsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Jobs          []*Job                 `protobuf:"bytes,1,rep,name=jobs,proto3" json:"jobs,omitempty"`
+	Contacts      []*Contact             `protobuf:"bytes,2,rep,name=contacts,proto3" json:"contacts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDueFollowUpsResponse) Reset() {
+	*x = ListDueFollowUpsResponse{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDueFollowUpsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDueFollowUpsResponse) ProtoMessage() {}
+
+func (x *ListDueFollowUpsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDueFollowUpsResponse.ProtoReflect.Descriptor instead.
+func (*ListDueFollowUpsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ListDueFollowUpsResponse) GetJobs() []*Job {
+	if x != nil {
+		return x.Jobs
+	}
+	return nil
+}
+
+func (x *ListDueFollowUpsResponse) GetContacts() []*Contact {
+	if x != nil {
+		return x.Contacts
+	}
+	return nil
+}
+
 var File_shogun_kagami_v1_kagami_proto protoreflect.FileDescriptor
 
 const file_shogun_kagami_v1_kagami_proto_rawDesc = "" +
 	"\n" +
-	"\x1dshogun/kagami/v1/kagami.proto\x12\x10shogun.kagami.v12\x0f\n" +
-	"\rKagamiServiceB\xc2\x01\n" +
+	"\x1dshogun/kagami/v1/kagami.proto\x12\x10shogun.kagami.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xeb\x01\n" +
+	"\aCompany\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06domain\x18\x03 \x01(\tR\x06domain\x12\x14\n" +
+	"\x05notes\x18\x04 \x01(\tR\x05notes\x12\x18\n" +
+	"\aversion\x18\x05 \x01(\x05R\aversion\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x9a\x04\n" +
+	"\x03Job\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"company_id\x18\x02 \x01(\tR\tcompanyId\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x10\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\x12\x16\n" +
+	"\x06source\x18\x05 \x01(\tR\x06source\x123\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"applied_on\x18\a \x01(\tR\tappliedOn\x12$\n" +
+	"\x0enext_follow_up\x18\b \x01(\tR\fnextFollowUp\x12\x1f\n" +
+	"\vsalary_text\x18\t \x01(\tR\n" +
+	"salaryText\x12\x1a\n" +
+	"\blocation\x18\n" +
+	" \x01(\tR\blocation\x12 \n" +
+	"\vdescription\x18\v \x01(\tR\vdescription\x12\x18\n" +
+	"\aversion\x18\f \x01(\x05R\aversion\x129\n" +
+	"\n" +
+	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12;\n" +
+	"\varchived_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"archivedAt\"\x94\x02\n" +
+	"\bJobEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x15\n" +
+	"\x06job_id\x18\x02 \x01(\tR\x05jobId\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\tR\x04kind\x12<\n" +
+	"\vfrom_status\x18\x04 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\n" +
+	"fromStatus\x128\n" +
+	"\tto_status\x18\x05 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\btoStatus\x12\x18\n" +
+	"\apayload\x18\x06 \x01(\tR\apayload\x12;\n" +
+	"\voccurred_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"occurredAt\"\xf7\x05\n" +
+	"\aContact\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x1d\n" +
+	"\n" +
+	"company_id\x18\x03 \x01(\tR\tcompanyId\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12!\n" +
+	"\flinkedin_url\x18\x06 \x01(\tR\vlinkedinUrl\x12\x19\n" +
+	"\bx_handle\x18\a \x01(\tR\axHandle\x12\x14\n" +
+	"\x05phone\x18\b \x01(\tR\x05phone\x12\"\n" +
+	"\frelationship\x18\t \x01(\tR\frelationship\x12\x1c\n" +
+	"\n" +
+	"how_we_met\x18\n" +
+	" \x01(\tR\bhowWeMet\x127\n" +
+	"\x06status\x18\v \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x06status\x12+\n" +
+	"\x11preferred_channel\x18\f \x01(\tR\x10preferredChannel\x12%\n" +
+	"\x0elast_contacted\x18\r \x01(\tR\rlastContacted\x12$\n" +
+	"\x0enext_follow_up\x18\x0e \x01(\tR\fnextFollowUp\x12\x1f\n" +
+	"\vtarget_role\x18\x0f \x01(\tR\n" +
+	"targetRole\x12\x15\n" +
+	"\x06job_id\x18\x10 \x01(\tR\x05jobId\x12\x12\n" +
+	"\x04tags\x18\x11 \x03(\tR\x04tags\x12\x14\n" +
+	"\x05notes\x18\x12 \x01(\tR\x05notes\x12\x18\n" +
+	"\aversion\x18\x13 \x01(\x05R\aversion\x129\n" +
+	"\n" +
+	"created_at\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12;\n" +
+	"\varchived_at\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"archivedAt\"\xc2\x01\n" +
+	"\fContactEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
+	"\n" +
+	"contact_id\x18\x02 \x01(\tR\tcontactId\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\tR\x04kind\x12\x18\n" +
+	"\achannel\x18\x04 \x01(\tR\achannel\x12\x18\n" +
+	"\apayload\x18\x05 \x01(\tR\apayload\x12;\n" +
+	"\voccurred_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"occurredAt\"\xd6\x02\n" +
+	"\rAddJobRequest\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12!\n" +
+	"\fcompany_name\x18\x02 \x01(\tR\vcompanyName\x12%\n" +
+	"\x0ecompany_domain\x18\x03 \x01(\tR\rcompanyDomain\x12\x10\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\x12\x16\n" +
+	"\x06source\x18\x05 \x01(\tR\x06source\x123\n" +
+	"\x06status\x18\x06 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\x06status\x12\x1a\n" +
+	"\blocation\x18\a \x01(\tR\blocation\x12\x1f\n" +
+	"\vsalary_text\x18\b \x01(\tR\n" +
+	"salaryText\x12 \n" +
+	"\vdescription\x18\t \x01(\tR\vdescription\x12'\n" +
+	"\x0fidempotency_key\x18\n" +
+	" \x01(\tR\x0eidempotencyKey\"n\n" +
+	"\x0eAddJobResponse\x12'\n" +
+	"\x03job\x18\x01 \x01(\v2\x15.shogun.kagami.v1.JobR\x03job\x123\n" +
+	"\acompany\x18\x02 \x01(\v2\x19.shogun.kagami.v1.CompanyR\acompany\"\x1f\n" +
+	"\rGetJobRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xa2\x01\n" +
+	"\x0eGetJobResponse\x12'\n" +
+	"\x03job\x18\x01 \x01(\v2\x15.shogun.kagami.v1.JobR\x03job\x123\n" +
+	"\acompany\x18\x02 \x01(\v2\x19.shogun.kagami.v1.CompanyR\acompany\x122\n" +
+	"\x06events\x18\x03 \x03(\v2\x1a.shogun.kagami.v1.JobEventR\x06events\"\xc0\x01\n" +
+	"\x0fListJobsRequest\x123\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"company_id\x18\x02 \x01(\tR\tcompanyId\x12\x1d\n" +
+	"\n" +
+	"due_before\x18\x03 \x01(\tR\tdueBefore\x12\x1b\n" +
+	"\tpage_size\x18\x04 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x05 \x01(\tR\tpageToken\"e\n" +
+	"\x10ListJobsResponse\x12)\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x15.shogun.kagami.v1.JobR\x04jobs\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\x92\x01\n" +
+	"\x10UpdateJobRequest\x12'\n" +
+	"\x03job\x18\x01 \x01(\v2\x15.shogun.kagami.v1.JobR\x03job\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\"<\n" +
+	"\x11UpdateJobResponse\x12'\n" +
+	"\x03job\x18\x01 \x01(\v2\x15.shogun.kagami.v1.JobR\x03job\"\x90\x01\n" +
+	"\x16ChangeJobStatusRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x128\n" +
+	"\tto_status\x18\x02 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\btoStatus\x12\x12\n" +
+	"\x04note\x18\x03 \x01(\tR\x04note\x12\x18\n" +
+	"\aversion\x18\x04 \x01(\x05R\aversion\"B\n" +
+	"\x17ChangeJobStatusResponse\x12'\n" +
+	"\x03job\x18\x01 \x01(\v2\x15.shogun.kagami.v1.JobR\x03job\"\x94\x01\n" +
+	"\x11AddContactRequest\x123\n" +
+	"\acontact\x18\x01 \x01(\v2\x19.shogun.kagami.v1.ContactR\acontact\x12!\n" +
+	"\fcompany_name\x18\x02 \x01(\tR\vcompanyName\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"I\n" +
+	"\x12AddContactResponse\x123\n" +
+	"\acontact\x18\x01 \x01(\v2\x19.shogun.kagami.v1.ContactR\acontact\"\xa2\x01\n" +
+	"\x14UpdateContactRequest\x123\n" +
+	"\acontact\x18\x01 \x01(\v2\x19.shogun.kagami.v1.ContactR\acontact\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\"L\n" +
+	"\x15UpdateContactResponse\x123\n" +
+	"\acontact\x18\x01 \x01(\v2\x19.shogun.kagami.v1.ContactR\acontact\"\xd1\x01\n" +
+	"\x13ListContactsRequest\x127\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x06status\x12\x10\n" +
+	"\x03tag\x18\x02 \x01(\tR\x03tag\x12\x1d\n" +
+	"\n" +
+	"company_id\x18\x03 \x01(\tR\tcompanyId\x12\x14\n" +
+	"\x05query\x18\x04 \x01(\tR\x05query\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x06 \x01(\tR\tpageToken\"u\n" +
+	"\x14ListContactsResponse\x125\n" +
+	"\bcontacts\x18\x01 \x03(\v2\x19.shogun.kagami.v1.ContactR\bcontacts\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"#\n" +
+	"\x11GetContactRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x85\x01\n" +
+	"\x12GetContactResponse\x123\n" +
+	"\acontact\x18\x01 \x01(\v2\x19.shogun.kagami.v1.ContactR\acontact\x12:\n" +
+	"\btimeline\x18\x02 \x03(\v2\x1e.shogun.kagami.v1.ContactEventR\btimeline\"\x84\x01\n" +
+	"\x1aChangeContactStatusRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12<\n" +
+	"\tto_status\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\btoStatus\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\"R\n" +
+	"\x1bChangeContactStatusResponse\x123\n" +
+	"\acontact\x18\x01 \x01(\v2\x19.shogun.kagami.v1.ContactR\acontact\"^\n" +
+	"\x15ImportContactsRequest\x12\x1a\n" +
+	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x10\n" +
+	"\x03csv\x18\x02 \x01(\fR\x03csv\x12\x17\n" +
+	"\adry_run\x18\x03 \x01(\bR\x06dryRun\"T\n" +
+	"\x0eImportRowError\x12\x10\n" +
+	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x16\n" +
+	"\x06column\x18\x02 \x01(\tR\x06column\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xce\x01\n" +
+	"\fImportReport\x12\x1d\n" +
+	"\n" +
+	"rows_total\x18\x01 \x01(\x05R\trowsTotal\x12!\n" +
+	"\frows_created\x18\x02 \x01(\x05R\vrowsCreated\x12!\n" +
+	"\frows_updated\x18\x03 \x01(\x05R\vrowsUpdated\x12\x1f\n" +
+	"\vrows_failed\x18\x04 \x01(\x05R\n" +
+	"rowsFailed\x128\n" +
+	"\x06errors\x18\x05 \x03(\v2 .shogun.kagami.v1.ImportRowErrorR\x06errors\"m\n" +
+	"\x16ImportContactsResponse\x126\n" +
+	"\x06report\x18\x01 \x01(\v2\x1e.shogun.kagami.v1.ImportReportR\x06report\x12\x1b\n" +
+	"\timport_id\x18\x02 \x01(\tR\bimportId\";\n" +
+	"\x17ListDueFollowUpsRequest\x12 \n" +
+	"\fon_or_before\x18\x01 \x01(\tR\n" +
+	"onOrBefore\"|\n" +
+	"\x18ListDueFollowUpsResponse\x12)\n" +
+	"\x04jobs\x18\x01 \x03(\v2\x15.shogun.kagami.v1.JobR\x04jobs\x125\n" +
+	"\bcontacts\x18\x02 \x03(\v2\x19.shogun.kagami.v1.ContactR\bcontacts*\xba\x01\n" +
+	"\tJobStatus\x12\x1a\n" +
+	"\x16JOB_STATUS_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10JOB_STATUS_SAVED\x10\x01\x12\x16\n" +
+	"\x12JOB_STATUS_APPLIED\x10\x02\x12\x1a\n" +
+	"\x16JOB_STATUS_SHORTLISTED\x10\x03\x12\x18\n" +
+	"\x14JOB_STATUS_INTERVIEW\x10\x04\x12\x14\n" +
+	"\x10JOB_STATUS_OFFER\x10\x05\x12\x17\n" +
+	"\x13JOB_STATUS_REJECTED\x10\x06*\xd7\x01\n" +
+	"\rContactStatus\x12\x1e\n" +
+	"\x1aCONTACT_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
+	"\x1aCONTACT_STATUS_NOT_REACHED\x10\x01\x12\x1e\n" +
+	"\x1aCONTACT_STATUS_REACHED_OUT\x10\x02\x12'\n" +
+	"#CONTACT_STATUS_CONVERSATION_STARTED\x10\x03\x12\x1a\n" +
+	"\x16CONTACT_STATUS_REPLIED\x10\x04\x12!\n" +
+	"\x1dCONTACT_STATUS_REFERRAL_ASKED\x10\x052\xf1\b\n" +
+	"\rKagamiService\x12K\n" +
+	"\x06AddJob\x12\x1f.shogun.kagami.v1.AddJobRequest\x1a .shogun.kagami.v1.AddJobResponse\x12K\n" +
+	"\x06GetJob\x12\x1f.shogun.kagami.v1.GetJobRequest\x1a .shogun.kagami.v1.GetJobResponse\x12Q\n" +
+	"\bListJobs\x12!.shogun.kagami.v1.ListJobsRequest\x1a\".shogun.kagami.v1.ListJobsResponse\x12T\n" +
+	"\tUpdateJob\x12\".shogun.kagami.v1.UpdateJobRequest\x1a#.shogun.kagami.v1.UpdateJobResponse\x12f\n" +
+	"\x0fChangeJobStatus\x12(.shogun.kagami.v1.ChangeJobStatusRequest\x1a).shogun.kagami.v1.ChangeJobStatusResponse\x12W\n" +
+	"\n" +
+	"AddContact\x12#.shogun.kagami.v1.AddContactRequest\x1a$.shogun.kagami.v1.AddContactResponse\x12`\n" +
+	"\rUpdateContact\x12&.shogun.kagami.v1.UpdateContactRequest\x1a'.shogun.kagami.v1.UpdateContactResponse\x12]\n" +
+	"\fListContacts\x12%.shogun.kagami.v1.ListContactsRequest\x1a&.shogun.kagami.v1.ListContactsResponse\x12W\n" +
+	"\n" +
+	"GetContact\x12#.shogun.kagami.v1.GetContactRequest\x1a$.shogun.kagami.v1.GetContactResponse\x12r\n" +
+	"\x13ChangeContactStatus\x12,.shogun.kagami.v1.ChangeContactStatusRequest\x1a-.shogun.kagami.v1.ChangeContactStatusResponse\x12c\n" +
+	"\x0eImportContacts\x12'.shogun.kagami.v1.ImportContactsRequest\x1a(.shogun.kagami.v1.ImportContactsResponse\x12i\n" +
+	"\x10ListDueFollowUps\x12).shogun.kagami.v1.ListDueFollowUpsRequest\x1a*.shogun.kagami.v1.ListDueFollowUpsResponseB\xc2\x01\n" +
 	"\x14com.shogun.kagami.v1B\vKagamiProtoP\x01Z;github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1;kagamiv1\xa2\x02\x03SKX\xaa\x02\x10Shogun.Kagami.V1\xca\x02\x10Shogun\\Kagami\\V1\xe2\x02\x1cShogun\\Kagami\\V1\\GPBMetadata\xea\x02\x12Shogun::Kagami::V1b\x06proto3"
 
-var file_shogun_kagami_v1_kagami_proto_goTypes = []any{}
+var (
+	file_shogun_kagami_v1_kagami_proto_rawDescOnce sync.Once
+	file_shogun_kagami_v1_kagami_proto_rawDescData []byte
+)
+
+func file_shogun_kagami_v1_kagami_proto_rawDescGZIP() []byte {
+	file_shogun_kagami_v1_kagami_proto_rawDescOnce.Do(func() {
+		file_shogun_kagami_v1_kagami_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_kagami_v1_kagami_proto_rawDesc), len(file_shogun_kagami_v1_kagami_proto_rawDesc)))
+	})
+	return file_shogun_kagami_v1_kagami_proto_rawDescData
+}
+
+var file_shogun_kagami_v1_kagami_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_shogun_kagami_v1_kagami_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_shogun_kagami_v1_kagami_proto_goTypes = []any{
+	(JobStatus)(0),                      // 0: shogun.kagami.v1.JobStatus
+	(ContactStatus)(0),                  // 1: shogun.kagami.v1.ContactStatus
+	(*Company)(nil),                     // 2: shogun.kagami.v1.Company
+	(*Job)(nil),                         // 3: shogun.kagami.v1.Job
+	(*JobEvent)(nil),                    // 4: shogun.kagami.v1.JobEvent
+	(*Contact)(nil),                     // 5: shogun.kagami.v1.Contact
+	(*ContactEvent)(nil),                // 6: shogun.kagami.v1.ContactEvent
+	(*AddJobRequest)(nil),               // 7: shogun.kagami.v1.AddJobRequest
+	(*AddJobResponse)(nil),              // 8: shogun.kagami.v1.AddJobResponse
+	(*GetJobRequest)(nil),               // 9: shogun.kagami.v1.GetJobRequest
+	(*GetJobResponse)(nil),              // 10: shogun.kagami.v1.GetJobResponse
+	(*ListJobsRequest)(nil),             // 11: shogun.kagami.v1.ListJobsRequest
+	(*ListJobsResponse)(nil),            // 12: shogun.kagami.v1.ListJobsResponse
+	(*UpdateJobRequest)(nil),            // 13: shogun.kagami.v1.UpdateJobRequest
+	(*UpdateJobResponse)(nil),           // 14: shogun.kagami.v1.UpdateJobResponse
+	(*ChangeJobStatusRequest)(nil),      // 15: shogun.kagami.v1.ChangeJobStatusRequest
+	(*ChangeJobStatusResponse)(nil),     // 16: shogun.kagami.v1.ChangeJobStatusResponse
+	(*AddContactRequest)(nil),           // 17: shogun.kagami.v1.AddContactRequest
+	(*AddContactResponse)(nil),          // 18: shogun.kagami.v1.AddContactResponse
+	(*UpdateContactRequest)(nil),        // 19: shogun.kagami.v1.UpdateContactRequest
+	(*UpdateContactResponse)(nil),       // 20: shogun.kagami.v1.UpdateContactResponse
+	(*ListContactsRequest)(nil),         // 21: shogun.kagami.v1.ListContactsRequest
+	(*ListContactsResponse)(nil),        // 22: shogun.kagami.v1.ListContactsResponse
+	(*GetContactRequest)(nil),           // 23: shogun.kagami.v1.GetContactRequest
+	(*GetContactResponse)(nil),          // 24: shogun.kagami.v1.GetContactResponse
+	(*ChangeContactStatusRequest)(nil),  // 25: shogun.kagami.v1.ChangeContactStatusRequest
+	(*ChangeContactStatusResponse)(nil), // 26: shogun.kagami.v1.ChangeContactStatusResponse
+	(*ImportContactsRequest)(nil),       // 27: shogun.kagami.v1.ImportContactsRequest
+	(*ImportRowError)(nil),              // 28: shogun.kagami.v1.ImportRowError
+	(*ImportReport)(nil),                // 29: shogun.kagami.v1.ImportReport
+	(*ImportContactsResponse)(nil),      // 30: shogun.kagami.v1.ImportContactsResponse
+	(*ListDueFollowUpsRequest)(nil),     // 31: shogun.kagami.v1.ListDueFollowUpsRequest
+	(*ListDueFollowUpsResponse)(nil),    // 32: shogun.kagami.v1.ListDueFollowUpsResponse
+	(*timestamppb.Timestamp)(nil),       // 33: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),       // 34: google.protobuf.FieldMask
+}
 var file_shogun_kagami_v1_kagami_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	33, // 0: shogun.kagami.v1.Company.created_at:type_name -> google.protobuf.Timestamp
+	33, // 1: shogun.kagami.v1.Company.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 2: shogun.kagami.v1.Job.status:type_name -> shogun.kagami.v1.JobStatus
+	33, // 3: shogun.kagami.v1.Job.created_at:type_name -> google.protobuf.Timestamp
+	33, // 4: shogun.kagami.v1.Job.updated_at:type_name -> google.protobuf.Timestamp
+	33, // 5: shogun.kagami.v1.Job.archived_at:type_name -> google.protobuf.Timestamp
+	0,  // 6: shogun.kagami.v1.JobEvent.from_status:type_name -> shogun.kagami.v1.JobStatus
+	0,  // 7: shogun.kagami.v1.JobEvent.to_status:type_name -> shogun.kagami.v1.JobStatus
+	33, // 8: shogun.kagami.v1.JobEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	1,  // 9: shogun.kagami.v1.Contact.status:type_name -> shogun.kagami.v1.ContactStatus
+	33, // 10: shogun.kagami.v1.Contact.created_at:type_name -> google.protobuf.Timestamp
+	33, // 11: shogun.kagami.v1.Contact.updated_at:type_name -> google.protobuf.Timestamp
+	33, // 12: shogun.kagami.v1.Contact.archived_at:type_name -> google.protobuf.Timestamp
+	33, // 13: shogun.kagami.v1.ContactEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	0,  // 14: shogun.kagami.v1.AddJobRequest.status:type_name -> shogun.kagami.v1.JobStatus
+	3,  // 15: shogun.kagami.v1.AddJobResponse.job:type_name -> shogun.kagami.v1.Job
+	2,  // 16: shogun.kagami.v1.AddJobResponse.company:type_name -> shogun.kagami.v1.Company
+	3,  // 17: shogun.kagami.v1.GetJobResponse.job:type_name -> shogun.kagami.v1.Job
+	2,  // 18: shogun.kagami.v1.GetJobResponse.company:type_name -> shogun.kagami.v1.Company
+	4,  // 19: shogun.kagami.v1.GetJobResponse.events:type_name -> shogun.kagami.v1.JobEvent
+	0,  // 20: shogun.kagami.v1.ListJobsRequest.status:type_name -> shogun.kagami.v1.JobStatus
+	3,  // 21: shogun.kagami.v1.ListJobsResponse.jobs:type_name -> shogun.kagami.v1.Job
+	3,  // 22: shogun.kagami.v1.UpdateJobRequest.job:type_name -> shogun.kagami.v1.Job
+	34, // 23: shogun.kagami.v1.UpdateJobRequest.update_mask:type_name -> google.protobuf.FieldMask
+	3,  // 24: shogun.kagami.v1.UpdateJobResponse.job:type_name -> shogun.kagami.v1.Job
+	0,  // 25: shogun.kagami.v1.ChangeJobStatusRequest.to_status:type_name -> shogun.kagami.v1.JobStatus
+	3,  // 26: shogun.kagami.v1.ChangeJobStatusResponse.job:type_name -> shogun.kagami.v1.Job
+	5,  // 27: shogun.kagami.v1.AddContactRequest.contact:type_name -> shogun.kagami.v1.Contact
+	5,  // 28: shogun.kagami.v1.AddContactResponse.contact:type_name -> shogun.kagami.v1.Contact
+	5,  // 29: shogun.kagami.v1.UpdateContactRequest.contact:type_name -> shogun.kagami.v1.Contact
+	34, // 30: shogun.kagami.v1.UpdateContactRequest.update_mask:type_name -> google.protobuf.FieldMask
+	5,  // 31: shogun.kagami.v1.UpdateContactResponse.contact:type_name -> shogun.kagami.v1.Contact
+	1,  // 32: shogun.kagami.v1.ListContactsRequest.status:type_name -> shogun.kagami.v1.ContactStatus
+	5,  // 33: shogun.kagami.v1.ListContactsResponse.contacts:type_name -> shogun.kagami.v1.Contact
+	5,  // 34: shogun.kagami.v1.GetContactResponse.contact:type_name -> shogun.kagami.v1.Contact
+	6,  // 35: shogun.kagami.v1.GetContactResponse.timeline:type_name -> shogun.kagami.v1.ContactEvent
+	1,  // 36: shogun.kagami.v1.ChangeContactStatusRequest.to_status:type_name -> shogun.kagami.v1.ContactStatus
+	5,  // 37: shogun.kagami.v1.ChangeContactStatusResponse.contact:type_name -> shogun.kagami.v1.Contact
+	28, // 38: shogun.kagami.v1.ImportReport.errors:type_name -> shogun.kagami.v1.ImportRowError
+	29, // 39: shogun.kagami.v1.ImportContactsResponse.report:type_name -> shogun.kagami.v1.ImportReport
+	3,  // 40: shogun.kagami.v1.ListDueFollowUpsResponse.jobs:type_name -> shogun.kagami.v1.Job
+	5,  // 41: shogun.kagami.v1.ListDueFollowUpsResponse.contacts:type_name -> shogun.kagami.v1.Contact
+	7,  // 42: shogun.kagami.v1.KagamiService.AddJob:input_type -> shogun.kagami.v1.AddJobRequest
+	9,  // 43: shogun.kagami.v1.KagamiService.GetJob:input_type -> shogun.kagami.v1.GetJobRequest
+	11, // 44: shogun.kagami.v1.KagamiService.ListJobs:input_type -> shogun.kagami.v1.ListJobsRequest
+	13, // 45: shogun.kagami.v1.KagamiService.UpdateJob:input_type -> shogun.kagami.v1.UpdateJobRequest
+	15, // 46: shogun.kagami.v1.KagamiService.ChangeJobStatus:input_type -> shogun.kagami.v1.ChangeJobStatusRequest
+	17, // 47: shogun.kagami.v1.KagamiService.AddContact:input_type -> shogun.kagami.v1.AddContactRequest
+	19, // 48: shogun.kagami.v1.KagamiService.UpdateContact:input_type -> shogun.kagami.v1.UpdateContactRequest
+	21, // 49: shogun.kagami.v1.KagamiService.ListContacts:input_type -> shogun.kagami.v1.ListContactsRequest
+	23, // 50: shogun.kagami.v1.KagamiService.GetContact:input_type -> shogun.kagami.v1.GetContactRequest
+	25, // 51: shogun.kagami.v1.KagamiService.ChangeContactStatus:input_type -> shogun.kagami.v1.ChangeContactStatusRequest
+	27, // 52: shogun.kagami.v1.KagamiService.ImportContacts:input_type -> shogun.kagami.v1.ImportContactsRequest
+	31, // 53: shogun.kagami.v1.KagamiService.ListDueFollowUps:input_type -> shogun.kagami.v1.ListDueFollowUpsRequest
+	8,  // 54: shogun.kagami.v1.KagamiService.AddJob:output_type -> shogun.kagami.v1.AddJobResponse
+	10, // 55: shogun.kagami.v1.KagamiService.GetJob:output_type -> shogun.kagami.v1.GetJobResponse
+	12, // 56: shogun.kagami.v1.KagamiService.ListJobs:output_type -> shogun.kagami.v1.ListJobsResponse
+	14, // 57: shogun.kagami.v1.KagamiService.UpdateJob:output_type -> shogun.kagami.v1.UpdateJobResponse
+	16, // 58: shogun.kagami.v1.KagamiService.ChangeJobStatus:output_type -> shogun.kagami.v1.ChangeJobStatusResponse
+	18, // 59: shogun.kagami.v1.KagamiService.AddContact:output_type -> shogun.kagami.v1.AddContactResponse
+	20, // 60: shogun.kagami.v1.KagamiService.UpdateContact:output_type -> shogun.kagami.v1.UpdateContactResponse
+	22, // 61: shogun.kagami.v1.KagamiService.ListContacts:output_type -> shogun.kagami.v1.ListContactsResponse
+	24, // 62: shogun.kagami.v1.KagamiService.GetContact:output_type -> shogun.kagami.v1.GetContactResponse
+	26, // 63: shogun.kagami.v1.KagamiService.ChangeContactStatus:output_type -> shogun.kagami.v1.ChangeContactStatusResponse
+	30, // 64: shogun.kagami.v1.KagamiService.ImportContacts:output_type -> shogun.kagami.v1.ImportContactsResponse
+	32, // 65: shogun.kagami.v1.KagamiService.ListDueFollowUps:output_type -> shogun.kagami.v1.ListDueFollowUpsResponse
+	54, // [54:66] is the sub-list for method output_type
+	42, // [42:54] is the sub-list for method input_type
+	42, // [42:42] is the sub-list for extension type_name
+	42, // [42:42] is the sub-list for extension extendee
+	0,  // [0:42] is the sub-list for field type_name
 }
 
 func init() { file_shogun_kagami_v1_kagami_proto_init() }
@@ -47,13 +2660,15 @@ func file_shogun_kagami_v1_kagami_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_kagami_v1_kagami_proto_rawDesc), len(file_shogun_kagami_v1_kagami_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      2,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_kagami_v1_kagami_proto_goTypes,
 		DependencyIndexes: file_shogun_kagami_v1_kagami_proto_depIdxs,
+		EnumInfos:         file_shogun_kagami_v1_kagami_proto_enumTypes,
+		MessageInfos:      file_shogun_kagami_v1_kagami_proto_msgTypes,
 	}.Build()
 	File_shogun_kagami_v1_kagami_proto = out.File
 	file_shogun_kagami_v1_kagami_proto_goTypes = nil

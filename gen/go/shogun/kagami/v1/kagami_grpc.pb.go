@@ -7,7 +7,10 @@
 package kagamiv1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,50 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	KagamiService_AddJob_FullMethodName              = "/shogun.kagami.v1.KagamiService/AddJob"
+	KagamiService_GetJob_FullMethodName              = "/shogun.kagami.v1.KagamiService/GetJob"
+	KagamiService_ListJobs_FullMethodName            = "/shogun.kagami.v1.KagamiService/ListJobs"
+	KagamiService_UpdateJob_FullMethodName           = "/shogun.kagami.v1.KagamiService/UpdateJob"
+	KagamiService_ChangeJobStatus_FullMethodName     = "/shogun.kagami.v1.KagamiService/ChangeJobStatus"
+	KagamiService_AddContact_FullMethodName          = "/shogun.kagami.v1.KagamiService/AddContact"
+	KagamiService_UpdateContact_FullMethodName       = "/shogun.kagami.v1.KagamiService/UpdateContact"
+	KagamiService_ListContacts_FullMethodName        = "/shogun.kagami.v1.KagamiService/ListContacts"
+	KagamiService_GetContact_FullMethodName          = "/shogun.kagami.v1.KagamiService/GetContact"
+	KagamiService_ChangeContactStatus_FullMethodName = "/shogun.kagami.v1.KagamiService/ChangeContactStatus"
+	KagamiService_ImportContacts_FullMethodName      = "/shogun.kagami.v1.KagamiService/ImportContacts"
+	KagamiService_ListDueFollowUps_FullMethodName    = "/shogun.kagami.v1.KagamiService/ListDueFollowUps"
+)
+
 // KagamiServiceClient is the client API for KagamiService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of kagami are added with its first feature task.
+// KagamiService holds jobs, companies, contacts, their timelines and
+// follow-ups. Dates without a time are YYYY-MM-DD strings.
 type KagamiServiceClient interface {
+	// AddJob creates a job, upserting its company by domain. Callers: torii, shinobi.
+	AddJob(ctx context.Context, in *AddJobRequest, opts ...grpc.CallOption) (*AddJobResponse, error)
+	GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*GetJobResponse, error)
+	ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error)
+	// UpdateJob applies update_mask to the job if version matches.
+	UpdateJob(ctx context.Context, in *UpdateJobRequest, opts ...grpc.CallOption) (*UpdateJobResponse, error)
+	// ChangeJobStatus moves a job along the job state machine; an invalid move
+	// is FailedPrecondition with reason JOB_STATUS_INVALID_TRANSITION.
+	ChangeJobStatus(ctx context.Context, in *ChangeJobStatusRequest, opts ...grpc.CallOption) (*ChangeJobStatusResponse, error)
+	AddContact(ctx context.Context, in *AddContactRequest, opts ...grpc.CallOption) (*AddContactResponse, error)
+	UpdateContact(ctx context.Context, in *UpdateContactRequest, opts ...grpc.CallOption) (*UpdateContactResponse, error)
+	ListContacts(ctx context.Context, in *ListContactsRequest, opts ...grpc.CallOption) (*ListContactsResponse, error)
+	// GetContact returns the contact with its timeline.
+	GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*GetContactResponse, error)
+	// ChangeContactStatus fails with CONTACT_STATUS_INVALID_TRANSITION on an
+	// invalid move.
+	ChangeContactStatus(ctx context.Context, in *ChangeContactStatusRequest, opts ...grpc.CallOption) (*ChangeContactStatusResponse, error)
+	// ImportContacts parses a contacts CSV. With dry_run nothing is written.
+	ImportContacts(ctx context.Context, in *ImportContactsRequest, opts ...grpc.CallOption) (*ImportContactsResponse, error)
+	// ListDueFollowUps returns jobs and contacts whose next_follow_up is on or
+	// before a date. Callers: torii, taiko.
+	ListDueFollowUps(ctx context.Context, in *ListDueFollowUpsRequest, opts ...grpc.CallOption) (*ListDueFollowUpsResponse, error)
 }
 
 type kagamiServiceClient struct {
@@ -31,12 +72,155 @@ func NewKagamiServiceClient(cc grpc.ClientConnInterface) KagamiServiceClient {
 	return &kagamiServiceClient{cc}
 }
 
+func (c *kagamiServiceClient) AddJob(ctx context.Context, in *AddJobRequest, opts ...grpc.CallOption) (*AddJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddJobResponse)
+	err := c.cc.Invoke(ctx, KagamiService_AddJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) GetJob(ctx context.Context, in *GetJobRequest, opts ...grpc.CallOption) (*GetJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetJobResponse)
+	err := c.cc.Invoke(ctx, KagamiService_GetJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) ListJobs(ctx context.Context, in *ListJobsRequest, opts ...grpc.CallOption) (*ListJobsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListJobsResponse)
+	err := c.cc.Invoke(ctx, KagamiService_ListJobs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) UpdateJob(ctx context.Context, in *UpdateJobRequest, opts ...grpc.CallOption) (*UpdateJobResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateJobResponse)
+	err := c.cc.Invoke(ctx, KagamiService_UpdateJob_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) ChangeJobStatus(ctx context.Context, in *ChangeJobStatusRequest, opts ...grpc.CallOption) (*ChangeJobStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangeJobStatusResponse)
+	err := c.cc.Invoke(ctx, KagamiService_ChangeJobStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) AddContact(ctx context.Context, in *AddContactRequest, opts ...grpc.CallOption) (*AddContactResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddContactResponse)
+	err := c.cc.Invoke(ctx, KagamiService_AddContact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) UpdateContact(ctx context.Context, in *UpdateContactRequest, opts ...grpc.CallOption) (*UpdateContactResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateContactResponse)
+	err := c.cc.Invoke(ctx, KagamiService_UpdateContact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) ListContacts(ctx context.Context, in *ListContactsRequest, opts ...grpc.CallOption) (*ListContactsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListContactsResponse)
+	err := c.cc.Invoke(ctx, KagamiService_ListContacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*GetContactResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetContactResponse)
+	err := c.cc.Invoke(ctx, KagamiService_GetContact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) ChangeContactStatus(ctx context.Context, in *ChangeContactStatusRequest, opts ...grpc.CallOption) (*ChangeContactStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangeContactStatusResponse)
+	err := c.cc.Invoke(ctx, KagamiService_ChangeContactStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) ImportContacts(ctx context.Context, in *ImportContactsRequest, opts ...grpc.CallOption) (*ImportContactsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ImportContactsResponse)
+	err := c.cc.Invoke(ctx, KagamiService_ImportContacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) ListDueFollowUps(ctx context.Context, in *ListDueFollowUpsRequest, opts ...grpc.CallOption) (*ListDueFollowUpsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListDueFollowUpsResponse)
+	err := c.cc.Invoke(ctx, KagamiService_ListDueFollowUps_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KagamiServiceServer is the server API for KagamiService service.
 // All implementations must embed UnimplementedKagamiServiceServer
 // for forward compatibility.
 //
-// The RPCs of kagami are added with its first feature task.
+// KagamiService holds jobs, companies, contacts, their timelines and
+// follow-ups. Dates without a time are YYYY-MM-DD strings.
 type KagamiServiceServer interface {
+	// AddJob creates a job, upserting its company by domain. Callers: torii, shinobi.
+	AddJob(context.Context, *AddJobRequest) (*AddJobResponse, error)
+	GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error)
+	ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error)
+	// UpdateJob applies update_mask to the job if version matches.
+	UpdateJob(context.Context, *UpdateJobRequest) (*UpdateJobResponse, error)
+	// ChangeJobStatus moves a job along the job state machine; an invalid move
+	// is FailedPrecondition with reason JOB_STATUS_INVALID_TRANSITION.
+	ChangeJobStatus(context.Context, *ChangeJobStatusRequest) (*ChangeJobStatusResponse, error)
+	AddContact(context.Context, *AddContactRequest) (*AddContactResponse, error)
+	UpdateContact(context.Context, *UpdateContactRequest) (*UpdateContactResponse, error)
+	ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error)
+	// GetContact returns the contact with its timeline.
+	GetContact(context.Context, *GetContactRequest) (*GetContactResponse, error)
+	// ChangeContactStatus fails with CONTACT_STATUS_INVALID_TRANSITION on an
+	// invalid move.
+	ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error)
+	// ImportContacts parses a contacts CSV. With dry_run nothing is written.
+	ImportContacts(context.Context, *ImportContactsRequest) (*ImportContactsResponse, error)
+	// ListDueFollowUps returns jobs and contacts whose next_follow_up is on or
+	// before a date. Callers: torii, taiko.
+	ListDueFollowUps(context.Context, *ListDueFollowUpsRequest) (*ListDueFollowUpsResponse, error)
 	mustEmbedUnimplementedKagamiServiceServer()
 }
 
@@ -47,6 +231,42 @@ type KagamiServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedKagamiServiceServer struct{}
 
+func (UnimplementedKagamiServiceServer) AddJob(context.Context, *AddJobRequest) (*AddJobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddJob not implemented")
+}
+func (UnimplementedKagamiServiceServer) GetJob(context.Context, *GetJobRequest) (*GetJobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetJob not implemented")
+}
+func (UnimplementedKagamiServiceServer) ListJobs(context.Context, *ListJobsRequest) (*ListJobsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListJobs not implemented")
+}
+func (UnimplementedKagamiServiceServer) UpdateJob(context.Context, *UpdateJobRequest) (*UpdateJobResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateJob not implemented")
+}
+func (UnimplementedKagamiServiceServer) ChangeJobStatus(context.Context, *ChangeJobStatusRequest) (*ChangeJobStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeJobStatus not implemented")
+}
+func (UnimplementedKagamiServiceServer) AddContact(context.Context, *AddContactRequest) (*AddContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddContact not implemented")
+}
+func (UnimplementedKagamiServiceServer) UpdateContact(context.Context, *UpdateContactRequest) (*UpdateContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateContact not implemented")
+}
+func (UnimplementedKagamiServiceServer) ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListContacts not implemented")
+}
+func (UnimplementedKagamiServiceServer) GetContact(context.Context, *GetContactRequest) (*GetContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContact not implemented")
+}
+func (UnimplementedKagamiServiceServer) ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeContactStatus not implemented")
+}
+func (UnimplementedKagamiServiceServer) ImportContacts(context.Context, *ImportContactsRequest) (*ImportContactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ImportContacts not implemented")
+}
+func (UnimplementedKagamiServiceServer) ListDueFollowUps(context.Context, *ListDueFollowUpsRequest) (*ListDueFollowUpsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListDueFollowUps not implemented")
+}
 func (UnimplementedKagamiServiceServer) mustEmbedUnimplementedKagamiServiceServer() {}
 func (UnimplementedKagamiServiceServer) testEmbeddedByValue()                       {}
 
@@ -68,13 +288,278 @@ func RegisterKagamiServiceServer(s grpc.ServiceRegistrar, srv KagamiServiceServe
 	s.RegisterService(&KagamiService_ServiceDesc, srv)
 }
 
+func _KagamiService_AddJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).AddJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_AddJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).AddJob(ctx, req.(*AddJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_GetJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).GetJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_GetJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).GetJob(ctx, req.(*GetJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_ListJobs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListJobsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).ListJobs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_ListJobs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).ListJobs(ctx, req.(*ListJobsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_UpdateJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateJobRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).UpdateJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_UpdateJob_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).UpdateJob(ctx, req.(*UpdateJobRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_ChangeJobStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeJobStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).ChangeJobStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_ChangeJobStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).ChangeJobStatus(ctx, req.(*ChangeJobStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_AddContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).AddContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_AddContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).AddContact(ctx, req.(*AddContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_UpdateContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).UpdateContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_UpdateContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).UpdateContact(ctx, req.(*UpdateContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_ListContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListContactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).ListContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_ListContacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).ListContacts(ctx, req.(*ListContactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_GetContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).GetContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_GetContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).GetContact(ctx, req.(*GetContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_ChangeContactStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeContactStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).ChangeContactStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_ChangeContactStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).ChangeContactStatus(ctx, req.(*ChangeContactStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_ImportContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImportContactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).ImportContacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_ImportContacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).ImportContacts(ctx, req.(*ImportContactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_ListDueFollowUps_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDueFollowUpsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).ListDueFollowUps(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_ListDueFollowUps_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).ListDueFollowUps(ctx, req.(*ListDueFollowUpsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KagamiService_ServiceDesc is the grpc.ServiceDesc for KagamiService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var KagamiService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.kagami.v1.KagamiService",
 	HandlerType: (*KagamiServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/kagami/v1/kagami.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddJob",
+			Handler:    _KagamiService_AddJob_Handler,
+		},
+		{
+			MethodName: "GetJob",
+			Handler:    _KagamiService_GetJob_Handler,
+		},
+		{
+			MethodName: "ListJobs",
+			Handler:    _KagamiService_ListJobs_Handler,
+		},
+		{
+			MethodName: "UpdateJob",
+			Handler:    _KagamiService_UpdateJob_Handler,
+		},
+		{
+			MethodName: "ChangeJobStatus",
+			Handler:    _KagamiService_ChangeJobStatus_Handler,
+		},
+		{
+			MethodName: "AddContact",
+			Handler:    _KagamiService_AddContact_Handler,
+		},
+		{
+			MethodName: "UpdateContact",
+			Handler:    _KagamiService_UpdateContact_Handler,
+		},
+		{
+			MethodName: "ListContacts",
+			Handler:    _KagamiService_ListContacts_Handler,
+		},
+		{
+			MethodName: "GetContact",
+			Handler:    _KagamiService_GetContact_Handler,
+		},
+		{
+			MethodName: "ChangeContactStatus",
+			Handler:    _KagamiService_ChangeContactStatus_Handler,
+		},
+		{
+			MethodName: "ImportContacts",
+			Handler:    _KagamiService_ImportContacts_Handler,
+		},
+		{
+			MethodName: "ListDueFollowUps",
+			Handler:    _KagamiService_ListDueFollowUps_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/kagami/v1/kagami.proto",
 }

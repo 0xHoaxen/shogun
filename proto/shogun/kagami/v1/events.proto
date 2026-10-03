@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package shogun.kagami.v1;
+
+import "google/protobuf/timestamp.proto";
+import "shogun/kagami/v1/kagami.proto";
+
+// Payloads of the events kagami produces. Routes live in pkg/bus/routes.go.
+
+// JobAdded is the payload of job.added.
+message JobAdded {
+  string job_id = 1;
+  string title = 2;
+  string company = 3;
+  string url = 4;
+  string source = 5;
+}
+
+// JobStatusChanged is the payload of job.status_changed.
+message JobStatusChanged {
+  string job_id = 1;
+  JobStatus from = 2;
+  JobStatus to = 3;
+  google.protobuf.Timestamp at = 4;
+}
+
+// JobFollowUpDue is the payload of job.follow_up_due.
+message JobFollowUpDue {
+  string job_id = 1;
+  // due_on is a YYYY-MM-DD date.
+  string due_on = 2;
+}
+
+// ContactAdded is the payload of contact.added.
+message ContactAdded {
+  string contact_id = 1;
+  ContactStatus status = 2;
+}
+
+// ContactStatusChanged is the payload of contact.status_changed.
+message ContactStatusChanged {
+  string contact_id = 1;
+  ContactStatus from = 2;
+  ContactStatus to = 3;
+  string channel = 4;
+}
+
+// ContactFollowUpDue is the payload of contact.follow_up_due.
+message ContactFollowUpDue {
+  string contact_id = 1;
+  string due_on = 2;
+}

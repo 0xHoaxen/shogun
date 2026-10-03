@@ -160,7 +160,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 4: kagami (jobs and contacts) and torii (gateway)
 
-- [ ] **P4.1 kagami proto** (M) Needs: P2.3
+- [x] **P4.1 kagami proto** (M) Needs: P2.3
   Do: `proto/shogun/kagami/v1/kagami.proto` with the RPCs from the LLD (AddJob, GetJob, ListJobs, UpdateJob, ChangeJobStatus, AddContact, UpdateContact, ListContacts, GetContact, ChangeContactStatus, ImportContacts, ListDueFollowUps) and `events.proto` payloads for `job.*` and `contact.*`.
   Done when: `make proto` and `bin/buf lint` pass.
 
