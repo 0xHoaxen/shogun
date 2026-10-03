@@ -176,7 +176,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: sqlc queries + repositories with optimistic `version` and cursor pagination; contacts dedupe on lower(email) then linkedin_url.
   Done when: testcontainers integration tests pass for create, update with stale version (fails), list pagination, dedupe.
 
-- [ ] **P4.5 kagami use cases + handlers (jobs)** (M) Needs: P4.3, P4.4, P1.5
+- [x] **P4.5 kagami use cases + handlers (jobs)** (M) Needs: P4.3, P4.4, P1.5
   Do: AddJob (upsert company by domain, write `job.added` via outbox), ChangeJobStatus (writes `job_events` and `job.status_changed`), Get/List/Update; gRPC handlers with authz.
   Done when: handler tests pass; a test asserts exactly one outbox row per mutating call.
 
