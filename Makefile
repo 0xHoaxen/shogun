@@ -26,7 +26,11 @@ proto: ## buf lint + buf generate into gen/go and web/src/gen
 	$(BIN)/buf generate
 
 sqlc: ## generate internal/store/db in each service
-	@echo "not yet: needs service skeletons (P2.3) and sqlc.yaml (P4.4)"
+	@for f in services/*/sqlc.yaml; do \
+		[ -f "$$f" ] || continue; \
+		echo "==> sqlc $$(dirname $$f)"; \
+		(cd $$(dirname $$f) && $(BIN)/sqlc generate) || exit 1; \
+	done
 
 lint: ## golangci-lint on every module, buf lint
 	@for m in $(MODULES); do echo "==> lint $$m"; (cd $$m && $(BIN)/golangci-lint run ./...) || exit 1; done

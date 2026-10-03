@@ -172,7 +172,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `internal/domain` job and contact entities with transition tables from the System Design state machines; errors map to `JOB_STATUS_INVALID_TRANSITION` / `CONTACT_STATUS_INVALID_TRANSITION`.
   Done when: table-driven tests cover every allowed and one disallowed transition per state.
 
-- [ ] **P4.4 kagami store** (M) Needs: P4.2
+- [x] **P4.4 kagami store** (M) Needs: P4.2
   Do: sqlc queries + repositories with optimistic `version` and cursor pagination; contacts dedupe on lower(email) then linkedin_url.
   Done when: testcontainers integration tests pass for create, update with stale version (fails), list pagination, dedupe.
 
