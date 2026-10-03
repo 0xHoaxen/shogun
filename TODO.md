@@ -164,7 +164,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `proto/shogun/kagami/v1/kagami.proto` with the RPCs from the LLD (AddJob, GetJob, ListJobs, UpdateJob, ChangeJobStatus, AddContact, UpdateContact, ListContacts, GetContact, ChangeContactStatus, ImportContacts, ListDueFollowUps) and `events.proto` payloads for `job.*` and `contact.*`.
   Done when: `make proto` and `bin/buf lint` pass.
 
-- [ ] **P4.2 kagami migrations** (M) Needs: P2.3
+- [x] **P4.2 kagami migrations** (M) Needs: P2.3
   Do: migration `00002_core.sql` with `companies jobs job_events contacts contact_events imports` exactly as in the System Design "Table structures" tab.
   Done when: `make migrate` applies cleanly; `\d kagami.jobs` matches the DDL.
 
