@@ -75,9 +75,10 @@ func Run(m *testing.M) int {
 	return m.Run()
 }
 
-// NewDatabase creates an empty database in the shared container and returns
-// its connection URL. The database is dropped when the test ends. Run must
-// have been called from TestMain.
+// NewDatabase creates a database in the shared container, with the vector and
+// citext extensions installed in an extensions schema as in the local stack,
+// and returns its connection URL. The database is dropped when the test ends.
+// Run must have been called from TestMain.
 func NewDatabase(t testing.TB) string {
 	t.Helper()
 	mu.Lock()
@@ -115,7 +116,30 @@ func NewDatabase(t testing.TB) string {
 		t.Fatalf("postgrestest: parse url: %v", err)
 	}
 	u.Path = "/" + name
+	installExtensions(t, u.String())
 	return u.String()
+}
+
+// installExtensions mirrors deploy/compose/postgres/init.sql: vector and
+// citext live in the shared extensions schema that postgres.Connect puts on
+// the search_path.
+func installExtensions(t testing.TB, url string) {
+	t.Helper()
+	ctx := context.Background()
+	c, err := pgx.Connect(ctx, url)
+	if err != nil {
+		t.Fatalf("postgrestest: connect for extensions: %v", err)
+	}
+	defer closeConn(t, c)
+	for _, stmt := range []string{
+		`CREATE SCHEMA extensions`,
+		`CREATE EXTENSION vector WITH SCHEMA extensions`,
+		`CREATE EXTENSION citext WITH SCHEMA extensions`,
+	} {
+		if _, err := c.Exec(ctx, stmt); err != nil {
+			t.Fatalf("postgrestest: %s: %v", stmt, err)
+		}
+	}
 }
 
 func closeConn(t testing.TB, c *pgx.Conn) {

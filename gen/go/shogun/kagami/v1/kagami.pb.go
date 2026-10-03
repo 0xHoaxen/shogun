@@ -235,22 +235,24 @@ func (x *Company) GetUpdatedAt() *timestamppb.Timestamp {
 }
 
 type Job struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	CompanyId     string                 `protobuf:"bytes,2,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
-	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	Url           string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
-	Source        string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
-	Status        JobStatus              `protobuf:"varint,6,opt,name=status,proto3,enum=shogun.kagami.v1.JobStatus" json:"status,omitempty"`
-	AppliedOn     string                 `protobuf:"bytes,7,opt,name=applied_on,json=appliedOn,proto3" json:"applied_on,omitempty"`
-	NextFollowUp  string                 `protobuf:"bytes,8,opt,name=next_follow_up,json=nextFollowUp,proto3" json:"next_follow_up,omitempty"`
-	SalaryText    string                 `protobuf:"bytes,9,opt,name=salary_text,json=salaryText,proto3" json:"salary_text,omitempty"`
-	Location      string                 `protobuf:"bytes,10,opt,name=location,proto3" json:"location,omitempty"`
-	Description   string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"`
-	Version       int32                  `protobuf:"varint,12,opt,name=version,proto3" json:"version,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	ArchivedAt    *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Id           string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	CompanyId    string                 `protobuf:"bytes,2,opt,name=company_id,json=companyId,proto3" json:"company_id,omitempty"`
+	Title        string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Url          string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Source       string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	Status       JobStatus              `protobuf:"varint,6,opt,name=status,proto3,enum=shogun.kagami.v1.JobStatus" json:"status,omitempty"`
+	AppliedOn    string                 `protobuf:"bytes,7,opt,name=applied_on,json=appliedOn,proto3" json:"applied_on,omitempty"`
+	NextFollowUp string                 `protobuf:"bytes,8,opt,name=next_follow_up,json=nextFollowUp,proto3" json:"next_follow_up,omitempty"`
+	SalaryText   string                 `protobuf:"bytes,9,opt,name=salary_text,json=salaryText,proto3" json:"salary_text,omitempty"`
+	Location     string                 `protobuf:"bytes,10,opt,name=location,proto3" json:"location,omitempty"`
+	Description  string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"`
+	Version      int32                  `protobuf:"varint,12,opt,name=version,proto3" json:"version,omitempty"`
+	CreatedAt    *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt    *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	ArchivedAt   *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
+	// company_name is the name of company_id, filled in on responses.
+	CompanyName   string `protobuf:"bytes,16,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -390,6 +392,13 @@ func (x *Job) GetArchivedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Job) GetCompanyName() string {
+	if x != nil {
+		return x.CompanyName
+	}
+	return ""
+}
+
 type JobEvent struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -508,8 +517,10 @@ type Contact struct {
 	CreatedAt        *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt        *timestamppb.Timestamp `protobuf:"bytes,21,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	ArchivedAt       *timestamppb.Timestamp `protobuf:"bytes,22,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// company_name is the name of company_id, filled in on responses.
+	CompanyName   string `protobuf:"bytes,23,opt,name=company_name,json=companyName,proto3" json:"company_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Contact) Reset() {
@@ -694,6 +705,13 @@ func (x *Contact) GetArchivedAt() *timestamppb.Timestamp {
 		return x.ArchivedAt
 	}
 	return nil
+}
+
+func (x *Contact) GetCompanyName() string {
+	if x != nil {
+		return x.CompanyName
+	}
+	return ""
 }
 
 type ContactEvent struct {
@@ -2311,7 +2329,7 @@ const file_shogun_kagami_v1_kagami_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\x9a\x04\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xbd\x04\n" +
 	"\x03Job\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +
@@ -2334,7 +2352,8 @@ const file_shogun_kagami_v1_kagami_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12;\n" +
 	"\varchived_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"archivedAt\"\x94\x02\n" +
+	"archivedAt\x12!\n" +
+	"\fcompany_name\x18\x10 \x01(\tR\vcompanyName\"\x94\x02\n" +
 	"\bJobEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x15\n" +
 	"\x06job_id\x18\x02 \x01(\tR\x05jobId\x12\x12\n" +
@@ -2344,7 +2363,7 @@ const file_shogun_kagami_v1_kagami_proto_rawDesc = "" +
 	"\tto_status\x18\x05 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\btoStatus\x12\x18\n" +
 	"\apayload\x18\x06 \x01(\tR\apayload\x12;\n" +
 	"\voccurred_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"occurredAt\"\xf7\x05\n" +
+	"occurredAt\"\x9a\x06\n" +
 	"\aContact\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x1d\n" +
@@ -2374,7 +2393,8 @@ const file_shogun_kagami_v1_kagami_proto_rawDesc = "" +
 	"\n" +
 	"updated_at\x18\x15 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12;\n" +
 	"\varchived_at\x18\x16 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"archivedAt\"\xc2\x01\n" +
+	"archivedAt\x12!\n" +
+	"\fcompany_name\x18\x17 \x01(\tR\vcompanyName\"\xc2\x01\n" +
 	"\fContactEvent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1d\n" +
 	"\n" +

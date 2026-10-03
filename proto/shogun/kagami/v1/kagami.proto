@@ -79,6 +79,8 @@ message Job {
   google.protobuf.Timestamp created_at = 13;
   google.protobuf.Timestamp updated_at = 14;
   google.protobuf.Timestamp archived_at = 15;
+  // company_name is the name of company_id, filled in on responses.
+  string company_name = 16;
 }
 
 message JobEvent {
@@ -116,6 +118,8 @@ message Contact {
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
   google.protobuf.Timestamp archived_at = 22;
+  // company_name is the name of company_id, filled in on responses.
+  string company_name = 23;
 }
 
 message ContactEvent {

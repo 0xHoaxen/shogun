@@ -79,20 +79,6 @@ func TestMigrateCreatesTablesInServiceSchema(t *testing.T) {
 func TestConnectResolvesExtensionOperatorsUnqualified(t *testing.T) {
 	url := postgrestest.NewDatabase(t)
 	ctx := context.Background()
-	admin, err := pgx.Connect(ctx, url)
-	if err != nil {
-		t.Fatalf("connect admin: %v", err)
-	}
-	defer func() { _ = admin.Close(ctx) }()
-	for _, stmt := range []string{
-		`CREATE SCHEMA extensions`,
-		`CREATE EXTENSION vector WITH SCHEMA extensions`,
-		`CREATE EXTENSION citext WITH SCHEMA extensions`,
-	} {
-		if _, err := admin.Exec(ctx, stmt); err != nil {
-			t.Fatalf("%s: %v", stmt, err)
-		}
-	}
 
 	pool, err := postgres.Connect(ctx, url, "kagami")
 	if err != nil {
