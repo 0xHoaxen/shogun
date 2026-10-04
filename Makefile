@@ -24,6 +24,12 @@ tools: ## install pinned buf, protoc plugins, goose, sqlc and golangci-lint into
 proto: ## buf lint + buf generate into gen/go and web/src/gen
 	$(BIN)/buf lint
 	$(BIN)/buf generate
+	@if [ -x web/node_modules/.bin/protoc-gen-es ]; then \
+		echo "==> buf generate (web)"; \
+		$(BIN)/buf generate --template buf.gen.web.yaml --path proto/shogun/api || exit 1; \
+	else \
+		echo "not yet: web/node_modules missing, run 'cd web && npm ci' to generate the TS client"; \
+	fi
 
 sqlc: ## generate internal/store/db in each service
 	@for f in services/*/sqlc.yaml; do \

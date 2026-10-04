@@ -196,9 +196,17 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: the scans run only at their scheduled minute, so a day on which kagami was down at 07:55 and 08:00 is never scanned. On start, enqueue today's scans when the clock is already past their time (the unique-by-date args keep it to one run). `TODO(owner)`: `staleAfterDays` (7) in `internal/app/followups.go` is a default to confirm.
   Done when: a test starts the service at 09:00 IST on a day with no scan job and sees both scans run once.
 
-- [ ] **P4.9 torii proto + login** (L, split) Needs: P1.7, P3.3
-  Do (a): `proto/shogun/api/v1` Jobs and Contacts services. Do (b): Google OAuth with PKCE, email allowlist from env, session in `torii.sessions` (token hash only), cookie HttpOnly Secure SameSite=Lax, sliding renewal. Do (c): ConnectRPC server, session middleware, internal identity signing, rate limit, request size cap.
-  Done when: tests with a fake OAuth provider cover allowed email, disallowed email, expired session, logout; an unauthenticated API call returns `Unauthenticated`.
+- [x] **P4.9a api/v1 protos and TS codegen** (S) Needs: P1.7, P3.3
+  Do: `proto/shogun/api/v1/{auth,jobs,contacts}.proto` (`AuthService`, `JobsService`, `ContactsService`); `buf.gen.web.yaml` generating the TS client with `protoc-gen-es` v2 into `web/src/gen`, run by `make proto` once `web/node_modules` exists (P5.1a).
+  Done when: `make proto`, `bin/buf lint` and `bin/buf breaking --against '.git#branch=main'` pass; `cd gen/go && go build ./...` passes.
+
+- [ ] **P4.9b Google login and sessions** (M) Needs: P4.9a
+  Do: Google OAuth (authorization code + PKCE + `state`) at `/auth/login`, `/auth/callback`, `/auth/logout`; ID token verified with `go-oidc`; issuer from `GOOGLE_ISSUER_URL` (defaults to Google, overridden by tests); email allowlist from `TORII_ALLOWED_EMAILS`; session in `torii.sessions` (token hash only); cookie HttpOnly, Secure outside local, SameSite=Lax; sliding renewal.
+  Done when: tests with a fake OAuth provider cover allowed email, disallowed email, expired session, logout.
+
+- [ ] **P4.9c ConnectRPC server and session middleware** (M) Needs: P4.9b
+  Do: public HTTP listener `TORII_PUBLIC_ADDR` serving ConnectRPC handlers and `/auth/*`; session middleware resolving the cookie to the owner and signing the internal identity; per-IP rate limit; request size cap; graceful shutdown; `AuthService` handlers.
+  Done when: an unauthenticated API call returns `Unauthenticated`; `GetSession` and `Logout` handler tests pass.
 
 - [ ] **P4.10 torii jobs and contacts endpoints** (M) Needs: P4.9, P4.6
   Do: screen-shaped endpoints calling kagami; `Idempotency-Key` passthrough.

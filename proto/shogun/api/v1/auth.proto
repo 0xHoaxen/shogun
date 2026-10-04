@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AuthService is the session surface of the web app. Login itself is the
+// browser redirect flow under /auth/*; these RPCs only read and end a session.
+service AuthService {
+  // GetSession returns the signed-in owner; Unauthenticated without a session.
+  rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
+  // Logout ends the current session and clears its cookie.
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+}
+
+message Session {
+  string email = 1;
+  string display_name = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message GetSessionRequest {}
+
+message GetSessionResponse {
+  Session session = 1;
+}
+
+message LogoutRequest {}
+
+message LogoutResponse {}
