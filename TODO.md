@@ -237,12 +237,12 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `cd web && npm ci && npm run lint && npm run typecheck && npm run build` passes; `make proto` leaves no diff.
   `TODO(owner)`: register `web` with release-please (`release-please-config.json` and the manifest are protected files); `web/AGENTS.md` and `web/CLAUDE.md` are written by `next dev` and kept so the tree stays clean.
 
-- [ ] **P5.1b Login page and authenticated layout** (M) Needs: P5.1a, P4.9c2
-  Do: `/login` with the Google link and `?error=` messages, the authenticated shell from the design canvas (rail, strip, tab nav, utility footer with logout), session gate on `AuthService.GetSession` that sends `Unauthenticated` to `/login`, `reasonOf` helper for `ErrorInfo.reason`, Playwright config with a mocked-API helper, and the `e2e` step in the CI `web` job.
+- [x] **P5.1b Login page and authenticated layout** (M) Needs: P5.1a, P4.9c2
+  Do: `/login` with the Google link and `?error=` messages, the authenticated shell from the design canvas (rail, strip, tab nav, utility footer with logout), session gate on `AuthService.GetSession` that sends `Unauthenticated` to `/login`, Playwright config with a mocked-API helper, and the `e2e` step in the CI `web` job.
   Done when: `cd web && npm run build && npm run test:e2e` passes: signed-out redirect, login link, error message, signed-in shell, logout.
 
 - [ ] **P5.2a Jobs board** (M) Needs: P5.1b, P4.10a
-  Do: board by status from `GetBoard`, drag (pointer and keyboard) to `ChangeJobStatus` with optimistic move and rollback keyed by `ErrorInfo.reason`, add-job dialog with `Idempotency-Key`.
+  Do: board by status from `GetBoard`, drag (pointer and keyboard) to `ChangeJobStatus` with optimistic move and rollback keyed by `ErrorInfo.reason` (add a `reasonOf` helper in `web/src/lib/errors.ts` that decodes the `google.rpc.ErrorInfo` detail), add-job dialog with `Idempotency-Key`.
   Done when: Playwright tests (mocked API) for add job, move job and a rejected move pass.
 
 - [ ] **P5.2b Contacts table and CSV import** (M) Needs: P5.1b, P4.10b
