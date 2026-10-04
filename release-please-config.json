@@ -43,6 +43,10 @@
     },
     "services/soroban": {
       "component": "services/soroban"
+    },
+    "web": {
+      "component": "web",
+      "release-type": "node"
     }
   }
 }
