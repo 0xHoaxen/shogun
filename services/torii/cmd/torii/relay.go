@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -18,11 +19,13 @@ import (
 // Events carry no owner, and consumers that enforce authz still need one.
 const relayOwnerPrefix = "system:"
 
-// relayOverrides replaces what startRelay would otherwise build from the
-// environment and the event routes. The zero value means no override.
-type relayOverrides struct {
-	bus    bus.Bus
-	routes func(eventType string) []string
+// runOverrides replaces what run would otherwise build from the environment:
+// the relay's bus and event routes, and the public API listener. The zero
+// value means no override.
+type runOverrides struct {
+	bus            bus.Bus
+	routes         func(eventType string) []string
+	publicListener net.Listener
 }
 
 // startRelay starts the outbox relay and returns a function that stops it and
@@ -34,7 +37,7 @@ func startRelay(
 	lookup config.LookupFunc,
 	signer grpcclient.Signer,
 	timeout time.Duration,
-	overrides relayOverrides,
+	overrides runOverrides,
 ) (func(), error) {
 	sink := overrides.bus
 	closeBus := func() error { return nil }

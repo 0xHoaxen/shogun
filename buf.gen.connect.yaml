@@ -1,0 +1,14 @@
+version: v2
+# ConnectRPC server stubs for torii's browser API only (proto/shogun/api).
+# The messages come from buf.gen.yaml; this adds <name>connect packages with
+# the service handlers and clients. Run by `make proto` with
+# --path proto/shogun/api, so the internal services get no Connect code.
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/0xHoaxen/shogun/gen/go
+plugins:
+  - local: bin/protoc-gen-connect-go
+    out: gen/go
+    opt: paths=source_relative

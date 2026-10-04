@@ -3,6 +3,7 @@ module github.com/0xHoaxen/shogun/tools
 go 1.25.4
 
 tool (
+	connectrpc.com/connect/cmd/protoc-gen-connect-go
 	github.com/bufbuild/buf/cmd/buf
 	github.com/pressly/goose/v3/cmd/goose
 	github.com/sqlc-dev/sqlc/cmd/sqlc

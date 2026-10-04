@@ -1,0 +1,55 @@
+# End-to-end add-on: a stub OpenID provider in place of Google, so the web
+# app's login can be exercised without a real account. Used by the CI
+# e2e-compose job:
+#   docker compose -f compose.yaml -f compose.e2e.yaml up -d --build --wait \
+#     postgres kagami torii web mock-oauth2
+#
+# Torii checks that the provider's issuer equals GOOGLE_ISSUER_URL, and the
+# mock derives its issuer from the request host. The browser therefore has to
+# reach the provider as mock-oauth2 too; playwright.compose.config.ts maps that
+# name to 127.0.0.1 inside Chromium, so no /etc/hosts entry is needed.
+services:
+  mock-oauth2:
+    image: ghcr.io/navikt/mock-oauth2-server:6.0.4
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: "8080"
+      # No login screen: every authorization is granted for the subject below.
+      JSON_CONFIG: |
+        {
+          "interactiveLogin": false,
+          "tokenCallbacks": [
+            {
+              "issuerId": "default",
+              "requestMappings": [
+                {
+                  "requestParam": "code",
+                  "match": "*",
+                  "claims": {
+                    "sub": "e2e-owner",
+                    "email": "${TORII_E2E_EMAIL:-owner@example.com}",
+                    "email_verified": true,
+                    "name": "E2E Owner"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/default/.well-known/openid-configuration || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  torii:
+    depends_on:
+      mock-oauth2:
+        condition: service_healthy
+    environment:
+      GOOGLE_ISSUER_URL: http://mock-oauth2:8080/default
+      GOOGLE_CLIENT_ID: e2e-client
+      GOOGLE_CLIENT_SECRET: e2e-secret
+      TORII_ALLOWED_EMAILS: ${TORII_E2E_EMAIL:-owner@example.com}

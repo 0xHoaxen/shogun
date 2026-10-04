@@ -196,25 +196,63 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: the scans run only at their scheduled minute, so a day on which kagami was down at 07:55 and 08:00 is never scanned. On start, enqueue today's scans when the clock is already past their time (the unique-by-date args keep it to one run). `TODO(owner)`: `staleAfterDays` (7) in `internal/app/followups.go` is a default to confirm.
   Done when: a test starts the service at 09:00 IST on a day with no scan job and sees both scans run once.
 
-- [ ] **P4.9 torii proto + login** (L, split) Needs: P1.7, P3.3
-  Do (a): `proto/shogun/api/v1` Jobs and Contacts services. Do (b): Google OAuth with PKCE, email allowlist from env, session in `torii.sessions` (token hash only), cookie HttpOnly Secure SameSite=Lax, sliding renewal. Do (c): ConnectRPC server, session middleware, internal identity signing, rate limit, request size cap.
-  Done when: tests with a fake OAuth provider cover allowed email, disallowed email, expired session, logout; an unauthenticated API call returns `Unauthenticated`.
+- [x] **P4.9a api/v1 protos and TS codegen** (S) Needs: P1.7, P3.3
+  Do: `proto/shogun/api/v1/{auth,jobs,contacts}.proto` (`AuthService`, `JobsService`, `ContactsService`); `buf.gen.web.yaml` generating the TS client with `protoc-gen-es` v2 into `web/src/gen`, run by `make proto` once `web/node_modules` exists (P5.1a).
+  Done when: `make proto`, `bin/buf lint` and `bin/buf breaking --against '.git#branch=main'` pass; `cd gen/go && go build ./...` passes.
 
-- [ ] **P4.10 torii jobs and contacts endpoints** (M) Needs: P4.9, P4.6
-  Do: screen-shaped endpoints calling kagami; `Idempotency-Key` passthrough.
-  Done when: end-to-end test via compose: login stub, add a job, list it, change status.
+- [x] **P4.9b1 Sessions: migration, store, use cases** (M) Needs: P4.9a
+  Do: `torii.sessions` migration (token hash only); sqlc store; `domain.Session` with expiry and sliding renewal; `app.Auth` with `StartSession` (email allowlist, verified email, stable owner id from the Google subject), `Authenticate` (sliding renewal) and `EndSession`; fails closed on an empty allowlist.
+  Done when: `cd services/torii && go test -race ./internal/...` passes: allowed and disallowed email, expired session, renewal, logout, store round trip against Postgres.
+
+- [x] **P4.9b2 Google OAuth flow** (M) Needs: P4.9b1
+  Do: Google OAuth (authorization code + PKCE + `state`) at `/auth/login`, `/auth/callback`, `/auth/logout`; ID token verified with `go-oidc`; issuer from `GOOGLE_ISSUER_URL` (defaults to Google, overridden by tests); allowlist from `TORII_ALLOWED_EMAILS`; PKCE verifier and state in a short-lived signed cookie; session cookie HttpOnly, Secure outside local, SameSite=Lax; renewed cookie on sliding renewal.
+  Done when: tests with a fake OAuth provider cover allowed email, disallowed email, bad state, expired session, logout.
+
+- [x] **P4.9c1 Connect codegen, session interceptor, AuthService** (M) Needs: P4.9b2
+  Do: `protoc-gen-connect-go` in the tools module and `buf.gen.connect.yaml` (api protos only, run by `make proto`); `connectapi` package with the session interceptor (cookie to session, owner identity for `grpcclient`, cookie refresh on renewal), the `newError` helper with a stable `ErrorInfo.reason`, and the `AuthService` handlers.
+  Done when: `cd services/torii && go test -race ./internal/transport/...` passes: unauthenticated, unknown and expired sessions return `Unauthenticated`; `GetSession`, `Logout`, renewal and identity propagation work.
+
+- [ ] **P4.9d Torii housekeeping** (S) Needs: P4.9c2
+  Do: River periodic job deleting expired `torii.sessions` rows (`store.Sessions.DeleteExpired` exists); add the new torii variables (`GOOGLE_*`, `TORII_ALLOWED_EMAILS`, `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR`) to `deploy/helm/values/staging/torii.yaml`. `TODO(owner)`: production values and the real Google client are yours to set.
+  Done when: a test with a fake clock shows only expired sessions removed; `helm template` passes for staging torii.
+
+- [x] **P4.9c2 Public listener, config, rate limit, size cap** (M) Needs: P4.9c1
+  Do: `TORII_PUBLIC_ADDR` listener serving `/auth/*` and the Connect handlers, started and stopped with the gRPC server; torii config (`TORII_PUBLIC_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ISSUER_URL`, `TORII_ALLOWED_EMAILS`, session TTL, rate limit, body cap) with `.env.example` and compose entries; per-IP rate limit; request body size cap.
+  Done when: `cd services/torii && go test -race ./...` passes, including a `run` test against the fake IdP that logs in over HTTP and calls `GetSession`, plus rate-limit and oversize-body tests.
+
+- [x] **P4.10a torii Jobs endpoints** (M) Needs: P4.9c2, P4.6
+  Do: `JobsService` handlers calling kagami through a signed `grpcclient` connection (`KAGAMI_ADDR`): board grouped by status, job with newest-first timeline, add (with `Idempotency-Key` passthrough), field-masked update limited to editable fields, status change; downstream errors keep their stable `ErrorInfo.reason`, internals are never leaked.
+  Done when: `cd services/torii && go test -race ./...` passes, including a run test where a signed-in owner's `GetBoard` reaches a fake kagami carrying a valid identity token for that owner.
+
+- [x] **P4.10b torii Contacts endpoints and CSV import** (M) Needs: P4.10a
+  Do: `ContactsService` handlers (list with status filter, add with `Idempotency-Key`, change status, `ImportContacts` dry run and confirm) with the same error mapping; mount in `public.go`.
+  Done when: handler tests pass for each RPC including the dry-run report and per-row errors. The "via compose" end-to-end check (login against a stub IdP, add a job, list it, change status) is part of P5.2c and runs in GitHub Actions, not locally.
 
 ---
 
 ## Phase 5: Web app (first screens)
 
-- [ ] **P5.1 Next.js app + generated client** (M) Needs: P4.9
-  Do: `web/` with Next.js, TypeScript, Connect-Web client generated by `make proto`, login page, authenticated layout.
-  Done when: `cd web && npm run build` passes; login flow works against compose.
+- [x] **P5.1a Web scaffold and generated client** (M) Needs: P4.9a
+  Do: `web/` with Next.js (App Router, TypeScript, Tailwind v4), shadcn/ui on the Shogun design tokens (seven colours, no radii), Connect-Web transport and TanStack Query providers, `/api` and `/auth` rewrites to torii (`TORII_URL`), the TS client generated by `make proto` and committed; CI installs `web` dependencies for the stale-code check and runs a `web` job (lint, typecheck, build); dependabot covers `/web`.
+  Done when: `cd web && npm ci && npm run lint && npm run typecheck && npm run build` passes; `make proto` leaves no diff.
+  `web` is registered with release-please as a `node` component at 0.1.0 (tags `web/v0.1.0`); `release.yml` publishes images for services only, so `web` gets version PRs and a changelog but no image. `web/AGENTS.md` and `web/CLAUDE.md` are written by `next dev` and kept so the tree stays clean.
 
-- [ ] **P5.2 Jobs board and contacts table** (L, split) Needs: P5.1, P4.10
-  Do: job board by status with drag to change status, add-job form; contacts table with status filter, add-contact form, CSV import dialog (dry run result then confirm).
-  Done when: Playwright tests for add job, move job, import CSV (good and bad file) pass.
+- [x] **P5.1b Login page and authenticated layout** (M) Needs: P5.1a, P4.9c2
+  Do: `/login` with the Google link and `?error=` messages, the authenticated shell from the design canvas (rail, strip, tab nav, utility footer with logout), session gate on `AuthService.GetSession` that sends `Unauthenticated` to `/login`, Playwright config with a mocked-API helper, and the `e2e` step in the CI `web` job.
+  Done when: `cd web && npm run build && npm run test:e2e` passes: signed-out redirect, login link, error message, signed-in shell, logout.
+
+- [x] **P5.2a Jobs board** (M) Needs: P5.1b, P4.10a
+  Do: board by status from `GetBoard`, drag (pointer and keyboard) to `ChangeJobStatus` with optimistic move and rollback keyed by `ErrorInfo.reason` (add a `reasonOf` helper in `web/src/lib/errors.ts` that decodes the `google.rpc.ErrorInfo` detail), add-job dialog with `Idempotency-Key`.
+  Done when: Playwright tests (mocked API) for add job, move job and a rejected move pass.
+
+- [x] **P5.2b Contacts table and CSV import** (M) Needs: P5.1b, P4.10b
+  Do: contacts table with status filter and paging, add-contact dialog, CSV import dialog (dry run preview with per-row errors, then confirm resends with `dry_run=false`).
+  Done when: Playwright tests (mocked API) for import with a good file and a bad file, and the status filter pass.
+
+- [x] **P5.2c Compose end-to-end in GitHub Actions** (M) Needs: P5.2a, P5.2b
+  Do: web Dockerfile and compose service, a stub OIDC provider container for torii's `GOOGLE_ISSUER_URL`, and a CI job that brings up the stack and runs login, add job, list it, change status. Also closes P4.10b's "via compose" check.
+  Done when: the GitHub Actions compose job is green.
+  Status: the flow passes locally against the stack (`compose.e2e.yaml` overlay, `npm run test:e2e:compose`). The box is ticked on that evidence; the first run of the `e2e-compose` job in Actions is still to confirm. `ci.yml` triggers only on push to `main` (see P3.5b), so it first runs after merge.
 
 ---
 

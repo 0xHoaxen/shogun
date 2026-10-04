@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+// JobsService is the screen-shaped job API of the web app. Torii maps it onto
+// kagami. Dates without a time are YYYY-MM-DD strings. Mutating calls honour
+// the Idempotency-Key request header.
+service JobsService {
+  // GetBoard returns every non-archived job grouped into one column per status.
+  rpc GetBoard(GetBoardRequest) returns (GetBoardResponse);
+  // GetJob returns one job with its timeline, newest first.
+  rpc GetJob(GetJobRequest) returns (GetJobResponse);
+  // AddJob creates a job, creating the company when it is new.
+  rpc AddJob(AddJobRequest) returns (AddJobResponse);
+  // UpdateJob applies update_mask when version matches the stored row.
+  rpc UpdateJob(UpdateJobRequest) returns (UpdateJobResponse);
+  // ChangeJobStatus moves a job along the state machine; an invalid move is
+  // FailedPrecondition with reason JOB_STATUS_INVALID_TRANSITION.
+  rpc ChangeJobStatus(ChangeJobStatusRequest) returns (ChangeJobStatusResponse);
+}
+
+enum JobStatus {
+  JOB_STATUS_UNSPECIFIED = 0;
+  JOB_STATUS_SAVED = 1;
+  JOB_STATUS_APPLIED = 2;
+  JOB_STATUS_SHORTLISTED = 3;
+  JOB_STATUS_INTERVIEW = 4;
+  JOB_STATUS_OFFER = 5;
+  JOB_STATUS_REJECTED = 6;
+}
+
+// JobCard is what a board column shows for one job.
+message JobCard {
+  string id = 1;
+  string title = 2;
+  string company_name = 3;
+  JobStatus status = 4;
+  string next_follow_up = 5;
+  int32 version = 6;
+}
+
+message BoardColumn {
+  JobStatus status = 1;
+  repeated JobCard jobs = 2;
+}
+
+message Job {
+  string id = 1;
+  string title = 2;
+  string company_name = 3;
+  string company_domain = 4;
+  JobStatus status = 5;
+  string url = 6;
+  string source = 7;
+  string location = 8;
+  string salary_text = 9;
+  string description = 10;
+  string applied_on = 11;
+  string next_follow_up = 12;
+  int32 version = 13;
+}
+
+// TimelineEntry is one line of a job's timeline, for example "Applied".
+message TimelineEntry {
+  string id = 1;
+  // kind is one of status_changed, note, mail_linked, follow_up_set.
+  string kind = 2;
+  JobStatus from_status = 3;
+  JobStatus to_status = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+message GetBoardRequest {}
+
+message GetBoardResponse {
+  // columns holds all six statuses in pipeline order, empty ones included.
+  repeated BoardColumn columns = 1;
+}
+
+message GetJobRequest {
+  string id = 1;
+}
+
+message GetJobResponse {
+  Job job = 1;
+  repeated TimelineEntry timeline = 2;
+}
+
+message AddJobRequest {
+  string title = 1;
+  string company_name = 2;
+  // company_domain is the upsert key for the company; optional.
+  string company_domain = 3;
+  string url = 4;
+  string source = 5;
+  // status defaults to saved when unspecified.
+  JobStatus status = 6;
+  string location = 7;
+  string salary_text = 8;
+  string description = 9;
+}
+
+message AddJobResponse {
+  Job job = 1;
+}
+
+message UpdateJobRequest {
+  Job job = 1;
+  google.protobuf.FieldMask update_mask = 2;
+  // version is the version the caller last read.
+  int32 version = 3;
+}
+
+message UpdateJobResponse {
+  Job job = 1;
+}
+
+message ChangeJobStatusRequest {
+  string id = 1;
+  JobStatus to_status = 2;
+  string note = 3;
+  int32 version = 4;
+}
+
+message ChangeJobStatusResponse {
+  Job job = 1;
+}

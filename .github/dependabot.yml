@@ -10,7 +10,16 @@ updates:
       actions:
         patterns: ["*"]
 
-  # TODO: add /web in P5.1.
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore"
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: gomod
     directories:
       - /pkg

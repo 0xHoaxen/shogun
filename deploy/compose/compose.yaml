@@ -85,9 +85,18 @@ services:
     environment:
       <<: *env
       DATABASE_URL: postgres://torii:${TORII_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+      TORII_PUBLIC_ADDR: ":8081"
+      TORII_PUBLIC_URL: ${TORII_PUBLIC_URL:-http://localhost:3000}
+      # Google's issuer by default; the e2e overlay points it at a stub provider.
+      GOOGLE_ISSUER_URL: ${GOOGLE_ISSUER_URL:-https://accounts.google.com}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?copy .env.example to .env}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?copy .env.example to .env}
+      TORII_ALLOWED_EMAILS: ${TORII_ALLOWED_EMAILS:?copy .env.example to .env}
     ports:
       - "127.0.0.1:8081:8080"
       - "127.0.0.1:9091:9090"
+      # Browser-facing API: login and ConnectRPC. The web app proxies to it.
+      - "127.0.0.1:8190:8081"
 
   kagami:
     <<: *service
@@ -225,6 +234,21 @@ services:
       - "127.0.0.1:9100:9090"
 
   # services end
+
+  # The web app, outside the generated block above. Next bakes its rewrites in
+  # at build time, so torii's address is a build arg.
+  web:
+    image: shogun-web:local
+    restart: unless-stopped
+    build:
+      context: ../../web
+      dockerfile: ../deploy/docker/web.Dockerfile
+      args:
+        TORII_URL: http://torii:8081
+    depends_on:
+      - torii
+    ports:
+      - "127.0.0.1:3000:3000"
 
 volumes:
   pgdata:

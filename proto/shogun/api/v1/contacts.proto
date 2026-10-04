@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+// ContactsService is the screen-shaped contact API of the web app. Torii maps
+// it onto kagami. Mutating calls honour the Idempotency-Key request header.
+service ContactsService {
+  // ListContacts returns contacts for the table, optionally filtered by status.
+  rpc ListContacts(ListContactsRequest) returns (ListContactsResponse);
+  // AddContact creates a contact, creating the company when it is new.
+  rpc AddContact(AddContactRequest) returns (AddContactResponse);
+  // ChangeContactStatus moves a contact along the state machine; an invalid
+  // move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
+  rpc ChangeContactStatus(ChangeContactStatusRequest) returns (ChangeContactStatusResponse);
+  // ImportContacts parses a contacts CSV. With dry_run nothing is written and
+  // the report is the preview shown before the owner confirms.
+  rpc ImportContacts(ImportContactsRequest) returns (ImportContactsResponse);
+}
+
+enum ContactStatus {
+  CONTACT_STATUS_UNSPECIFIED = 0;
+  CONTACT_STATUS_NOT_REACHED = 1;
+  CONTACT_STATUS_REACHED_OUT = 2;
+  CONTACT_STATUS_CONVERSATION_STARTED = 3;
+  CONTACT_STATUS_REPLIED = 4;
+  CONTACT_STATUS_REFERRAL_ASKED = 5;
+}
+
+// Contact is one row of the contact table.
+message Contact {
+  string id = 1;
+  string full_name = 2;
+  string role = 3;
+  string company_name = 4;
+  ContactStatus status = 5;
+  string email = 6;
+  string linkedin_url = 7;
+  string preferred_channel = 8;
+  string last_contacted = 9;
+  string next_follow_up = 10;
+  string notes = 11;
+  int32 version = 12;
+}
+
+message ListContactsRequest {
+  // status filters to one status; unspecified means all.
+  ContactStatus status = 1;
+  // query matches name, email and company text.
+  string query = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListContactsResponse {
+  repeated Contact contacts = 1;
+  string next_page_token = 2;
+}
+
+message AddContactRequest {
+  string full_name = 1;
+  string role = 2;
+  string company_name = 3;
+  string email = 4;
+  string linkedin_url = 5;
+  string preferred_channel = 6;
+  string notes = 7;
+}
+
+message AddContactResponse {
+  Contact contact = 1;
+}
+
+message ChangeContactStatusRequest {
+  string id = 1;
+  ContactStatus to_status = 2;
+  int32 version = 3;
+}
+
+message ChangeContactStatusResponse {
+  Contact contact = 1;
+}
+
+message ImportContactsRequest {
+  string filename = 1;
+  bytes csv = 2;
+  bool dry_run = 3;
+}
+
+message ImportRowError {
+  // row is the 1-based CSV row number, counting the header as row 1.
+  int32 row = 1;
+  string column = 2;
+  string message = 3;
+}
+
+message ImportReport {
+  int32 rows_total = 1;
+  int32 rows_created = 2;
+  int32 rows_updated = 3;
+  int32 rows_failed = 4;
+  repeated ImportRowError errors = 5;
+}
+
+message ImportContactsResponse {
+  ImportReport report = 1;
+  // import_id is empty on a dry run.
+  string import_id = 2;
+}
