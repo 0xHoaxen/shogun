@@ -227,6 +227,20 @@ func TestRunJobsWithoutSessionAreUnauthenticated(t *testing.T) {
 	}
 }
 
+func TestRunContactsWithoutSessionAreUnauthenticated(t *testing.T) {
+	// Arrange
+	base, _ := startTorii(t, nil)
+	contacts := apiv1connect.NewContactsServiceClient(newBrowser(t), base)
+
+	// Act
+	_, err := contacts.ListContacts(context.Background(), connect.NewRequest(&apiv1.ListContactsRequest{}))
+
+	// Assert
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Fatalf("code = %v, want Unauthenticated (err %v)", connect.CodeOf(err), err)
+	}
+}
+
 func TestRunAPIWithoutSessionIsUnauthenticated(t *testing.T) {
 	// Arrange
 	base, _ := startTorii(t, nil)
