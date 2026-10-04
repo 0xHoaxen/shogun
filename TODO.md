@@ -245,7 +245,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: board by status from `GetBoard`, drag (pointer and keyboard) to `ChangeJobStatus` with optimistic move and rollback keyed by `ErrorInfo.reason` (add a `reasonOf` helper in `web/src/lib/errors.ts` that decodes the `google.rpc.ErrorInfo` detail), add-job dialog with `Idempotency-Key`.
   Done when: Playwright tests (mocked API) for add job, move job and a rejected move pass.
 
-- [ ] **P5.2b Contacts table and CSV import** (M) Needs: P5.1b, P4.10b
+- [x] **P5.2b Contacts table and CSV import** (M) Needs: P5.1b, P4.10b
   Do: contacts table with status filter and paging, add-contact dialog, CSV import dialog (dry run preview with per-row errors, then confirm resends with `dry_run=false`).
   Done when: Playwright tests (mocked API) for import with a good file and a bad file, and the status filter pass.
 

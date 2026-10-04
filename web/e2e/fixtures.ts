@@ -30,9 +30,11 @@ function rpcPattern(method: DescMethodUnary): string {
   return `**/api/${method.parent.typeName}/${method.name}`;
 }
 
-// A response is either fixed or computed per call, so a test can change what a
-// refetch returns after a mutation.
-type Response<O extends DescMessage> = MessageInitShape<O> | (() => MessageInitShape<O>);
+// A response is either fixed or computed per call from the request body, so a
+// test can change what a refetch returns after a mutation or answer a filter.
+type Response<O extends DescMessage> =
+  | MessageInitShape<O>
+  | ((body: Record<string, unknown>) => MessageInitShape<O>);
 
 // mockRpc answers a unary method with response, serialised by the generated
 // schema, and returns the calls the page makes to it.
@@ -44,8 +46,9 @@ export async function mockRpc<I extends DescMessage, O extends DescMessage>(
   const calls: RpcCall[] = [];
   await page.route(rpcPattern(method), async (route) => {
     const request = route.request();
-    calls.push({ body: request.postDataJSON(), headers: request.headers() });
-    const init = typeof response === "function" ? response() : response;
+    const body = request.postDataJSON() as Record<string, unknown>;
+    calls.push({ body, headers: request.headers() });
+    const init = typeof response === "function" ? response(body) : response;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
