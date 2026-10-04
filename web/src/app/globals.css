@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Shogun design system, spec v1: light only, ruled cells, one signal colour,
+ * mono labels and tight grotesk headlines. Seven colours and nothing else.
+ * No radii, shadows or gradients.
+ */
+:root {
+  --paper: #f7f7f5;
+  --ink: #111111;
+  --strip: #e4e4e2;
+  --signal: #f2592a;
+  --rail-ink: #14301f;
+  --field: #ffffff;
+  --muted-ink: #444444;
+  --radius: 0px;
+
+  /* shadcn semantic tokens, mapped onto the seven values. */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--paper);
+  --card-foreground: var(--ink);
+  --popover: var(--paper);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
+  --secondary: var(--strip);
+  --secondary-foreground: var(--ink);
+  --muted: var(--strip);
+  --muted-foreground: var(--muted-ink);
+  --accent: var(--strip);
+  --accent-foreground: var(--ink);
+  --destructive: var(--ink);
+  --border: var(--ink);
+  --input: var(--ink);
+  --ring: var(--signal);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-strip: var(--strip);
+  --color-signal: var(--signal);
+  --color-rail-ink: var(--rail-ink);
+  --color-field: var(--field);
+  --color-muted-ink: var(--muted-ink);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  --font-sans: var(--font-geist-mono), ui-monospace, monospace;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground text-xs leading-normal;
+  }
+  ::selection {
+    background: var(--signal);
+    color: var(--ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--signal);
+    outline-offset: 0;
+  }
+}
+
+@layer components {
+  /* Display headline: tight grotesk. */
+  .h-display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    line-height: 0.95;
+    margin: 0;
+  }
+  /* Label: uppercase mono with tracking. */
+  .label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
