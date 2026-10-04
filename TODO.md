@@ -212,7 +212,11 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `protoc-gen-connect-go` in the tools module and `buf.gen.connect.yaml` (api protos only, run by `make proto`); `connectapi` package with the session interceptor (cookie to session, owner identity for `grpcclient`, cookie refresh on renewal), the `newError` helper with a stable `ErrorInfo.reason`, and the `AuthService` handlers.
   Done when: `cd services/torii && go test -race ./internal/transport/...` passes: unauthenticated, unknown and expired sessions return `Unauthenticated`; `GetSession`, `Logout`, renewal and identity propagation work.
 
-- [ ] **P4.9c2 Public listener, config, rate limit, size cap** (M) Needs: P4.9c1
+- [ ] **P4.9d Torii housekeeping** (S) Needs: P4.9c2
+  Do: River periodic job deleting expired `torii.sessions` rows (`store.Sessions.DeleteExpired` exists); add the new torii variables (`GOOGLE_*`, `TORII_ALLOWED_EMAILS`, `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR`) to `deploy/helm/values/staging/torii.yaml`. `TODO(owner)`: production values and the real Google client are yours to set.
+  Done when: a test with a fake clock shows only expired sessions removed; `helm template` passes for staging torii.
+
+- [x] **P4.9c2 Public listener, config, rate limit, size cap** (M) Needs: P4.9c1
   Do: `TORII_PUBLIC_ADDR` listener serving `/auth/*` and the Connect handlers, started and stopped with the gRPC server; torii config (`TORII_PUBLIC_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ISSUER_URL`, `TORII_ALLOWED_EMAILS`, session TTL, rate limit, body cap) with `.env.example` and compose entries; per-IP rate limit; request body size cap.
   Done when: `cd services/torii && go test -race ./...` passes, including a `run` test against the fake IdP that logs in over HTTP and calls `GetSession`, plus rate-limit and oversize-body tests.
 

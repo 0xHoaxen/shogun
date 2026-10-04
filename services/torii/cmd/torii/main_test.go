@@ -40,6 +40,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 		"DATABASE_URL":         postgrestest.NewDatabase(t),
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
 	}
+	addLoginSettings(t, env)
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
 	httpLis := listen(t)
@@ -48,7 +49,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 	done := make(chan error, 1)
 
 	// Act
-	go func() { done <- run(ctx, lookup, relayOverrides{}, server.WithListeners(grpcLis, httpLis)) }()
+	go func() { done <- run(ctx, lookup, runOverrides{}, server.WithListeners(grpcLis, httpLis)) }()
 	status := checkHealth(t, grpcLis.Addr().String())
 	cancel()
 
@@ -72,7 +73,7 @@ func TestRunRejectsMissingIdentityKey(t *testing.T) {
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 
 	// Act
-	err := run(context.Background(), lookup, relayOverrides{})
+	err := run(context.Background(), lookup, runOverrides{})
 
 	// Assert
 	if err == nil || !strings.Contains(err.Error(), "IDENTITY_SIGNING_KEY") {
@@ -96,11 +97,12 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 		"DATABASE_URL":         dbURL,
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
 	}
+	addLoginSettings(t, env)
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
 	httpLis := listen(t)
 	fake := &recordingBus{delivered: make(chan string, deliveryBuffer)}
-	overrides := relayOverrides{
+	overrides := runOverrides{
 		bus:    fake,
 		routes: func(string) []string { return []string{testConsumer} },
 	}

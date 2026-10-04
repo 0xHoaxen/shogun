@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,6 +23,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/torii/internal/settings"
 	"github.com/0xHoaxen/shogun/services/torii/migrations"
 )
 
@@ -45,7 +47,7 @@ func runMain() error {
 	if len(os.Args) > 1 {
 		return runCommand(ctx, os.Args[1], os.LookupEnv)
 	}
-	return run(ctx, os.LookupEnv, relayOverrides{})
+	return run(ctx, os.LookupEnv, runOverrides{})
 }
 
 // runCommand runs a one-shot subcommand instead of serving.
@@ -73,7 +75,7 @@ func runMigrate(ctx context.Context, lookup config.LookupFunc) error {
 }
 
 // run wires the service and blocks until ctx is cancelled or serving fails.
-func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides, opts ...server.Option) error {
+func run(ctx context.Context, lookup config.LookupFunc, overrides runOverrides, opts ...server.Option) error {
 	cfg, err := config.LoadBase(serviceName, lookup)
 	if err != nil {
 		return err
@@ -85,6 +87,10 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 	authority, err := authz.New(key)
+	if err != nil {
+		return err
+	}
+	toriiSettings, err := settings.Load(lookup)
 	if err != nil {
 		return err
 	}
@@ -106,6 +112,23 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 			return err
 		}
 	}
+
+	public, err := newPublicServer(ctx, toriiSettings, pool, key, log)
+	if err != nil {
+		return err
+	}
+	publicListener := overrides.publicListener
+	if publicListener == nil {
+		if publicListener, err = net.Listen("tcp", toriiSettings.PublicAddr); err != nil {
+			return fmt.Errorf("listen on public address: %w", err)
+		}
+	}
+	// A public listener that dies takes the whole service down with it, so the
+	// orchestrator restarts torii rather than leaving it half alive.
+	ctx, cancelRun := context.WithCancel(ctx)
+	defer cancelRun()
+	stopPublic := servePublic(public, publicListener, log, cancelRun)
+	defer stopPublic(cfg.ShutdownTimeout)
 
 	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
 	if err != nil {
