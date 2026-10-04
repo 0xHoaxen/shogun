@@ -204,7 +204,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `torii.sessions` migration (token hash only); sqlc store; `domain.Session` with expiry and sliding renewal; `app.Auth` with `StartSession` (email allowlist, verified email, stable owner id from the Google subject), `Authenticate` (sliding renewal) and `EndSession`; fails closed on an empty allowlist.
   Done when: `cd services/torii && go test -race ./internal/...` passes: allowed and disallowed email, expired session, renewal, logout, store round trip against Postgres.
 
-- [ ] **P4.9b2 Google OAuth flow** (M) Needs: P4.9b1
+- [x] **P4.9b2 Google OAuth flow** (M) Needs: P4.9b1
   Do: Google OAuth (authorization code + PKCE + `state`) at `/auth/login`, `/auth/callback`, `/auth/logout`; ID token verified with `go-oidc`; issuer from `GOOGLE_ISSUER_URL` (defaults to Google, overridden by tests); allowlist from `TORII_ALLOWED_EMAILS`; PKCE verifier and state in a short-lived signed cookie; session cookie HttpOnly, Secure outside local, SameSite=Lax; renewed cookie on sliding renewal.
   Done when: tests with a fake OAuth provider cover allowed email, disallowed email, bad state, expired session, logout.
 
