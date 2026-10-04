@@ -184,10 +184,52 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
 
+  e2e-compose:
+    name: e2e (compose)
+    needs: modules
+    if: needs.modules.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose --env-file .env.example -f deploy/compose/compose.yaml -f deploy/compose/compose.e2e.yaml
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # Only what the flow needs: other services are not called, and torii's
+      # event relay to them just retries.
+      - name: Start the stack with a stub identity provider
+        run: $COMPOSE up -d --build --wait postgres kagami torii web mock-oauth2
+      - name: Install web dependencies and the browser
+        working-directory: web
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Log in, add a job, move it
+        working-directory: web
+        run: npm run test:e2e:compose
+      - name: Show container logs
+        if: failure()
+        run: $COMPOSE logs --no-color --tail=200
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: playwright-compose-report
+          path: |
+            web/playwright-report
+            web/test-results
+          if-no-files-found: ignore
+      - name: Stop the stack
+        if: always()
+        run: $COMPOSE down -v --remove-orphans
+
   ci-ok:
     name: ci ok
     if: always()
-    needs: [modules, lint, lint-config, test, isolated-build, build, docker-build, web]
+    needs: [modules, lint, lint-config, test, isolated-build, build, docker-build, web, e2e-compose]
     runs-on: ubuntu-latest
     steps:
       # Matrix jobs are skipped when nothing they cover changed, so a skipped

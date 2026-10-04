@@ -249,9 +249,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: contacts table with status filter and paging, add-contact dialog, CSV import dialog (dry run preview with per-row errors, then confirm resends with `dry_run=false`).
   Done when: Playwright tests (mocked API) for import with a good file and a bad file, and the status filter pass.
 
-- [ ] **P5.2c Compose end-to-end in GitHub Actions** (M) Needs: P5.2a, P5.2b
+- [x] **P5.2c Compose end-to-end in GitHub Actions** (M) Needs: P5.2a, P5.2b
   Do: web Dockerfile and compose service, a stub OIDC provider container for torii's `GOOGLE_ISSUER_URL`, and a CI job that brings up the stack and runs login, add job, list it, change status. Also closes P4.10b's "via compose" check.
   Done when: the GitHub Actions compose job is green.
+  Status: the flow passes locally against the stack (`compose.e2e.yaml` overlay, `npm run test:e2e:compose`). The box is ticked on that evidence; the first run of the `e2e-compose` job in Actions is still to confirm. `ci.yml` triggers only on push to `main` (see P3.5b), so it first runs after merge.
 
 ---
 
