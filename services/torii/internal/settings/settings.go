@@ -35,7 +35,9 @@ type Settings struct {
 	// GoogleIssuerURL is Google's issuer; tests point it at a fake provider.
 	GoogleIssuerURL string
 	AllowedEmails   []string
-	SessionTTL      time.Duration
+	// KagamiAddr is the gRPC address of kagami, which owns jobs and contacts.
+	KagamiAddr string
+	SessionTTL time.Duration
 	// RateLimit is requests per second per client; RateBurst the burst size.
 	RateLimit int
 	RateBurst int
@@ -65,6 +67,8 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	emails, err := config.Required(lookup, "TORII_ALLOWED_EMAILS")
 	collect(err)
+	kagamiAddr, err := config.Required(lookup, "KAGAMI_ADDR")
+	collect(err)
 	ttl, err := config.Duration(lookup, "SESSION_TTL", defaultSessionTTL)
 	collect(err)
 	rateLimit, err := config.Int(lookup, "TORII_RATE_LIMIT", defaultRateLimit)
@@ -81,6 +85,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		GoogleClientSecret: clientSecret,
 		GoogleIssuerURL:    config.String(lookup, "GOOGLE_ISSUER_URL", defaultIssuer),
 		AllowedEmails:      splitList(emails),
+		KagamiAddr:         kagamiAddr,
 		SessionTTL:         ttl,
 		RateLimit:          rateLimit,
 		RateBurst:          rateBurst,

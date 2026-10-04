@@ -113,10 +113,11 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides runOverrides, 
 		}
 	}
 
-	public, err := newPublicServer(ctx, toriiSettings, pool, key, log)
+	public, closePublicDeps, err := newPublicServer(ctx, toriiSettings, pool, key, authority, log)
 	if err != nil {
 		return err
 	}
+	defer closePublicDeps()
 	publicListener := overrides.publicListener
 	if publicListener == nil {
 		if publicListener, err = net.Listen("tcp", toriiSettings.PublicAddr); err != nil {

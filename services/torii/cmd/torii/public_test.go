@@ -7,13 +7,18 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"connectrpc.com/connect"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	apiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/api/v1"
 	"github.com/0xHoaxen/shogun/gen/go/shogun/api/v1/apiv1connect"
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/services/torii/internal/idp/idptest"
@@ -37,7 +42,63 @@ func addLoginSettings(t *testing.T, env map[string]string) *idptest.IDP {
 	env["GOOGLE_ISSUER_URL"] = idp.IssuerURL()
 	env["TORII_ALLOWED_EMAILS"] = testOwnerEmail
 	env["TORII_PUBLIC_ADDR"] = "127.0.0.1:0"
+	// The connection is lazy, so tests that never call kagami need no server.
+	env["KAGAMI_ADDR"] = "127.0.0.1:1"
 	return idp
+}
+
+// signIn walks the browser through the login: torii sends it to the provider,
+// the provider approves the owner, and the browser returns to the callback. It
+// returns the callback response; the browser's cookie jar now holds the session.
+func signIn(t *testing.T, browser *http.Client, base string, idp *idptest.IDP) reply {
+	t.Helper()
+	login := get(t, browser, base+"/auth/login")
+	providerURL, err := url.Parse(login.Header.Get("Location"))
+	if err != nil {
+		t.Fatalf("parse provider redirect: %v", err)
+	}
+	code := idp.IssueCode(providerURL.Query().Get("code_challenge"),
+		idptest.Claims{Subject: "sub-1", Email: testOwnerEmail, EmailVerified: true, Name: "Owner"})
+	return get(t, browser, base+"/auth/callback?"+url.Values{
+		"code": {code}, "state": {providerURL.Query().Get("state")},
+	}.Encode())
+}
+
+// fakeKagami is a kagami gRPC server that answers ListJobs and remembers the
+// identity token torii sent.
+type fakeKagami struct {
+	kagamiv1.UnimplementedKagamiServiceServer
+	mu       sync.Mutex
+	identity string
+}
+
+func (f *fakeKagami) ListJobs(ctx context.Context, _ *kagamiv1.ListJobsRequest) (*kagamiv1.ListJobsResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if values := md.Get("x-shogun-identity"); len(values) > 0 {
+		f.identity = values[0]
+	}
+	return &kagamiv1.ListJobsResponse{Jobs: []*kagamiv1.Job{
+		{Id: "job-1", Title: "SRE", CompanyName: "Tessellate", Status: kagamiv1.JobStatus_JOB_STATUS_SAVED},
+	}}, nil
+}
+
+func (f *fakeKagami) identityToken() string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.identity
+}
+
+func startFakeKagami(t *testing.T) (*fakeKagami, string) {
+	t.Helper()
+	lis := listen(t)
+	srv := grpc.NewServer()
+	fake := &fakeKagami{}
+	kagamiv1.RegisterKagamiServiceServer(srv, fake)
+	go func() { _ = srv.Serve(lis) }()
+	t.Cleanup(srv.Stop)
+	return fake, lis.Addr().String()
 }
 
 // startTorii runs torii against a fresh database and returns the base URL of
@@ -108,17 +169,8 @@ func TestRunServesLoginAndSession(t *testing.T) {
 	browser := newBrowser(t)
 	api := apiv1connect.NewAuthServiceClient(browser, base)
 
-	// Act: the browser starts a login, the provider approves, the browser returns.
-	login := get(t, browser, base+"/auth/login")
-	providerURL, err := url.Parse(login.Header.Get("Location"))
-	if err != nil {
-		t.Fatalf("parse provider redirect: %v", err)
-	}
-	code := idp.IssueCode(providerURL.Query().Get("code_challenge"),
-		idptest.Claims{Subject: "sub-1", Email: testOwnerEmail, EmailVerified: true, Name: "Owner"})
-	callback := get(t, browser, base+"/auth/callback?"+url.Values{
-		"code": {code}, "state": {providerURL.Query().Get("state")},
-	}.Encode())
+	// Act
+	callback := signIn(t, browser, base, idp)
 	session, sessionErr := api.GetSession(context.Background(), connect.NewRequest(&apiv1.GetSessionRequest{}))
 
 	// Assert
@@ -130,6 +182,48 @@ func TestRunServesLoginAndSession(t *testing.T) {
 	}
 	if got := session.Msg.GetSession().GetEmail(); got != testOwnerEmail {
 		t.Fatalf("session email = %q, want %q", got, testOwnerEmail)
+	}
+}
+
+func TestRunBoardCallsKagamiAsTheSignedInOwner(t *testing.T) {
+	// Arrange
+	kagami, kagamiAddr := startFakeKagami(t)
+	base, idp := startTorii(t, map[string]string{"KAGAMI_ADDR": kagamiAddr})
+	browser := newBrowser(t)
+	signIn(t, browser, base, idp)
+	jobs := apiv1connect.NewJobsServiceClient(browser, base)
+
+	// Act
+	resp, err := jobs.GetBoard(context.Background(), connect.NewRequest(&apiv1.GetBoardRequest{}))
+	// Assert
+	if err != nil {
+		t.Fatalf("GetBoard: %v", err)
+	}
+	saved := resp.Msg.GetColumns()[0]
+	if saved.GetStatus() != apiv1.JobStatus_JOB_STATUS_SAVED || len(saved.GetJobs()) != 1 || saved.GetJobs()[0].GetCompanyName() != "Tessellate" {
+		t.Fatalf("saved column = %v", saved)
+	}
+	authority, authErr := authz.New([]byte(testIdentityKey))
+	if authErr != nil {
+		t.Fatal(authErr)
+	}
+	identity, verifyErr := authority.Verify(kagami.identityToken())
+	if verifyErr != nil || identity.OwnerID == "" {
+		t.Fatalf("kagami got identity %+v, verify error %v; want a valid token naming the owner", identity, verifyErr)
+	}
+}
+
+func TestRunJobsWithoutSessionAreUnauthenticated(t *testing.T) {
+	// Arrange
+	base, _ := startTorii(t, nil)
+	jobs := apiv1connect.NewJobsServiceClient(newBrowser(t), base)
+
+	// Act
+	_, err := jobs.GetBoard(context.Background(), connect.NewRequest(&apiv1.GetBoardRequest{}))
+
+	// Assert
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Fatalf("code = %v, want Unauthenticated (err %v)", connect.CodeOf(err), err)
 	}
 }
 

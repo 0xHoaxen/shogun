@@ -220,9 +220,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `TORII_PUBLIC_ADDR` listener serving `/auth/*` and the Connect handlers, started and stopped with the gRPC server; torii config (`TORII_PUBLIC_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ISSUER_URL`, `TORII_ALLOWED_EMAILS`, session TTL, rate limit, body cap) with `.env.example` and compose entries; per-IP rate limit; request body size cap.
   Done when: `cd services/torii && go test -race ./...` passes, including a `run` test against the fake IdP that logs in over HTTP and calls `GetSession`, plus rate-limit and oversize-body tests.
 
-- [ ] **P4.10 torii jobs and contacts endpoints** (M) Needs: P4.9, P4.6
-  Do: screen-shaped endpoints calling kagami; `Idempotency-Key` passthrough.
-  Done when: end-to-end test via compose: login stub, add a job, list it, change status.
+- [x] **P4.10a torii Jobs endpoints** (M) Needs: P4.9c2, P4.6
+  Do: `JobsService` handlers calling kagami through a signed `grpcclient` connection (`KAGAMI_ADDR`): board grouped by status, job with newest-first timeline, add (with `Idempotency-Key` passthrough), field-masked update limited to editable fields, status change; downstream errors keep their stable `ErrorInfo.reason`, internals are never leaked.
+  Done when: `cd services/torii && go test -race ./...` passes, including a run test where a signed-in owner's `GetBoard` reaches a fake kagami carrying a valid identity token for that owner.
+
+- [ ] **P4.10b torii Contacts endpoints and CSV import** (M) Needs: P4.10a
+  Do: `ContactsService` handlers (list with status filter, add with `Idempotency-Key`, change status, `ImportContacts` dry run and confirm) with the same error mapping; mount in `public.go`.
+  Done when: handler tests pass for each RPC including the dry-run report and per-row errors. The "via compose" end-to-end check (login against a stub IdP, add a job, list it, change status) is part of P5.2c and runs in GitHub Actions, not locally.
 
 ---
 
