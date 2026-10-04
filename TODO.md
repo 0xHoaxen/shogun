@@ -208,9 +208,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: Google OAuth (authorization code + PKCE + `state`) at `/auth/login`, `/auth/callback`, `/auth/logout`; ID token verified with `go-oidc`; issuer from `GOOGLE_ISSUER_URL` (defaults to Google, overridden by tests); allowlist from `TORII_ALLOWED_EMAILS`; PKCE verifier and state in a short-lived signed cookie; session cookie HttpOnly, Secure outside local, SameSite=Lax; renewed cookie on sliding renewal.
   Done when: tests with a fake OAuth provider cover allowed email, disallowed email, bad state, expired session, logout.
 
-- [ ] **P4.9c ConnectRPC server and session middleware** (M) Needs: P4.9b
-  Do: public HTTP listener `TORII_PUBLIC_ADDR` serving ConnectRPC handlers and `/auth/*`; session middleware resolving the cookie to the owner and signing the internal identity; per-IP rate limit; request size cap; graceful shutdown; `AuthService` handlers.
-  Done when: an unauthenticated API call returns `Unauthenticated`; `GetSession` and `Logout` handler tests pass.
+- [x] **P4.9c1 Connect codegen, session interceptor, AuthService** (M) Needs: P4.9b2
+  Do: `protoc-gen-connect-go` in the tools module and `buf.gen.connect.yaml` (api protos only, run by `make proto`); `connectapi` package with the session interceptor (cookie to session, owner identity for `grpcclient`, cookie refresh on renewal), the `newError` helper with a stable `ErrorInfo.reason`, and the `AuthService` handlers.
+  Done when: `cd services/torii && go test -race ./internal/transport/...` passes: unauthenticated, unknown and expired sessions return `Unauthenticated`; `GetSession`, `Logout`, renewal and identity propagation work.
+
+- [ ] **P4.9c2 Public listener, config, rate limit, size cap** (M) Needs: P4.9c1
+  Do: `TORII_PUBLIC_ADDR` listener serving `/auth/*` and the Connect handlers, started and stopped with the gRPC server; torii config (`TORII_PUBLIC_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_ISSUER_URL`, `TORII_ALLOWED_EMAILS`, session TTL, rate limit, body cap) with `.env.example` and compose entries; per-IP rate limit; request body size cap.
+  Done when: `cd services/torii && go test -race ./...` passes, including a `run` test against the fake IdP that logs in over HTTP and calls `GetSession`, plus rate-limit and oversize-body tests.
 
 - [ ] **P4.10 torii jobs and contacts endpoints** (M) Needs: P4.9, P4.6
   Do: screen-shaped endpoints calling kagami; `Idempotency-Key` passthrough.

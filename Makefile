@@ -24,6 +24,7 @@ tools: ## install pinned buf, protoc plugins, goose, sqlc and golangci-lint into
 proto: ## buf lint + buf generate into gen/go and web/src/gen
 	$(BIN)/buf lint
 	$(BIN)/buf generate
+	$(BIN)/buf generate --template buf.gen.connect.yaml --path proto/shogun/api
 	@if [ -x web/node_modules/.bin/protoc-gen-es ]; then \
 		echo "==> buf generate (web)"; \
 		$(BIN)/buf generate --template buf.gen.web.yaml --path proto/shogun/api || exit 1; \
