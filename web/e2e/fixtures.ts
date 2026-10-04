@@ -5,6 +5,7 @@ import {
   type DescMethodUnary,
   type MessageInitShape,
 } from "@bufbuild/protobuf";
+import { BinaryWriter, WireType } from "@bufbuild/protobuf/wire";
 import type { Page } from "@playwright/test";
 
 // RpcCall is one request the browser made to a mocked method.
@@ -29,32 +30,54 @@ function rpcPattern(method: DescMethodUnary): string {
   return `**/api/${method.parent.typeName}/${method.name}`;
 }
 
+// A response is either fixed or computed per call, so a test can change what a
+// refetch returns after a mutation.
+type Response<O extends DescMessage> = MessageInitShape<O> | (() => MessageInitShape<O>);
+
 // mockRpc answers a unary method with response, serialised by the generated
 // schema, and returns the calls the page makes to it.
 export async function mockRpc<I extends DescMessage, O extends DescMessage>(
   page: Page,
   method: DescMethodUnary<I, O>,
-  response: MessageInitShape<O>,
+  response: Response<O>,
 ): Promise<RpcCall[]> {
   const calls: RpcCall[] = [];
   await page.route(rpcPattern(method), async (route) => {
     const request = route.request();
     calls.push({ body: request.postDataJSON(), headers: request.headers() });
+    const init = typeof response === "function" ? response() : response;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify(toJson(method.output, create(method.output, response))),
+      body: JSON.stringify(toJson(method.output, create(method.output, init))),
     });
   });
   return calls;
 }
 
-// mockRpcError answers a unary method with a Connect error.
+// errorInfoDetail is the wire form of a google.rpc.ErrorInfo error detail with
+// the given reason: the unpadded base64 of the serialised message.
+function errorInfoDetail(reason: string) {
+  const bytes = new BinaryWriter()
+    .tag(1, WireType.LengthDelimited)
+    .string(reason)
+    .tag(2, WireType.LengthDelimited)
+    .string("shogun")
+    .finish();
+  return {
+    type: "google.rpc.ErrorInfo",
+    value: Buffer.from(bytes).toString("base64").replace(/=+$/, ""),
+  };
+}
+
+// mockRpcError answers a unary method with a Connect error. A reason adds the
+// stable ErrorInfo.reason torii attaches to errors the owner can act on.
 export async function mockRpcError<I extends DescMessage, O extends DescMessage>(
   page: Page,
   method: DescMethodUnary<I, O>,
   code: ErrorCode,
   message: string,
+  reason?: string,
 ): Promise<RpcCall[]> {
   const calls: RpcCall[] = [];
   await page.route(rpcPattern(method), async (route) => {
@@ -63,7 +86,7 @@ export async function mockRpcError<I extends DescMessage, O extends DescMessage>
     await route.fulfill({
       status: HTTP_STATUS[code],
       contentType: "application/json",
-      body: JSON.stringify({ code, message }),
+      body: JSON.stringify({ code, message, details: reason ? [errorInfoDetail(reason)] : [] }),
     });
   });
   return calls;

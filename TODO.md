@@ -241,7 +241,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `/login` with the Google link and `?error=` messages, the authenticated shell from the design canvas (rail, strip, tab nav, utility footer with logout), session gate on `AuthService.GetSession` that sends `Unauthenticated` to `/login`, Playwright config with a mocked-API helper, and the `e2e` step in the CI `web` job.
   Done when: `cd web && npm run build && npm run test:e2e` passes: signed-out redirect, login link, error message, signed-in shell, logout.
 
-- [ ] **P5.2a Jobs board** (M) Needs: P5.1b, P4.10a
+- [x] **P5.2a Jobs board** (M) Needs: P5.1b, P4.10a
   Do: board by status from `GetBoard`, drag (pointer and keyboard) to `ChangeJobStatus` with optimistic move and rollback keyed by `ErrorInfo.reason` (add a `reasonOf` helper in `web/src/lib/errors.ts` that decodes the `google.rpc.ErrorInfo` detail), add-job dialog with `Idempotency-Key`.
   Done when: Playwright tests (mocked API) for add job, move job and a rejected move pass.
 
