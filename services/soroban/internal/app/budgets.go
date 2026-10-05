@@ -89,11 +89,21 @@ func saveBudget(ctx context.Context, repo *store.Repo, owner uuid.UUID, in Budge
 }
 
 func validateBudget(in BudgetInput) error {
-	if !in.ScopeType.Valid() || !in.Period.Valid() || !in.Mode.Valid() {
-		return invalid(ReasonInvalidBudget, "scope type, period and mode are required")
+	if !in.Mode.Valid() {
+		return invalid(ReasonInvalidBudget, "mode is required")
 	}
 	if in.LimitMicros < 0 {
 		return invalid(ReasonInvalidBudget, "limit must not be negative")
+	}
+	if err := validateThresholds(in.Thresholds); err != nil {
+		return err
+	}
+	// An update names the budget by id; scope and period never change.
+	if in.ID != "" {
+		return nil
+	}
+	if !in.ScopeType.Valid() || !in.Period.Valid() {
+		return invalid(ReasonInvalidBudget, "scope type and period are required")
 	}
 	switch {
 	case in.ScopeType == domain.ScopeGlobal && in.ScopeValue != "":
@@ -103,7 +113,11 @@ func validateBudget(in BudgetInput) error {
 	case in.ScopeType == domain.ScopeFeature && !strings.Contains(in.ScopeValue, "."):
 		return invalid(ReasonInvalidBudget, "a feature budget's scope value is service.feature")
 	}
-	for _, t := range in.Thresholds {
+	return nil
+}
+
+func validateThresholds(thresholds []int32) error {
+	for _, t := range thresholds {
 		if t < 1 || t > maxThreshold {
 			return invalid(ReasonInvalidBudget, "thresholds are percentages from 1 to %d", maxThreshold)
 		}

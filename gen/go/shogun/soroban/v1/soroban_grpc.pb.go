@@ -48,7 +48,10 @@ type SorobanServiceClient interface {
 	Release(ctx context.Context, in *ReleaseRequest, opts ...grpc.CallOption) (*ReleaseResponse, error)
 	// GetSpend totals the ledger over a range. Callers: torii, sensei.
 	GetSpend(ctx context.Context, in *GetSpendRequest, opts ...grpc.CallOption) (*GetSpendResponse, error)
-	// SetBudget creates or updates a budget if version matches.
+	// SetBudget creates a budget when id is empty. Otherwise it updates the
+	// limit, mode, thresholds and enabled flag of that budget if version
+	// matches; scope and period identify a budget and are not read. Empty
+	// thresholds mean the defaults, 50, 80 and 100.
 	SetBudget(ctx context.Context, in *SetBudgetRequest, opts ...grpc.CallOption) (*SetBudgetResponse, error)
 	ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error)
 	SetPrice(ctx context.Context, in *SetPriceRequest, opts ...grpc.CallOption) (*SetPriceResponse, error)
@@ -162,7 +165,10 @@ type SorobanServiceServer interface {
 	Release(context.Context, *ReleaseRequest) (*ReleaseResponse, error)
 	// GetSpend totals the ledger over a range. Callers: torii, sensei.
 	GetSpend(context.Context, *GetSpendRequest) (*GetSpendResponse, error)
-	// SetBudget creates or updates a budget if version matches.
+	// SetBudget creates a budget when id is empty. Otherwise it updates the
+	// limit, mode, thresholds and enabled flag of that budget if version
+	// matches; scope and period identify a budget and are not read. Empty
+	// thresholds mean the defaults, 50, 80 and 100.
 	SetBudget(context.Context, *SetBudgetRequest) (*SetBudgetResponse, error)
 	ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error)
 	SetPrice(context.Context, *SetPriceRequest) (*SetPriceResponse, error)

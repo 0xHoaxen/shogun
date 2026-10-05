@@ -357,3 +357,27 @@ func TestGetSpendRejectsBadRanges(t *testing.T) {
 		})
 	}
 }
+
+func TestSetBudgetUpdateNeedsOnlyTheIDAndVersion(t *testing.T) {
+	// Arrange
+	h := newHarness(t)
+	global := findBudget(t, h.listBudgets(t), sorobanv1.ScopeType_SCOPE_TYPE_GLOBAL, "", sorobanv1.BudgetPeriod_BUDGET_PERIOD_MONTHLY)
+
+	// Act
+	res, err := h.client.SetBudget(h.ctx(t), &sorobanv1.SetBudgetRequest{
+		Id: global.GetId(), Version: global.GetVersion(), LimitMicros: 30_000_000,
+		Mode: sorobanv1.BudgetMode_BUDGET_MODE_SOFT, Enabled: false, Thresholds: []int32{90},
+	})
+	// Assert
+	if err != nil {
+		t.Fatalf("SetBudget: %v", err)
+	}
+	b := res.GetBudget()
+	if b.GetScopeType() != sorobanv1.ScopeType_SCOPE_TYPE_GLOBAL || b.GetPeriod() != sorobanv1.BudgetPeriod_BUDGET_PERIOD_MONTHLY {
+		t.Errorf("scope and period changed: %v", b)
+	}
+	if b.GetLimitMicros() != 30_000_000 || b.GetMode() != sorobanv1.BudgetMode_BUDGET_MODE_SOFT || b.GetEnabled() ||
+		len(b.GetThresholds()) != 1 || b.GetThresholds()[0] != 90 {
+		t.Errorf("budget = %v, want $30 soft, disabled, thresholds [90]", b)
+	}
+}

@@ -19,7 +19,10 @@ service SorobanService {
   rpc Release(ReleaseRequest) returns (ReleaseResponse);
   // GetSpend totals the ledger over a range. Callers: torii, sensei.
   rpc GetSpend(GetSpendRequest) returns (GetSpendResponse);
-  // SetBudget creates or updates a budget if version matches.
+  // SetBudget creates a budget when id is empty. Otherwise it updates the
+  // limit, mode, thresholds and enabled flag of that budget if version
+  // matches; scope and period identify a budget and are not read. Empty
+  // thresholds mean the defaults, 50, 80 and 100.
   rpc SetBudget(SetBudgetRequest) returns (SetBudgetResponse);
   rpc ListBudgets(ListBudgetsRequest) returns (ListBudgetsResponse);
   rpc SetPrice(SetPriceRequest) returns (SetPriceResponse);
