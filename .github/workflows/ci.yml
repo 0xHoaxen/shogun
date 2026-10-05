@@ -1,6 +1,8 @@
 name: ci
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
 
@@ -36,7 +38,7 @@ jobs:
       - id: list
         name: Select affected modules
         env:
-          BEFORE: ${{ github.event.before }}
+          BEFORE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           zeros=0000000000000000000000000000000000000000
           skip=false
