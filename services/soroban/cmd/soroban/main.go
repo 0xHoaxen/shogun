@@ -24,6 +24,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/app"
+	"github.com/0xHoaxen/shogun/services/soroban/internal/jobs"
 	sorobangrpc "github.com/0xHoaxen/shogun/services/soroban/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/soroban/migrations"
 )
@@ -115,7 +116,8 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	service := app.NewService(pool, nil)
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, jobs.NewSetup(service, log), overrides)
 	if err != nil {
 		return err
 	}
@@ -127,7 +129,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
-		sorobanv1.RegisterSorobanServiceServer(s, sorobangrpc.New(app.NewService(pool, nil)))
+		sorobanv1.RegisterSorobanServiceServer(s, sorobangrpc.New(service))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

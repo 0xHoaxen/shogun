@@ -10,6 +10,7 @@ import (
 
 	"github.com/0xHoaxen/shogun/services/soroban/internal/app"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/domain"
+	"github.com/0xHoaxen/shogun/services/soroban/internal/store"
 )
 
 // errorDomain is the ErrorInfo.domain of every error soroban returns.
@@ -17,8 +18,10 @@ const errorDomain = "soroban.shogun"
 
 // Reasons for errors that have no code of their own in app or domain.
 const (
-	reasonOwnerRequired = "OWNER_REQUIRED"
-	reasonInternal      = "INTERNAL"
+	reasonOwnerRequired      = "OWNER_REQUIRED"
+	reasonNotFound           = "RESOURCE_NOT_FOUND"
+	reasonReservationNotOpen = "RESERVATION_NOT_OPEN"
+	reasonInternal           = "INTERNAL"
 )
 
 // toStatus maps a use case error to a gRPC status carrying an ErrorInfo
@@ -40,6 +43,10 @@ func toStatus(err error) error {
 		return withReason(codes.InvalidArgument, ia.Reason, ia.Msg, nil)
 	case errors.Is(err, app.ErrNoOwner):
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner", nil)
+	case errors.Is(err, store.ErrNotFound):
+		return withReason(codes.NotFound, reasonNotFound, "not found", nil)
+	case errors.Is(err, app.ErrReservationNotOpen):
+		return withReason(codes.FailedPrecondition, reasonReservationNotOpen, "reservation is not open", nil)
 	default:
 		return withReason(codes.Internal, reasonInternal, "internal error", nil)
 	}

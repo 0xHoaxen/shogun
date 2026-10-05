@@ -21,6 +21,7 @@ const (
 	eventSource = "soroban"
 
 	eventBudgetExhausted = "cost.budget_exhausted"
+	eventThresholdHit    = "cost.threshold_reached"
 )
 
 // Service runs the soroban use cases.

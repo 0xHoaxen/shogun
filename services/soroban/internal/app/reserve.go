@@ -70,7 +70,9 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 		denial *domain.BudgetExhaustedError
 	)
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
-		est, err := s.estimate(ctx, repo, in, now)
+		est, err := priceUsage(ctx, repo, in.Model, domain.Usage{
+			InputTokens: in.EstInputTokens, OutputTokens: in.EstOutputTokens,
+		}, now)
 		if err != nil {
 			return err
 		}
@@ -111,26 +113,26 @@ func validateReserve(in ReserveInput) error {
 	return nil
 }
 
-// estimate prices the request at the model's price in force at now.
-func (s *Service) estimate(ctx context.Context, repo *store.Repo, in ReserveInput, now time.Time) (int64, error) {
+// priceUsage prices usage of model at the price in force at now.
+func priceUsage(ctx context.Context, repo *store.Repo, model string, usage domain.Usage, now time.Time) (int64, error) {
 	y, m, d := now.UTC().Date()
-	price, err := repo.PriceOn(ctx, in.Model, time.Date(y, m, d, 0, 0, 0, 0, time.UTC))
+	price, err := repo.PriceOn(ctx, model, time.Date(y, m, d, 0, 0, 0, 0, time.UTC))
 	if errors.Is(err, store.ErrNotFound) {
-		return 0, invalid(ReasonModelUnpriced, "no price for model %q", in.Model)
+		return 0, invalid(ReasonModelUnpriced, "no price for model %q", model)
 	}
 	if err != nil {
 		return 0, fmt.Errorf("get price: %w", err)
 	}
-	est, err := domain.Cost(domain.Price{
+	cost, err := domain.Cost(domain.Price{
 		InputMicrosPerMtok:      price.InputMicrosPerMtok,
 		OutputMicrosPerMtok:     price.OutputMicrosPerMtok,
 		CacheReadMicrosPerMtok:  price.CacheReadMicrosPerMtok,
 		CacheWriteMicrosPerMtok: price.CacheWriteMicrosPerMtok,
-	}, domain.Usage{InputTokens: in.EstInputTokens, OutputTokens: in.EstOutputTokens})
+	}, usage)
 	if err != nil {
 		return 0, invalid(ReasonInvalidTokens, "%v", err)
 	}
-	return est, nil
+	return cost, nil
 }
 
 // lockBudgets locks the current period of every budget in scope. Budgets come

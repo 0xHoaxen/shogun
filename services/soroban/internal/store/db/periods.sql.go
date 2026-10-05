@@ -75,6 +75,39 @@ func (q *Queries) LockPeriod(ctx context.Context, arg LockPeriodParams) (BudgetP
 	return i, err
 }
 
+const lockPeriodsByID = `-- name: LockPeriodsByID :many
+SELECT id, budget_id, period_start, period_end, spent_micros, reserved_micros, notified_thresholds FROM budget_periods WHERE id = ANY ($1::uuid[]) ORDER BY budget_id FOR UPDATE
+`
+
+// Ordered by budget id, the order Reserve locks in, so the two cannot deadlock.
+func (q *Queries) LockPeriodsByID(ctx context.Context, ids []uuid.UUID) ([]BudgetPeriod, error) {
+	rows, err := q.db.Query(ctx, lockPeriodsByID, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BudgetPeriod{}
+	for rows.Next() {
+		var i BudgetPeriod
+		if err := rows.Scan(
+			&i.ID,
+			&i.BudgetID,
+			&i.PeriodStart,
+			&i.PeriodEnd,
+			&i.SpentMicros,
+			&i.ReservedMicros,
+			&i.NotifiedThresholds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const markThresholdNotified = `-- name: MarkThresholdNotified :exec
 UPDATE budget_periods
 SET notified_thresholds = array_append(notified_thresholds, $1::int)
@@ -88,5 +121,23 @@ type MarkThresholdNotifiedParams struct {
 
 func (q *Queries) MarkThresholdNotified(ctx context.Context, arg MarkThresholdNotifiedParams) error {
 	_, err := q.db.Exec(ctx, markThresholdNotified, arg.Threshold, arg.ID)
+	return err
+}
+
+const settlePeriod = `-- name: SettlePeriod :exec
+UPDATE budget_periods
+SET reserved_micros = reserved_micros - $1,
+    spent_micros = spent_micros + $2
+WHERE id = $3
+`
+
+type SettlePeriodParams struct {
+	ReleaseMicros int64
+	SpendMicros   int64
+	ID            uuid.UUID
+}
+
+func (q *Queries) SettlePeriod(ctx context.Context, arg SettlePeriodParams) error {
+	_, err := q.db.Exec(ctx, settlePeriod, arg.ReleaseMicros, arg.SpendMicros, arg.ID)
 	return err
 }

@@ -9,6 +9,10 @@ import (
 // UUID. Transport maps it to PermissionDenied.
 var ErrNoOwner = errors.New("app: call has no valid owner")
 
+// ErrReservationNotOpen means usage cannot be recorded against a reservation
+// because it was released. Transport maps it to FailedPrecondition.
+var ErrReservationNotOpen = errors.New("app: reservation is not open")
+
 // Reasons of the InvalidArgumentError a use case returns.
 const (
 	ReasonInvalidRequest  = "INVALID_REQUEST"

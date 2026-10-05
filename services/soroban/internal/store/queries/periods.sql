@@ -15,3 +15,13 @@ UPDATE budget_periods SET reserved_micros = reserved_micros + @delta WHERE id = 
 UPDATE budget_periods
 SET notified_thresholds = array_append(notified_thresholds, @threshold::int)
 WHERE id = @id AND NOT (@threshold::int = ANY (notified_thresholds));
+
+-- name: LockPeriodsByID :many
+-- Ordered by budget id, the order Reserve locks in, so the two cannot deadlock.
+SELECT * FROM budget_periods WHERE id = ANY (@ids::uuid[]) ORDER BY budget_id FOR UPDATE;
+
+-- name: SettlePeriod :exec
+UPDATE budget_periods
+SET reserved_micros = reserved_micros - @release_micros,
+    spent_micros = spent_micros + @spend_micros
+WHERE id = @id;

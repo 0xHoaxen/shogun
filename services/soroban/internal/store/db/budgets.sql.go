@@ -92,6 +92,42 @@ func (q *Queries) ListBudgetTemplates(ctx context.Context, templateOwnerID uuid.
 	return items, nil
 }
 
+const listBudgetsByID = `-- name: ListBudgetsByID :many
+SELECT id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at FROM budgets WHERE id = ANY ($1::uuid[])
+`
+
+func (q *Queries) ListBudgetsByID(ctx context.Context, ids []uuid.UUID) ([]Budget, error) {
+	rows, err := q.db.Query(ctx, listBudgetsByID, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Budget{}
+	for rows.Next() {
+		var i Budget
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.ScopeType,
+			&i.ScopeValue,
+			&i.Period,
+			&i.LimitMicros,
+			&i.Mode,
+			&i.Thresholds,
+			&i.Enabled,
+			&i.Version,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMatchingBudgets = `-- name: ListMatchingBudgets :many
 SELECT id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at FROM budgets
 WHERE owner_id = $1

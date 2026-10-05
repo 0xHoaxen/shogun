@@ -21,3 +21,6 @@ WHERE owner_id = @owner_id
        OR (scope_type = 'service' AND scope_value = @service::text)
        OR (scope_type = 'feature' AND scope_value = @feature::text))
 ORDER BY id;
+
+-- name: ListBudgetsByID :many
+SELECT * FROM budgets WHERE id = ANY (@ids::uuid[]);

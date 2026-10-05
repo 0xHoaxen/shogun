@@ -266,15 +266,19 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: transactional Reserve locking matching `budget_periods` rows `FOR UPDATE` (ordered by id), checking `spent + reserved + estimate <= limit` for hard budgets, creating periods lazily at local midnight boundaries (Asia/Kolkata); default budgets copied from the nil-owner templates on first use; a refusal is `ResourceExhausted` with reason `BUDGET_EXHAUSTED` and `resets_at`, and `cost.budget_exhausted` is emitted once per period.
   Done when: concurrency test with 50 parallel Reserve calls against a small hard budget never exceeds the limit.
 
-- [ ] **P6.2b Commit / Release / expiry / read RPCs** (M) Needs: P6.2a
-  Do: Commit moves reserved to spent and writes `ledger`; Release; `expire_reservations` job every minute; threshold events emitted once per period; GetSpend, SetBudget, ListBudgets, SetPrice, ListPrices.
+- [x] **P6.2b Commit / Release / expiry / thresholds** (M) Needs: P6.2a
+  Do: Commit moves reserved to spent and writes `ledger` (a commit on an expired reservation still records the spend); Release; `expire_reservations` River job every minute; `cost.threshold_reached` emitted once per period and threshold. `cost.*` routes in `pkg/bus/routes.go` are added with their consumers (taiko, sensei), as for the other events.
   Done when: commit and release leave `reserved_micros` at 0; a threshold is emitted once per period.
+
+- [ ] **P6.2c soroban read and admin RPCs** (M) Needs: P6.2b
+  Do: GetSpend (group by service, feature, model, day), SetBudget (optimistic `version`), ListBudgets (with current period spent and reserved), SetPrice, ListPrices.
+  Done when: handler tests pass, including a stale-version SetBudget and spend grouped by each key.
 
 - [ ] **P6.3 pkg/llm** (M) Needs: P6.2b, P1.7
   Do: `llm.Complete(ctx, feature, req)`: count tokens, estimate cost, Reserve, call the Claude API, Commit actual usage (or Release on error), prompt caching for system prompt, optional response cache by prompt hash for 24 h; fails closed when soroban is unreachable; model per feature from config; API client behind an interface with a fake for tests.
   Done when: tests with the fake API cover allowed, denied (`ResourceExhausted` with `resets_at`), API error releases reservation, soroban down fails closed.
 
-- [ ] **P6.4 soroban admin endpoints in torii and a spend screen** (M) Needs: P6.3, P5.1
+- [ ] **P6.4 soroban admin endpoints in torii and a spend screen** (M) Needs: P6.2c, P6.3, P5.1
   Do: `CostsService` in `api/v1` (spend by day/service/feature, budgets CRUD) and a Settings > Spend page.
   Done when: Playwright test edits a budget and sees updated spend.
 

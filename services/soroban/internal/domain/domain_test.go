@@ -2,6 +2,7 @@ package domain_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
@@ -118,6 +119,52 @@ func TestReservationCanSettleOnlyWhenOpen(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.status), func(t *testing.T) {
 			if got := tt.status.CanSettle(); got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestThresholdsReached(t *testing.T) {
+	defaults := []int32{50, 80, 100}
+	tests := []struct {
+		name         string
+		thresholds   []int32
+		spent, limit int64
+		want         []int32
+	}{
+		{"nothing spent", defaults, 0, 1000, nil},
+		{"just under the first", defaults, 499, 1000, nil},
+		{"exactly the first", defaults, 500, 1000, []int32{50}},
+		{"between the second and third", defaults, 900, 1000, []int32{50, 80}},
+		{"at the limit", defaults, 1000, 1000, []int32{50, 80, 100}},
+		{"past the limit", defaults, 2500, 1000, []int32{50, 80, 100}},
+		{"unsorted thresholds come back ascending", []int32{100, 50}, 1000, 1000, []int32{50, 100}},
+		{"a zero limit has no thresholds", defaults, 10, 0, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := domain.ThresholdsReached(tt.thresholds, tt.spent, tt.limit)
+			if !slices.Equal(got, tt.want) {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestReservationCanCommitWhenOpenOrExpired(t *testing.T) {
+	tests := []struct {
+		status domain.ReservationStatus
+		want   bool
+	}{
+		{domain.ReservationOpen, true},
+		{domain.ReservationExpired, true},
+		{domain.ReservationCommitted, false},
+		{domain.ReservationReleased, false},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.status), func(t *testing.T) {
+			if got := tt.status.CanCommit(); got != tt.want {
 				t.Errorf("got %v, want %v", got, tt.want)
 			}
 		})
