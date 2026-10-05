@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -22,6 +23,8 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/soroban/internal/app"
+	sorobangrpc "github.com/0xHoaxen/shogun/services/soroban/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/soroban/migrations"
 )
 
@@ -124,6 +127,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		sorobanv1.RegisterSorobanServiceServer(s, sorobangrpc.New(app.NewService(pool, nil)))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }
