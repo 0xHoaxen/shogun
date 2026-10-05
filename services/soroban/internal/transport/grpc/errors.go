@@ -21,6 +21,8 @@ const (
 	reasonOwnerRequired      = "OWNER_REQUIRED"
 	reasonNotFound           = "RESOURCE_NOT_FOUND"
 	reasonReservationNotOpen = "RESERVATION_NOT_OPEN"
+	reasonVersionConflict    = "VERSION_CONFLICT"
+	reasonAlreadyExists      = "ALREADY_EXISTS"
 	reasonInternal           = "INTERNAL"
 )
 
@@ -45,6 +47,10 @@ func toStatus(err error) error {
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner", nil)
 	case errors.Is(err, store.ErrNotFound):
 		return withReason(codes.NotFound, reasonNotFound, "not found", nil)
+	case errors.Is(err, store.ErrVersionConflict):
+		return withReason(codes.Aborted, reasonVersionConflict, "version is stale; read the latest and retry", nil)
+	case errors.Is(err, store.ErrDuplicate):
+		return withReason(codes.AlreadyExists, reasonAlreadyExists, "already exists", nil)
 	case errors.Is(err, app.ErrReservationNotOpen):
 		return withReason(codes.FailedPrecondition, reasonReservationNotOpen, "reservation is not open", nil)
 	default:

@@ -11,6 +11,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const getBudget = `-- name: GetBudget :one
+SELECT id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at FROM budgets WHERE id = $1 AND owner_id = $2
+`
+
+type GetBudgetParams struct {
+	ID      uuid.UUID
+	OwnerID uuid.UUID
+}
+
+func (q *Queries) GetBudget(ctx context.Context, arg GetBudgetParams) (Budget, error) {
+	row := q.db.QueryRow(ctx, getBudget, arg.ID, arg.OwnerID)
+	var i Budget
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ScopeType,
+		&i.ScopeValue,
+		&i.Period,
+		&i.LimitMicros,
+		&i.Mode,
+		&i.Thresholds,
+		&i.Enabled,
+		&i.Version,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const hasBudgets = `-- name: HasBudgets :one
 SELECT EXISTS (SELECT 1 FROM budgets WHERE owner_id = $1)
 `
@@ -20,6 +48,53 @@ func (q *Queries) HasBudgets(ctx context.Context, ownerID uuid.UUID) (bool, erro
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const insertBudget = `-- name: InsertBudget :one
+INSERT INTO budgets (id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at
+`
+
+type InsertBudgetParams struct {
+	ID          uuid.UUID
+	OwnerID     uuid.UUID
+	ScopeType   string
+	ScopeValue  string
+	Period      string
+	LimitMicros int64
+	Mode        string
+	Thresholds  []int32
+	Enabled     bool
+}
+
+func (q *Queries) InsertBudget(ctx context.Context, arg InsertBudgetParams) (Budget, error) {
+	row := q.db.QueryRow(ctx, insertBudget,
+		arg.ID,
+		arg.OwnerID,
+		arg.ScopeType,
+		arg.ScopeValue,
+		arg.Period,
+		arg.LimitMicros,
+		arg.Mode,
+		arg.Thresholds,
+		arg.Enabled,
+	)
+	var i Budget
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ScopeType,
+		&i.ScopeValue,
+		&i.Period,
+		&i.LimitMicros,
+		&i.Mode,
+		&i.Thresholds,
+		&i.Enabled,
+		&i.Version,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const insertBudgetIfAbsent = `-- name: InsertBudgetIfAbsent :exec
@@ -62,6 +137,42 @@ SELECT id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresh
 // The defaults seeded by migration live under the nil owner id.
 func (q *Queries) ListBudgetTemplates(ctx context.Context, templateOwnerID uuid.UUID) ([]Budget, error) {
 	rows, err := q.db.Query(ctx, listBudgetTemplates, templateOwnerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Budget{}
+	for rows.Next() {
+		var i Budget
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.ScopeType,
+			&i.ScopeValue,
+			&i.Period,
+			&i.LimitMicros,
+			&i.Mode,
+			&i.Thresholds,
+			&i.Enabled,
+			&i.Version,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listBudgets = `-- name: ListBudgets :many
+SELECT id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at FROM budgets WHERE owner_id = $1 ORDER BY scope_type, scope_value, period
+`
+
+func (q *Queries) ListBudgets(ctx context.Context, ownerID uuid.UUID) ([]Budget, error) {
+	rows, err := q.db.Query(ctx, listBudgets, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -177,4 +288,50 @@ func (q *Queries) ListMatchingBudgets(ctx context.Context, arg ListMatchingBudge
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateBudget = `-- name: UpdateBudget :one
+UPDATE budgets
+SET limit_micros = $1, mode = $2, thresholds = $3, enabled = $4,
+    version = version + 1, updated_at = now()
+WHERE id = $5 AND owner_id = $6 AND version = $7
+RETURNING id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at
+`
+
+type UpdateBudgetParams struct {
+	LimitMicros int64
+	Mode        string
+	Thresholds  []int32
+	Enabled     bool
+	ID          uuid.UUID
+	OwnerID     uuid.UUID
+	Version     int32
+}
+
+// Scope and period are the budget's identity and never change.
+func (q *Queries) UpdateBudget(ctx context.Context, arg UpdateBudgetParams) (Budget, error) {
+	row := q.db.QueryRow(ctx, updateBudget,
+		arg.LimitMicros,
+		arg.Mode,
+		arg.Thresholds,
+		arg.Enabled,
+		arg.ID,
+		arg.OwnerID,
+		arg.Version,
+	)
+	var i Budget
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.ScopeType,
+		&i.ScopeValue,
+		&i.Period,
+		&i.LimitMicros,
+		&i.Mode,
+		&i.Thresholds,
+		&i.Enabled,
+		&i.Version,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

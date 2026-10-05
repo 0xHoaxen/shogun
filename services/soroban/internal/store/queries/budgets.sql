@@ -24,3 +24,22 @@ ORDER BY id;
 
 -- name: ListBudgetsByID :many
 SELECT * FROM budgets WHERE id = ANY (@ids::uuid[]);
+
+-- name: ListBudgets :many
+SELECT * FROM budgets WHERE owner_id = @owner_id ORDER BY scope_type, scope_value, period;
+
+-- name: GetBudget :one
+SELECT * FROM budgets WHERE id = @id AND owner_id = @owner_id;
+
+-- name: InsertBudget :one
+INSERT INTO budgets (id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled)
+VALUES (@id, @owner_id, @scope_type, @scope_value, @period, @limit_micros, @mode, @thresholds, @enabled)
+RETURNING *;
+
+-- name: UpdateBudget :one
+-- Scope and period are the budget's identity and never change.
+UPDATE budgets
+SET limit_micros = @limit_micros, mode = @mode, thresholds = @thresholds, enabled = @enabled,
+    version = version + 1, updated_at = now()
+WHERE id = @id AND owner_id = @owner_id AND version = @version
+RETURNING *;

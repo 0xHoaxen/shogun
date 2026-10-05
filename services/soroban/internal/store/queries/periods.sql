@@ -25,3 +25,8 @@ UPDATE budget_periods
 SET reserved_micros = reserved_micros - @release_micros,
     spent_micros = spent_micros + @spend_micros
 WHERE id = @id;
+
+-- name: ListCurrentPeriods :many
+SELECT bp.* FROM budget_periods bp
+JOIN budgets b ON b.id = bp.budget_id
+WHERE b.owner_id = @owner_id AND bp.period_start <= @now AND bp.period_end > @now;

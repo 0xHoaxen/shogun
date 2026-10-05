@@ -3,15 +3,24 @@ package store
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/0xHoaxen/shogun/services/soroban/internal/store/db"
 )
 
-// ErrNotFound means the row asked for does not exist.
-var ErrNotFound = errors.New("store: not found")
+// Errors the app layer maps to gRPC status codes.
+var (
+	ErrNotFound        = errors.New("store: not found")
+	ErrVersionConflict = errors.New("store: version conflict")
+	ErrDuplicate       = errors.New("store: duplicate")
+)
+
+// uniqueViolation is the Postgres SQLSTATE for a unique index violation.
+const uniqueViolation = "23505"
 
 // DBTX is a pool or a transaction. Build a Repo on a pgx.Tx to run several
 // writes, and an outbox event, atomically.
@@ -37,6 +46,10 @@ func NewID() uuid.UUID {
 func mapErr(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == uniqueViolation {
+		return fmt.Errorf("%w: %s", ErrDuplicate, pgErr.ConstraintName)
 	}
 	return err
 }

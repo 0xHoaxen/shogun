@@ -35,3 +35,10 @@ func (e *InvalidArgumentError) Error() string {
 func invalid(reason, format string, args ...any) error {
 	return &InvalidArgumentError{Reason: reason, Msg: fmt.Sprintf(format, args...)}
 }
+
+// Reasons of the InvalidArgumentError the admin use cases return.
+const (
+	ReasonInvalidBudget = "INVALID_BUDGET"
+	ReasonInvalidRange  = "INVALID_RANGE"
+	ReasonInvalidPrice  = "INVALID_PRICE"
+)

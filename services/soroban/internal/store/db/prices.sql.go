@@ -36,3 +36,77 @@ func (q *Queries) GetPriceOn(ctx context.Context, arg GetPriceOnParams) (Price, 
 	)
 	return i, err
 }
+
+const listPrices = `-- name: ListPrices :many
+SELECT model, effective_from, input_micros_per_mtok, output_micros_per_mtok, cache_read_micros_per_mtok, cache_write_micros_per_mtok FROM prices ORDER BY model, effective_from DESC
+`
+
+func (q *Queries) ListPrices(ctx context.Context) ([]Price, error) {
+	rows, err := q.db.Query(ctx, listPrices)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Price{}
+	for rows.Next() {
+		var i Price
+		if err := rows.Scan(
+			&i.Model,
+			&i.EffectiveFrom,
+			&i.InputMicrosPerMtok,
+			&i.OutputMicrosPerMtok,
+			&i.CacheReadMicrosPerMtok,
+			&i.CacheWriteMicrosPerMtok,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const upsertPrice = `-- name: UpsertPrice :one
+INSERT INTO prices (model, effective_from, input_micros_per_mtok, output_micros_per_mtok,
+                    cache_read_micros_per_mtok, cache_write_micros_per_mtok)
+VALUES ($1, $2, $3, $4,
+        $5, $6)
+ON CONFLICT (model, effective_from) DO UPDATE SET
+    input_micros_per_mtok = EXCLUDED.input_micros_per_mtok,
+    output_micros_per_mtok = EXCLUDED.output_micros_per_mtok,
+    cache_read_micros_per_mtok = EXCLUDED.cache_read_micros_per_mtok,
+    cache_write_micros_per_mtok = EXCLUDED.cache_write_micros_per_mtok
+RETURNING model, effective_from, input_micros_per_mtok, output_micros_per_mtok, cache_read_micros_per_mtok, cache_write_micros_per_mtok
+`
+
+type UpsertPriceParams struct {
+	Model                   string
+	EffectiveFrom           time.Time
+	InputMicrosPerMtok      int64
+	OutputMicrosPerMtok     int64
+	CacheReadMicrosPerMtok  int64
+	CacheWriteMicrosPerMtok int64
+}
+
+func (q *Queries) UpsertPrice(ctx context.Context, arg UpsertPriceParams) (Price, error) {
+	row := q.db.QueryRow(ctx, upsertPrice,
+		arg.Model,
+		arg.EffectiveFrom,
+		arg.InputMicrosPerMtok,
+		arg.OutputMicrosPerMtok,
+		arg.CacheReadMicrosPerMtok,
+		arg.CacheWriteMicrosPerMtok,
+	)
+	var i Price
+	err := row.Scan(
+		&i.Model,
+		&i.EffectiveFrom,
+		&i.InputMicrosPerMtok,
+		&i.OutputMicrosPerMtok,
+		&i.CacheReadMicrosPerMtok,
+		&i.CacheWriteMicrosPerMtok,
+	)
+	return i, err
+}

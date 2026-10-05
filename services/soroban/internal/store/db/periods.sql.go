@@ -49,6 +49,45 @@ func (q *Queries) InsertPeriodIfAbsent(ctx context.Context, arg InsertPeriodIfAb
 	return err
 }
 
+const listCurrentPeriods = `-- name: ListCurrentPeriods :many
+SELECT bp.id, bp.budget_id, bp.period_start, bp.period_end, bp.spent_micros, bp.reserved_micros, bp.notified_thresholds FROM budget_periods bp
+JOIN budgets b ON b.id = bp.budget_id
+WHERE b.owner_id = $1 AND bp.period_start <= $2 AND bp.period_end > $2
+`
+
+type ListCurrentPeriodsParams struct {
+	OwnerID uuid.UUID
+	Now     time.Time
+}
+
+func (q *Queries) ListCurrentPeriods(ctx context.Context, arg ListCurrentPeriodsParams) ([]BudgetPeriod, error) {
+	rows, err := q.db.Query(ctx, listCurrentPeriods, arg.OwnerID, arg.Now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []BudgetPeriod{}
+	for rows.Next() {
+		var i BudgetPeriod
+		if err := rows.Scan(
+			&i.ID,
+			&i.BudgetID,
+			&i.PeriodStart,
+			&i.PeriodEnd,
+			&i.SpentMicros,
+			&i.ReservedMicros,
+			&i.NotifiedThresholds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockPeriod = `-- name: LockPeriod :one
 SELECT id, budget_id, period_start, period_end, spent_micros, reserved_micros, notified_thresholds FROM budget_periods
 WHERE budget_id = $1 AND period_start = $2

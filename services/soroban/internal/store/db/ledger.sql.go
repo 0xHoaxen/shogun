@@ -95,3 +95,70 @@ func (q *Queries) InsertLedgerEntry(ctx context.Context, arg InsertLedgerEntryPa
 	)
 	return i, err
 }
+
+const sumSpend = `-- name: SumSpend :many
+SELECT (CASE $1::text
+          WHEN 'service' THEN service
+          WHEN 'feature' THEN feature
+          WHEN 'model' THEN model
+          ELSE to_char(occurred_at AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD')
+        END)::text AS key,
+       sum(cost_micros)::bigint AS cost_micros,
+       sum(input_tokens)::bigint AS input_tokens,
+       sum(output_tokens)::bigint AS output_tokens,
+       sum(cache_read_tokens)::bigint AS cache_read_tokens,
+       sum(cache_write_tokens)::bigint AS cache_write_tokens
+FROM ledger
+WHERE owner_id = $2 AND occurred_at >= $3 AND occurred_at < $4
+GROUP BY 1
+ORDER BY 1
+`
+
+type SumSpendParams struct {
+	GroupBy  string
+	OwnerID  uuid.UUID
+	FromTime time.Time
+	ToTime   time.Time
+}
+
+type SumSpendRow struct {
+	Key              string
+	CostMicros       int64
+	InputTokens      int64
+	OutputTokens     int64
+	CacheReadTokens  int64
+	CacheWriteTokens int64
+}
+
+// group_by is service, feature, model or day; a day is an Asia/Kolkata date.
+func (q *Queries) SumSpend(ctx context.Context, arg SumSpendParams) ([]SumSpendRow, error) {
+	rows, err := q.db.Query(ctx, sumSpend,
+		arg.GroupBy,
+		arg.OwnerID,
+		arg.FromTime,
+		arg.ToTime,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SumSpendRow{}
+	for rows.Next() {
+		var i SumSpendRow
+		if err := rows.Scan(
+			&i.Key,
+			&i.CostMicros,
+			&i.InputTokens,
+			&i.OutputTokens,
+			&i.CacheReadTokens,
+			&i.CacheWriteTokens,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

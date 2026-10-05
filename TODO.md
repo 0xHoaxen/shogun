@@ -270,7 +270,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: Commit moves reserved to spent and writes `ledger` (a commit on an expired reservation still records the spend); Release; `expire_reservations` River job every minute; `cost.threshold_reached` emitted once per period and threshold. `cost.*` routes in `pkg/bus/routes.go` are added with their consumers (taiko, sensei), as for the other events.
   Done when: commit and release leave `reserved_micros` at 0; a threshold is emitted once per period.
 
-- [ ] **P6.2c soroban read and admin RPCs** (M) Needs: P6.2b
+- [x] **P6.2c soroban read and admin RPCs** (M) Needs: P6.2b
   Do: GetSpend (group by service, feature, model, day), SetBudget (optimistic `version`), ListBudgets (with current period spent and reserved), SetPrice, ListPrices.
   Done when: handler tests pass, including a stale-version SetBudget and spend grouped by each key.
 
