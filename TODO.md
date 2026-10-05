@@ -274,7 +274,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: GetSpend (group by service, feature, model, day), SetBudget (optimistic `version`), ListBudgets (with current period spent and reserved), SetPrice, ListPrices.
   Done when: handler tests pass, including a stale-version SetBudget and spend grouped by each key.
 
-- [ ] **P6.3 pkg/llm** (M) Needs: P6.2b, P1.7
+- [x] **P6.3 pkg/llm** (M) Needs: P6.2b, P1.7
   Do: `llm.Complete(ctx, feature, req)`: count tokens, estimate cost, Reserve, call the Claude API, Commit actual usage (or Release on error), prompt caching for system prompt, optional response cache by prompt hash for 24 h; fails closed when soroban is unreachable; model per feature from config; API client behind an interface with a fake for tests.
   Done when: tests with the fake API cover allowed, denied (`ResourceExhausted` with `resets_at`), API error releases reservation, soroban down fails closed.
 
