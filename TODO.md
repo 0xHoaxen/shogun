@@ -278,7 +278,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `llm.Complete(ctx, feature, req)`: count tokens, estimate cost, Reserve, call the Claude API, Commit actual usage (or Release on error), prompt caching for system prompt, optional response cache by prompt hash for 24 h; fails closed when soroban is unreachable; model per feature from config; API client behind an interface with a fake for tests.
   Done when: tests with the fake API cover allowed, denied (`ResourceExhausted` with `resets_at`), API error releases reservation, soroban down fails closed.
 
-- [ ] **P6.4 soroban admin endpoints in torii and a spend screen** (M) Needs: P6.2c, P6.3, P5.1
+- [x] **P6.4 soroban admin endpoints in torii and a spend screen** (M) Needs: P6.2c, P6.3, P5.1
   Do: `CostsService` in `api/v1` (spend by day/service/feature, budgets CRUD) and a Settings > Spend page.
   Done when: Playwright test edits a budget and sees updated spend.
 
