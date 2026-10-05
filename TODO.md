@@ -258,7 +258,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 6: soroban (cost control) and pkg/llm
 
-- [ ] **P6.1 soroban migrations and proto** (M) Needs: P2.3
+- [x] **P6.1 soroban migrations and proto** (M) Needs: P2.3
   Do: `prices budgets budget_periods reservations ledger` per the DDL; RPCs Reserve, Commit, Release, GetSpend, SetBudget, ListBudgets, SetPrice, ListPrices; events `cost.threshold_reached`, `cost.budget_exhausted`. Seed prices for the models in use and default budgets ($20 global monthly hard, $15 `fude` monthly hard, $3 other services monthly hard, $1 per feature daily soft) with `TODO(owner)` to confirm numbers.
   Done when: `make proto` and `make migrate` pass.
 
