@@ -37,7 +37,9 @@ type Settings struct {
 	AllowedEmails   []string
 	// KagamiAddr is the gRPC address of kagami, which owns jobs and contacts.
 	KagamiAddr string
-	SessionTTL time.Duration
+	// SorobanAddr is the gRPC address of soroban, which meters Claude spend.
+	SorobanAddr string
+	SessionTTL  time.Duration
 	// RateLimit is requests per second per client; RateBurst the burst size.
 	RateLimit int
 	RateBurst int
@@ -69,6 +71,8 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	kagamiAddr, err := config.Required(lookup, "KAGAMI_ADDR")
 	collect(err)
+	sorobanAddr, err := config.Required(lookup, "SOROBAN_ADDR")
+	collect(err)
 	ttl, err := config.Duration(lookup, "SESSION_TTL", defaultSessionTTL)
 	collect(err)
 	rateLimit, err := config.Int(lookup, "TORII_RATE_LIMIT", defaultRateLimit)
@@ -86,6 +90,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		GoogleIssuerURL:    config.String(lookup, "GOOGLE_ISSUER_URL", defaultIssuer),
 		AllowedEmails:      splitList(emails),
 		KagamiAddr:         kagamiAddr,
+		SorobanAddr:        sorobanAddr,
 		SessionTTL:         ttl,
 		RateLimit:          rateLimit,
 		RateBurst:          rateBurst,

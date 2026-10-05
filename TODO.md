@@ -213,7 +213,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `cd services/torii && go test -race ./internal/transport/...` passes: unauthenticated, unknown and expired sessions return `Unauthenticated`; `GetSession`, `Logout`, renewal and identity propagation work.
 
 - [ ] **P4.9d Torii housekeeping** (S) Needs: P4.9c2
-  Do: River periodic job deleting expired `torii.sessions` rows (`store.Sessions.DeleteExpired` exists); add the new torii variables (`GOOGLE_*`, `TORII_ALLOWED_EMAILS`, `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR`) to `deploy/helm/values/staging/torii.yaml`. `TODO(owner)`: production values and the real Google client are yours to set.
+  Do: River periodic job deleting expired `torii.sessions` rows (`store.Sessions.DeleteExpired` exists); add the new torii variables (`GOOGLE_*`, `TORII_ALLOWED_EMAILS`, `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR`, `KAGAMI_ADDR`, `SOROBAN_ADDR`) to `deploy/helm/values/staging/torii.yaml`. `TODO(owner)`: production values and the real Google client are yours to set.
   Done when: a test with a fake clock shows only expired sessions removed; `helm template` passes for staging torii.
 
 - [x] **P4.9c2 Public listener, config, rate limit, size cap** (M) Needs: P4.9c1
