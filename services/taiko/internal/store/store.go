@@ -1,0 +1,52 @@
+package store
+
+import (
+	"errors"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+
+	"github.com/0xHoaxen/shogun/services/taiko/internal/store/db"
+)
+
+// Errors the app layer maps to gRPC status codes.
+var (
+	ErrNotFound         = errors.New("store: not found")
+	ErrInvalidPageToken = errors.New("store: invalid page token")
+)
+
+// DBTX is a pool or a transaction. Build a Repo on a pgx.Tx to insert a
+// notification in the same transaction as the inbox row of its event.
+type DBTX = db.DBTX
+
+// Repo reads and writes the taiko tables. It holds no state besides the
+// connection it was built on.
+type Repo struct {
+	q *db.Queries
+}
+
+// New returns a Repo that runs on d.
+func New(d DBTX) *Repo {
+	return &Repo{q: db.New(d)}
+}
+
+// NewID returns a new UUIDv7. Notification ids sort by creation time, which
+// the stream replay relies on.
+func NewID() uuid.UUID {
+	return uuid.Must(uuid.NewV7())
+}
+
+func mapErr(err error) error {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	return err
+}
+
+func wrap(op string, err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("store: %s: %w", op, mapErr(err))
+}

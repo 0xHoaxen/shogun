@@ -392,17 +392,34 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 8: taiko (notifications)
 
-- [ ] **P8.1 taiko service** (M) Needs: P1.6
-  Do: migrations `notifications channel_settings`; consume the events in the LLD catalog; one notification per `source_event_id`; RPCs List, MarkRead, MarkAllRead, Subscribe (server stream).
-  Done when: duplicate event creates one notification; stream test receives a new notification within 1 s.
+- [x] **P8.1a taiko tables, proto, domain, store** (M) Needs: P1.6
+  Do: migration `notifications channel_settings` (types closed by a `CHECK`); `shogun.taiko.v1` RPCs List, MarkRead, MarkAllRead, Subscribe (server stream, `after_id` replay); `domain.Notice` with link and length validation; sqlc store with insert-once on `source_event_id`, keyset list, replay, mark read, channel settings.
+  Done when: `cd services/taiko && go test -race ./...` passes: domain table tests and store integration tests (duplicate `source_event_id` stores one row, pagination, unread only, replay, mark read, settings).
+  Status: `Subscribe` returns `SubscribeResponse` wrapping a `Notification`, as `buf lint` requires. The per-event title and link builders move to P8.1b, where the payloads are known.
 
-- [ ] **P8.2 torii stream and bell UI** (M) Needs: P8.1, P5.1
-  Do: `NotificationsService.Stream` bridging `Subscribe` with last-seen-id reconnect; bell with unread count and list.
+- [ ] **P8.1b0 Owner on kagami follow-up and status events** (S) Needs: P8.1a
+  Do: add `owner_id` to `JobStatusChanged`, `JobFollowUpDue` and `ContactFollowUpDue` in `proto/shogun/kagami/v1/events.proto` and fill it in kagami's producers; taiko cannot attribute a notification to the owner without it.
+  Done when: `cd services/kagami && go test -race ./...` passes with the producer tests asserting `owner_id`.
+
+- [ ] **P8.1b taiko consumes events** (M) Needs: P8.1b0
+  Do: `internal/events` handlers (shape of fude's) for `job.status_changed` (interview and offer), `job.follow_up_due`, `contact.follow_up_due`, `mail.classified` (interview, offer, rejection), `mail.reply_detected`, `draft.ready`, `draft.failed`, `draft.send_failed`, `cost.threshold_reached`, `cost.budget_exhausted`; title and link builders in `domain`; routes to `taiko` in `pkg/bus/routes.go`; wire the handlers into `bus.NewSinkServer`.
+  Done when: a handler test per event type and an idempotency test (the same envelope twice gives one notification).
+
+- [ ] **P8.1c taiko RPCs and Subscribe stream** (M) Needs: P8.1b
+  Do: use cases and gRPC handlers for List, MarkRead, MarkAllRead, Subscribe; `pg_notify` on insert, one `LISTEN` connection feeding an in-process broker, replay from `after_id` after subscribing so no gap; register `TaikoService`.
+  Done when: a handler test per RPC; a stream test where a consumed event reaches an open `Subscribe` within 1 s, including replay and recovery after the `LISTEN` connection drops.
+
+- [ ] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P5.1
+  Do: `proto/shogun/api/v1/notifications.proto` (`List`, `MarkRead`, `MarkAllRead`, `Stream` with last-seen-id); Connect handlers bridging `taiko.Subscribe`; `TAIKO_ADDR` config. Check the stream through the real proxy chain early, since it is the first server stream.
+  Done when: torii handler tests including a stream bridge with a fake taiko client.
+
+- [ ] **P8.2b Notification bell** (M) Needs: P8.2a
+  Do: bell with unread count and list, mark read and mark all read, `Stream` subscription that reconnects from the last seen id.
   Done when: Playwright: adding a job leads to a "cover letter ready" notification appearing without reload.
 
-- [ ] **P8.3 Daily digest** (S) Needs: P8.1, P4.8
-  Do: `daily_digest` at 08:30 summarising due follow-ups, drafts waiting, spend; skipped if empty; respects quiet hours.
-  Done when: tests with fake clock.
+- [ ] **P8.3 Daily digest** (M) Needs: P8.1c, P4.8
+  Do: `daily_digest` at 08:30 in the owner's timezone summarising due follow-ups, drafts waiting, spend; one `source_event_id` per date; skipped if empty; snoozed past quiet hours (including windows that wrap midnight); skipped when the in-app channel is disabled. In-app only: an emailed digest would be an external send without a Hanko approval, so `TODO(owner)`: decide whether to add `email_digest`.
+  Done when: tests with fake clock and fake clients.
 
 ---
 
@@ -413,11 +430,11 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: logging an activity leads to a pending post draft in the queue (E2E with fake LLM).
 
 - [ ] **P9.2 katana** (L, split) Needs: P6.3
-  Do: GitHub sync with ETags into `github_snapshots`; `suggest` job diffing snapshots plus `learning.item_completed`, feature `katana.suggest`; accept and dismiss RPCs; Profile suggestions screen.
+  Do: GitHub sync with ETags into `github_snapshots`; `suggest` job diffing snapshots plus `learning.item_completed`, feature `katana.suggest`; accept and dismiss RPCs (and the `profile.suggestion_ready` taiko route and handler); Profile suggestions screen.
   Done when: fixture snapshots produce suggestions with evidence links; accepting changes state only.
 
 - [ ] **P9.3 shinobi** (L, split) Needs: P6.3, P4.6
-  Do: sources of kind api, rss, file with schedule; upsert postings by `(source_id, external_id)`; rule score then LLM score for borderline (feature `shinobi.score`); `discovery.match_found`; `SaveToTracker` calling `kagami.AddJob`; Discovery screen. `TODO(owner)`: provide the first real data source.
+  Do: sources of kind api, rss, file with schedule; upsert postings by `(source_id, external_id)`; rule score then LLM score for borderline (feature `shinobi.score`); `discovery.match_found` (and its taiko route and handler); `SaveToTracker` calling `kagami.AddJob`; Discovery screen. `TODO(owner)`: provide the first real data source.
   Done when: fixture RSS and file sources work; score at or above `min_score` emits the event once.
 
 - [ ] **P9.4 sensei** (M) Needs: P7.7

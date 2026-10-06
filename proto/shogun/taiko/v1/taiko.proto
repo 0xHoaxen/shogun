@@ -2,5 +2,81 @@ syntax = "proto3";
 
 package shogun.taiko.v1;
 
-// The RPCs of taiko are added with its first feature task.
-service TaikoService {}
+import "google/protobuf/timestamp.proto";
+
+// TaikoService holds the owner's in-app notifications. Notifications are made
+// from events, one per source event, and are never edited besides read_at.
+service TaikoService {
+  // List returns notifications newest first.
+  rpc List(ListRequest) returns (ListResponse);
+  // MarkRead marks the given notifications read. Unknown ids are ignored.
+  rpc MarkRead(MarkReadRequest) returns (MarkReadResponse);
+  // MarkAllRead marks every unread notification read.
+  rpc MarkAllRead(MarkAllReadRequest) returns (MarkAllReadResponse);
+  // Subscribe streams new notifications. With after_id set it first replays
+  // the notifications created after that id, so a client can reconnect without
+  // missing any.
+  rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+}
+
+// NotificationType says what happened. The set is closed by a CHECK in the
+// notifications table.
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TYPE_DRAFT_READY = 1;
+  NOTIFICATION_TYPE_DRAFT_FAILED = 2;
+  NOTIFICATION_TYPE_DRAFT_SEND_FAILED = 3;
+  NOTIFICATION_TYPE_INTERVIEW_INVITE = 4;
+  NOTIFICATION_TYPE_OFFER = 5;
+  NOTIFICATION_TYPE_REJECTION = 6;
+  NOTIFICATION_TYPE_REPLY_DETECTED = 7;
+  NOTIFICATION_TYPE_FOLLOW_UP_DUE = 8;
+  NOTIFICATION_TYPE_BUDGET_THRESHOLD = 9;
+  NOTIFICATION_TYPE_BUDGET_EXHAUSTED = 10;
+  NOTIFICATION_TYPE_DAILY_DIGEST = 11;
+}
+
+message Notification {
+  string id = 1;
+  NotificationType type = 2;
+  string title = 3;
+  string body = 4;
+  // link is an in-app route such as /drafts/<id>; empty when there is none.
+  string link = 5;
+  google.protobuf.Timestamp created_at = 6;
+  // read_at is unset while the notification is unread.
+  google.protobuf.Timestamp read_at = 7;
+}
+
+message ListRequest {
+  bool unread_only = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListResponse {
+  repeated Notification notifications = 1;
+  string next_page_token = 2;
+  // unread_count is all unread notifications, not only this page.
+  int32 unread_count = 3;
+}
+
+message MarkReadRequest {
+  repeated string ids = 1;
+}
+
+message MarkReadResponse {}
+
+message MarkAllReadRequest {}
+
+message MarkAllReadResponse {}
+
+message SubscribeRequest {
+  // after_id is the id of the last notification the client saw; empty streams
+  // only new ones.
+  string after_id = 1;
+}
+
+message SubscribeResponse {
+  Notification notification = 1;
+}

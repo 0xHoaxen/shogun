@@ -7,7 +7,10 @@
 package taikov1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,30 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	TaikoService_List_FullMethodName        = "/shogun.taiko.v1.TaikoService/List"
+	TaikoService_MarkRead_FullMethodName    = "/shogun.taiko.v1.TaikoService/MarkRead"
+	TaikoService_MarkAllRead_FullMethodName = "/shogun.taiko.v1.TaikoService/MarkAllRead"
+	TaikoService_Subscribe_FullMethodName   = "/shogun.taiko.v1.TaikoService/Subscribe"
+)
+
 // TaikoServiceClient is the client API for TaikoService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of taiko are added with its first feature task.
+// TaikoService holds the owner's in-app notifications. Notifications are made
+// from events, one per source event, and are never edited besides read_at.
 type TaikoServiceClient interface {
+	// List returns notifications newest first.
+	List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error)
+	// MarkRead marks the given notifications read. Unknown ids are ignored.
+	MarkRead(ctx context.Context, in *MarkReadRequest, opts ...grpc.CallOption) (*MarkReadResponse, error)
+	// MarkAllRead marks every unread notification read.
+	MarkAllRead(ctx context.Context, in *MarkAllReadRequest, opts ...grpc.CallOption) (*MarkAllReadResponse, error)
+	// Subscribe streams new notifications. With after_id set it first replays
+	// the notifications created after that id, so a client can reconnect without
+	// missing any.
+	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SubscribeResponse], error)
 }
 
 type taikoServiceClient struct {
@@ -31,12 +52,72 @@ func NewTaikoServiceClient(cc grpc.ClientConnInterface) TaikoServiceClient {
 	return &taikoServiceClient{cc}
 }
 
+func (c *taikoServiceClient) List(ctx context.Context, in *ListRequest, opts ...grpc.CallOption) (*ListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListResponse)
+	err := c.cc.Invoke(ctx, TaikoService_List_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taikoServiceClient) MarkRead(ctx context.Context, in *MarkReadRequest, opts ...grpc.CallOption) (*MarkReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkReadResponse)
+	err := c.cc.Invoke(ctx, TaikoService_MarkRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taikoServiceClient) MarkAllRead(ctx context.Context, in *MarkAllReadRequest, opts ...grpc.CallOption) (*MarkAllReadResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkAllReadResponse)
+	err := c.cc.Invoke(ctx, TaikoService_MarkAllRead_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taikoServiceClient) Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SubscribeResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &TaikoService_ServiceDesc.Streams[0], TaikoService_Subscribe_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[SubscribeRequest, SubscribeResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type TaikoService_SubscribeClient = grpc.ServerStreamingClient[SubscribeResponse]
+
 // TaikoServiceServer is the server API for TaikoService service.
 // All implementations must embed UnimplementedTaikoServiceServer
 // for forward compatibility.
 //
-// The RPCs of taiko are added with its first feature task.
+// TaikoService holds the owner's in-app notifications. Notifications are made
+// from events, one per source event, and are never edited besides read_at.
 type TaikoServiceServer interface {
+	// List returns notifications newest first.
+	List(context.Context, *ListRequest) (*ListResponse, error)
+	// MarkRead marks the given notifications read. Unknown ids are ignored.
+	MarkRead(context.Context, *MarkReadRequest) (*MarkReadResponse, error)
+	// MarkAllRead marks every unread notification read.
+	MarkAllRead(context.Context, *MarkAllReadRequest) (*MarkAllReadResponse, error)
+	// Subscribe streams new notifications. With after_id set it first replays
+	// the notifications created after that id, so a client can reconnect without
+	// missing any.
+	Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[SubscribeResponse]) error
 	mustEmbedUnimplementedTaikoServiceServer()
 }
 
@@ -47,6 +128,18 @@ type TaikoServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTaikoServiceServer struct{}
 
+func (UnimplementedTaikoServiceServer) List(context.Context, *ListRequest) (*ListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method List not implemented")
+}
+func (UnimplementedTaikoServiceServer) MarkRead(context.Context, *MarkReadRequest) (*MarkReadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkRead not implemented")
+}
+func (UnimplementedTaikoServiceServer) MarkAllRead(context.Context, *MarkAllReadRequest) (*MarkAllReadResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkAllRead not implemented")
+}
+func (UnimplementedTaikoServiceServer) Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[SubscribeResponse]) error {
+	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
 func (UnimplementedTaikoServiceServer) mustEmbedUnimplementedTaikoServiceServer() {}
 func (UnimplementedTaikoServiceServer) testEmbeddedByValue()                      {}
 
@@ -68,13 +161,97 @@ func RegisterTaikoServiceServer(s grpc.ServiceRegistrar, srv TaikoServiceServer)
 	s.RegisterService(&TaikoService_ServiceDesc, srv)
 }
 
+func _TaikoService_List_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaikoServiceServer).List(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaikoService_List_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaikoServiceServer).List(ctx, req.(*ListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaikoService_MarkRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaikoServiceServer).MarkRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaikoService_MarkRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaikoServiceServer).MarkRead(ctx, req.(*MarkReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaikoService_MarkAllRead_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkAllReadRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaikoServiceServer).MarkAllRead(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaikoService_MarkAllRead_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaikoServiceServer).MarkAllRead(ctx, req.(*MarkAllReadRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaikoService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(SubscribeRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TaikoServiceServer).Subscribe(m, &grpc.GenericServerStream[SubscribeRequest, SubscribeResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type TaikoService_SubscribeServer = grpc.ServerStreamingServer[SubscribeResponse]
+
 // TaikoService_ServiceDesc is the grpc.ServiceDesc for TaikoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TaikoService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.taiko.v1.TaikoService",
 	HandlerType: (*TaikoServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/taiko/v1/taiko.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "List",
+			Handler:    _TaikoService_List_Handler,
+		},
+		{
+			MethodName: "MarkRead",
+			Handler:    _TaikoService_MarkRead_Handler,
+		},
+		{
+			MethodName: "MarkAllRead",
+			Handler:    _TaikoService_MarkAllRead_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Subscribe",
+			Handler:       _TaikoService_Subscribe_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "shogun/taiko/v1/taiko.proto",
 }
