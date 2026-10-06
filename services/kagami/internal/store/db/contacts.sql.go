@@ -311,6 +311,22 @@ func (q *Queries) InsertContactEvent(ctx context.Context, arg InsertContactEvent
 	return i, err
 }
 
+const latestContactStatusAnchor = `-- name: LatestContactStatusAnchor :one
+SELECT COALESCE((payload->>'event_at')::timestamptz, occurred_at)::timestamptz AS anchor
+FROM contact_events
+WHERE contact_id = $1 AND kind = 'status_changed'
+ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
+LIMIT 1
+`
+
+// See LatestJobStatusAnchor.
+func (q *Queries) LatestContactStatusAnchor(ctx context.Context, contactID uuid.UUID) (time.Time, error) {
+	row := q.db.QueryRow(ctx, latestContactStatusAnchor, contactID)
+	var anchor time.Time
+	err := row.Scan(&anchor)
+	return anchor, err
+}
+
 const listContactEvents = `-- name: ListContactEvents :many
 SELECT id, contact_id, kind, channel, from_status, to_status, source_event_id, payload, occurred_at FROM contact_events WHERE contact_id = $1 ORDER BY occurred_at DESC, id DESC
 `

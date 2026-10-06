@@ -9,8 +9,10 @@ import "slices"
 var routes = map[string][]string{
 	"job.added":              {"fude"},
 	"contact.status_changed": {"fude"},
-	"draft.sent":             {"fude"},
+	"draft.sent":             {"fude", "kagami"},
 	"draft.send_failed":      {"fude"},
+	"mail.classified":        {"kagami"},
+	"mail.reply_detected":    {"kagami"},
 }
 
 // Consumers returns the services subscribed to eventType, or nil when there

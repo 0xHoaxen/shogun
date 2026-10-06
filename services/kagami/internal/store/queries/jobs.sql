@@ -111,3 +111,14 @@ WHERE j.owner_id = @owner_id AND j.archived_at IS NULL AND c.archived_at IS NULL
   AND c.domain = ANY(@domains::text[])
 ORDER BY (j.status <> 'rejected') DESC, length(c.domain) DESC, j.updated_at DESC, j.id DESC
 LIMIT 1;
+
+-- name: LatestJobStatusAnchor :one
+-- When the job's status last changed, as an event time: a change made from
+-- mail carries the time of the mail event in its payload; any other change is
+-- anchored at the moment it was made. A mail event that occurred before this
+-- is out of date.
+SELECT COALESCE((payload->>'event_at')::timestamptz, occurred_at)::timestamptz AS anchor
+FROM job_events
+WHERE job_id = @job_id AND kind = 'status_changed'
+ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
+LIMIT 1;

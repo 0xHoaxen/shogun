@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -159,4 +160,17 @@ func (r *Repo) FindJobByURLs(ctx context.Context, owner uuid.UUID, urls []string
 func (r *Repo) FindJobByCompanyDomains(ctx context.Context, owner uuid.UUID, domains []string) (db.Job, error) {
 	j, err := r.q.FindJobByCompanyDomains(ctx, db.FindJobByCompanyDomainsParams{OwnerID: owner, Domains: domains})
 	return j, mapErr(err)
+}
+
+// LatestJobStatusAnchor returns the event time of the job's latest status
+// change, and false when it has had none.
+func (r *Repo) LatestJobStatusAnchor(ctx context.Context, jobID uuid.UUID) (time.Time, bool, error) {
+	at, err := r.q.LatestJobStatusAnchor(ctx, jobID)
+	if errors.Is(mapErr(err), ErrNotFound) {
+		return time.Time{}, false, nil
+	}
+	if err != nil {
+		return time.Time{}, false, fmt.Errorf("latest job status anchor: %w", mapErr(err))
+	}
+	return at, true, nil
 }

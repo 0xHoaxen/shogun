@@ -301,6 +301,25 @@ func (q *Queries) InsertJobEvent(ctx context.Context, arg InsertJobEventParams) 
 	return i, err
 }
 
+const latestJobStatusAnchor = `-- name: LatestJobStatusAnchor :one
+SELECT COALESCE((payload->>'event_at')::timestamptz, occurred_at)::timestamptz AS anchor
+FROM job_events
+WHERE job_id = $1 AND kind = 'status_changed'
+ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
+LIMIT 1
+`
+
+// When the job's status last changed, as an event time: a change made from
+// mail carries the time of the mail event in its payload; any other change is
+// anchored at the moment it was made. A mail event that occurred before this
+// is out of date.
+func (q *Queries) LatestJobStatusAnchor(ctx context.Context, jobID uuid.UUID) (time.Time, error) {
+	row := q.db.QueryRow(ctx, latestJobStatusAnchor, jobID)
+	var anchor time.Time
+	err := row.Scan(&anchor)
+	return anchor, err
+}
+
 const listDueJobs = `-- name: ListDueJobs :many
 SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
 WHERE owner_id = $1 AND next_follow_up <= $2::date
