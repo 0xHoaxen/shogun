@@ -115,3 +115,48 @@ func (r *Repo) GetMessage(ctx context.Context, owner, id uuid.UUID) (db.Message,
 	m, err := r.q.GetMessage(ctx, db.GetMessageParams{ID: id, OwnerID: owner})
 	return m, mapErr(err)
 }
+
+// ClassifyArgs is what a classification stores on a message.
+type ClassifyArgs struct {
+	Classification string
+	Confidence     float32
+	ClassifiedBy   string
+	JobID          *uuid.UUID
+	ContactID      *uuid.UUID
+}
+
+// SetMessageClassification classifies a message that is not classified yet. It
+// reports false, and changes nothing, when it already was or is not the
+// owner's.
+func (r *Repo) SetMessageClassification(ctx context.Context, owner, id uuid.UUID, a ClassifyArgs) (bool, error) {
+	n, err := r.q.SetMessageClassification(ctx, db.SetMessageClassificationParams{
+		ID: id, OwnerID: owner, Classification: &a.Classification, Confidence: &a.Confidence,
+		ClassifiedBy: &a.ClassifiedBy, LinkedJobID: a.JobID, LinkedContactID: a.ContactID,
+	})
+	if err != nil {
+		return false, fmt.Errorf("classify message: %w", err)
+	}
+	return n > 0, nil
+}
+
+// ThreadHasOutbound reports whether the owner sent a message in the thread.
+func (r *Repo) ThreadHasOutbound(ctx context.Context, accountID uuid.UUID, threadID string) (bool, error) {
+	has, err := r.q.ThreadHasOutbound(ctx, db.ThreadHasOutboundParams{AccountID: accountID, ThreadID: &threadID})
+	if err != nil {
+		return false, fmt.Errorf("thread has outbound: %w", err)
+	}
+	return has, nil
+}
+
+// ThreadLinks returns the job and contact an earlier message of the thread was
+// linked to, either of which may be nil. Both are nil when none was.
+func (r *Repo) ThreadLinks(ctx context.Context, accountID, messageID uuid.UUID, threadID string) (job, contact *uuid.UUID, err error) {
+	row, err := r.q.ThreadLinks(ctx, db.ThreadLinksParams{AccountID: accountID, ThreadID: &threadID, ID: messageID})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil, nil
+	}
+	if err != nil {
+		return nil, nil, fmt.Errorf("thread links: %w", err)
+	}
+	return row.LinkedJobID, row.LinkedContactID, nil
+}

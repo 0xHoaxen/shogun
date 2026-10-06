@@ -114,10 +114,12 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	mailSvc, err := newMailServices(lookup, pool, keys, log)
+	mailSvc, err := newMailServices(ctx, lookup, cfg, pool, keys, authority, log)
 	if err != nil {
 		return err
 	}
+
+	defer mailSvc.close()
 
 	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
 	if err != nil {

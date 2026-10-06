@@ -76,13 +76,14 @@ type Setup struct {
 	PeriodicJobs []*river.PeriodicJob
 }
 
-// NewSetup builds the scheduled sync.
-func NewSetup(syncer Syncer, log *slog.Logger) Setup {
+// NewSetup builds the scheduled sync and the classification worker.
+func NewSetup(syncer Syncer, classifier Classifier, log *slog.Logger) Setup {
 	return Setup{
 		Workers: func(ws *river.Workers) {
 			river.AddWorker(ws, &syncWorker{syncer: syncer, log: log})
+			river.AddWorker(ws, &classifyWorker{classifier: classifier, log: log, now: time.Now})
 		},
-		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: 2}},
+		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: classifyWorkers}},
 		PeriodicJobs: []*river.PeriodicJob{
 			river.NewPeriodicJob(river.PeriodicInterval(syncEvery), func() (river.JobArgs, *river.InsertOpts) {
 				return GmailSyncArgs{}, nil

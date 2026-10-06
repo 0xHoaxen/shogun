@@ -44,7 +44,7 @@ func TestWorkReportsAFailedSync(t *testing.T) {
 }
 
 func TestSetupSchedulesTheSyncEveryFiveMinutesWithoutOverlap(t *testing.T) {
-	setup := NewSetup(&fakeSyncer{}, slog.New(slog.DiscardHandler))
+	setup := NewSetup(&fakeSyncer{}, &fakeClassifier{}, slog.New(slog.DiscardHandler))
 
 	opts := GmailSyncArgs{}.InsertOpts()
 

@@ -337,9 +337,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `FindMailLinks(from_email, urls)` on kagami: the contact by the sender's address, and the job by a posting URL in the mail, else by the sender's company domain (parent domains too, never a free-mail provider, an open job before a rejected one), else the contact's own job.
   Done when: handler tests cover each key, the preferences between them, free-mail senders, per-owner isolation and a missing owner.
 
-- [ ] **P7.5b2 tsubame classification** (M) Needs: P7.5a, P7.5b1, P6.3
+- [x] **P7.5b2 tsubame classification** (M) Needs: P7.5a, P7.5b1, P6.3
   Do: `classify_message` River job (3 tries): rules first; `pkg/llm` feature `tsubame.classify` only when the rules are unsure; link the message by thread, then through kagami `FindMailLinks`; emit `mail.classified` and `mail.reply_detected` (new `tsubame/v1/events.proto`); route both to kagami; wire the queue into the syncer.
   Done when: fixture mails cover each classification, the LLM is not called when a rule is sure, and linking works for each key.
+  Status: `mail.classified` and `mail.reply_detected` carry `owner_id` for their consumers. Their routes to kagami are added with kagami's handlers in P7.7, so until then the events stay in tsubame's outbox undelivered, which is harmless. Mail with no rule match and no link to a job or contact is stored as `other` without a model call, to save budget. A message that fails classification three times stays unclassified. `ANTHROPIC_API_KEY` is required in production only.
 
 - [ ] **P7.6 tsubame Send with Hanko** (M) Needs: P7.4, P1.9
   Do: `Send(hanko, to, subject, body)` verifies signature, audience, expiry, recomputed hashes, inserts `sends` with unique `token_jti`, sends once, adds the `X-Shogun-Draft` header, emits `draft.sent`; reconciler checks Sent mail for the header before any retry.

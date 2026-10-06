@@ -125,6 +125,7 @@ services:
       <<: *env
       DATABASE_URL: postgres://tsubame:${TSUBAME_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
       TSUBAME_TOKEN_MASTER_KEY: ${TSUBAME_TOKEN_MASTER_KEY:?copy .env.example to .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       TSUBAME_TOKEN_KEY_ID: ${TSUBAME_TOKEN_KEY_ID:-tsubame-1}
       TSUBAME_GMAIL_CLIENT_ID: ${TSUBAME_GMAIL_CLIENT_ID:?copy .env.example to .env}
       TSUBAME_GMAIL_CLIENT_SECRET: ${TSUBAME_GMAIL_CLIENT_SECRET:?copy .env.example to .env}

@@ -109,3 +109,88 @@ func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) (M
 	)
 	return i, err
 }
+
+const setMessageClassification = `-- name: SetMessageClassification :execrows
+UPDATE messages SET
+    classification = $1,
+    confidence = $2,
+    classified_by = $3,
+    linked_job_id = $4,
+    linked_contact_id = $5
+WHERE id = $6 AND owner_id = $7 AND classification IS NULL
+`
+
+type SetMessageClassificationParams struct {
+	Classification  *string
+	Confidence      *float32
+	ClassifiedBy    *string
+	LinkedJobID     *uuid.UUID
+	LinkedContactID *uuid.UUID
+	ID              uuid.UUID
+	OwnerID         uuid.UUID
+}
+
+// Classifies a message once; a message already classified is left alone.
+func (q *Queries) SetMessageClassification(ctx context.Context, arg SetMessageClassificationParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setMessageClassification,
+		arg.Classification,
+		arg.Confidence,
+		arg.ClassifiedBy,
+		arg.LinkedJobID,
+		arg.LinkedContactID,
+		arg.ID,
+		arg.OwnerID,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const threadHasOutbound = `-- name: ThreadHasOutbound :one
+SELECT EXISTS (
+    SELECT 1 FROM messages
+    WHERE account_id = $1 AND provider_thread_id = $2 AND direction = 'outbound'
+)
+`
+
+type ThreadHasOutboundParams struct {
+	AccountID uuid.UUID
+	ThreadID  *string
+}
+
+// Whether the owner sent anything in the thread, which makes mail in it a
+// reply.
+func (q *Queries) ThreadHasOutbound(ctx context.Context, arg ThreadHasOutboundParams) (bool, error) {
+	row := q.db.QueryRow(ctx, threadHasOutbound, arg.AccountID, arg.ThreadID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const threadLinks = `-- name: ThreadLinks :one
+SELECT linked_job_id, linked_contact_id FROM messages
+WHERE account_id = $1 AND provider_thread_id = $2 AND id <> $3
+  AND (linked_job_id IS NOT NULL OR linked_contact_id IS NOT NULL)
+ORDER BY received_at DESC, id DESC
+LIMIT 1
+`
+
+type ThreadLinksParams struct {
+	AccountID uuid.UUID
+	ThreadID  *string
+	ID        uuid.UUID
+}
+
+type ThreadLinksRow struct {
+	LinkedJobID     *uuid.UUID
+	LinkedContactID *uuid.UUID
+}
+
+// The job and contact an earlier message of the thread was linked to.
+func (q *Queries) ThreadLinks(ctx context.Context, arg ThreadLinksParams) (ThreadLinksRow, error) {
+	row := q.db.QueryRow(ctx, threadLinks, arg.AccountID, arg.ThreadID, arg.ID)
+	var i ThreadLinksRow
+	err := row.Scan(&i.LinkedJobID, &i.LinkedContactID)
+	return i, err
+}

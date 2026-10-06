@@ -1,17 +1,24 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/grpcclient"
+	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/jobs"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/gmail"
+	kagamisource "github.com/0xHoaxen/shogun/services/tsubame/internal/transport/kagami"
 )
 
 const (
@@ -22,6 +29,10 @@ const (
 	gmailClientIDEnv     = "TSUBAME_GMAIL_CLIENT_ID"
 	gmailClientSecretEnv = "TSUBAME_GMAIL_CLIENT_SECRET"
 	gmailRedirectURLEnv  = "TSUBAME_GMAIL_REDIRECT_URL"
+
+	sorobanAddrEnv = "SOROBAN_ADDR"
+	kagamiAddrEnv  = "KAGAMI_ADDR"
+	apiKeyEnv      = "ANTHROPIC_API_KEY"
 )
 
 // loadKeyring reads the master key that wraps the data key of every stored
@@ -69,18 +80,88 @@ func newGmail(lookup config.LookupFunc) (*gmail.Client, error) {
 type mailServices struct {
 	connector *app.Connector
 	setup     jobs.Setup
+	close     func()
 }
 
-// newMailServices wires account connection and the scheduled sync to Gmail.
-func newMailServices(lookup config.LookupFunc, pool *pgxpool.Pool, keys *envelope.Keyring, log *slog.Logger) (*mailServices, error) {
+// newMailServices wires account connection, the scheduled sync and message
+// classification. Classification calls kagami to link mail and soroban to meter
+// the model; with no ANTHROPIC_API_KEY (allowed outside production) the rules
+// still run and only mail they are unsure about fails to classify.
+func newMailServices(
+	ctx context.Context,
+	lookup config.LookupFunc,
+	cfg config.Base,
+	pool *pgxpool.Pool,
+	keys *envelope.Keyring,
+	signer grpcclient.Signer,
+	log *slog.Logger,
+) (*mailServices, error) {
 	client, err := newGmail(lookup)
 	if err != nil {
 		return nil, err
 	}
+	sorobanAddr, err := config.Required(lookup, sorobanAddrEnv)
+	if err != nil {
+		return nil, err
+	}
+	kagamiAddr, err := config.Required(lookup, kagamiAddrEnv)
+	if err != nil {
+		return nil, err
+	}
+	apiKey := config.String(lookup, apiKeyEnv, "")
+	if apiKey == "" && cfg.IsProduction() {
+		return nil, errNoAPIKey
+	}
+	queue, err := jobs.NewRiverQueue(pool)
+	if err != nil {
+		return nil, err
+	}
+
+	sorobanConn, err := grpcclient.Dial(ctx, sorobanAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		return nil, fmt.Errorf("dial soroban: %w", err)
+	}
+	kagamiConn, err := grpcclient.Dial(ctx, kagamiAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = sorobanConn.Close()
+		return nil, fmt.Errorf("dial kagami: %w", err)
+	}
+	closeConns := func() { _ = sorobanConn.Close(); _ = kagamiConn.Close() }
+
+	completer, err := newCompleter(lookup, apiKey, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
+	if err != nil {
+		closeConns()
+		return nil, err
+	}
 	accounts := app.NewAccounts(pool, keys)
-	syncer := app.NewSyncer(pool, accounts, client, nil, log, nil)
+	syncer := app.NewSyncer(pool, accounts, client, queue, log, nil)
+	classifier := app.NewClassifier(pool, completer, kagamisource.New(kagamiv1.NewKagamiServiceClient(kagamiConn)))
 	return &mailServices{
 		connector: app.NewConnector(accounts, client, client, keys, log, nil),
-		setup:     jobs.NewSetup(syncer, log),
+		setup:     jobs.NewSetup(syncer, classifier, log),
+		close:     closeConns,
 	}, nil
+}
+
+// errNoAPIKey is what classification fails with while no API key is set.
+var errNoAPIKey = errors.New(apiKeyEnv + " is not set")
+
+// newCompleter returns the metered Claude client, or one that fails every call
+// when there is no API key.
+func newCompleter(lookup config.LookupFunc, apiKey string, meter llm.Meter, log *slog.Logger) (app.Completer, error) {
+	if apiKey == "" {
+		log.Warn("model classification is off: " + errNoAPIKey.Error())
+		return noKeyCompleter{}, nil
+	}
+	cfg, err := llm.NewConfig(serviceName, lookup)
+	if err != nil {
+		return nil, err
+	}
+	return llm.New(cfg, llm.NewAnthropicAPI(apiKey), meter, llm.WithLogger(log))
+}
+
+type noKeyCompleter struct{}
+
+func (noKeyCompleter) Complete(context.Context, string, llm.Request) (llm.Response, error) {
+	return llm.Response{}, errNoAPIKey
 }
