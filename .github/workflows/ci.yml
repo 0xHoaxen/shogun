@@ -26,6 +26,9 @@ jobs:
       any: ${{ steps.list.outputs.any }}
       services: ${{ steps.list.outputs.services }}
       any-service: ${{ steps.list.outputs.any-service }}
+      web: ${{ steps.list.outputs.web }}
+      e2e: ${{ steps.list.outputs.e2e }}
+      lint-config: ${{ steps.list.outputs.lint-config }}
       golangci-lint: ${{ steps.versions.outputs.golangci-lint }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,6 +45,7 @@ jobs:
         run: |
           zeros=0000000000000000000000000000000000000000
           skip=false
+          web=true e2e=true lint_config=true
           if [ -z "$BEFORE" ] || [ "$BEFORE" = "$zeros" ] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
             # New branch or a base that no longer exists (force push): run everything.
             dirs=$(go list -m -f '{{.Dir}}' | sed "s|^$PWD/||" | jq -R . | jq -sc '{dir: .}')
@@ -49,9 +53,17 @@ jobs:
             # Skip when every pushed commit is a Conventional Commits "ci" type.
             if [ "$(scripts/ci-only-commits.sh "$BEFORE")" = true ]; then
               skip=true
+              web=false e2e=false lint_config=false
               dirs='{"dir":[]}'
             else
               dirs=$(scripts/changed-modules.sh "$BEFORE")
+              changed=$(git diff --name-only "$(git merge-base "$BEFORE" HEAD)" HEAD)
+              # Non-Go jobs run only when a file they build from changed.
+              touches() { grep -qE "$1" <<<"$changed" && echo true || echo false; }
+              self='^\.github/workflows/ci\.yml$|^\.tool-versions$'
+              web=$(touches "$self|^(web|proto)/")
+              e2e=$(touches "$self|^(web|proto|pkg|gen|deploy/compose|deploy/docker)/|^services/(kagami|torii)/|^go\.work|^\.env\.example$")
+              lint_config=$(touches "$self|^\.golangci\.yml$|^go\.work$")
             fi
           fi
           services=$(jq -c '{service: [.dir[] | select(startswith("services/")) | ltrimstr("services/")]}' <<<"$dirs")
@@ -61,6 +73,9 @@ jobs:
             echo "any=$(jq '.dir | length > 0' <<<"$dirs")"
             echo "services=$services"
             echo "any-service=$(jq '.service | length > 0' <<<"$services")"
+            echo "web=$web"
+            echo "e2e=$e2e"
+            echo "lint-config=$lint_config"
           } >> "$GITHUB_OUTPUT"
       - id: versions
         name: Read pinned tool versions
@@ -87,7 +102,7 @@ jobs:
   lint-config:
     name: lint config
     needs: modules
-    if: needs.modules.outputs.skip != 'true'
+    if: needs.modules.outputs.lint-config == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -167,7 +182,7 @@ jobs:
   web:
     name: web
     needs: modules
-    if: needs.modules.outputs.skip != 'true'
+    if: needs.modules.outputs.web == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -189,7 +204,7 @@ jobs:
   e2e-compose:
     name: e2e (compose)
     needs: modules
-    if: needs.modules.outputs.skip != 'true'
+    if: needs.modules.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
