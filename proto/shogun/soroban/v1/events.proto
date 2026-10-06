@@ -17,6 +17,7 @@ message CostThresholdReached {
   int32 percent = 5;
   int64 spent_micros = 6;
   int64 limit_micros = 7;
+  string owner_id = 8;
 }
 
 // CostBudgetExhausted is the payload of cost.budget_exhausted.
@@ -26,4 +27,5 @@ message CostBudgetExhausted {
   string scope_value = 3;
   BudgetPeriod period = 4;
   google.protobuf.Timestamp resets_at = 5;
+  string owner_id = 6;
 }

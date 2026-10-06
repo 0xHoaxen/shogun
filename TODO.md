@@ -401,7 +401,11 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: add `owner_id` to `JobStatusChanged`, `JobFollowUpDue` and `ContactFollowUpDue` in `proto/shogun/kagami/v1/events.proto` and fill it in kagami's producers; taiko cannot attribute a notification to the owner without it.
   Done when: `cd services/kagami && go test -race ./...` passes with the producer tests asserting `owner_id`.
 
-- [ ] **P8.1b taiko consumes events** (M) Needs: P8.1b0
+- [x] **P8.1b0b Owner on fude and soroban events** (S) Needs: P8.1b0
+  Do: add `owner_id` to `DraftReady`, `DraftFailed` (fude) and `CostThresholdReached`, `CostBudgetExhausted` (soroban) and fill it in their producers; found while reading the payloads for P8.1b, which has no other way to name the owner.
+  Done when: `cd services/fude && go test -race ./...` and `cd services/soroban && go test -race ./...` pass with producer tests asserting `owner_id`.
+
+- [ ] **P8.1b taiko consumes events** (M) Needs: P8.1b0b
   Do: `internal/events` handlers (shape of fude's) for `job.status_changed` (interview and offer), `job.follow_up_due`, `contact.follow_up_due`, `mail.classified` (interview, offer, rejection), `mail.reply_detected`, `draft.ready`, `draft.failed`, `draft.send_failed`, `cost.threshold_reached`, `cost.budget_exhausted`; title and link builders in `domain`; routes to `taiko` in `pkg/bus/routes.go`; wire the handlers into `bus.NewSinkServer`.
   Done when: a handler test per event type and an idempotency test (the same envelope twice gives one notification).
 

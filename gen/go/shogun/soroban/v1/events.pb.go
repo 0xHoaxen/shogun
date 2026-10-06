@@ -30,9 +30,10 @@ type CostThresholdReached struct {
 	ScopeValue string                 `protobuf:"bytes,3,opt,name=scope_value,json=scopeValue,proto3" json:"scope_value,omitempty"`
 	Period     BudgetPeriod           `protobuf:"varint,4,opt,name=period,proto3,enum=shogun.soroban.v1.BudgetPeriod" json:"period,omitempty"`
 	// percent is the threshold crossed, for example 80.
-	Percent       int32 `protobuf:"varint,5,opt,name=percent,proto3" json:"percent,omitempty"`
-	SpentMicros   int64 `protobuf:"varint,6,opt,name=spent_micros,json=spentMicros,proto3" json:"spent_micros,omitempty"`
-	LimitMicros   int64 `protobuf:"varint,7,opt,name=limit_micros,json=limitMicros,proto3" json:"limit_micros,omitempty"`
+	Percent       int32  `protobuf:"varint,5,opt,name=percent,proto3" json:"percent,omitempty"`
+	SpentMicros   int64  `protobuf:"varint,6,opt,name=spent_micros,json=spentMicros,proto3" json:"spent_micros,omitempty"`
+	LimitMicros   int64  `protobuf:"varint,7,opt,name=limit_micros,json=limitMicros,proto3" json:"limit_micros,omitempty"`
+	OwnerId       string `protobuf:"bytes,8,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -116,6 +117,13 @@ func (x *CostThresholdReached) GetLimitMicros() int64 {
 	return 0
 }
 
+func (x *CostThresholdReached) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 // CostBudgetExhausted is the payload of cost.budget_exhausted.
 type CostBudgetExhausted struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -124,6 +132,7 @@ type CostBudgetExhausted struct {
 	ScopeValue    string                 `protobuf:"bytes,3,opt,name=scope_value,json=scopeValue,proto3" json:"scope_value,omitempty"`
 	Period        BudgetPeriod           `protobuf:"varint,4,opt,name=period,proto3,enum=shogun.soroban.v1.BudgetPeriod" json:"period,omitempty"`
 	ResetsAt      *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=resets_at,json=resetsAt,proto3" json:"resets_at,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,6,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -193,11 +202,18 @@ func (x *CostBudgetExhausted) GetResetsAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *CostBudgetExhausted) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 var File_shogun_soroban_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_soroban_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x1eshogun/soroban/v1/events.proto\x12\x11shogun.soroban.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fshogun/soroban/v1/soroban.proto\"\xaa\x02\n" +
+	"\x1eshogun/soroban/v1/events.proto\x12\x11shogun.soroban.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1fshogun/soroban/v1/soroban.proto\"\xc5\x02\n" +
 	"\x14CostThresholdReached\x12\x1b\n" +
 	"\tbudget_id\x18\x01 \x01(\tR\bbudgetId\x12;\n" +
 	"\n" +
@@ -207,7 +223,8 @@ const file_shogun_soroban_v1_events_proto_rawDesc = "" +
 	"\x06period\x18\x04 \x01(\x0e2\x1f.shogun.soroban.v1.BudgetPeriodR\x06period\x12\x18\n" +
 	"\apercent\x18\x05 \x01(\x05R\apercent\x12!\n" +
 	"\fspent_micros\x18\x06 \x01(\x03R\vspentMicros\x12!\n" +
-	"\flimit_micros\x18\a \x01(\x03R\vlimitMicros\"\x82\x02\n" +
+	"\flimit_micros\x18\a \x01(\x03R\vlimitMicros\x12\x19\n" +
+	"\bowner_id\x18\b \x01(\tR\aownerId\"\x9d\x02\n" +
 	"\x13CostBudgetExhausted\x12\x1b\n" +
 	"\tbudget_id\x18\x01 \x01(\tR\bbudgetId\x12;\n" +
 	"\n" +
@@ -215,7 +232,8 @@ const file_shogun_soroban_v1_events_proto_rawDesc = "" +
 	"\vscope_value\x18\x03 \x01(\tR\n" +
 	"scopeValue\x127\n" +
 	"\x06period\x18\x04 \x01(\x0e2\x1f.shogun.soroban.v1.BudgetPeriodR\x06period\x127\n" +
-	"\tresets_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bresetsAtB\xc9\x01\n" +
+	"\tresets_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bresetsAt\x12\x19\n" +
+	"\bowner_id\x18\x06 \x01(\tR\aownerIdB\xc9\x01\n" +
 	"\x15com.shogun.soroban.v1B\vEventsProtoP\x01Z=github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1;sorobanv1\xa2\x02\x03SSX\xaa\x02\x11Shogun.Soroban.V1\xca\x02\x11Shogun\\Soroban\\V1\xe2\x02\x1dShogun\\Soroban\\V1\\GPBMetadata\xea\x02\x13Shogun::Soroban::V1b\x06proto3"
 
 var (
