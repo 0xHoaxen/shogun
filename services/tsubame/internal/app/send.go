@@ -144,7 +144,7 @@ func (s *Sender) Send(ctx context.Context, in SendInput) (string, error) {
 		s.fail(ctx, row, reason)
 		return "", fmt.Errorf("%w: %s", ErrSendFailed, reason)
 	}
-	if err := s.succeed(ctx, row, sent.ID); err != nil {
+	if err := s.succeed(ctx, row, sent.ID, s.now()); err != nil {
 		// The mail is out but the record is not. The row stays "sending" and the
 		// reconciler finds the mail in Sent and records it.
 		return sent.ID, fmt.Errorf("record sent mail: %w", err)
@@ -217,10 +217,9 @@ func (s *Sender) reserve(ctx context.Context, owner uuid.UUID, acc db.Account, d
 }
 
 // succeed records the sent mail and draft.sent together.
-func (s *Sender) succeed(ctx context.Context, row db.Send, providerID string) error {
+func (s *Sender) succeed(ctx context.Context, row db.Send, providerID string, sentAt time.Time) error {
 	ctx, cancel := settleContext(ctx)
 	defer cancel()
-	sentAt := s.now()
 	return postgres.InTx(ctx, s.pool, func(tx pgx.Tx) error {
 		changed, err := store.New(tx).MarkSendSent(ctx, row.ID, providerID, sentAt)
 		if err != nil || !changed {

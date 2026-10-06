@@ -44,11 +44,11 @@ func TestWorkReportsAFailedSync(t *testing.T) {
 }
 
 func TestSetupSchedulesTheSyncEveryFiveMinutesWithoutOverlap(t *testing.T) {
-	setup := NewSetup(&fakeSyncer{}, &fakeClassifier{}, slog.New(slog.DiscardHandler))
+	setup := NewSetup(&fakeSyncer{}, &fakeClassifier{}, &fakeReconciler{}, slog.New(slog.DiscardHandler))
 
 	opts := GmailSyncArgs{}.InsertOpts()
 
-	if setup.Workers == nil || len(setup.PeriodicJobs) != 1 || setup.Queues[Queue].MaxWorkers < 1 {
+	if setup.Workers == nil || len(setup.PeriodicJobs) != 2 || setup.Queues[Queue].MaxWorkers < 1 {
 		t.Fatalf("got %+v", setup)
 	}
 	if opts.Queue != Queue || opts.MaxAttempts != 1 || !opts.UniqueOpts.ByArgs || !slices.Equal(opts.UniqueOpts.ByState, activeStates) {

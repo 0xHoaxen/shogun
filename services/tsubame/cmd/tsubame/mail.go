@@ -178,7 +178,7 @@ func newMailServices(
 	return &mailServices{
 		connector: app.NewConnector(accounts, client, client, keys, log, nil),
 		sender:    sender,
-		setup:     jobs.NewSetup(syncer, classifier, log),
+		setup:     jobs.NewSetup(syncer, classifier, sender, log),
 		close:     closeConns,
 	}, nil
 }

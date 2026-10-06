@@ -37,6 +37,7 @@ func (f *fakeCompleter) Complete(_ context.Context, feature string, req llm.Requ
 }
 
 type fakeLinker struct {
+	mu    sync.Mutex
 	links app.Links
 	err   error
 	calls int
@@ -45,6 +46,8 @@ type fakeLinker struct {
 }
 
 func (f *fakeLinker) FindLinks(_ context.Context, from string, urls []string) (app.Links, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.calls++
 	f.from, f.urls = from, urls
 	return f.links, f.err

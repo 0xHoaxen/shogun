@@ -55,7 +55,7 @@ func TestRiverRunsTheScheduledSyncOnStartAndStoresTheMail(t *testing.T) {
 		{ID: "m2", Direction: mail.Inbound, From: "hr@lumen.example", ReceivedAt: time.Now()},
 	}}
 	log := slog.New(slog.DiscardHandler)
-	setup := jobs.NewSetup(app.NewSyncer(pool, accounts, fake, nil, log, nil), nil, log)
+	setup := jobs.NewSetup(app.NewSyncer(pool, accounts, fake, nil, log, nil), nil, nopReconciler{}, log)
 	r, err := relay.New(relay.Config{
 		Pool: pool, Bus: nopBus{}, Logger: log, FetchPollInterval: 100 * time.Millisecond,
 		Workers: setup.Workers, Queues: setup.Queues, PeriodicJobs: setup.PeriodicJobs,
@@ -129,7 +129,7 @@ func TestASyncedMessageIsClassifiedThroughRiver(t *testing.T) {
 	}
 	log := slog.New(slog.DiscardHandler)
 	syncer := app.NewSyncer(pool, accounts, fake, queue, log, nil)
-	setup := jobs.NewSetup(syncer, app.NewClassifier(pool, noModel{}, stubLinker{}), log)
+	setup := jobs.NewSetup(syncer, app.NewClassifier(pool, noModel{}, stubLinker{}), nopReconciler{}, log)
 	r, err := relay.New(relay.Config{
 		Pool: pool, Bus: nopBus{}, Logger: log, FetchPollInterval: 100 * time.Millisecond,
 		Workers: setup.Workers, Queues: setup.Queues,
@@ -169,4 +169,10 @@ func TestASyncedMessageIsClassifiedThroughRiver(t *testing.T) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+type nopReconciler struct{}
+
+func (nopReconciler) Reconcile(context.Context) (app.ReconcileResult, error) {
+	return app.ReconcileResult{}, nil
 }
