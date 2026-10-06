@@ -141,7 +141,7 @@ test("budgets show what they cover, the spend so far and the limit", async ({ pa
   await page.goto("/settings/spend");
 
   // Assert
-  const global = page.getByRole("row", { name: /All services/ });
+  const global = page.getByRole("row", { name: /^All services/ });
   await expect(global).toContainText("Monthly");
   await expect(global).toContainText("Hard");
   await expect(global).toContainText("$2.00 (10%)");
@@ -165,7 +165,7 @@ test("editing a budget saves the new limit and shows the updated figures", async
     return { budget: globalBudget(limit, version) };
   });
   await page.goto("/settings/spend");
-  await expect(page.getByRole("row", { name: /All services/ })).toContainText("$20.00");
+  await expect(page.getByRole("row", { name: /^All services/ })).toContainText("$20.00");
 
   // Act
   await page.getByRole("button", { name: "Edit All services Monthly" }).click();
@@ -173,7 +173,7 @@ test("editing a budget saves the new limit and shows the updated figures", async
   await page.getByRole("button", { name: "Save" }).click();
 
   // Assert
-  const row = page.getByRole("row", { name: /All services/ });
+  const row = page.getByRole("row", { name: /^All services/ });
   await expect(row).toContainText("$25.00");
   await expect(row).toContainText("$2.00 (8%)");
   await expect(page.getByRole("form", { name: "Edit All services budget" })).toBeHidden();
@@ -240,7 +240,7 @@ test("cancelling an edit changes nothing", async ({ page }) => {
   await page.getByRole("button", { name: "Cancel" }).click();
 
   await expect(page.getByRole("form", { name: "Edit All services budget" })).toBeHidden();
-  await expect(page.getByRole("row", { name: /All services/ })).toContainText("$20.00");
+  await expect(page.getByRole("row", { name: /^All services/ })).toContainText("$20.00");
   expect(updates).toHaveLength(0);
 });
 
@@ -258,7 +258,7 @@ test("a budget changed elsewhere says so", async ({ page }) => {
   await page.getByRole("button", { name: "Save" }).click();
 
   // Assert
-  await expect(page.getByRole("alert")).toContainText("changed elsewhere");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("changed elsewhere");
   await expect(page.getByRole("form", { name: "Edit All services budget" })).toBeVisible();
 });
 
@@ -269,6 +269,6 @@ test("a failed load offers a retry", async ({ page }) => {
 
   await page.goto("/settings/spend");
 
-  await expect(page.getByRole("alert")).toContainText("Couldn't load your budgets.");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText("Couldn't load your budgets.");
   await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
 });
