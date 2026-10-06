@@ -374,8 +374,12 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: Playwright (mocked API) covers the redirect, a non-https address refused, a failed start, a good callback (called once, code gone from the URL), an expired or foreign state, a refused code, a denied grant and a callback with no code.
   Status: there is no RPC to list connected accounts, so the screen cannot show which address is connected or whether it needs reconnecting. Follow-up: add `ListAccounts` to tsubame and `MailService`, and show address and status here.
 
-- [ ] **P7.8d Compose end-to-end for drafts and mail** (M) Needs: P7.8b, P7.8c, P5.2c
-  Do: bring fude, tsubame, soroban and kagami up in the compose e2e overlay with a stub Anthropic API and a stub Gmail (token endpoint, profile, list, get, send), which needs base-URL settings for both in fude's and tsubame's config; a compose Playwright spec: add a draft, regenerate, edit, approve to email, and assert the stub Gmail received exactly one message with the `X-Shogun-Draft` header; add those services to the CI `e2e-compose` job.
+- [x] **P7.8d1 Base-URL settings for the e2e stubs** (S) Needs: P7.8b, P7.8c
+  Do: `ANTHROPIC_BASE_URL` (fude and tsubame, through `llm.AnthropicBaseURL`) and `TSUBAME_GMAIL_API_BASE`, `TSUBAME_GMAIL_AUTH_URL`, `TSUBAME_GMAIL_TOKEN_URL` (tsubame) point the Claude and Gmail clients at a stub. All optional; empty means the real service.
+  Done when: `cd pkg && go test -race ./llm/...` and `cd services/tsubame && go test -race ./cmd/...` pass.
+
+- [ ] **P7.8d2 Compose end-to-end for drafts and mail** (M) Needs: P7.8d1, P5.2c
+  Do: add a `mock-apis` stub (Anthropic messages and token count, Gmail token, profile, list, get, send, and a test-only list of sent mail) to `compose.e2e.yaml`, with fude, tsubame, soroban and kagami pointed at it; a compose Playwright spec: connect Gmail, add a draft, regenerate, edit, approve to email, and assert the stub received exactly one message with the `X-Shogun-Draft` header; add those services to the CI `e2e-compose` job.
   Done when: `npm run test:e2e:compose` passes locally against the stack, and the CI job is green after merge.
 
 - [ ] **P7.8e Mark a copy-only draft as posted** (S) Needs: P7.3

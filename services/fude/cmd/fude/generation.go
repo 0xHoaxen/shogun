@@ -25,6 +25,7 @@ const (
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
 	apiKeyEnv      = "ANTHROPIC_API_KEY"
+	baseURLEnv     = "ANTHROPIC_BASE_URL"
 )
 
 // errNoAPIKey is what every generation fails with while no API key is set.
@@ -120,7 +121,7 @@ func newCompleter(lookup config.LookupFunc, apiKey string, meter llm.Meter, log 
 	if err != nil {
 		return nil, err
 	}
-	return llm.New(cfg, llm.NewAnthropicAPI(apiKey), meter, llm.WithLogger(log))
+	return llm.New(cfg, llm.NewAnthropicAPI(apiKey, llm.AnthropicBaseURL(config.String(lookup, baseURLEnv, ""))), meter, llm.WithLogger(log))
 }
 
 type noKeyCompleter struct{}
