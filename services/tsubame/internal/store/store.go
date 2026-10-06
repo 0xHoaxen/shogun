@@ -8,12 +8,21 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/store/db"
 )
 
-// ErrNotFound means no row matches, or it belongs to another owner.
-var ErrNotFound = errors.New("store: not found")
+// Errors the app layer maps to outcomes.
+var (
+	// ErrNotFound means no row matches, or it belongs to another owner.
+	ErrNotFound = errors.New("store: not found")
+	// ErrDuplicate means a unique value is already taken.
+	ErrDuplicate = errors.New("store: duplicate")
+)
+
+// uniqueViolation is the Postgres SQLSTATE for a unique index violation.
+const uniqueViolation = "23505"
 
 // DBTX is a pool or a transaction.
 type DBTX = db.DBTX
@@ -33,6 +42,10 @@ func NewID() uuid.UUID { return uuid.Must(uuid.NewV7()) }
 func mapErr(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return ErrNotFound
+	}
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == uniqueViolation {
+		return fmt.Errorf("%w: %s", ErrDuplicate, pgErr.ConstraintName)
 	}
 	return err
 }
@@ -159,4 +172,44 @@ func (r *Repo) ThreadLinks(ctx context.Context, accountID, messageID uuid.UUID, 
 		return nil, nil, fmt.Errorf("thread links: %w", err)
 	}
 	return row.LinkedJobID, row.LinkedContactID, nil
+}
+
+// InsertSend records that a send was started. A token id used before is
+// ErrDuplicate: that Hanko was already spent.
+func (r *Repo) InsertSend(ctx context.Context, arg db.InsertSendParams) (db.Send, error) {
+	snd, err := r.q.InsertSend(ctx, arg)
+	if err != nil {
+		return db.Send{}, fmt.Errorf("insert send: %w", mapErr(err))
+	}
+	return snd, nil
+}
+
+// MarkSendSent records that the provider accepted the mail. It reports false
+// when the send was no longer in flight.
+func (r *Repo) MarkSendSent(ctx context.Context, id uuid.UUID, providerMessageID string, sentAt time.Time) (bool, error) {
+	n, err := r.q.MarkSendSent(ctx, db.MarkSendSentParams{ID: id, ProviderMessageID: &providerMessageID, SentAt: &sentAt})
+	if err != nil {
+		return false, fmt.Errorf("mark send sent: %w", err)
+	}
+	return n > 0, nil
+}
+
+// MarkSendFailed records that the mail did not go out, with a short reason. It
+// reports false when the send was no longer in flight.
+func (r *Repo) MarkSendFailed(ctx context.Context, id uuid.UUID, reason string) (bool, error) {
+	n, err := r.q.MarkSendFailed(ctx, db.MarkSendFailedParams{ID: id, Error: &reason})
+	if err != nil {
+		return false, fmt.Errorf("mark send failed: %w", err)
+	}
+	return n > 0, nil
+}
+
+// ListOpenSends returns up to limit sends still in flight that started at or
+// before startedBefore, oldest first.
+func (r *Repo) ListOpenSends(ctx context.Context, startedBefore time.Time, limit int32) ([]db.Send, error) {
+	rows, err := r.q.ListOpenSends(ctx, db.ListOpenSendsParams{StartedBefore: startedBefore, RowLimit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("list open sends: %w", err)
+	}
+	return rows, nil
 }

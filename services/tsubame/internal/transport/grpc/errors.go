@@ -19,6 +19,12 @@ const (
 	reasonInvalidState    = "INVALID_STATE"
 	reasonInvalidCode     = "INVALID_CODE"
 	reasonOwnerRequired   = "OWNER_REQUIRED"
+	reasonNotApproved     = "NOT_APPROVED"
+	reasonApprovalUsed    = "APPROVAL_ALREADY_USED"
+	reasonAlreadySent     = "ALREADY_SENT"
+	reasonNoMailAccount   = "NO_MAIL_ACCOUNT"
+	reasonSendFailed      = "SEND_FAILED"
+	reasonInvalidSend     = "INVALID_SEND"
 	reasonInternal        = "INTERNAL"
 )
 
@@ -26,6 +32,7 @@ const (
 // Unexpected errors become Internal without their text; the server's log
 // interceptor records the original.
 func toStatus(err error) error {
+	var invalidSend *app.InvalidArgumentError
 	switch {
 	case err == nil:
 		return nil
@@ -35,6 +42,18 @@ func toStatus(err error) error {
 		return withReason(codes.InvalidArgument, reasonInvalidState, "state is invalid or has expired; start again")
 	case errors.Is(err, app.ErrInvalidCode):
 		return withReason(codes.InvalidArgument, reasonInvalidCode, "the provider refused the code; start again")
+	case errors.Is(err, app.ErrNotApproved):
+		return withReason(codes.PermissionDenied, reasonNotApproved, "the approval does not cover this send")
+	case errors.Is(err, app.ErrTokenSpent):
+		return withReason(codes.PermissionDenied, reasonApprovalUsed, "this approval was already used")
+	case errors.Is(err, app.ErrAlreadySent):
+		return withReason(codes.PermissionDenied, reasonAlreadySent, "this draft version is already sent or being sent")
+	case errors.Is(err, app.ErrNoAccount):
+		return withReason(codes.FailedPrecondition, reasonNoMailAccount, "no connected mail account can send")
+	case errors.Is(err, app.ErrSendFailed):
+		return withReason(codes.FailedPrecondition, reasonSendFailed, "the mail was not sent; approve the draft again")
+	case errors.As(err, &invalidSend):
+		return withReason(codes.InvalidArgument, reasonInvalidSend, invalidSend.Msg)
 	case errors.Is(err, app.ErrNoOwner):
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner")
 	default:

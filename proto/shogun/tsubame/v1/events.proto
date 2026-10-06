@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package shogun.tsubame.v1;
 
+import "google/protobuf/timestamp.proto";
+
 // Payloads of the events tsubame produces. Routes live in pkg/bus/routes.go.
 
 // MailClass is what a message was classified as.
@@ -37,4 +39,25 @@ message MailReplyDetected {
   string owner_id = 1;
   string message_id = 2;
   string contact_id = 3;
+}
+
+// DraftSent is the payload of draft.sent: the mail went out.
+message DraftSent {
+  string owner_id = 1;
+  string draft_id = 2;
+  int32 version = 3;
+  string contact_id = 4;
+  string job_id = 5;
+  google.protobuf.Timestamp sent_at = 6;
+}
+
+// DraftSendFailed is the payload of draft.send_failed: the mail did not go out
+// and the draft needs a new approval.
+message DraftSendFailed {
+  string owner_id = 1;
+  string draft_id = 2;
+  int32 version = 3;
+  // reason is a short code such as provider_error or auth_revoked, never text
+  // from the mail.
+  string reason = 4;
 }

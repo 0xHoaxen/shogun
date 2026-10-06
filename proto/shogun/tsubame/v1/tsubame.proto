@@ -13,6 +13,9 @@ service TsubameService {
   // CompleteConnect finishes it with the code and state the provider sent back
   // to the redirect URL.
   rpc CompleteConnect(CompleteConnectRequest) returns (CompleteConnectResponse);
+  // Send sends an approved draft by email. It checks the Hanko token, and
+  // sends nothing without a valid one. Callers: fude only.
+  rpc Send(SendRequest) returns (SendResponse);
 }
 
 enum MailProvider {
@@ -54,4 +57,23 @@ message CompleteConnectRequest {
 
 message CompleteConnectResponse {
   Account account = 1;
+}
+
+message SendRequest {
+  // hanko is the token fude stamped when the owner approved this version.
+  string hanko = 1;
+  string draft_id = 2;
+  int32 version = 3;
+  repeated string to = 4;
+  string subject = 5;
+  string body = 6;
+  // contact_id and job_id are what the draft is about; they are echoed in
+  // draft.sent and are not covered by the token.
+  string contact_id = 7;
+  string job_id = 8;
+}
+
+message SendResponse {
+  // provider_message_id is the id the mail provider gave the sent message.
+  string provider_message_id = 1;
 }

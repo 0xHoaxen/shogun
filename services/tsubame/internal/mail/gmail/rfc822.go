@@ -2,7 +2,6 @@ package gmail
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"mime"
 	"mime/quotedprintable"
@@ -13,9 +12,8 @@ import (
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail"
 )
 
-// ErrInvalidMessage means an outgoing message cannot be turned into mail, for
-// example because a header value holds a line break.
-var ErrInvalidMessage = errors.New("gmail: invalid outgoing message")
+// ErrInvalidMessage is mail.ErrInvalidMessage, kept here for the builder.
+var ErrInvalidMessage = mail.ErrInvalidMessage
 
 // buildMessage returns the RFC 822 text of m. Values that could end a header
 // early (CR or LF) are refused rather than escaped, so a draft can never add a

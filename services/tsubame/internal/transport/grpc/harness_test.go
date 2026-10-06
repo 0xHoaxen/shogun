@@ -3,6 +3,7 @@ package grpc_test
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"io"
 	"log/slog"
 	"net"
@@ -32,6 +33,7 @@ import (
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/gmail"
+	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/mailtest"
 	tsubamegrpc "github.com/0xHoaxen/shogun/services/tsubame/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/tsubame/migrations"
 )
@@ -39,6 +41,8 @@ import (
 func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
 
 // Values Google's fake hands out, so tests can search the logs for them.
+const hankoKeyID = "fude-test"
+
 const (
 	goodCode     = "4/good-authorization-code"
 	refreshToken = "1//granted-refresh-token"
@@ -108,6 +112,10 @@ type harness struct {
 	google    *google
 	logs      *bytes.Buffer
 	owner     string
+	sender    *app.Sender
+	mail      *mailtest.Fake
+	hankoPub  ed25519.PublicKey
+	hankoPriv ed25519.PrivateKey
 
 	mu  sync.Mutex
 	now time.Time
@@ -151,6 +159,15 @@ func newHarness(t *testing.T) *harness {
 	h := &harness{pool: pool, google: g, logs: &bytes.Buffer{}, owner: uuid.NewString(), now: time.Date(2026, 10, 6, 9, 0, 0, 0, time.UTC)}
 	log := slog.New(slog.NewTextHandler(&lockedWriter{w: h.logs}, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	h.accounts = app.NewAccounts(pool, keys)
+	h.mail = &mailtest.Fake{Address: "me@example.com"}
+	h.hankoPub, h.hankoPriv, err = ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	h.sender, err = app.NewSender(pool, h.accounts, h.mail, map[string]ed25519.PublicKey{hankoKeyID: h.hankoPub}, log, h.clock)
+	if err != nil {
+		t.Fatal(err)
+	}
 	connector := app.NewConnector(h.accounts, client, client, keys, log, h.clock)
 
 	h.authority, err = authz.New(bytes.Repeat([]byte("k"), authz.MinKeyLength))
@@ -161,7 +178,7 @@ func newHarness(t *testing.T) *harness {
 		grpc.UnaryInterceptor(h.authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(h.authority.StreamServerInterceptor()),
 	)
-	tsubamev1.RegisterTsubameServiceServer(srv, tsubamegrpc.New(connector))
+	tsubamev1.RegisterTsubameServiceServer(srv, tsubamegrpc.New(connector, h.sender))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)

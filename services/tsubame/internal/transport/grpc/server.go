@@ -17,11 +17,13 @@ import (
 type Server struct {
 	tsubamev1.UnimplementedTsubameServiceServer
 	connector *app.Connector
+	sender    *app.Sender
 }
 
-// New returns a Server that connects accounts through connector.
-func New(connector *app.Connector) *Server {
-	return &Server{connector: connector}
+// New returns a Server that connects accounts through connector and sends
+// approved drafts through sender.
+func New(connector *app.Connector, sender *app.Sender) *Server {
+	return &Server{connector: connector, sender: sender}
 }
 
 // ConnectAccount implements tsubame.v1.TsubameService.
@@ -67,4 +69,16 @@ func accountToProto(a db.Account) *tsubamev1.Account {
 		out.LastSyncedAt = timestamppb.New(*a.LastSyncedAt)
 	}
 	return out
+}
+
+// Send implements tsubame.v1.TsubameService.
+func (s *Server) Send(ctx context.Context, req *tsubamev1.SendRequest) (*tsubamev1.SendResponse, error) {
+	id, err := s.sender.Send(ctx, app.SendInput{
+		Hanko: req.GetHanko(), DraftID: req.GetDraftId(), Version: req.GetVersion(), To: req.GetTo(),
+		Subject: req.GetSubject(), Body: req.GetBody(), ContactID: req.GetContactId(), JobID: req.GetJobId(),
+	})
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &tsubamev1.SendResponse{ProviderMessageId: id}, nil
 }

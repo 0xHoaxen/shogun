@@ -138,7 +138,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
-		tsubamev1.RegisterTsubameServiceServer(s, tsubamegrpc.New(mailSvc.connector))
+		tsubamev1.RegisterTsubameServiceServer(s, tsubamegrpc.New(mailSvc.connector, mailSvc.sender))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

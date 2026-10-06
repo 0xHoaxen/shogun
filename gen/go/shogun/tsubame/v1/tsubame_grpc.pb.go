@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	TsubameService_ConnectAccount_FullMethodName  = "/shogun.tsubame.v1.TsubameService/ConnectAccount"
 	TsubameService_CompleteConnect_FullMethodName = "/shogun.tsubame.v1.TsubameService/CompleteConnect"
+	TsubameService_Send_FullMethodName            = "/shogun.tsubame.v1.TsubameService/Send"
 )
 
 // TsubameServiceClient is the client API for TsubameService service.
@@ -36,6 +37,9 @@ type TsubameServiceClient interface {
 	// CompleteConnect finishes it with the code and state the provider sent back
 	// to the redirect URL.
 	CompleteConnect(ctx context.Context, in *CompleteConnectRequest, opts ...grpc.CallOption) (*CompleteConnectResponse, error)
+	// Send sends an approved draft by email. It checks the Hanko token, and
+	// sends nothing without a valid one. Callers: fude only.
+	Send(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*SendResponse, error)
 }
 
 type tsubameServiceClient struct {
@@ -66,6 +70,16 @@ func (c *tsubameServiceClient) CompleteConnect(ctx context.Context, in *Complete
 	return out, nil
 }
 
+func (c *tsubameServiceClient) Send(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*SendResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendResponse)
+	err := c.cc.Invoke(ctx, TsubameService_Send_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TsubameServiceServer is the server API for TsubameService service.
 // All implementations must embed UnimplementedTsubameServiceServer
 // for forward compatibility.
@@ -79,6 +93,9 @@ type TsubameServiceServer interface {
 	// CompleteConnect finishes it with the code and state the provider sent back
 	// to the redirect URL.
 	CompleteConnect(context.Context, *CompleteConnectRequest) (*CompleteConnectResponse, error)
+	// Send sends an approved draft by email. It checks the Hanko token, and
+	// sends nothing without a valid one. Callers: fude only.
+	Send(context.Context, *SendRequest) (*SendResponse, error)
 	mustEmbedUnimplementedTsubameServiceServer()
 }
 
@@ -94,6 +111,9 @@ func (UnimplementedTsubameServiceServer) ConnectAccount(context.Context, *Connec
 }
 func (UnimplementedTsubameServiceServer) CompleteConnect(context.Context, *CompleteConnectRequest) (*CompleteConnectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CompleteConnect not implemented")
+}
+func (UnimplementedTsubameServiceServer) Send(context.Context, *SendRequest) (*SendResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
 }
 func (UnimplementedTsubameServiceServer) mustEmbedUnimplementedTsubameServiceServer() {}
 func (UnimplementedTsubameServiceServer) testEmbeddedByValue()                        {}
@@ -152,6 +172,24 @@ func _TsubameService_CompleteConnect_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TsubameService_Send_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TsubameServiceServer).Send(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TsubameService_Send_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TsubameServiceServer).Send(ctx, req.(*SendRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TsubameService_ServiceDesc is the grpc.ServiceDesc for TsubameService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -166,6 +204,10 @@ var TsubameService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CompleteConnect",
 			Handler:    _TsubameService_CompleteConnect_Handler,
+		},
+		{
+			MethodName: "Send",
+			Handler:    _TsubameService_Send_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

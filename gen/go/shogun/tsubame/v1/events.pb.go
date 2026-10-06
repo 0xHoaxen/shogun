@@ -9,6 +9,7 @@ package tsubamev1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -245,11 +246,168 @@ func (x *MailReplyDetected) GetContactId() string {
 	return ""
 }
 
+// DraftSent is the payload of draft.sent: the mail went out.
+type DraftSent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OwnerId       string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	DraftId       string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	Version       int32                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	ContactId     string                 `protobuf:"bytes,4,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
+	JobId         string                 `protobuf:"bytes,5,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	SentAt        *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DraftSent) Reset() {
+	*x = DraftSent{}
+	mi := &file_shogun_tsubame_v1_events_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DraftSent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DraftSent) ProtoMessage() {}
+
+func (x *DraftSent) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_events_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DraftSent.ProtoReflect.Descriptor instead.
+func (*DraftSent) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_events_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *DraftSent) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *DraftSent) GetDraftId() string {
+	if x != nil {
+		return x.DraftId
+	}
+	return ""
+}
+
+func (x *DraftSent) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *DraftSent) GetContactId() string {
+	if x != nil {
+		return x.ContactId
+	}
+	return ""
+}
+
+func (x *DraftSent) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+func (x *DraftSent) GetSentAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SentAt
+	}
+	return nil
+}
+
+// DraftSendFailed is the payload of draft.send_failed: the mail did not go out
+// and the draft needs a new approval.
+type DraftSendFailed struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	OwnerId string                 `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	DraftId string                 `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	Version int32                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	// reason is a short code such as provider_error or auth_revoked, never text
+	// from the mail.
+	Reason        string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DraftSendFailed) Reset() {
+	*x = DraftSendFailed{}
+	mi := &file_shogun_tsubame_v1_events_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DraftSendFailed) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DraftSendFailed) ProtoMessage() {}
+
+func (x *DraftSendFailed) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_events_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DraftSendFailed.ProtoReflect.Descriptor instead.
+func (*DraftSendFailed) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_events_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DraftSendFailed) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
+func (x *DraftSendFailed) GetDraftId() string {
+	if x != nil {
+		return x.DraftId
+	}
+	return ""
+}
+
+func (x *DraftSendFailed) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *DraftSendFailed) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 var File_shogun_tsubame_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_tsubame_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x1eshogun/tsubame/v1/events.proto\x12\x11shogun.tsubame.v1\"\x8b\x02\n" +
+	"\x1eshogun/tsubame/v1/events.proto\x12\x11shogun.tsubame.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8b\x02\n" +
 	"\x0eMailClassified\x12\x19\n" +
 	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12\x1d\n" +
 	"\n" +
@@ -267,7 +425,20 @@ const file_shogun_tsubame_v1_events_proto_rawDesc = "" +
 	"\n" +
 	"message_id\x18\x02 \x01(\tR\tmessageId\x12\x1d\n" +
 	"\n" +
-	"contact_id\x18\x03 \x01(\tR\tcontactId*\xf0\x01\n" +
+	"contact_id\x18\x03 \x01(\tR\tcontactId\"\xc6\x01\n" +
+	"\tDraftSent\x12\x19\n" +
+	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12\x19\n" +
+	"\bdraft_id\x18\x02 \x01(\tR\adraftId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\x12\x1d\n" +
+	"\n" +
+	"contact_id\x18\x04 \x01(\tR\tcontactId\x12\x15\n" +
+	"\x06job_id\x18\x05 \x01(\tR\x05jobId\x123\n" +
+	"\asent_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\"y\n" +
+	"\x0fDraftSendFailed\x12\x19\n" +
+	"\bowner_id\x18\x01 \x01(\tR\aownerId\x12\x19\n" +
+	"\bdraft_id\x18\x02 \x01(\tR\adraftId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason*\xf0\x01\n" +
 	"\tMailClass\x12\x1a\n" +
 	"\x16MAIL_CLASS_UNSPECIFIED\x10\x00\x12'\n" +
 	"#MAIL_CLASS_APPLICATION_CONFIRMATION\x10\x01\x12\x1f\n" +
@@ -292,19 +463,23 @@ func file_shogun_tsubame_v1_events_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_tsubame_v1_events_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_tsubame_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_shogun_tsubame_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_shogun_tsubame_v1_events_proto_goTypes = []any{
-	(MailClass)(0),            // 0: shogun.tsubame.v1.MailClass
-	(*MailClassified)(nil),    // 1: shogun.tsubame.v1.MailClassified
-	(*MailReplyDetected)(nil), // 2: shogun.tsubame.v1.MailReplyDetected
+	(MailClass)(0),                // 0: shogun.tsubame.v1.MailClass
+	(*MailClassified)(nil),        // 1: shogun.tsubame.v1.MailClassified
+	(*MailReplyDetected)(nil),     // 2: shogun.tsubame.v1.MailReplyDetected
+	(*DraftSent)(nil),             // 3: shogun.tsubame.v1.DraftSent
+	(*DraftSendFailed)(nil),       // 4: shogun.tsubame.v1.DraftSendFailed
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file_shogun_tsubame_v1_events_proto_depIdxs = []int32{
 	0, // 0: shogun.tsubame.v1.MailClassified.classification:type_name -> shogun.tsubame.v1.MailClass
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 1: shogun.tsubame.v1.DraftSent.sent_at:type_name -> google.protobuf.Timestamp
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_shogun_tsubame_v1_events_proto_init() }
@@ -318,7 +493,7 @@ func file_shogun_tsubame_v1_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_tsubame_v1_events_proto_rawDesc), len(file_shogun_tsubame_v1_events_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

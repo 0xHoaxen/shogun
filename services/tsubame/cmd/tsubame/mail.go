@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"crypto/ed25519"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -29,6 +31,8 @@ const (
 	gmailClientIDEnv     = "TSUBAME_GMAIL_CLIENT_ID"
 	gmailClientSecretEnv = "TSUBAME_GMAIL_CLIENT_SECRET"
 	gmailRedirectURLEnv  = "TSUBAME_GMAIL_REDIRECT_URL"
+
+	hankoKeysEnv = "TSUBAME_HANKO_VERIFY_KEYS"
 
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
@@ -76,9 +80,34 @@ func newGmail(lookup config.LookupFunc) (*gmail.Client, error) {
 	return gmail.New(cfg)
 }
 
+// loadHankoKeys reads the public keys that may have signed an approval:
+// comma-separated "key-id=base64" pairs, each a 32-byte Ed25519 public key. More
+// than one is allowed so fude's key can be rotated. They are public, but they
+// are required: without one nothing can be sent.
+func loadHankoKeys(lookup config.LookupFunc) (map[string]ed25519.PublicKey, error) {
+	raw, err := config.Required(lookup, hankoKeysEnv)
+	if err != nil {
+		return nil, err
+	}
+	keys := map[string]ed25519.PublicKey{}
+	for _, pair := range strings.Split(raw, ",") {
+		id, b64, ok := strings.Cut(strings.TrimSpace(pair), "=")
+		if !ok || id == "" {
+			return nil, fmt.Errorf("%s must be key-id=base64 pairs separated by commas", hankoKeysEnv)
+		}
+		key, err := base64.StdEncoding.DecodeString(b64)
+		if err != nil || len(key) != ed25519.PublicKeySize {
+			return nil, fmt.Errorf("%s: key %q is not a base64 %d-byte Ed25519 public key", hankoKeysEnv, id, ed25519.PublicKeySize)
+		}
+		keys[id] = key
+	}
+	return keys, nil
+}
+
 // mailServices is what the mail use cases need, built once.
 type mailServices struct {
 	connector *app.Connector
+	sender    *app.Sender
 	setup     jobs.Setup
 	close     func()
 }
@@ -133,11 +162,22 @@ func newMailServices(
 		closeConns()
 		return nil, err
 	}
+	hankoKeys, err := loadHankoKeys(lookup)
+	if err != nil {
+		closeConns()
+		return nil, err
+	}
 	accounts := app.NewAccounts(pool, keys)
+	sender, err := app.NewSender(pool, accounts, client, hankoKeys, log, nil)
+	if err != nil {
+		closeConns()
+		return nil, err
+	}
 	syncer := app.NewSyncer(pool, accounts, client, queue, log, nil)
 	classifier := app.NewClassifier(pool, completer, kagamisource.New(kagamiv1.NewKagamiServiceClient(kagamiConn)))
 	return &mailServices{
 		connector: app.NewConnector(accounts, client, client, keys, log, nil),
+		sender:    sender,
 		setup:     jobs.NewSetup(syncer, classifier, log),
 		close:     closeConns,
 	}, nil

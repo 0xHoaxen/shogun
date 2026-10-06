@@ -73,4 +73,6 @@ type Send struct {
 	Error             *string
 	CreatedAt         time.Time
 	SentAt            *time.Time
+	ContactID         *uuid.UUID
+	JobID             *uuid.UUID
 }

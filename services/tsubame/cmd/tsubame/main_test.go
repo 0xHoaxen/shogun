@@ -22,7 +22,8 @@ import (
 )
 
 const (
-	unusedAddr      = "127.0.0.1:1" // dialed lazily, never called
+	unusedAddr      = "127.0.0.1:1"             // dialed lazily, never called
+	testHankoKeys   = "fude-1=" + testMasterKey // any 32 bytes is the right size for a public key
 	testIdentityKey = "0123456789abcdef0123456789abcdef"
 	testMasterKey   = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=" // 32 bytes, test only
 	testConsumer    = "consumer"
@@ -42,7 +43,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 		"DATABASE_URL":         postgrestest.NewDatabase(t),
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
 		masterKeyEnv:           testMasterKey, gmailClientIDEnv: "id", gmailClientSecretEnv: "secret", gmailRedirectURLEnv: "http://localhost/cb",
-		sorobanAddrEnv: unusedAddr, kagamiAddrEnv: unusedAddr,
+		sorobanAddrEnv: unusedAddr, kagamiAddrEnv: unusedAddr, hankoKeysEnv: testHankoKeys,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -100,7 +101,7 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 		"DATABASE_URL":         dbURL,
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
 		masterKeyEnv:           testMasterKey, gmailClientIDEnv: "id", gmailClientSecretEnv: "secret", gmailRedirectURLEnv: "http://localhost/cb",
-		sorobanAddrEnv: unusedAddr, kagamiAddrEnv: unusedAddr,
+		sorobanAddrEnv: unusedAddr, kagamiAddrEnv: unusedAddr, hankoKeysEnv: testHankoKeys,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

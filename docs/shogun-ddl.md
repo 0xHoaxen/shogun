@@ -218,6 +218,8 @@ CREATE TABLE sends (
   account_id          uuid NOT NULL REFERENCES accounts(id),
   draft_id            uuid NOT NULL,        -- fude id, no FK
   draft_version       int  NOT NULL,
+  contact_id          uuid,                 -- kagami id, no FK; echoed in draft.sent
+  job_id              uuid,                 -- kagami id, no FK; echoed in draft.sent
   token_jti           uuid NOT NULL UNIQUE, -- makes each Hanko single use
   to_addrs            citext[] NOT NULL,
   provider_message_id text,

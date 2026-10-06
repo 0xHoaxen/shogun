@@ -24,6 +24,9 @@ var (
 	ErrHistoryExpired = errors.New("mail: history cursor expired")
 	// ErrNotFound means the message is gone.
 	ErrNotFound = errors.New("mail: message not found")
+	// ErrInvalidMessage means an outgoing message cannot be turned into mail,
+	// for example because a header value holds a line break.
+	ErrInvalidMessage = errors.New("mail: invalid outgoing message")
 )
 
 // APIError is a provider answer that is not one of the sentinel errors. It
