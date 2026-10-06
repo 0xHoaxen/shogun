@@ -360,10 +360,17 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: tests include out-of-order and duplicate events.
   Status: mail moves a job only at confidence 0.9 or more, only where the state machine allows, never out of `rejected`, and never repeats the current status; below 0.9 it only leaves a `mail_linked` timeline note (taiko raises the suggestion from `mail.classified` in P8.1). An event that occurred before the job's or contact's latest status change (by event time, kept in the timeline payload) is ignored. `draft.sent` moves a contact not yet reached to `reached_out` and moves `last_contacted` forward only. `ChangeJobStatus` and `ChangeContactStatus` now share `moveJob` and `moveContact` with the handlers. Routes for the three events to kagami are in `pkg/bus/routes.go`. `TODO(owner)`: `contact.status_changed` makes fude draft an outreach message for every status change, including `reached_out` caused by fude's own send and `replied` caused by a reply; decide which statuses should draft (the LLD lists templates per status).
 
-- [ ] **P7.8 Draft queue UI** (L, split) Needs: P7.3, P5.1
-  Do: torii `DraftsService`; web screens for queue, draft detail with versions, regenerate with extra context, edit, approve (shows exactly what will be sent), copy button for LinkedIn and X.
-  Done when: Playwright: generate, regenerate, edit, approve to email via fake provider, verify one send.
-  Also: torii `MailService` (`ConnectAccount`, `CompleteConnect`, list accounts) with a `/mail/callback` route that reads `code` and `state` and calls `CompleteConnect`, and a web "connect mail" screen under Settings. P7.4 built the tsubame side only.
+- [x] **P7.8a torii DraftsService and MailService** (M) Needs: P7.3, P7.4c, P5.1
+  Do: `api/v1/drafts.proto` (`ListQueue GetDraft GenerateDraft Regenerate EditDraft Approve Discard`) and `api/v1/mail.proto` (`ConnectAccount CompleteConnect`) with Connect handlers over fude and tsubame (`FUDE_ADDR`, `TSUBAME_ADDR`), the same error mapping as jobs and contacts, and `Idempotency-Key` passthrough on GenerateDraft. Approve keeps the `SEND_UNAVAILABLE` and `SEND_STATUS_UNKNOWN` reasons so the screen can say whether the mail may have gone out. fude's queue now carries each draft's subject and a 200 character preview.
+  Done when: `cd services/torii && go test -race ./...` passes: each RPC, enum mapping, owner propagation, the approve error reasons, no session, no internals or codes in errors.
+
+- [ ] **P7.8b web drafts queue and detail** (M) Needs: P7.8a
+  Do: `/drafts` queue (pending first, with subject and preview) and `/drafts/[id]` detail with versions, regenerate with extra context, edit, discard, and approve showing the exact subject, body and recipient that will be sent, with the digest of that text sent with the approval; copy buttons for LinkedIn and X; add-draft dialog; nav entry. Mocked-API Playwright tests.
+  Done when: Playwright (mocked API) covers queue, regenerate, edit, approve to email, approve to copy, discard, a stale version and a refused send.
+
+- [ ] **P7.8c web connect mail and compose end-to-end** (M) Needs: P7.8b
+  Do: Settings > Mail screen and a `/mail/callback` route that reads `code` and `state` and calls `CompleteConnect`; a stub Gmail in the compose e2e overlay; a compose Playwright run: generate, regenerate, edit, approve to email through the fake provider, verify exactly one send.
+  Done when: the compose e2e passes locally against the stack.
 
 ---
 

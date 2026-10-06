@@ -316,7 +316,7 @@ Starting defaults, all editable in the app: global $20 per month hard, `fude` $1
 
 Torii is a backend-for-frontend: the web app speaks ConnectRPC to it, and it speaks gRPC to the services. It owns no business data, only sessions.
 
-- **Public API.** A separate proto package `shogun.api.v1` shaped for screens (`DashboardService.GetToday`, `JobsService`, `ContactsService`, `DraftsService`, `InboxService`, `NotificationsService.Stream`). Internal protos can change without breaking the UI, and one screen is one call. `CostsService` backs the spend and budgets screen.
+- **Public API.** A separate proto package `shogun.api.v1` shaped for screens (`DashboardService.GetToday`, `JobsService`, `ContactsService`, `DraftsService`, `InboxService`, `MailService` for connecting an account, `NotificationsService.Stream`). Internal protos can change without breaking the UI, and one screen is one call. `CostsService` backs the spend and budgets screen.
 - **Web client.** `buf generate` also emits TypeScript with `@connectrpc/connect-web` into `web/src/gen`, so the UI is typed end to end. Connect speaks plain HTTP/1.1 JSON, so it is debuggable with `curl`.
 - **Login.** Google OAuth (the same Google account Gmail uses), with an allowlist of one email. On success torii stores a session in `torii.sessions` and sets an `HttpOnly`, `Secure`, `SameSite=Lax` cookie valid for 30 days with sliding renewal.
 - **CSRF.** Connect requires `Content-Type: application/json` or `application/proto` plus a `Connect-Protocol-Version` header, which a cross-site form cannot send; the cookie is also `SameSite`.

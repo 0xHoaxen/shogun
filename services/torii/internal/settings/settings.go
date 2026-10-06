@@ -37,6 +37,10 @@ type Settings struct {
 	AllowedEmails   []string
 	// KagamiAddr is the gRPC address of kagami, which owns jobs and contacts.
 	KagamiAddr string
+	// FudeAddr is the gRPC address of fude, which owns drafts and approvals.
+	FudeAddr string
+	// TsubameAddr is the gRPC address of tsubame, which owns mail accounts.
+	TsubameAddr string
 	// SorobanAddr is the gRPC address of soroban, which meters Claude spend.
 	SorobanAddr string
 	SessionTTL  time.Duration
@@ -73,6 +77,10 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	sorobanAddr, err := config.Required(lookup, "SOROBAN_ADDR")
 	collect(err)
+	fudeAddr, err := config.Required(lookup, "FUDE_ADDR")
+	collect(err)
+	tsubameAddr, err := config.Required(lookup, "TSUBAME_ADDR")
+	collect(err)
 	ttl, err := config.Duration(lookup, "SESSION_TTL", defaultSessionTTL)
 	collect(err)
 	rateLimit, err := config.Int(lookup, "TORII_RATE_LIMIT", defaultRateLimit)
@@ -90,6 +98,8 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		GoogleIssuerURL:    config.String(lookup, "GOOGLE_ISSUER_URL", defaultIssuer),
 		AllowedEmails:      splitList(emails),
 		KagamiAddr:         kagamiAddr,
+		FudeAddr:           fudeAddr,
+		TsubameAddr:        tsubameAddr,
 		SorobanAddr:        sorobanAddr,
 		SessionTTL:         ttl,
 		RateLimit:          rateLimit,

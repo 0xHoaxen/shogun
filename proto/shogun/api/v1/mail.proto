@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+// MailService connects the owner's mail account. Torii maps it onto tsubame.
+service MailService {
+  // ConnectAccount starts connecting Gmail and returns where to send the owner
+  // to grant access. Google sends them back to the web app's /mail/callback
+  // with a code and a state.
+  rpc ConnectAccount(ConnectAccountRequest) returns (ConnectAccountResponse);
+  // CompleteConnect finishes it with the code and state from that callback.
+  rpc CompleteConnect(CompleteConnectRequest) returns (CompleteConnectResponse);
+}
+
+message ConnectAccountRequest {}
+
+message ConnectAccountResponse {
+  // auth_url is where to send the owner. It is good for ten minutes.
+  string auth_url = 1;
+}
+
+message CompleteConnectRequest {
+  string code = 1;
+  string state = 2;
+}
+
+message CompleteConnectResponse {
+  // address is the mailbox that was connected.
+  string address = 1;
+}
