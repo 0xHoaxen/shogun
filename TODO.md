@@ -369,9 +369,18 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: Playwright (mocked API) covers queue, regenerate, edit, approve to email, approve to copy, discard, a stale version and a refused send.
   Status: the approval digest is computed in the browser (`src/lib/digest.ts`) over the stored current version, never the editor text, and is pinned to `hanko.BodyDigest` by a golden vector tested on both sides. Approve is blocked while an edit is unsaved or an older version is open. Polling is bounded to 90 seconds. Follow-up: the draft state machine lets the owner mark an approved copy-only post as posted (approved to sent), but fude has no RPC for it, so LinkedIn and X drafts stay `approved` after copying. Add `MarkPosted` to fude and a button to the copy panel.
 
-- [ ] **P7.8c web connect mail and compose end-to-end** (M) Needs: P7.8b
-  Do: Settings > Mail screen and a `/mail/callback` route that reads `code` and `state` and calls `CompleteConnect`; a stub Gmail in the compose e2e overlay; a compose Playwright run: generate, regenerate, edit, approve to email through the fake provider, verify exactly one send.
-  Done when: the compose e2e passes locally against the stack.
+- [x] **P7.8c web connect mail** (M) Needs: P7.8a
+  Do: Settings > Mail with a Connect Gmail button that follows only an https address from the backend, and a `/mail/callback` page that finishes the connection with the code and state once, then removes them from the address bar.
+  Done when: Playwright (mocked API) covers the redirect, a non-https address refused, a failed start, a good callback (called once, code gone from the URL), an expired or foreign state, a refused code, a denied grant and a callback with no code.
+  Status: there is no RPC to list connected accounts, so the screen cannot show which address is connected or whether it needs reconnecting. Follow-up: add `ListAccounts` to tsubame and `MailService`, and show address and status here.
+
+- [ ] **P7.8d Compose end-to-end for drafts and mail** (M) Needs: P7.8b, P7.8c, P5.2c
+  Do: bring fude, tsubame, soroban and kagami up in the compose e2e overlay with a stub Anthropic API and a stub Gmail (token endpoint, profile, list, get, send), which needs base-URL settings for both in fude's and tsubame's config; a compose Playwright spec: add a draft, regenerate, edit, approve to email, and assert the stub Gmail received exactly one message with the `X-Shogun-Draft` header; add those services to the CI `e2e-compose` job.
+  Done when: `npm run test:e2e:compose` passes locally against the stack, and the CI job is green after merge.
+
+- [ ] **P7.8e Mark a copy-only draft as posted** (S) Needs: P7.3
+  Do: `MarkPosted` on fude (approved to sent for non-email channels, through the state machine) and a button in the copy panel. Without it LinkedIn and X drafts stay `approved` after the owner posts them.
+  Done when: domain, handler and Playwright tests pass.
 
 ---
 

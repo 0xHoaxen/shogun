@@ -14,6 +14,8 @@ export const REASON_SEND_REFUSED = "SEND_REFUSED";
 export const REASON_SEND_FAILED = "SEND_FAILED";
 export const REASON_SEND_UNAVAILABLE = "SEND_UNAVAILABLE";
 export const REASON_SEND_STATUS_UNKNOWN = "SEND_STATUS_UNKNOWN";
+export const REASON_INVALID_STATE = "INVALID_STATE";
+export const REASON_INVALID_CODE = "INVALID_CODE";
 
 function decodeReason(bytes: Uint8Array): string {
   const reader = new BinaryReader(bytes);
