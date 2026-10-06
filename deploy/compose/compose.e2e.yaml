@@ -53,3 +53,42 @@ services:
       GOOGLE_CLIENT_ID: e2e-client
       GOOGLE_CLIENT_SECRET: e2e-secret
       TORII_ALLOWED_EMAILS: ${TORII_E2E_EMAIL:-owner@example.com}
+
+  # Stand-in for Anthropic and Gmail (see stubs/mock-apis.mjs). fude and
+  # tsubame call it instead of the real services; the spec reads what it was
+  # sent from /_e2e/sent. Host port 8091, because soroban already has 8090.
+  mock-apis:
+    image: node:22-alpine
+    restart: unless-stopped
+    command: ["node", "/stubs/mock-apis.mjs"]
+    environment:
+      PORT: "8090"
+    volumes:
+      - ./stubs:/stubs:ro
+    ports:
+      - "127.0.0.1:8091:8090"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8090/healthz || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  fude:
+    depends_on:
+      mock-apis:
+        condition: service_healthy
+    environment:
+      ANTHROPIC_API_KEY: e2e-key
+      ANTHROPIC_BASE_URL: http://mock-apis:8090
+
+  tsubame:
+    depends_on:
+      mock-apis:
+        condition: service_healthy
+    environment:
+      ANTHROPIC_API_KEY: e2e-key
+      ANTHROPIC_BASE_URL: http://mock-apis:8090
+      TSUBAME_GMAIL_API_BASE: http://mock-apis:8090
+      TSUBAME_GMAIL_TOKEN_URL: http://mock-apis:8090/token
+      # https because the web app follows nothing else; the spec intercepts it.
+      TSUBAME_GMAIL_AUTH_URL: https://mock-gmail.test/authorize
