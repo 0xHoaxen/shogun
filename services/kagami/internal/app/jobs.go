@@ -179,6 +179,7 @@ func (s *Service) createJob(ctx context.Context, tx pgx.Tx, repo *store.Repo, ow
 	}
 	_, err = outbox.Write(ctx, tx, eventSource, eventJobAdded, job.ID.String(), &kagamiv1.JobAdded{
 		JobId: job.ID.String(), Title: job.Title, Company: company.Name, Url: in.URL, Source: job.Source,
+		OwnerId: job.OwnerID.String(),
 	})
 	if err != nil {
 		return JobResult{}, fmt.Errorf("write %s event: %w", eventJobAdded, err)

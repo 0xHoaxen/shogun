@@ -365,6 +365,8 @@ func (s *Service) ChangeContactStatus(ctx context.Context, in ChangeContactStatu
 			ContactId: id.String(),
 			From:      wire.ContactStatusToProto(from),
 			To:        wire.ContactStatusToProto(moved.Status),
+			Channel:   deref(updated.PreferredChannel),
+			OwnerId:   owner.String(),
 		})
 		if err != nil {
 			return fmt.Errorf("write %s event: %w", eventContactStatusChanged, err)
