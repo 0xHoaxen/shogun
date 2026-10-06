@@ -82,7 +82,13 @@ func (s *Server) GetDraft(ctx context.Context, req *fudev1.GetDraftRequest) (*fu
 	for _, v := range detail.Versions {
 		versions = append(versions, versionToProto(v))
 	}
-	return &fudev1.GetDraftResponse{Draft: draftToProto(detail.Draft), Versions: versions}, nil
+	d := draftToProto(detail.Draft)
+	for _, v := range detail.Versions {
+		if v.Version == detail.Draft.CurrentVersion {
+			d.Subject, d.Preview = deref(v.Subject), preview(v.Body)
+		}
+	}
+	return &fudev1.GetDraftResponse{Draft: d, Versions: versions}, nil
 }
 
 // ListQueue implements fude.v1.FudeService.
@@ -100,7 +106,7 @@ func (s *Server) ListQueue(ctx context.Context, req *fudev1.ListQueueRequest) (*
 	}
 	drafts := make([]*fudev1.Draft, 0, len(res.Drafts))
 	for _, d := range res.Drafts {
-		drafts = append(drafts, draftToProto(d))
+		drafts = append(drafts, queueItemToProto(d))
 	}
 	return &fudev1.ListQueueResponse{Drafts: drafts, NextPageToken: res.NextPageToken}, nil
 }

@@ -5,6 +5,7 @@ import (
 
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	"github.com/0xHoaxen/shogun/services/fude/internal/domain"
+	"github.com/0xHoaxen/shogun/services/fude/internal/store"
 	"github.com/0xHoaxen/shogun/services/fude/internal/store/db"
 	"github.com/0xHoaxen/shogun/services/fude/internal/wire"
 )
@@ -49,4 +50,24 @@ func versionToProto(v db.DraftVersion) *fudev1.DraftVersion {
 		CreatedBy:    wire.AuthorToProto(v.CreatedBy),
 		CreatedAt:    timestamppb.New(v.CreatedAt),
 	}
+}
+
+// queueItemToProto converts a queue row: the draft plus the subject and preview
+// of its newest version.
+func queueItemToProto(i store.QueueItem) *fudev1.Draft {
+	d := draftToProto(i.Draft)
+	d.Subject, d.Preview = i.Subject, i.Preview
+	return d
+}
+
+// previewLen is how much of a body the queue shows.
+const previewLen = 200
+
+// preview returns the start of a body, cut on a character boundary.
+func preview(body string) string {
+	runes := []rune(body)
+	if len(runes) <= previewLen {
+		return body
+	}
+	return string(runes[:previewLen])
 }

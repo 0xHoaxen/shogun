@@ -283,3 +283,21 @@ func TestAddVoiceSample(t *testing.T) {
 	_, err = h.client.AddVoiceSample(h.ctx(t), &fudev1.AddVoiceSampleRequest{Text: "x"})
 	requireStatus(t, err, codes.InvalidArgument, "INVALID_CHANNEL")
 }
+
+func TestListQueueAndGetDraftShowTheNewestVersionsSubjectAndPreview(t *testing.T) {
+	h := newHarness(t)
+	d := h.pending(t, h.generate(t, ""))
+	if _, err := h.client.EditDraft(h.ctx(t), &fudev1.EditDraftRequest{DraftId: d.GetId(), Subject: "Hello", Body: "Dear Lumen team", Version: d.GetVersion()}); err != nil {
+		t.Fatal(err)
+	}
+
+	queue, err := h.client.ListQueue(h.ctx(t), &fudev1.ListQueueRequest{})
+	got, getErr := h.client.GetDraft(h.ctx(t), &fudev1.GetDraftRequest{DraftId: d.GetId()})
+
+	if err != nil || len(queue.GetDrafts()) != 1 || queue.GetDrafts()[0].GetSubject() != "Hello" || queue.GetDrafts()[0].GetPreview() != "Dear Lumen team" {
+		t.Fatalf("queue %+v, %v", queue.GetDrafts(), err)
+	}
+	if getErr != nil || got.GetDraft().GetSubject() != "Hello" || got.GetDraft().GetPreview() != "Dear Lumen team" {
+		t.Fatalf("draft %+v, %v", got.GetDraft(), getErr)
+	}
+}

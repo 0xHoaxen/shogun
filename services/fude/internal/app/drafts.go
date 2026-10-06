@@ -54,7 +54,7 @@ type ListQueueInput struct {
 
 // ListQueueResult is one page of drafts.
 type ListQueueResult struct {
-	Drafts        []db.Draft
+	Drafts        []store.QueueItem
 	NextPageToken string
 }
 

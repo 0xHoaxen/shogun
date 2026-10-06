@@ -126,14 +126,16 @@ func (q *Queries) InsertDraft(ctx context.Context, arg InsertDraftParams) (Draft
 }
 
 const listDrafts = `-- name: ListDrafts :many
-SELECT id, owner_id, kind, target_type, target_id, channel, state, current_version, recipient, failure_reason, version, created_at, updated_at, idempotency_key FROM drafts
-WHERE owner_id = $1
-  AND state = $2::text
+SELECT d.id, d.owner_id, d.kind, d.target_type, d.target_id, d.channel, d.state, d.current_version, d.recipient, d.failure_reason, d.version, d.created_at, d.updated_at, d.idempotency_key, v.subject AS version_subject, COALESCE(left(v.body, 200), '')::text AS version_preview
+FROM drafts d
+LEFT JOIN draft_versions v ON v.draft_id = d.id AND v.version = d.current_version
+WHERE d.owner_id = $1
+  AND d.state = $2::text
   AND (
     $3::timestamptz IS NULL
-    OR (updated_at, id) < ($3::timestamptz, $4::uuid)
+    OR (d.updated_at, d.id) < ($3::timestamptz, $4::uuid)
   )
-ORDER BY updated_at DESC, id DESC
+ORDER BY d.updated_at DESC, d.id DESC
 LIMIT $5
 `
 
@@ -145,9 +147,29 @@ type ListDraftsParams struct {
 	RowLimit       int32
 }
 
+type ListDraftsRow struct {
+	ID             uuid.UUID
+	OwnerID        uuid.UUID
+	Kind           string
+	TargetType     string
+	TargetID       *uuid.UUID
+	Channel        string
+	State          string
+	CurrentVersion int32
+	Recipient      *string
+	FailureReason  *string
+	Version        int32
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	IdempotencyKey *string
+	VersionSubject *string
+	VersionPreview string
+}
+
 // Keyset pagination on (updated_at, id), newest first. A NULL after_* pair
-// means the first page.
-func (q *Queries) ListDrafts(ctx context.Context, arg ListDraftsParams) ([]Draft, error) {
+// means the first page. Each draft carries the subject and the start of the
+// body of its newest version, so the queue can be shown without a call each.
+func (q *Queries) ListDrafts(ctx context.Context, arg ListDraftsParams) ([]ListDraftsRow, error) {
 	rows, err := q.db.Query(ctx, listDrafts,
 		arg.OwnerID,
 		arg.State,
@@ -159,9 +181,9 @@ func (q *Queries) ListDrafts(ctx context.Context, arg ListDraftsParams) ([]Draft
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Draft{}
+	items := []ListDraftsRow{}
 	for rows.Next() {
-		var i Draft
+		var i ListDraftsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OwnerID,
@@ -177,6 +199,8 @@ func (q *Queries) ListDrafts(ctx context.Context, arg ListDraftsParams) ([]Draft
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.IdempotencyKey,
+			&i.VersionSubject,
+			&i.VersionPreview,
 		); err != nil {
 			return nil, err
 		}

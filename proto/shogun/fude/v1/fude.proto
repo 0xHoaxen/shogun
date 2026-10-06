@@ -80,6 +80,10 @@ message Draft {
   int32 version = 10;
   google.protobuf.Timestamp created_at = 11;
   google.protobuf.Timestamp updated_at = 12;
+  // subject and preview come from the newest version and are filled by ListQueue
+  // and GetDraft: the subject, and the first characters of the body.
+  string subject = 13;
+  string preview = 14;
 }
 
 message DraftVersion {

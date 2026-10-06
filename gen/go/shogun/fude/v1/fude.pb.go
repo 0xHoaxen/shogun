@@ -313,9 +313,13 @@ type Draft struct {
 	Recipient      string `protobuf:"bytes,8,opt,name=recipient,proto3" json:"recipient,omitempty"`
 	FailureReason  string `protobuf:"bytes,9,opt,name=failure_reason,json=failureReason,proto3" json:"failure_reason,omitempty"`
 	// version is the optimistic lock on the draft row.
-	Version       int32                  `protobuf:"varint,10,opt,name=version,proto3" json:"version,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Version   int32                  `protobuf:"varint,10,opt,name=version,proto3" json:"version,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	// subject and preview come from the newest version and are filled by ListQueue
+	// and GetDraft: the subject, and the first characters of the body.
+	Subject       string `protobuf:"bytes,13,opt,name=subject,proto3" json:"subject,omitempty"`
+	Preview       string `protobuf:"bytes,14,opt,name=preview,proto3" json:"preview,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -432,6 +436,20 @@ func (x *Draft) GetUpdatedAt() *timestamppb.Timestamp {
 		return x.UpdatedAt
 	}
 	return nil
+}
+
+func (x *Draft) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *Draft) GetPreview() string {
+	if x != nil {
+		return x.Preview
+	}
+	return ""
 }
 
 type DraftVersion struct {
@@ -1492,7 +1510,7 @@ var File_shogun_fude_v1_fude_proto protoreflect.FileDescriptor
 
 const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\n" +
-	"\x19shogun/fude/v1/fude.proto\x12\x0eshogun.fude.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x04\n" +
+	"\x19shogun/fude/v1/fude.proto\x12\x0eshogun.fude.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb7\x04\n" +
 	"\x05Draft\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12-\n" +
 	"\x04kind\x18\x02 \x01(\x0e2\x19.shogun.fude.v1.DraftKindR\x04kind\x12;\n" +
@@ -1509,7 +1527,9 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xc6\x02\n" +
+	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12\x18\n" +
+	"\asubject\x18\r \x01(\tR\asubject\x12\x18\n" +
+	"\apreview\x18\x0e \x01(\tR\apreview\"\xc6\x02\n" +
 	"\fDraftVersion\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\x12\x18\n" +

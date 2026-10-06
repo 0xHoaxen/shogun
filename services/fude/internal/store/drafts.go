@@ -32,9 +32,17 @@ func (r *Repo) GetDraftByIdempotencyKey(ctx context.Context, owner uuid.UUID, ke
 	return d, mapErr(err)
 }
 
+// QueueItem is a draft with the subject and the start of the body of its newest
+// version, for showing the queue.
+type QueueItem struct {
+	Draft   db.Draft
+	Subject string
+	Preview string
+}
+
 // ListDrafts returns one page of the owner's drafts in state, most recently
 // updated first, and the token for the next page, empty on the last page.
-func (r *Repo) ListDrafts(ctx context.Context, owner uuid.UUID, state string, p Page) ([]db.Draft, string, error) {
+func (r *Repo) ListDrafts(ctx context.Context, owner uuid.UUID, state string, p Page) ([]QueueItem, string, error) {
 	after, err := decodeCursor(p.Token)
 	if err != nil {
 		return nil, "", err
@@ -47,8 +55,26 @@ func (r *Repo) ListDrafts(ctx context.Context, owner uuid.UUID, state string, p 
 	if err != nil {
 		return nil, "", fmt.Errorf("list drafts: %w", mapErr(err))
 	}
-	rows, next := trimPage(rows, size, func(d db.Draft) (time.Time, uuid.UUID) { return d.UpdatedAt, d.ID })
-	return rows, next, nil
+	rows, next := trimPage(rows, size, func(d db.ListDraftsRow) (time.Time, uuid.UUID) { return d.UpdatedAt, d.ID })
+	items := make([]QueueItem, len(rows))
+	for i, row := range rows {
+		subject := ""
+		if row.VersionSubject != nil {
+			subject = *row.VersionSubject
+		}
+		items[i] = QueueItem{Draft: draftOf(row), Subject: subject, Preview: row.VersionPreview}
+	}
+	return items, next, nil
+}
+
+// draftOf returns the draft columns of a queue row.
+func draftOf(r db.ListDraftsRow) db.Draft {
+	return db.Draft{
+		ID: r.ID, OwnerID: r.OwnerID, Kind: r.Kind, TargetType: r.TargetType, TargetID: r.TargetID,
+		Channel: r.Channel, State: r.State, CurrentVersion: r.CurrentVersion, Recipient: r.Recipient,
+		FailureReason: r.FailureReason, Version: r.Version, CreatedAt: r.CreatedAt, UpdatedAt: r.UpdatedAt,
+		IdempotencyKey: r.IdempotencyKey,
+	}
 }
 
 // UpdateDraftState writes the state columns when arg.Version is current. A

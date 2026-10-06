@@ -3,6 +3,7 @@ package store_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -123,7 +124,7 @@ func TestListDraftsPaginatesByStateNewestFirst(t *testing.T) {
 	page2, next2, _ := repo.ListDrafts(ctx, owner, "pending", store.Page{Size: 2, Token: next})
 	page3, next3, _ := repo.ListDrafts(ctx, owner, "pending", store.Page{Size: 2, Token: next2})
 
-	if page1[0].ID != ids[4] || page2[0].ID != ids[2] || len(page3) != 1 || page3[0].ID != ids[0] || next3 != "" {
+	if page1[0].Draft.ID != ids[4] || page2[0].Draft.ID != ids[2] || len(page3) != 1 || page3[0].Draft.ID != ids[0] || next3 != "" {
 		t.Fatalf("unexpected order: %v %v %v next3=%q", page1, page2, page3, next3)
 	}
 	if _, _, err := repo.ListDrafts(ctx, owner, "pending", store.Page{Token: "!!"}); !errors.Is(err, store.ErrInvalidPageToken) {
@@ -166,5 +167,43 @@ func TestInsertVoiceSample(t *testing.T) {
 	_ = pool.QueryRow(ctx, `SELECT embedding IS NULL FROM voice_samples WHERE id = $1`, s.ID).Scan(&nilEmbedding)
 	if err != nil || !nilEmbedding {
 		t.Fatalf("got %+v, nil embedding %v, err %v", s, nilEmbedding, err)
+	}
+}
+
+func TestListDraftsCarriesTheSubjectAndPreviewOfTheNewestVersion(t *testing.T) {
+	repo, pool := newRepo(t)
+	ctx := context.Background()
+	owner := store.NewID()
+	withVersions, _ := repo.InsertDraft(ctx, newDraft(owner, nil))
+	noVersion, _ := repo.InsertDraft(ctx, newDraft(owner, nil))
+	subject := "Hello Lumen"
+	long := strings.Repeat("é", 300) // multi-byte, so a byte cut would split a character
+	for v, body := range []string{"first draft", long} {
+		if _, err := repo.InsertDraftVersion(ctx, db.InsertDraftVersionParams{
+			DraftID: withVersions.ID, Version: int32(v + 1), Subject: &subject, Body: body, BodySha256: []byte{byte(v)}, CreatedBy: "ai",
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := pool.Exec(ctx, `UPDATE drafts SET state = 'pending', current_version = CASE WHEN id = $1 THEN 2 ELSE 0 END WHERE owner_id = $2`, withVersions.ID, owner); err != nil {
+		t.Fatal(err)
+	}
+
+	items, _, err := repo.ListDrafts(ctx, owner, "pending", store.Page{})
+
+	if err != nil || len(items) != 2 {
+		t.Fatalf("got %d items, %v", len(items), err)
+	}
+	for _, it := range items {
+		switch it.Draft.ID {
+		case withVersions.ID:
+			if it.Subject != subject || []rune(it.Preview)[0] != 'é' || len([]rune(it.Preview)) != 200 {
+				t.Errorf("newest version: subject %q, preview of %d characters", it.Subject, len([]rune(it.Preview)))
+			}
+		case noVersion.ID:
+			if it.Subject != "" || it.Preview != "" {
+				t.Errorf("a draft with no version shows %q %q", it.Subject, it.Preview)
+			}
+		}
 	}
 }
