@@ -364,9 +364,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `api/v1/drafts.proto` (`ListQueue GetDraft GenerateDraft Regenerate EditDraft Approve Discard`) and `api/v1/mail.proto` (`ConnectAccount CompleteConnect`) with Connect handlers over fude and tsubame (`FUDE_ADDR`, `TSUBAME_ADDR`), the same error mapping as jobs and contacts, and `Idempotency-Key` passthrough on GenerateDraft. Approve keeps the `SEND_UNAVAILABLE` and `SEND_STATUS_UNKNOWN` reasons so the screen can say whether the mail may have gone out. fude's queue now carries each draft's subject and a 200 character preview.
   Done when: `cd services/torii && go test -race ./...` passes: each RPC, enum mapping, owner propagation, the approve error reasons, no session, no internals or codes in errors.
 
-- [ ] **P7.8b web drafts queue and detail** (M) Needs: P7.8a
+- [x] **P7.8b web drafts queue and detail** (M) Needs: P7.8a
   Do: `/drafts` queue (pending first, with subject and preview) and `/drafts/[id]` detail with versions, regenerate with extra context, edit, discard, and approve showing the exact subject, body and recipient that will be sent, with the digest of that text sent with the approval; copy buttons for LinkedIn and X; add-draft dialog; nav entry. Mocked-API Playwright tests.
   Done when: Playwright (mocked API) covers queue, regenerate, edit, approve to email, approve to copy, discard, a stale version and a refused send.
+  Status: the approval digest is computed in the browser (`src/lib/digest.ts`) over the stored current version, never the editor text, and is pinned to `hanko.BodyDigest` by a golden vector tested on both sides. Approve is blocked while an edit is unsaved or an older version is open. Polling is bounded to 90 seconds. Follow-up: the draft state machine lets the owner mark an approved copy-only post as posted (approved to sent), but fude has no RPC for it, so LinkedIn and X drafts stay `approved` after copying. Add `MarkPosted` to fude and a button to the copy panel.
 
 - [ ] **P7.8c web connect mail and compose end-to-end** (M) Needs: P7.8b
   Do: Settings > Mail screen and a `/mail/callback` route that reads `code` and `state` and calls `CompleteConnect`; a stub Gmail in the compose e2e overlay; a compose Playwright run: generate, regenerate, edit, approve to email through the fake provider, verify exactly one send.

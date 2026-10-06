@@ -24,6 +24,7 @@ interface NavItem {
 const NAV_ITEMS: readonly NavItem[] = [
   { href: "/jobs", label: "Jobs", section: "S2 / Tracker", railLabel: "JOB PIPELINE" },
   { href: "/contacts", label: "Contacts", section: "S3 / Network", railLabel: "CONTACT BOOK" },
+  { href: "/drafts", label: "Drafts", section: "S4 / Drafts", railLabel: "APPROVAL QUEUE" },
   { href: "/settings/spend", label: "Spend", section: "S9 / Settings", railLabel: "SPEND LEDGER" },
 ];
 
