@@ -115,7 +115,13 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	gen, err := newGeneration(ctx, lookup, cfg, pool, authority, log)
+	if err != nil {
+		return err
+	}
+	defer gen.close()
+
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, gen.setup, overrides)
 	if err != nil {
 		return err
 	}
@@ -125,7 +131,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		server.WithAuth(authority.UnaryServerInterceptor(), authority.StreamServerInterceptor()),
 		server.WithReadinessCheck(pool.Ping),
 	}, opts...)
-	svc := app.NewService(pool, nil, nil)
+	svc := app.NewService(pool, gen.queue, nil)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
 		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc))
