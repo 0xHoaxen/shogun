@@ -42,3 +42,14 @@ func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
 		t.Errorf("consumers = %v, want nil for an event nobody consumes", got)
 	}
 }
+
+func TestConsumersRoutesNotificationEventsToTaiko(t *testing.T) {
+	for _, eventType := range []string{
+		"job.follow_up_due", "contact.follow_up_due", "mail.classified", "mail.reply_detected",
+		"draft.ready", "draft.failed", "draft.send_failed", "cost.threshold_reached", "cost.budget_exhausted",
+	} {
+		if got := Consumers(eventType); !slices.Contains(got, "taiko") {
+			t.Errorf("Consumers(%q) = %v, want taiko among them", eventType, got)
+		}
+	}
+}

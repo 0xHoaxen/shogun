@@ -22,6 +22,8 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/app"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/events"
 	"github.com/0xHoaxen/shogun/services/taiko/migrations"
 )
 
@@ -107,7 +109,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
+	sink, err := bus.NewSinkServer(pool, events.Handlers(app.NewService(pool, nil), log), log)
 	if err != nil {
 		return err
 	}

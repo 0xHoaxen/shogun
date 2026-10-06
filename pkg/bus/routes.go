@@ -8,11 +8,17 @@ import "slices"
 // and consumer of each event, as listed in the Shogun LLD event catalog.
 var routes = map[string][]string{
 	"job.added":              {"fude"},
+	"job.follow_up_due":      {"taiko"},
 	"contact.status_changed": {"fude"},
+	"contact.follow_up_due":  {"taiko"},
+	"draft.ready":            {"taiko"},
+	"draft.failed":           {"taiko"},
 	"draft.sent":             {"fude", "kagami"},
-	"draft.send_failed":      {"fude"},
-	"mail.classified":        {"kagami"},
-	"mail.reply_detected":    {"kagami"},
+	"draft.send_failed":      {"fude", "taiko"},
+	"mail.classified":        {"kagami", "taiko"},
+	"mail.reply_detected":    {"kagami", "taiko"},
+	"cost.threshold_reached": {"taiko"},
+	"cost.budget_exhausted":  {"taiko"},
 }
 
 // Consumers returns the services subscribed to eventType, or nil when there

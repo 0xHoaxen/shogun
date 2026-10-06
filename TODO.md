@@ -405,9 +405,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: add `owner_id` to `DraftReady`, `DraftFailed` (fude) and `CostThresholdReached`, `CostBudgetExhausted` (soroban) and fill it in their producers; found while reading the payloads for P8.1b, which has no other way to name the owner.
   Done when: `cd services/fude && go test -race ./...` and `cd services/soroban && go test -race ./...` pass with producer tests asserting `owner_id`.
 
-- [ ] **P8.1b taiko consumes events** (M) Needs: P8.1b0b
-  Do: `internal/events` handlers (shape of fude's) for `job.status_changed` (interview and offer), `job.follow_up_due`, `contact.follow_up_due`, `mail.classified` (interview, offer, rejection), `mail.reply_detected`, `draft.ready`, `draft.failed`, `draft.send_failed`, `cost.threshold_reached`, `cost.budget_exhausted`; title and link builders in `domain`; routes to `taiko` in `pkg/bus/routes.go`; wire the handlers into `bus.NewSinkServer`.
+- [x] **P8.1b taiko consumes events** (M) Needs: P8.1b0b
+  Do: `internal/events` handlers (shape of fude's) for `job.follow_up_due`, `contact.follow_up_due`, `mail.classified` (interview, offer, rejection), `mail.reply_detected`, `draft.ready`, `draft.failed`, `draft.send_failed`, `cost.threshold_reached`, `cost.budget_exhausted`; title and link builders in `domain`; `app.Service.Record`; routes to `taiko` in `pkg/bus/routes.go`; handlers wired into `bus.NewSinkServer`.
   Done when: a handler test per event type and an idempotency test (the same envelope twice gives one notification).
+  Status: `job.status_changed` is not consumed although the LLD catalog lists taiko for it. A mail-driven move to interview or offer would notify twice (once from `mail.classified`, once from the status change), and a drag on the board would echo the owner's own action. `TODO(owner)`: say if you want it anyway. Mail and job notifications link to `/jobs` since the board has no job page yet. Ids that end up in links must be uuids or the event is dropped.
 
 - [ ] **P8.1c taiko RPCs and Subscribe stream** (M) Needs: P8.1b
   Do: use cases and gRPC handlers for List, MarkRead, MarkAllRead, Subscribe; `pg_notify` on insert, one `LISTEN` connection feeding an in-process broker, replay from `after_id` after subscribing so no gap; register `TaikoService`.
