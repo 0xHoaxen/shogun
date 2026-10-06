@@ -133,3 +133,23 @@ func TestDraftCanApprove(t *testing.T) {
 		})
 	}
 }
+
+func TestDraftRegenerateOnlyWhenPending(t *testing.T) {
+	now := time.Date(2026, 10, 6, 8, 0, 0, 0, time.UTC)
+	for _, from := range allDraftStates {
+		t.Run(string(from), func(t *testing.T) {
+			got, err := Draft{State: from, CurrentVersion: 2}.Regenerate(now)
+
+			if from == DraftPending {
+				if err != nil || got.State != DraftPending || got.CurrentVersion != 2 {
+					t.Fatalf("got %+v, %v", got, err)
+				}
+				return
+			}
+			var te *TransitionError
+			if !errors.As(err, &te) {
+				t.Fatalf("want TransitionError, got %v", err)
+			}
+		})
+	}
+}

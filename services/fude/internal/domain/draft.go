@@ -111,6 +111,16 @@ func (d Draft) NewVersion(version int32, now time.Time) (Draft, error) {
 	return next, nil
 }
 
+// Regenerate returns a pending draft with its row refreshed, for a new AI
+// version that is still being written. Only a pending draft can be
+// regenerated; a generating one already has a version on the way.
+func (d Draft) Regenerate(now time.Time) (Draft, error) {
+	if d.State != DraftPending {
+		return d, d.invalidMove(DraftPending)
+	}
+	return d.Move(DraftPending, now)
+}
+
 // CanApprove reports whether version is the newest version of a pending
 // draft, the only thing that may be approved.
 func (d Draft) CanApprove(version int32) bool {

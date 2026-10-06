@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -22,6 +23,8 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/fude/internal/app"
+	fudegrpc "github.com/0xHoaxen/shogun/services/fude/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/fude/migrations"
 )
 
@@ -122,8 +125,10 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		server.WithAuth(authority.UnaryServerInterceptor(), authority.StreamServerInterceptor()),
 		server.WithReadinessCheck(pool.Ping),
 	}, opts...)
+	svc := app.NewService(pool, nil, nil)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

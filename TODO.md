@@ -290,9 +290,17 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: tables `drafts draft_versions approvals voice_samples templates`; RPCs GenerateDraft, Regenerate, EditDraft, Approve, Discard, ListQueue, GetDraft, AddVoiceSample; draft state machine from the System Design diagram; events `draft.ready/failed/approved`.
   Done when: domain tests cover all transitions including "edit after approval returns to pending".
 
-- [ ] **P7.2 fude generation pipeline** (L, split) Needs: P7.1
-  Do: `generate_draft` River job (keyed by draft id and version): gather context, top 5 voice samples by pgvector similarity, template for kind and contact status, call `pkg/llm` feature `fude.<kind>`, write `draft_versions`, emit `draft.ready`; on 5 failures set `failed` and emit `draft.failed`. Event handlers: `job.added` (cover letter), `contact.status_changed` (outreach), `learning.activity_added` (post).
-  Done when: tests with fake LLM cover success, retries, final failure, budget denial snoozing the job.
+- [x] **P7.2a fude store, use cases and handlers** (M) Needs: P7.1
+  Do: sqlc store for drafts, versions and voice samples; GenerateDraft (idempotency key, queue seam), Regenerate, EditDraft (new user version, digest from `hanko.BodyDigest`), Discard, ListQueue, GetDraft, AddVoiceSample use cases; gRPC handlers with authz, optimistic `version` and stable `ErrorInfo.reason`; register `FudeService`.
+  Done when: `cd services/fude && go test -race ./...` passes: store integration tests (stale version, pagination, duplicate key) and a handler test per RPC. `draft.*` events are written by the generation job (P7.2b) and Approve (P7.3), so no outbox row is written here. The `app.Queue` seam is nil until P7.2b wires River.
+
+- [ ] **P7.2b fude generation job** (M) Needs: P7.2a
+  Do: `generate_draft` River job (keyed by draft id and version, concurrency 2, 5 tries): gather context from kagami through `pkg/grpcclient`, top 5 voice samples by pgvector similarity (the 5 newest when embeddings are NULL), template for kind and contact status, call `pkg/llm` feature `fude.<kind>`, write `draft_versions`, move the draft to pending and emit `draft.ready`; after the 5th failure set `failed` and emit `draft.failed`. A `ResourceExhausted` from soroban snoozes the job until `resets_at`. Implements `app.Queue`.
+  Done when: tests with a fake LLM cover success, retries, final failure and budget denial snoozing the job.
+
+- [ ] **P7.2c fude embeddings and event handlers** (M) Needs: P7.2b
+  Do: `Embedder` interface with a fake and an `embed_voice_sample` job (3 tries; embedding stays NULL when no provider is set); inbox handlers for `job.added` (cover letter) and `contact.status_changed` (outreach) that queue GenerateDraft in the inbox transaction; routes for both in `pkg/bus/routes.go`. `TODO(owner)`: choose the real embedding provider. `learning.activity_added` waits for dojo's `events.proto` (see P9.1).
+  Done when: consumer tests for both handlers including a duplicate delivery; embed job test with the fake.
 
 - [ ] **P7.3 Approve and Hanko** (M) Needs: P7.1, P1.9
   Do: `fude.Approve(draft_id, version, body_sha256)` checks state, current version, hash; stamps Hanko; writes `approvals`; sets `approved`; emits `draft.approved`; a test (and a depguard/grep check in CI) asserts `hanko.Sign` is referenced only from `fude/internal/app/approve.go`.
@@ -339,7 +347,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 ## Phase 9: dojo, katana, shinobi, sensei
 
 - [ ] **P9.1 dojo** (M) Needs: P2.3
-  Do: tables, RPCs (items, activities, GeneratePost), events `learning.activity_added`, `learning.item_completed`; torii endpoints; Learning screen.
+  Do: tables, RPCs (items, activities, GeneratePost), events `learning.activity_added`, `learning.item_completed`; torii endpoints; Learning screen. Also add fude's `learning.activity_added` handler (post draft) and its route, deferred from P7.2c.
   Done when: logging an activity leads to a pending post draft in the queue (E2E with fake LLM).
 
 - [ ] **P9.2 katana** (L, split) Needs: P6.3
