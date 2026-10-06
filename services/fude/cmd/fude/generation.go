@@ -59,7 +59,10 @@ func newGeneration(
 	if apiKey == "" && cfg.IsProduction() {
 		return nil, errNoAPIKey
 	}
-	queue, err := jobs.NewRiverQueue(pool)
+	// TODO(owner): choose the embedding provider. With none, voice samples are
+	// stored unembedded and drafts use the newest ones.
+	var embedder app.Embedder
+	queue, err := jobs.NewRiverQueue(pool, embedder != nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +84,12 @@ func newGeneration(
 		return nil, err
 	}
 	source := kagamisource.New(kagamiv1.NewKagamiServiceClient(kagamiConn))
-	generator := app.NewGenerator(pool, completer, source, log, nil)
-	return &generation{queue: queue, close: closeConns, setup: jobs.NewSetup(generator, log)}, nil
+	generator := app.NewGenerator(pool, completer, source, log, nil, app.WithEmbedder(embedder))
+	var sampleEmbedder jobs.SampleEmbedder
+	if embedder != nil {
+		sampleEmbedder = app.NewVoiceEmbedder(pool, embedder)
+	}
+	return &generation{queue: queue, close: closeConns, setup: jobs.NewSetup(generator, sampleEmbedder, log)}, nil
 }
 
 // newCompleter returns the metered Claude client, or one that fails every call

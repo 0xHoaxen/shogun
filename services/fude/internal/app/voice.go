@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/0xHoaxen/shogun/services/fude/internal/domain"
 	"github.com/0xHoaxen/shogun/services/fude/internal/store"
 	"github.com/0xHoaxen/shogun/services/fude/internal/store/db"
@@ -25,7 +27,16 @@ func (s *Service) AddVoiceSample(ctx context.Context, channel domain.Channel, te
 	case len(text) > maxVoiceSampleLen:
 		return db.InsertVoiceSampleRow{}, invalidField("text", "TEXT_TOO_LONG", "text is longer than %d bytes", maxVoiceSampleLen)
 	}
-	return store.New(s.pool).InsertVoiceSample(ctx, db.InsertVoiceSampleParams{
-		ID: store.NewID(), OwnerID: owner, Channel: string(channel), Text: text,
+	var sample db.InsertVoiceSampleRow
+	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
+		var insErr error
+		sample, insErr = repo.InsertVoiceSample(ctx, db.InsertVoiceSampleParams{
+			ID: store.NewID(), OwnerID: owner, Channel: string(channel), Text: text,
+		})
+		if insErr != nil {
+			return insErr
+		}
+		return s.enqueueEmbed(ctx, tx, sample.ID)
 	})
+	return sample, err
 }

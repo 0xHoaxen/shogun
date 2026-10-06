@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -61,19 +62,31 @@ type ContextSource interface {
 
 // Generator writes the AI versions of drafts.
 type Generator struct {
-	pool    *pgxpool.Pool
-	llm     Completer
-	context ContextSource
-	log     *slog.Logger
-	now     func() time.Time
+	pool     *pgxpool.Pool
+	llm      Completer
+	context  ContextSource
+	embedder Embedder
+	log      *slog.Logger
+	now      func() time.Time
 }
 
+// GeneratorOption configures a Generator.
+type GeneratorOption func(*Generator)
+
+// WithEmbedder ranks voice samples by similarity to what the draft is about.
+// Without it the newest samples are used.
+func WithEmbedder(e Embedder) GeneratorOption { return func(g *Generator) { g.embedder = e } }
+
 // NewGenerator returns a Generator. A nil now means time.Now.
-func NewGenerator(pool *pgxpool.Pool, completer Completer, source ContextSource, log *slog.Logger, now func() time.Time) *Generator {
+func NewGenerator(pool *pgxpool.Pool, completer Completer, source ContextSource, log *slog.Logger, now func() time.Time, opts ...GeneratorOption) *Generator {
 	if now == nil {
 		now = time.Now
 	}
-	return &Generator{pool: pool, llm: completer, context: source, log: log, now: now}
+	g := &Generator{pool: pool, llm: completer, context: source, log: log, now: now}
+	for _, opt := range opts {
+		opt(g)
+	}
+	return g
 }
 
 // Generate writes version args.Version of a draft and moves it to pending. It
@@ -127,13 +140,9 @@ func (g *Generator) gather(ctx context.Context, repo *store.Repo, d db.Draft, ar
 			return promptInput{}, &contextError{err: err}
 		}
 	}
-	samples, err := repo.ListRecentVoiceSamples(ctx, args.OwnerID, d.Channel, voiceSampleCount)
+	voice, err := g.voiceSamples(ctx, repo, args.OwnerID, d.Channel, target.Summary+"\n"+args.ExtraContext)
 	if err != nil {
 		return promptInput{}, err
-	}
-	voice := make([]string, len(samples))
-	for i, s := range samples {
-		voice[i] = s.Text
 	}
 	instructions, err := g.instructions(ctx, repo, args.OwnerID, kind, channel, target.ContactStatus)
 	if err != nil {
@@ -143,6 +152,40 @@ func (g *Generator) gather(ctx context.Context, repo *store.Repo, d db.Draft, ar
 		Kind: kind, Channel: channel, Instructions: instructions, Target: target.Summary,
 		ExtraContext: args.ExtraContext, Voice: voice,
 	}, nil
+}
+
+// voiceSamples returns the texts of the samples that shape a draft: the ones
+// closest to topic when there is an embedder, else the newest. A failing
+// embedder costs only the ranking, so it is logged and the newest are used.
+func (g *Generator) voiceSamples(ctx context.Context, repo *store.Repo, owner uuid.UUID, channel, topic string) ([]string, error) {
+	if g.embedder != nil && strings.TrimSpace(topic) != "" {
+		vec, err := g.embedder.Embed(ctx, topic)
+		switch {
+		case err != nil:
+			g.log.Warn("voice ranking skipped", slog.Any("error", err))
+		case len(vec) != EmbeddingDimensions:
+			g.log.Warn("voice ranking skipped", slog.Any("error", ErrEmbeddingSize))
+		default:
+			rows, err := repo.ListSimilarVoiceSamples(ctx, owner, channel, vec, voiceSampleCount)
+			if err != nil {
+				return nil, err
+			}
+			return sampleTexts(rows, func(r db.ListSimilarVoiceSamplesRow) string { return r.Text }), nil
+		}
+	}
+	rows, err := repo.ListRecentVoiceSamples(ctx, owner, channel, voiceSampleCount)
+	if err != nil {
+		return nil, err
+	}
+	return sampleTexts(rows, func(r db.ListRecentVoiceSamplesRow) string { return r.Text }), nil
+}
+
+func sampleTexts[R any](rows []R, text func(R) string) []string {
+	out := make([]string, len(rows))
+	for i, r := range rows {
+		out[i] = text(r)
+	}
+	return out
 }
 
 // instructions returns the owner's template for the draft, or the default.

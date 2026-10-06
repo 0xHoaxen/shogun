@@ -275,6 +275,9 @@ func TestAddVoiceSample(t *testing.T) {
 	if err != nil || res.GetSample().GetText() != "Hi there" || res.GetSample().GetChannel() != fudev1.Channel_CHANNEL_EMAIL {
 		t.Fatalf("got %+v, %v", res.GetSample(), err)
 	}
+	if len(h.queue.embeds) != 1 || h.queue.embeds[0].String() != res.GetSample().GetId() {
+		t.Fatalf("got embed jobs %v, want one for %s", h.queue.embeds, res.GetSample().GetId())
+	}
 	_, err = h.client.AddVoiceSample(h.ctx(t), &fudev1.AddVoiceSampleRequest{Channel: fudev1.Channel_CHANNEL_EMAIL, Text: " "})
 	requireStatus(t, err, codes.InvalidArgument, "TEXT_REQUIRED")
 	_, err = h.client.AddVoiceSample(h.ctx(t), &fudev1.AddVoiceSampleRequest{Text: "x"})

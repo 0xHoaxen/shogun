@@ -303,9 +303,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: worker tests cover success, retry, final failure and budget denial snoozing; an integration test shows GenerateDraft leading to a pending draft through River with a fake LLM.
   Status: `ANTHROPIC_API_KEY` is required only when `ENVIRONMENT=production`; elsewhere an empty key logs a warning and drafts fail with `generation_failed`. `TODO(owner)`: set `SOROBAN_ADDR`, `KAGAMI_ADDR` and the API key secret in `deploy/helm/values/staging/fude.yaml`, as P4.9d does for torii.
 
-- [ ] **P7.2c fude embeddings and event handlers** (M) Needs: P7.2b
-  Do: `Embedder` interface with a fake and an `embed_voice_sample` job (3 tries; embedding stays NULL when no provider is set); inbox handlers for `job.added` (cover letter) and `contact.status_changed` (outreach) that queue GenerateDraft in the inbox transaction; routes for both in `pkg/bus/routes.go`. `TODO(owner)`: choose the real embedding provider. `learning.activity_added` waits for dojo's `events.proto` (see P9.1).
-  Done when: consumer tests for both handlers including a duplicate delivery; embed job test with the fake.
+- [x] **P7.2c1 fude embeddings** (M) Needs: P7.2b2
+  Do: `Embedder` interface (1024 dimensions) and `VoiceEmbedder`; `embed_voice_sample` job (3 tries, unique per sample) queued by AddVoiceSample in its transaction; the generator ranks the top 5 samples by pgvector cosine distance to the draft's topic, unembedded ones last, and falls back to the newest 5 when the embedder fails. `TODO(owner)`: choose the embedding provider. With none (`cmd/fude` passes a nil embedder), no embed job is queued and the newest samples are used.
+  Done when: tests with a fake embedder cover storing a vector, wrong width, provider error, a missing sample, ranking by closeness, the fallback, and an embed through River.
+
+- [ ] **P7.2c2 fude event handlers** (M) Needs: P7.2c1
+  Do: inbox handlers for `job.added` (cover letter, channel other) and `contact.status_changed` (outreach on the contact's preferred channel; for email the generation job fills the recipient from the contact), each creating the draft in the inbox transaction with the event id as idempotency key; routes for both in `pkg/bus/routes.go`. Kagami's payloads gained `owner_id` for this (commit `14a58bc`). `learning.activity_added` waits for dojo's `events.proto` (see P9.1).
+  Done when: consumer tests for both handlers including a duplicate delivery and a payload without an owner.
 
 - [ ] **P7.3 Approve and Hanko** (M) Needs: P7.1, P1.9
   Do: `fude.Approve(draft_id, version, body_sha256)` checks state, current version, hash; stamps Hanko; writes `approvals`; sets `approved`; emits `draft.approved`; a test (and a depguard/grep check in CI) asserts `hanko.Sign` is referenced only from `fude/internal/app/approve.go`.

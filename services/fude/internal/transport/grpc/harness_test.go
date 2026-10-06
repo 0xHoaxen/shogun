@@ -103,9 +103,10 @@ func (h *harness) ctx(t *testing.T) context.Context {
 // fakeQueue records the generation jobs the use cases ask for. A non-nil err
 // makes every enqueue fail.
 type fakeQueue struct {
-	mu   sync.Mutex
-	jobs []app.GenerateArgs
-	err  error
+	mu     sync.Mutex
+	jobs   []app.GenerateArgs
+	embeds []uuid.UUID
+	err    error
 }
 
 func (q *fakeQueue) EnqueueGenerate(_ context.Context, _ pgx.Tx, args app.GenerateArgs) error {
@@ -115,6 +116,16 @@ func (q *fakeQueue) EnqueueGenerate(_ context.Context, _ pgx.Tx, args app.Genera
 		return q.err
 	}
 	q.jobs = append(q.jobs, args)
+	return nil
+}
+
+func (q *fakeQueue) EnqueueEmbed(_ context.Context, _ pgx.Tx, sampleID uuid.UUID) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if q.err != nil {
+		return q.err
+	}
+	q.embeds = append(q.embeds, sampleID)
 	return nil
 }
 

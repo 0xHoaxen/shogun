@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
@@ -17,11 +18,13 @@ import (
 // draft and its job succeed or fail together. It implements app.Queue.
 type RiverQueue struct {
 	client *river.Client[pgx.Tx]
+	embed  bool
 }
 
 // NewRiverQueue returns a queue on pool's schema. Its River client only
-// inserts; the relay's client runs the jobs.
-func NewRiverQueue(pool *pgxpool.Pool) (*RiverQueue, error) {
+// inserts; the relay's client runs the jobs. With embeddings off, voice
+// samples are stored without an embedding job.
+func NewRiverQueue(pool *pgxpool.Pool, embeddings bool) (*RiverQueue, error) {
 	schema, err := postgres.SchemaOf(pool)
 	if err != nil {
 		return nil, fmt.Errorf("river queue: %w", err)
@@ -30,7 +33,7 @@ func NewRiverQueue(pool *pgxpool.Pool) (*RiverQueue, error) {
 	if err != nil {
 		return nil, fmt.Errorf("river queue: %w", err)
 	}
-	return &RiverQueue{client: client}, nil
+	return &RiverQueue{client: client, embed: embeddings}, nil
 }
 
 // EnqueueGenerate implements app.Queue.
@@ -40,6 +43,17 @@ func (q *RiverQueue) EnqueueGenerate(ctx context.Context, tx pgx.Tx, args app.Ge
 	}, nil)
 	if err != nil {
 		return fmt.Errorf("enqueue generate_draft: %w", err)
+	}
+	return nil
+}
+
+// EnqueueEmbed implements app.Queue.
+func (q *RiverQueue) EnqueueEmbed(ctx context.Context, tx pgx.Tx, sampleID uuid.UUID) error {
+	if !q.embed {
+		return nil
+	}
+	if _, err := q.client.InsertTx(ctx, tx, EmbedArgs{SampleID: sampleID}, nil); err != nil {
+		return fmt.Errorf("enqueue embed_voice_sample: %w", err)
 	}
 	return nil
 }

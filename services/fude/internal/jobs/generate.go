@@ -121,11 +121,15 @@ type Setup struct {
 	Queues  map[string]river.QueueConfig
 }
 
-// NewSetup builds the generation worker.
-func NewSetup(drafter Drafter, log *slog.Logger) Setup {
+// NewSetup builds the workers: generation always, and sample embedding when
+// there is an embedder to run it.
+func NewSetup(drafter Drafter, embedder SampleEmbedder, log *slog.Logger) Setup {
 	return Setup{
 		Workers: func(ws *river.Workers) {
 			river.AddWorker(ws, &generateWorker{drafter: drafter, log: log, now: time.Now})
+			if embedder != nil {
+				river.AddWorker(ws, &embedWorker{embedder: embedder, log: log})
+			}
 		},
 		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: workers}},
 	}

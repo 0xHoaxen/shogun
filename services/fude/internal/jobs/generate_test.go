@@ -142,7 +142,7 @@ func TestWorkCancelsWhenTheDraftIsGone(t *testing.T) {
 }
 
 func TestSetupRunsTwoWorkersOnItsOwnQueue(t *testing.T) {
-	setup := NewSetup(&fakeDrafter{}, slog.New(slog.DiscardHandler))
+	setup := NewSetup(&fakeDrafter{}, nil, slog.New(slog.DiscardHandler))
 
 	opts := GenerateArgs{}.InsertOpts()
 

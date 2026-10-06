@@ -31,6 +31,9 @@ type GenerateArgs struct {
 // job commit or roll back together.
 type Queue interface {
 	EnqueueGenerate(ctx context.Context, tx pgx.Tx, args GenerateArgs) error
+	// EnqueueEmbed asks for a voice sample's embedding. A queue with
+	// embeddings switched off does nothing.
+	EnqueueEmbed(ctx context.Context, tx pgx.Tx, sampleID uuid.UUID) error
 }
 
 // Service runs the fude use cases.
@@ -61,6 +64,13 @@ func (s *Service) enqueue(ctx context.Context, tx pgx.Tx, args GenerateArgs) err
 		return nil
 	}
 	return s.queue.EnqueueGenerate(ctx, tx, args)
+}
+
+func (s *Service) enqueueEmbed(ctx context.Context, tx pgx.Tx, sampleID uuid.UUID) error {
+	if s.queue == nil {
+		return nil
+	}
+	return s.queue.EnqueueEmbed(ctx, tx, sampleID)
 }
 
 // ownerFrom returns the owner the call acts for.

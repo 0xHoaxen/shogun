@@ -37,6 +37,10 @@ func (s scriptedLLM) Complete(context.Context, string, llm.Request) (llm.Respons
 	return llm.Response{Text: "Subject: Hi\n\nHello there.", Model: "claude-test"}, s.err
 }
 
+type constEmbedder struct{ vec []float32 }
+
+func (c constEmbedder) Embed(context.Context, string) ([]float32, error) { return c.vec, nil }
+
 type noTarget struct{}
 
 func (noTarget) Describe(context.Context, uuid.UUID, domain.TargetType, uuid.UUID) (app.TargetContext, error) {
@@ -51,6 +55,11 @@ type stack struct {
 }
 
 func newStack(t *testing.T, completer app.Completer) *stack {
+	return newStackWith(t, completer, nil)
+}
+
+// newStackWith is newStack with an embedder; a nil one leaves embeddings off.
+func newStackWith(t *testing.T, completer app.Completer, embedder app.Embedder) *stack {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "fude")
@@ -65,7 +74,11 @@ func newStack(t *testing.T, completer app.Completer) *stack {
 		t.Fatalf("relay migrate: %v", err)
 	}
 	log := slog.New(slog.DiscardHandler)
-	setup := jobs.NewSetup(app.NewGenerator(pool, completer, noTarget{}, log, nil), log)
+	var sampleEmbedder jobs.SampleEmbedder
+	if embedder != nil {
+		sampleEmbedder = app.NewVoiceEmbedder(pool, embedder)
+	}
+	setup := jobs.NewSetup(app.NewGenerator(pool, completer, noTarget{}, log, nil), sampleEmbedder, log)
 	r, err := relay.New(relay.Config{
 		Pool: pool, Bus: nopBus{}, Logger: log, FetchPollInterval: 100 * time.Millisecond,
 		Workers: setup.Workers, Queues: setup.Queues,
@@ -81,7 +94,7 @@ func newStack(t *testing.T, completer app.Completer) *stack {
 		defer cancel()
 		_ = r.Stop(stopCtx)
 	})
-	queue, err := jobs.NewRiverQueue(pool)
+	queue, err := jobs.NewRiverQueue(pool, embedder != nil)
 	if err != nil {
 		t.Fatalf("queue: %v", err)
 	}
@@ -168,7 +181,7 @@ func TestBudgetDenialSnoozesTheJobInsteadOfFailingTheDraft(t *testing.T) {
 
 func TestQueueingTheSameVersionTwiceMakesOneJob(t *testing.T) {
 	s := newStack(t, scriptedLLM{err: errors.New("never finishes")})
-	queue, err := jobs.NewRiverQueue(s.pool)
+	queue, err := jobs.NewRiverQueue(s.pool, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -190,5 +203,44 @@ func TestQueueingTheSameVersionTwiceMakesOneJob(t *testing.T) {
 	var n int
 	if err := s.pool.QueryRow(s.ctx, `SELECT count(*) FROM river_job WHERE kind = 'generate_draft' AND args->>'draft_id' = $1`, args.DraftID.String()).Scan(&n); err != nil || n != 1 {
 		t.Fatalf("got %d jobs, err %v; want 1", n, err)
+	}
+}
+
+func TestAddVoiceSampleIsEmbeddedThroughRiverWhenAnEmbedderIsSet(t *testing.T) {
+	vec := make([]float32, app.EmbeddingDimensions)
+	vec[0] = 1
+	s := newStackWith(t, scriptedLLM{}, constEmbedder{vec: vec})
+
+	sample, err := s.svc.AddVoiceSample(s.ctx, domain.ChannelEmail, "my writing")
+	if err != nil {
+		t.Fatalf("add sample: %v", err)
+	}
+
+	deadline := time.Now().Add(waitFor)
+	for {
+		var embedded bool
+		if err := s.pool.QueryRow(s.ctx, `SELECT embedding IS NOT NULL FROM voice_samples WHERE id = $1`, sample.ID).Scan(&embedded); err != nil {
+			t.Fatal(err)
+		}
+		if embedded {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("sample was never embedded")
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestAddVoiceSampleQueuesNoEmbedJobWhenEmbeddingsAreOff(t *testing.T) {
+	s := newStack(t, scriptedLLM{})
+
+	if _, err := s.svc.AddVoiceSample(s.ctx, domain.ChannelEmail, "my writing"); err != nil {
+		t.Fatalf("add sample: %v", err)
+	}
+
+	var n int
+	if err := s.pool.QueryRow(s.ctx, `SELECT count(*) FROM river_job WHERE kind = 'embed_voice_sample'`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("got %d embed jobs, err %v; want none", n, err)
 	}
 }
