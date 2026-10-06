@@ -84,7 +84,7 @@ func TestCost(t *testing.T) {
 		{"one million input tokens cost the input rate", domain.Usage{InputTokens: 1_000_000}, 4_000_000},
 		{"input and output add up", domain.Usage{InputTokens: 1000, OutputTokens: 500}, 4_000 + 10_000},
 		{"a fraction of a micro-dollar rounds up", domain.Usage{CacheReadTokens: 1}, 1},
-		{"all four kinds are priced", domain.Usage{InputTokens: 10, OutputTokens: 10, CacheReadTokens: 10, CacheWriteTokens: 10}, 1},
+		{"all four kinds are priced", domain.Usage{InputTokens: 10, OutputTokens: 10, CacheReadTokens: 10, CacheWriteTokens: 10}, 40 + 200 + 2 + 50},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
