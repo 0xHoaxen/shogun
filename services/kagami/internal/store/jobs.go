@@ -145,3 +145,18 @@ func (r *Repo) ListJobEvents(ctx context.Context, jobID uuid.UUID) ([]db.JobEven
 	}
 	return events, nil
 }
+
+// FindJobByURLs returns the owner's job posted at one of urls, the newest when
+// several. It is ErrNotFound when none is.
+func (r *Repo) FindJobByURLs(ctx context.Context, owner uuid.UUID, urls []string) (db.Job, error) {
+	j, err := r.q.FindJobByURLs(ctx, db.FindJobByURLsParams{OwnerID: owner, Urls: urls})
+	return j, mapErr(err)
+}
+
+// FindJobByCompanyDomains returns a job at a company with one of the domains,
+// preferring an open job and the most specific domain. It is ErrNotFound when
+// none is.
+func (r *Repo) FindJobByCompanyDomains(ctx context.Context, owner uuid.UUID, domains []string) (db.Job, error) {
+	j, err := r.q.FindJobByCompanyDomains(ctx, db.FindJobByCompanyDomainsParams{OwnerID: owner, Domains: domains})
+	return j, mapErr(err)
+}

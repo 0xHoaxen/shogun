@@ -333,8 +333,12 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `app.Syncer` reads each active account by `history_id`, falling back to a full read of the last 30 days (capped at 500) when there is no cursor or Gmail dropped it, and stores messages, queues classification of inbound ones and advances the cursor in one transaction; `gmail_sync` River periodic job every 5 minutes (unique while one waits or runs, no retries, 4 minute timeout).
   Done when: fixture tests with the fake provider cover first sync, incremental, expired cursor, a failure part way (cursor and rows unchanged, then retried), a deleted message, outbound mail not queued, and one account failing without stopping the others; a test shows River running the scheduled sync.
 
-- [ ] **P7.5b tsubame classification** (M) Needs: P7.5a, P6.3
-  Do: `classify_message` River job (3 tries): rules first; `pkg/llm` feature `tsubame.classify` only when the rules are unsure; link the message to a job or contact by domain, URL, thread or email through kagami; emit `mail.classified` and `mail.reply_detected` (new `tsubame/v1/events.proto`); route both to kagami; wire the queue into the syncer.
+- [x] **P7.5b1 kagami FindMailLinks** (M) Needs: P4.6
+  Do: `FindMailLinks(from_email, urls)` on kagami: the contact by the sender's address, and the job by a posting URL in the mail, else by the sender's company domain (parent domains too, never a free-mail provider, an open job before a rejected one), else the contact's own job.
+  Done when: handler tests cover each key, the preferences between them, free-mail senders, per-owner isolation and a missing owner.
+
+- [ ] **P7.5b2 tsubame classification** (M) Needs: P7.5a, P7.5b1, P6.3
+  Do: `classify_message` River job (3 tries): rules first; `pkg/llm` feature `tsubame.classify` only when the rules are unsure; link the message by thread, then through kagami `FindMailLinks`; emit `mail.classified` and `mail.reply_detected` (new `tsubame/v1/events.proto`); route both to kagami; wire the queue into the syncer.
   Done when: fixture mails cover each classification, the LLM is not called when a rule is sure, and linking works for each key.
 
 - [ ] **P7.6 tsubame Send with Hanko** (M) Needs: P7.4, P1.9

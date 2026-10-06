@@ -94,3 +94,20 @@ RETURNING *;
 
 -- name: ListJobEvents :many
 SELECT * FROM job_events WHERE job_id = @job_id ORDER BY occurred_at DESC, id DESC;
+
+-- name: FindJobByURLs :one
+-- The job whose posting URL is one of the given URLs; the newest when several.
+SELECT * FROM jobs
+WHERE owner_id = @owner_id AND archived_at IS NULL AND url = ANY(@urls::text[])
+ORDER BY updated_at DESC, id DESC
+LIMIT 1;
+
+-- name: FindJobByCompanyDomains :one
+-- A job at a company with one of the given domains: an open job before a
+-- rejected one, the longest (most specific) domain first, then the newest.
+SELECT j.* FROM jobs j
+JOIN companies c ON c.id = j.company_id AND c.owner_id = j.owner_id
+WHERE j.owner_id = @owner_id AND j.archived_at IS NULL AND c.archived_at IS NULL
+  AND c.domain = ANY(@domains::text[])
+ORDER BY (j.status <> 'rejected') DESC, length(c.domain) DESC, j.updated_at DESC, j.id DESC
+LIMIT 1;
