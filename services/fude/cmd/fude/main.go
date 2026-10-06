@@ -93,6 +93,11 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
+	hankoKey, hankoKeyID, err := loadHankoKey(lookup)
+	if err != nil {
+		return err
+	}
+
 	shutdownTelemetry, err := telemetry.Setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -109,6 +114,11 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		if err := migrate(ctx, pool); err != nil {
 			return err
 		}
+	}
+
+	approver, err := app.NewApprover(pool, hankoKey, hankoKeyID, nil)
+	if err != nil {
+		return err
 	}
 
 	gen, err := newGeneration(ctx, lookup, cfg, pool, authority, log)
@@ -135,7 +145,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
-		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc))
+		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc, approver))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

@@ -311,9 +311,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: inbox handlers for `job.added` (cover letter, channel other) and `contact.status_changed` (outreach on the contact's preferred channel; for email the generation job fills the recipient from the contact), each creating the draft in the inbox transaction with the event id as idempotency key; routes for both in `pkg/bus/routes.go`. Kagami's payloads gained `owner_id` for this (commit `14a58bc`). `learning.activity_added` waits for dojo's `events.proto` (see P9.1).
   Done when: consumer tests for both handlers including a duplicate delivery and a payload without an owner.
 
-- [ ] **P7.3 Approve and Hanko** (M) Needs: P7.1, P1.9
+- [x] **P7.3 Approve and Hanko** (M) Needs: P7.1, P1.9
   Do: `fude.Approve(draft_id, version, body_sha256)` checks state, current version, hash; stamps Hanko; writes `approvals`; sets `approved`; emits `draft.approved`; a test (and a depguard/grep check in CI) asserts `hanko.Sign` is referenced only from `fude/internal/app/approve.go`.
   Done when: tests cover stale version, hash mismatch, double approve, and the single-reference check passes.
+  Status: `Approver.Approve` returns the token to its caller only; tsubame.Send (P7.6) will use it, so nothing is stored or logged. `hanko.RecipientDigest` joins `hanko.BodyDigest` in `pkg/hanko` for tsubame to recompute. Copy-only channels are stamped too (the `approvals` row needs a jti) but the token is discarded. `FUDE_HANKO_SIGNING_KEY` (base64 Ed25519 seed) is required at startup. `TODO(owner)`: set `FUDE_HANKO_SIGNING_KEY` and `FUDE_HANKO_KEY_ID` as a secret in the staging and production helm values.
 
 - [ ] **P7.4 tsubame accounts, Gmail OAuth, provider interface** (M) Needs: P2.3
   Do: migrations `accounts messages sends`; `MailProvider` interface (List, Get, Send, History) with a Gmail implementation and a fake; envelope-encrypted token storage; ConnectAccount / CompleteConnect RPCs.

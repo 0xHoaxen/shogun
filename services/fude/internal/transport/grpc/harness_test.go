@@ -3,11 +3,13 @@ package grpc_test
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"net"
 	"os"
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -29,6 +31,11 @@ import (
 	"github.com/0xHoaxen/shogun/services/fude/migrations"
 )
 
+const testKeyID = "test-1"
+
+// testNow is the clock approvals run on, so a token is valid for the tests.
+var testNow = time.Date(2026, 10, 6, 9, 0, 0, 0, time.UTC)
+
 func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
 
 // harness is a fude server on an in-memory listener with the real authz
@@ -39,6 +46,7 @@ type harness struct {
 	authority *authz.Authority
 	owner     string
 	queue     *fakeQueue
+	hankoKey  ed25519.PublicKey
 }
 
 func newHarness(t *testing.T) *harness {
@@ -54,6 +62,14 @@ func newHarness(t *testing.T) *harness {
 	}
 
 	queue := &fakeQueue{}
+	pub, priv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("hanko key: %v", err)
+	}
+	approver, err := app.NewApprover(pool, priv, testKeyID, func() time.Time { return testNow })
+	if err != nil {
+		t.Fatalf("approver: %v", err)
+	}
 	authority, err := authz.New(bytes.Repeat([]byte("k"), authz.MinKeyLength))
 	if err != nil {
 		t.Fatalf("authority: %v", err)
@@ -62,7 +78,7 @@ func newHarness(t *testing.T) *harness {
 		grpc.UnaryInterceptor(authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(authority.StreamServerInterceptor()),
 	)
-	fudev1.RegisterFudeServiceServer(srv, fudegrpc.New(app.NewService(pool, queue, nil)))
+	fudev1.RegisterFudeServiceServer(srv, fudegrpc.New(app.NewService(pool, queue, nil), approver))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
@@ -82,6 +98,7 @@ func newHarness(t *testing.T) *harness {
 		authority: authority,
 		owner:     uuid.NewString(),
 		queue:     queue,
+		hankoKey:  pub,
 	}
 }
 

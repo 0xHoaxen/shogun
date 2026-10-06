@@ -119,3 +119,18 @@ func (r *Repo) SetDraftRecipient(ctx context.Context, owner, id uuid.UUID, recip
 	}
 	return n > 0, nil
 }
+
+// GetDraftVersion returns one version of a draft.
+func (r *Repo) GetDraftVersion(ctx context.Context, draftID uuid.UUID, version int32) (db.DraftVersion, error) {
+	v, err := r.q.GetDraftVersion(ctx, db.GetDraftVersionParams{DraftID: draftID, Version: version})
+	return v, mapErr(err)
+}
+
+// InsertApproval records an approval. A repeated token id is ErrDuplicate.
+func (r *Repo) InsertApproval(ctx context.Context, arg db.InsertApprovalParams) (db.Approval, error) {
+	a, err := r.q.InsertApproval(ctx, arg)
+	if err != nil {
+		return db.Approval{}, fmt.Errorf("insert approval: %w", mapErr(err))
+	}
+	return a, nil
+}

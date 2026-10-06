@@ -140,6 +140,8 @@ services:
       <<: *env
       DATABASE_URL: postgres://fude:${FUDE_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      FUDE_HANKO_SIGNING_KEY: ${FUDE_HANKO_SIGNING_KEY:?copy .env.example to .env}
+      FUDE_HANKO_KEY_ID: ${FUDE_HANKO_KEY_ID:-fude-1}
     ports:
       - "127.0.0.1:8084:8080"
       - "127.0.0.1:9094:9090"

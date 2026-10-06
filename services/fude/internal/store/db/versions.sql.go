@@ -11,6 +11,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const getDraftVersion = `-- name: GetDraftVersion :one
+SELECT draft_id, version, subject, body, body_sha256, extra_context, prompt_context, model, reservation_id, created_by, created_at FROM draft_versions WHERE draft_id = $1 AND version = $2
+`
+
+type GetDraftVersionParams struct {
+	DraftID uuid.UUID
+	Version int32
+}
+
+func (q *Queries) GetDraftVersion(ctx context.Context, arg GetDraftVersionParams) (DraftVersion, error) {
+	row := q.db.QueryRow(ctx, getDraftVersion, arg.DraftID, arg.Version)
+	var i DraftVersion
+	err := row.Scan(
+		&i.DraftID,
+		&i.Version,
+		&i.Subject,
+		&i.Body,
+		&i.BodySha256,
+		&i.ExtraContext,
+		&i.PromptContext,
+		&i.Model,
+		&i.ReservationID,
+		&i.CreatedBy,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const insertDraftVersion = `-- name: InsertDraftVersion :one
 INSERT INTO draft_versions (
     draft_id, version, subject, body, body_sha256, extra_context, model, prompt_context, created_by

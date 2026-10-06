@@ -9,3 +9,6 @@ RETURNING *;
 
 -- name: ListDraftVersions :many
 SELECT * FROM draft_versions WHERE draft_id = @draft_id ORDER BY version DESC;
+
+-- name: GetDraftVersion :one
+SELECT * FROM draft_versions WHERE draft_id = @draft_id AND version = @version;

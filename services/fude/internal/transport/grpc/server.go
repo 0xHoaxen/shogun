@@ -17,12 +17,13 @@ import (
 // Unimplemented.
 type Server struct {
 	fudev1.UnimplementedFudeServiceServer
-	svc *app.Service
+	svc      *app.Service
+	approver *app.Approver
 }
 
-// New returns a Server that runs its calls on svc.
-func New(svc *app.Service) *Server {
-	return &Server{svc: svc}
+// New returns a Server that runs its calls on svc, and approvals on approver.
+func New(svc *app.Service, approver *app.Approver) *Server {
+	return &Server{svc: svc, approver: approver}
 }
 
 func badEnum(field string) error {
@@ -114,4 +115,16 @@ func (s *Server) AddVoiceSample(ctx context.Context, req *fudev1.AddVoiceSampleR
 	return &fudev1.AddVoiceSampleResponse{Sample: &fudev1.VoiceSample{
 		Id: v.ID.String(), Channel: req.GetChannel(), Text: v.Text, CreatedAt: timestamppb.New(v.CreatedAt),
 	}}, nil
+}
+
+// Approve implements fude.v1.FudeService. The token it stamps stays inside the
+// service; the response only says whether the owner must copy the text.
+func (s *Server) Approve(ctx context.Context, req *fudev1.ApproveRequest) (*fudev1.ApproveResponse, error) {
+	res, err := s.approver.Approve(ctx, app.ApproveInput{
+		DraftID: req.GetDraftId(), Version: req.GetVersion(), BodySHA256: req.GetBodySha256(),
+	})
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &fudev1.ApproveResponse{Draft: draftToProto(res.Draft), CopyReady: res.CopyReady}, nil
 }
