@@ -324,9 +324,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `MailProvider` interface (List, Get, Send, History) and a fake; Gmail implemented over its REST API with `net/http` and `golang.org/x/oauth2` (`google.golang.org/api` needs Go 1.25.8 and the repo is pinned to 1.25.4 by the linter), base URL injectable for tests; the refresh token is exchanged per call and never logged.
   Done when: tests against an `httptest` Gmail and token endpoint cover list, get, history (including an expired cursor), send, a revoked token marking the account for reauth, and no token in log output.
 
-- [ ] **P7.4c tsubame ConnectAccount and CompleteConnect** (M) Needs: P7.4b
+- [x] **P7.4c tsubame ConnectAccount and CompleteConnect** (M) Needs: P7.4b
   Do: `ConnectAccount` (provider to auth URL) and `CompleteConnect` (code and state to Account) in `tsubame.proto`, with a PKCE verifier and owner sealed into the opaque `state` (no extra table), `TSUBAME_GMAIL_CLIENT_ID`, `TSUBAME_GMAIL_CLIENT_SECRET`, `TSUBAME_GMAIL_REDIRECT_URL` and `TSUBAME_TOKEN_MASTER_KEY` config, wiring in `cmd/tsubame`. The account address comes from Gmail's profile. Torii's callback route and the web "connect mail" screen are new work: add them under P7.8.
   Done when: tests with a mocked Google token endpoint cover a good connect, a bad or expired or foreign state, a reused code, and a test greps captured log output for tokens.
+  Status: `TSUBAME_TOKEN_MASTER_KEY` and the three `TSUBAME_GMAIL_*` variables are required at startup (placeholders in `.env.example`). Only one master key is read; rolling a new one needs a way to load the old ones too, which is not built yet. A state is not single-use (the code is, at Google). `TODO(owner)`: create the Google OAuth client with the Gmail API enabled, and set the key and client secret as secrets in the staging and production helm values.
 
 - [ ] **P7.5 tsubame sync and classification** (L, split) Needs: P7.4, P6.3
   Do: `gmail_sync` every 5 min using `history_id`; `classify_message` rules first, `pkg/llm` feature `tsubame.classify` only when unsure; link to job or contact by domain, URL, thread, email; emit `mail.classified` and `mail.reply_detected`.
@@ -343,6 +344,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 - [ ] **P7.8 Draft queue UI** (L, split) Needs: P7.3, P5.1
   Do: torii `DraftsService`; web screens for queue, draft detail with versions, regenerate with extra context, edit, approve (shows exactly what will be sent), copy button for LinkedIn and X.
   Done when: Playwright: generate, regenerate, edit, approve to email via fake provider, verify one send.
+  Also: torii `MailService` (`ConnectAccount`, `CompleteConnect`, list accounts) with a `/mail/callback` route that reads `code` and `state` and calls `CompleteConnect`, and a web "connect mail" screen under Settings. P7.4 built the tsubame side only.
 
 ---
 
