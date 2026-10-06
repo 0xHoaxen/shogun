@@ -286,7 +286,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 7: fude (drafts) + hanko + tsubame (mail)
 
-- [ ] **P7.1 fude migrations, proto, domain** (M) Needs: P6.3
+- [x] **P7.1 fude migrations, proto, domain** (M) Needs: P6.3
   Do: tables `drafts draft_versions approvals voice_samples templates`; RPCs GenerateDraft, Regenerate, EditDraft, Approve, Discard, ListQueue, GetDraft, AddVoiceSample; draft state machine from the System Design diagram; events `draft.ready/failed/approved`.
   Done when: domain tests cover all transitions including "edit after approval returns to pending".
 
