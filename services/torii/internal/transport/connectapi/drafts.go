@@ -31,6 +31,7 @@ type DraftsBackend interface {
 	EditDraft(ctx context.Context, in *fudev1.EditDraftRequest, opts ...grpc.CallOption) (*fudev1.EditDraftResponse, error)
 	Approve(ctx context.Context, in *fudev1.ApproveRequest, opts ...grpc.CallOption) (*fudev1.ApproveResponse, error)
 	Discard(ctx context.Context, in *fudev1.DiscardRequest, opts ...grpc.CallOption) (*fudev1.DiscardResponse, error)
+	MarkPosted(ctx context.Context, in *fudev1.MarkPostedRequest, opts ...grpc.CallOption) (*fudev1.MarkPostedResponse, error)
 }
 
 // DraftsServer implements shogun.api.v1.DraftsService on top of fude.
@@ -155,4 +156,16 @@ func (s *DraftsServer) Discard(
 		return nil, fromGRPC(ctx, s.log, err)
 	}
 	return connect.NewResponse(&apiv1.DiscardResponse{Draft: draftToAPI(resp.GetDraft())}), nil
+}
+
+// MarkPosted records that the owner posted an approved copy-only draft.
+func (s *DraftsServer) MarkPosted(
+	ctx context.Context, req *connect.Request[apiv1.MarkPostedRequest],
+) (*connect.Response[apiv1.MarkPostedResponse], error) {
+	in := req.Msg
+	resp, err := s.fude.MarkPosted(ctx, &fudev1.MarkPostedRequest{DraftId: in.GetId(), Version: in.GetVersion()})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.MarkPostedResponse{Draft: draftToAPI(resp.GetDraft())}), nil
 }

@@ -49,6 +49,9 @@ const (
 	DraftsServiceApproveProcedure = "/shogun.api.v1.DraftsService/Approve"
 	// DraftsServiceDiscardProcedure is the fully-qualified name of the DraftsService's Discard RPC.
 	DraftsServiceDiscardProcedure = "/shogun.api.v1.DraftsService/Discard"
+	// DraftsServiceMarkPostedProcedure is the fully-qualified name of the DraftsService's MarkPosted
+	// RPC.
+	DraftsServiceMarkPostedProcedure = "/shogun.api.v1.DraftsService/MarkPosted"
 )
 
 // DraftsServiceClient is a client for the shogun.api.v1.DraftsService service.
@@ -71,6 +74,10 @@ type DraftsServiceClient interface {
 	// with reason VERSION_CONFLICT.
 	Approve(context.Context, *connect.Request[v1.ApproveRequest]) (*connect.Response[v1.ApproveResponse], error)
 	Discard(context.Context, *connect.Request[v1.DiscardRequest]) (*connect.Response[v1.DiscardResponse], error)
+	// MarkPosted records that the owner posted an approved copy-only draft
+	// themselves, moving it to sent. Email is refused with reason
+	// DRAFT_CHANNEL_NOT_COPY_ONLY.
+	MarkPosted(context.Context, *connect.Request[v1.MarkPostedRequest]) (*connect.Response[v1.MarkPostedResponse], error)
 }
 
 // NewDraftsServiceClient constructs a client for the shogun.api.v1.DraftsService service. By
@@ -126,6 +133,12 @@ func NewDraftsServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(draftsServiceMethods.ByName("Discard")),
 			connect.WithClientOptions(opts...),
 		),
+		markPosted: connect.NewClient[v1.MarkPostedRequest, v1.MarkPostedResponse](
+			httpClient,
+			baseURL+DraftsServiceMarkPostedProcedure,
+			connect.WithSchema(draftsServiceMethods.ByName("MarkPosted")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -138,6 +151,7 @@ type draftsServiceClient struct {
 	editDraft     *connect.Client[v1.EditDraftRequest, v1.EditDraftResponse]
 	approve       *connect.Client[v1.ApproveRequest, v1.ApproveResponse]
 	discard       *connect.Client[v1.DiscardRequest, v1.DiscardResponse]
+	markPosted    *connect.Client[v1.MarkPostedRequest, v1.MarkPostedResponse]
 }
 
 // ListQueue calls shogun.api.v1.DraftsService.ListQueue.
@@ -175,6 +189,11 @@ func (c *draftsServiceClient) Discard(ctx context.Context, req *connect.Request[
 	return c.discard.CallUnary(ctx, req)
 }
 
+// MarkPosted calls shogun.api.v1.DraftsService.MarkPosted.
+func (c *draftsServiceClient) MarkPosted(ctx context.Context, req *connect.Request[v1.MarkPostedRequest]) (*connect.Response[v1.MarkPostedResponse], error) {
+	return c.markPosted.CallUnary(ctx, req)
+}
+
 // DraftsServiceHandler is an implementation of the shogun.api.v1.DraftsService service.
 type DraftsServiceHandler interface {
 	// ListQueue returns one page of drafts in a state, newest first; the default
@@ -195,6 +214,10 @@ type DraftsServiceHandler interface {
 	// with reason VERSION_CONFLICT.
 	Approve(context.Context, *connect.Request[v1.ApproveRequest]) (*connect.Response[v1.ApproveResponse], error)
 	Discard(context.Context, *connect.Request[v1.DiscardRequest]) (*connect.Response[v1.DiscardResponse], error)
+	// MarkPosted records that the owner posted an approved copy-only draft
+	// themselves, moving it to sent. Email is refused with reason
+	// DRAFT_CHANNEL_NOT_COPY_ONLY.
+	MarkPosted(context.Context, *connect.Request[v1.MarkPostedRequest]) (*connect.Response[v1.MarkPostedResponse], error)
 }
 
 // NewDraftsServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -246,6 +269,12 @@ func NewDraftsServiceHandler(svc DraftsServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(draftsServiceMethods.ByName("Discard")),
 		connect.WithHandlerOptions(opts...),
 	)
+	draftsServiceMarkPostedHandler := connect.NewUnaryHandler(
+		DraftsServiceMarkPostedProcedure,
+		svc.MarkPosted,
+		connect.WithSchema(draftsServiceMethods.ByName("MarkPosted")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/shogun.api.v1.DraftsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DraftsServiceListQueueProcedure:
@@ -262,6 +291,8 @@ func NewDraftsServiceHandler(svc DraftsServiceHandler, opts ...connect.HandlerOp
 			draftsServiceApproveHandler.ServeHTTP(w, r)
 		case DraftsServiceDiscardProcedure:
 			draftsServiceDiscardHandler.ServeHTTP(w, r)
+		case DraftsServiceMarkPostedProcedure:
+			draftsServiceMarkPostedHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -297,4 +328,8 @@ func (UnimplementedDraftsServiceHandler) Approve(context.Context, *connect.Reque
 
 func (UnimplementedDraftsServiceHandler) Discard(context.Context, *connect.Request[v1.DiscardRequest]) (*connect.Response[v1.DiscardResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.DraftsService.Discard is not implemented"))
+}
+
+func (UnimplementedDraftsServiceHandler) MarkPosted(context.Context, *connect.Request[v1.MarkPostedRequest]) (*connect.Response[v1.MarkPostedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.DraftsService.MarkPosted is not implemented"))
 }

@@ -26,6 +26,10 @@ service DraftsService {
   // with reason VERSION_CONFLICT.
   rpc Approve(ApproveRequest) returns (ApproveResponse);
   rpc Discard(DiscardRequest) returns (DiscardResponse);
+  // MarkPosted records that the owner posted an approved copy-only draft
+  // themselves, moving it to sent. Email is refused with reason
+  // DRAFT_CHANNEL_NOT_COPY_ONLY.
+  rpc MarkPosted(MarkPostedRequest) returns (MarkPostedResponse);
 }
 
 enum DraftKind {
@@ -177,5 +181,14 @@ message DiscardRequest {
 }
 
 message DiscardResponse {
+  Draft draft = 1;
+}
+
+message MarkPostedRequest {
+  string id = 1;
+  int32 version = 2;
+}
+
+message MarkPostedResponse {
   Draft draft = 1;
 }

@@ -100,6 +100,11 @@ export function DraftDetail({ id }: DraftDetailProps) {
     mutationFn: (version: number) => client.discard({ id, version }),
     onSuccess: refresh,
   });
+  const markPosted = useMutation({
+    mutationFn: (version: number) => client.markPosted({ id, version }),
+    // After a refusal the draft may have moved, so show what it is now.
+    onSettled: refresh,
+  });
   const approve = useMutation({
     mutationFn: async (input: { version: number; subject: string; body: string }) =>
       client.approve({
@@ -280,7 +285,13 @@ export function DraftDetail({ id }: DraftDetailProps) {
       ) : null}
 
       {draft.state === DraftState.APPROVED && !isEmail && current ? (
-        <CopyPanel channel={draft.channel} version={current} />
+        <CopyPanel
+          channel={draft.channel}
+          version={current}
+          onMarkPosted={() => markPosted.mutate(draft.version)}
+          markingPosted={markPosted.isPending}
+          markPostedError={markPosted.isError ? ConnectError.from(markPosted.error).rawMessage : undefined}
+        />
       ) : null}
 
       {draft.state === DraftState.PENDING ? (

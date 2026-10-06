@@ -301,3 +301,59 @@ func TestListQueueAndGetDraftShowTheNewestVersionsSubjectAndPreview(t *testing.T
 		t.Fatalf("draft %+v, %v", got.GetDraft(), getErr)
 	}
 }
+
+// approvedAs moves a pending draft to approved on channel, as Approve would.
+func (h *harness) approvedAs(t *testing.T, d *fudev1.Draft, channel string) *fudev1.Draft {
+	t.Helper()
+	if _, err := h.pool.Exec(t.Context(),
+		`UPDATE drafts SET state = 'approved', channel = $2, recipient = NULL, version = version + 1 WHERE id = $1`,
+		d.GetId(), channel); err != nil {
+		t.Fatalf("seed approved: %v", err)
+	}
+	got, err := h.client.GetDraft(h.ctx(t), &fudev1.GetDraftRequest{DraftId: d.GetId()})
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	return got.GetDraft()
+}
+
+func TestMarkPostedMovesAnApprovedCopyOnlyDraftToSent(t *testing.T) {
+	h := newHarness(t)
+	d := h.approvedAs(t, h.pending(t, h.generate(t, "")), "linkedin")
+
+	res, err := h.client.MarkPosted(h.ctx(t), &fudev1.MarkPostedRequest{DraftId: d.GetId(), Version: d.GetVersion()})
+
+	if err != nil || res.GetDraft().GetState() != fudev1.DraftState_DRAFT_STATE_SENT {
+		t.Fatalf("got %+v, %v", res.GetDraft(), err)
+	}
+}
+
+func TestMarkPostedRefusesEmailAndUnapprovedDrafts(t *testing.T) {
+	h := newHarness(t)
+	email := h.pending(t, h.generate(t, ""))
+	approvedEmail, err := h.pool.Exec(t.Context(), `UPDATE drafts SET state = 'approved', version = version + 1 WHERE id = $1`, email.GetId())
+	if err != nil || approvedEmail.RowsAffected() != 1 {
+		t.Fatalf("seed approved email: %v", err)
+	}
+	pending := h.pending(t, h.generate(t, ""))
+	if _, err := h.pool.Exec(t.Context(), `UPDATE drafts SET channel = 'x', recipient = NULL WHERE id = $1`, pending.GetId()); err != nil {
+		t.Fatalf("seed channel: %v", err)
+	}
+	gotEmail, _ := h.client.GetDraft(h.ctx(t), &fudev1.GetDraftRequest{DraftId: email.GetId()})
+	gotPending, _ := h.client.GetDraft(h.ctx(t), &fudev1.GetDraftRequest{DraftId: pending.GetId()})
+
+	_, emailErr := h.client.MarkPosted(h.ctx(t), &fudev1.MarkPostedRequest{DraftId: email.GetId(), Version: gotEmail.GetDraft().GetVersion()})
+	_, pendingErr := h.client.MarkPosted(h.ctx(t), &fudev1.MarkPostedRequest{DraftId: pending.GetId(), Version: gotPending.GetDraft().GetVersion()})
+
+	requireStatus(t, emailErr, codes.FailedPrecondition, "DRAFT_CHANNEL_NOT_COPY_ONLY")
+	requireStatus(t, pendingErr, codes.FailedPrecondition, "DRAFT_STATE_INVALID_TRANSITION")
+}
+
+func TestMarkPostedRejectsAStaleVersion(t *testing.T) {
+	h := newHarness(t)
+	d := h.approvedAs(t, h.pending(t, h.generate(t, "")), "linkedin")
+
+	_, err := h.client.MarkPosted(h.ctx(t), &fudev1.MarkPostedRequest{DraftId: d.GetId(), Version: d.GetVersion() - 1})
+
+	requireStatus(t, err, codes.Aborted, "VERSION_CONFLICT")
+}

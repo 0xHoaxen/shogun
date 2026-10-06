@@ -257,6 +257,45 @@ test("a copy-only draft is approved, then copied by hand, and nothing is sent", 
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("Excited to share what I learned.");
 });
 
+test("an approved copy-only draft is marked as posted once the owner has posted it", async ({ page }) => {
+  const s = emailScenario();
+  s.channel = DraftChannel.LINKEDIN;
+  s.recipient = "";
+  s.state = DraftState.APPROVED;
+  s.versions = [{ version: 1, subject: "", body: "Excited to share what I learned.", author: VersionAuthor.AI }];
+  await serve(page, s);
+  const posted = await mockRpc(page, DraftsService.method.markPosted, () => {
+    s.state = DraftState.SENT;
+    return { draft: draftOf(s) };
+  });
+  await page.goto("/drafts/d1");
+
+  await page.getByRole("button", { name: "Mark as posted" }).click();
+
+  await expect(page.getByRole("status").filter({ hasText: "Sent." })).toBeVisible();
+  expect(posted).toHaveLength(1);
+  expect(posted[0].body).toMatchObject({ id: "d1", version: draftOf(emailScenario()).version });
+  await expect(page.getByRole("button", { name: "Mark as posted" })).toBeHidden();
+});
+
+test("a refused mark as posted says why and shows the draft as it now is", async ({ page }) => {
+  const s = emailScenario();
+  s.channel = DraftChannel.X;
+  s.recipient = "";
+  s.state = DraftState.APPROVED;
+  s.versions = [{ version: 1, subject: "", body: "A short post.", author: VersionAuthor.AI }];
+  await serve(page, s);
+  await mockRpcError(page, DraftsService.method.markPosted, "failed_precondition", "draft is not approved", "DRAFT_STATE_INVALID_TRANSITION");
+  await page.goto("/drafts/d1");
+  await expect(page.getByRole("button", { name: "Mark as posted" })).toBeVisible();
+  s.state = DraftState.PENDING; // edited elsewhere while this page was open
+
+  await page.getByRole("button", { name: "Mark as posted" }).click();
+
+  await expect(page.getByRole("button", { name: "Mark as posted" })).toBeHidden();
+  await expect(page.getByRole("button", { name: "Discard draft" })).toBeVisible();
+});
+
 const REFUSALS = [
   ["VERSION_CONFLICT", "aborted", "This draft changed since you opened it"],
   ["BODY_HASH_MISMATCH", "invalid_argument", "This draft changed since you opened it"],

@@ -36,6 +36,8 @@ type fakeFude struct {
 	get      func(*fudev1.GetDraftRequest) (*fudev1.GetDraftResponse, error)
 	generate func(*fudev1.GenerateDraftRequest) (*fudev1.GenerateDraftResponse, error)
 	approve  func(*fudev1.ApproveRequest) (*fudev1.ApproveResponse, error)
+
+	markPostedErr error
 }
 
 func (f *fakeFude) record(ctx context.Context, in any) {
@@ -88,6 +90,14 @@ func (f *fakeFude) Approve(ctx context.Context, in *fudev1.ApproveRequest, _ ...
 func (f *fakeFude) Discard(ctx context.Context, in *fudev1.DiscardRequest, _ ...grpc.CallOption) (*fudev1.DiscardResponse, error) {
 	f.record(ctx, in)
 	return &fudev1.DiscardResponse{Draft: &fudev1.Draft{Id: in.GetDraftId(), State: fudev1.DraftState_DRAFT_STATE_DISCARDED}}, nil
+}
+
+func (f *fakeFude) MarkPosted(ctx context.Context, in *fudev1.MarkPostedRequest, _ ...grpc.CallOption) (*fudev1.MarkPostedResponse, error) {
+	f.record(ctx, in)
+	if f.markPostedErr != nil {
+		return nil, f.markPostedErr
+	}
+	return &fudev1.MarkPostedResponse{Draft: &fudev1.Draft{Id: in.GetDraftId(), State: fudev1.DraftState_DRAFT_STATE_SENT}}, nil
 }
 
 type draftsHarness struct {
@@ -314,3 +324,19 @@ func TestDraftsRequireASession(t *testing.T) {
 func asConnectError(err error, target **connect.Error) bool { return errors.As(err, target) }
 
 func contains(s, sub string) bool { return strings.Contains(s, sub) }
+
+func TestMarkPostedPassesTheVersionThroughAndKeepsTheRefusalReason(t *testing.T) {
+	h := newDraftsHarness(t)
+
+	ok, err := h.client.MarkPosted(context.Background(), withCookie(connect.NewRequest(&apiv1.MarkPostedRequest{Id: "d1", Version: 4}), h.token))
+	sent := h.fude.last().(*fudev1.MarkPostedRequest)
+	h.fude.markPostedErr = withInfo(codes.FailedPrecondition, "DRAFT_CHANNEL_NOT_COPY_ONLY")
+	_, refused := h.client.MarkPosted(context.Background(), withCookie(connect.NewRequest(&apiv1.MarkPostedRequest{Id: "d2", Version: 1}), h.token))
+
+	if err != nil || sent.GetDraftId() != "d1" || sent.GetVersion() != 4 || ok.Msg.GetDraft().GetState() != apiv1.DraftState_DRAFT_STATE_SENT {
+		t.Fatalf("sent %v, got %v, %v", sent, ok, err)
+	}
+	if code, reason := codeAndReason(t, refused); code != connect.CodeFailedPrecondition || reason != "DRAFT_CHANNEL_NOT_COPY_ONLY" {
+		t.Fatalf("got %v %q", code, reason)
+	}
+}

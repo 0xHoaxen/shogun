@@ -24,6 +24,7 @@ const (
 	FudeService_EditDraft_FullMethodName      = "/shogun.fude.v1.FudeService/EditDraft"
 	FudeService_Approve_FullMethodName        = "/shogun.fude.v1.FudeService/Approve"
 	FudeService_Discard_FullMethodName        = "/shogun.fude.v1.FudeService/Discard"
+	FudeService_MarkPosted_FullMethodName     = "/shogun.fude.v1.FudeService/MarkPosted"
 	FudeService_ListQueue_FullMethodName      = "/shogun.fude.v1.FudeService/ListQueue"
 	FudeService_GetDraft_FullMethodName       = "/shogun.fude.v1.FudeService/GetDraft"
 	FudeService_AddVoiceSample_FullMethodName = "/shogun.fude.v1.FudeService/AddVoiceSample"
@@ -47,6 +48,10 @@ type FudeServiceClient interface {
 	// copy-ready text. Callers: torii only.
 	Approve(ctx context.Context, in *ApproveRequest, opts ...grpc.CallOption) (*ApproveResponse, error)
 	Discard(ctx context.Context, in *DiscardRequest, opts ...grpc.CallOption) (*DiscardResponse, error)
+	// MarkPosted records that the owner posted an approved copy-only draft
+	// (LinkedIn, X, other) themselves, moving it to sent. Email is refused: only
+	// tsubame's draft.sent marks an email sent.
+	MarkPosted(ctx context.Context, in *MarkPostedRequest, opts ...grpc.CallOption) (*MarkPostedResponse, error)
 	ListQueue(ctx context.Context, in *ListQueueRequest, opts ...grpc.CallOption) (*ListQueueResponse, error)
 	// GetDraft returns the draft with all of its versions.
 	GetDraft(ctx context.Context, in *GetDraftRequest, opts ...grpc.CallOption) (*GetDraftResponse, error)
@@ -111,6 +116,16 @@ func (c *fudeServiceClient) Discard(ctx context.Context, in *DiscardRequest, opt
 	return out, nil
 }
 
+func (c *fudeServiceClient) MarkPosted(ctx context.Context, in *MarkPostedRequest, opts ...grpc.CallOption) (*MarkPostedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkPostedResponse)
+	err := c.cc.Invoke(ctx, FudeService_MarkPosted_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *fudeServiceClient) ListQueue(ctx context.Context, in *ListQueueRequest, opts ...grpc.CallOption) (*ListQueueResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListQueueResponse)
@@ -159,6 +174,10 @@ type FudeServiceServer interface {
 	// copy-ready text. Callers: torii only.
 	Approve(context.Context, *ApproveRequest) (*ApproveResponse, error)
 	Discard(context.Context, *DiscardRequest) (*DiscardResponse, error)
+	// MarkPosted records that the owner posted an approved copy-only draft
+	// (LinkedIn, X, other) themselves, moving it to sent. Email is refused: only
+	// tsubame's draft.sent marks an email sent.
+	MarkPosted(context.Context, *MarkPostedRequest) (*MarkPostedResponse, error)
 	ListQueue(context.Context, *ListQueueRequest) (*ListQueueResponse, error)
 	// GetDraft returns the draft with all of its versions.
 	GetDraft(context.Context, *GetDraftRequest) (*GetDraftResponse, error)
@@ -187,6 +206,9 @@ func (UnimplementedFudeServiceServer) Approve(context.Context, *ApproveRequest) 
 }
 func (UnimplementedFudeServiceServer) Discard(context.Context, *DiscardRequest) (*DiscardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Discard not implemented")
+}
+func (UnimplementedFudeServiceServer) MarkPosted(context.Context, *MarkPostedRequest) (*MarkPostedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkPosted not implemented")
 }
 func (UnimplementedFudeServiceServer) ListQueue(context.Context, *ListQueueRequest) (*ListQueueResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListQueue not implemented")
@@ -308,6 +330,24 @@ func _FudeService_Discard_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FudeService_MarkPosted_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkPostedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).MarkPosted(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_MarkPosted_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).MarkPosted(ctx, req.(*MarkPostedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _FudeService_ListQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListQueueRequest)
 	if err := dec(in); err != nil {
@@ -388,6 +428,10 @@ var FudeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Discard",
 			Handler:    _FudeService_Discard_Handler,
+		},
+		{
+			MethodName: "MarkPosted",
+			Handler:    _FudeService_MarkPosted_Handler,
 		},
 		{
 			MethodName: "ListQueue",

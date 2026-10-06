@@ -18,6 +18,10 @@ service FudeService {
   // copy-ready text. Callers: torii only.
   rpc Approve(ApproveRequest) returns (ApproveResponse);
   rpc Discard(DiscardRequest) returns (DiscardResponse);
+  // MarkPosted records that the owner posted an approved copy-only draft
+  // (LinkedIn, X, other) themselves, moving it to sent. Email is refused: only
+  // tsubame's draft.sent marks an email sent.
+  rpc MarkPosted(MarkPostedRequest) returns (MarkPostedResponse);
   rpc ListQueue(ListQueueRequest) returns (ListQueueResponse);
   // GetDraft returns the draft with all of its versions.
   rpc GetDraft(GetDraftRequest) returns (GetDraftResponse);
@@ -163,6 +167,15 @@ message DiscardRequest {
 }
 
 message DiscardResponse {
+  Draft draft = 1;
+}
+
+message MarkPostedRequest {
+  string draft_id = 1;
+  int32 version = 2;
+}
+
+message MarkPostedResponse {
   Draft draft = 1;
 }
 

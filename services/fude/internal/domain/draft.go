@@ -121,6 +121,20 @@ func (d Draft) Regenerate(now time.Time) (Draft, error) {
 	return d.Move(DraftPending, now)
 }
 
+// MarkPosted returns the draft sent, once the owner says they posted an
+// approved copy-only draft themselves. An email draft is refused with a
+// *TransitionError: only tsubame's report can mark an email sent.
+func (d Draft) MarkPosted(channel Channel, now time.Time) (Draft, error) {
+	if channel == ChannelEmail {
+		return d, &TransitionError{
+			Reason: ReasonDraftChannelNotCopyOnly,
+			From:   string(d.State),
+			To:     string(DraftSent),
+		}
+	}
+	return d.Move(DraftSent, now)
+}
+
 // CanApprove reports whether version is the newest version of a pending
 // draft, the only thing that may be approved.
 func (d Draft) CanApprove(version int32) bool {

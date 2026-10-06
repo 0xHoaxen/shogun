@@ -26,6 +26,7 @@ const (
 	DraftsService_EditDraft_FullMethodName     = "/shogun.api.v1.DraftsService/EditDraft"
 	DraftsService_Approve_FullMethodName       = "/shogun.api.v1.DraftsService/Approve"
 	DraftsService_Discard_FullMethodName       = "/shogun.api.v1.DraftsService/Discard"
+	DraftsService_MarkPosted_FullMethodName    = "/shogun.api.v1.DraftsService/MarkPosted"
 )
 
 // DraftsServiceClient is the client API for DraftsService service.
@@ -54,6 +55,10 @@ type DraftsServiceClient interface {
 	// with reason VERSION_CONFLICT.
 	Approve(ctx context.Context, in *ApproveRequest, opts ...grpc.CallOption) (*ApproveResponse, error)
 	Discard(ctx context.Context, in *DiscardRequest, opts ...grpc.CallOption) (*DiscardResponse, error)
+	// MarkPosted records that the owner posted an approved copy-only draft
+	// themselves, moving it to sent. Email is refused with reason
+	// DRAFT_CHANNEL_NOT_COPY_ONLY.
+	MarkPosted(ctx context.Context, in *MarkPostedRequest, opts ...grpc.CallOption) (*MarkPostedResponse, error)
 }
 
 type draftsServiceClient struct {
@@ -134,6 +139,16 @@ func (c *draftsServiceClient) Discard(ctx context.Context, in *DiscardRequest, o
 	return out, nil
 }
 
+func (c *draftsServiceClient) MarkPosted(ctx context.Context, in *MarkPostedRequest, opts ...grpc.CallOption) (*MarkPostedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkPostedResponse)
+	err := c.cc.Invoke(ctx, DraftsService_MarkPosted_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DraftsServiceServer is the server API for DraftsService service.
 // All implementations must embed UnimplementedDraftsServiceServer
 // for forward compatibility.
@@ -160,6 +175,10 @@ type DraftsServiceServer interface {
 	// with reason VERSION_CONFLICT.
 	Approve(context.Context, *ApproveRequest) (*ApproveResponse, error)
 	Discard(context.Context, *DiscardRequest) (*DiscardResponse, error)
+	// MarkPosted records that the owner posted an approved copy-only draft
+	// themselves, moving it to sent. Email is refused with reason
+	// DRAFT_CHANNEL_NOT_COPY_ONLY.
+	MarkPosted(context.Context, *MarkPostedRequest) (*MarkPostedResponse, error)
 	mustEmbedUnimplementedDraftsServiceServer()
 }
 
@@ -190,6 +209,9 @@ func (UnimplementedDraftsServiceServer) Approve(context.Context, *ApproveRequest
 }
 func (UnimplementedDraftsServiceServer) Discard(context.Context, *DiscardRequest) (*DiscardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Discard not implemented")
+}
+func (UnimplementedDraftsServiceServer) MarkPosted(context.Context, *MarkPostedRequest) (*MarkPostedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkPosted not implemented")
 }
 func (UnimplementedDraftsServiceServer) mustEmbedUnimplementedDraftsServiceServer() {}
 func (UnimplementedDraftsServiceServer) testEmbeddedByValue()                       {}
@@ -338,6 +360,24 @@ func _DraftsService_Discard_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DraftsService_MarkPosted_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkPostedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DraftsServiceServer).MarkPosted(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DraftsService_MarkPosted_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DraftsServiceServer).MarkPosted(ctx, req.(*MarkPostedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DraftsService_ServiceDesc is the grpc.ServiceDesc for DraftsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -372,6 +412,10 @@ var DraftsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Discard",
 			Handler:    _DraftsService_Discard_Handler,
+		},
+		{
+			MethodName: "MarkPosted",
+			Handler:    _DraftsService_MarkPosted_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
