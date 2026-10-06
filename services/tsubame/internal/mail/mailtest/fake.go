@@ -24,6 +24,8 @@ type Fake struct {
 	Messages []mail.Message
 	// Err, if set, is returned by every call; SendErr only by Send.
 	Err, SendErr error
+	// GetErrFor makes Get fail for the given message ids.
+	GetErrFor map[string]error
 	// ExpiredBefore makes History fail with ErrHistoryExpired for cursors
 	// older than it.
 	ExpiredBefore int
@@ -78,6 +80,9 @@ func (f *Fake) Get(_ context.Context, id string) (mail.Message, error) {
 	defer f.mu.Unlock()
 	if f.Err != nil {
 		return mail.Message{}, f.Err
+	}
+	if err := f.GetErrFor[id]; err != nil {
+		return mail.Message{}, err
 	}
 	for _, m := range f.Messages {
 		if m.ID == id {

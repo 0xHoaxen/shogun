@@ -329,9 +329,13 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: tests with a mocked Google token endpoint cover a good connect, a bad or expired or foreign state, a reused code, and a test greps captured log output for tokens.
   Status: `TSUBAME_TOKEN_MASTER_KEY` and the three `TSUBAME_GMAIL_*` variables are required at startup (placeholders in `.env.example`). Only one master key is read; rolling a new one needs a way to load the old ones too, which is not built yet. A state is not single-use (the code is, at Google). `TODO(owner)`: create the Google OAuth client with the Gmail API enabled, and set the key and client secret as secrets in the staging and production helm values.
 
-- [ ] **P7.5 tsubame sync and classification** (L, split) Needs: P7.4, P6.3
-  Do: `gmail_sync` every 5 min using `history_id`; `classify_message` rules first, `pkg/llm` feature `tsubame.classify` only when unsure; link to job or contact by domain, URL, thread, email; emit `mail.classified` and `mail.reply_detected`.
-  Done when: fixture mails cover each classification; the cursor advances only on success.
+- [x] **P7.5a tsubame mail sync** (M) Needs: P7.4
+  Do: `app.Syncer` reads each active account by `history_id`, falling back to a full read of the last 30 days (capped at 500) when there is no cursor or Gmail dropped it, and stores messages, queues classification of inbound ones and advances the cursor in one transaction; `gmail_sync` River periodic job every 5 minutes (unique while one waits or runs, no retries, 4 minute timeout).
+  Done when: fixture tests with the fake provider cover first sync, incremental, expired cursor, a failure part way (cursor and rows unchanged, then retried), a deleted message, outbound mail not queued, and one account failing without stopping the others; a test shows River running the scheduled sync.
+
+- [ ] **P7.5b tsubame classification** (M) Needs: P7.5a, P6.3
+  Do: `classify_message` River job (3 tries): rules first; `pkg/llm` feature `tsubame.classify` only when the rules are unsure; link the message to a job or contact by domain, URL, thread or email through kagami; emit `mail.classified` and `mail.reply_detected` (new `tsubame/v1/events.proto`); route both to kagami; wire the queue into the syncer.
+  Done when: fixture mails cover each classification, the LLM is not called when a rule is sure, and linking works for each key.
 
 - [ ] **P7.6 tsubame Send with Hanko** (M) Needs: P7.4, P1.9
   Do: `Send(hanko, to, subject, body)` verifies signature, audience, expiry, recomputed hashes, inserts `sends` with unique `token_jti`, sends once, adds the `X-Shogun-Draft` header, emits `draft.sent`; reconciler checks Sent mail for the header before any retry.

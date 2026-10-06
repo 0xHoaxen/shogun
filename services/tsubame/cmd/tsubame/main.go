@@ -114,7 +114,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	connector, err := newConnector(lookup, pool, keys, log)
+	mailSvc, err := newMailServices(lookup, pool, keys, log)
 	if err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, mailSvc.setup, overrides)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
-		tsubamev1.RegisterTsubameServiceServer(s, tsubamegrpc.New(connector))
+		tsubamev1.RegisterTsubameServiceServer(s, tsubamegrpc.New(mailSvc.connector))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

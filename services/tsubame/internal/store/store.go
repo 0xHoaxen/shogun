@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -72,4 +73,45 @@ func (r *Repo) SetAccountStatus(ctx context.Context, owner, id uuid.UUID, status
 		return ErrNotFound
 	}
 	return nil
+}
+
+// ListActiveAccounts returns every owner's accounts that can be synced.
+func (r *Repo) ListActiveAccounts(ctx context.Context) ([]db.Account, error) {
+	as, err := r.q.ListActiveAccounts(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list active accounts: %w", mapErr(err))
+	}
+	return as, nil
+}
+
+// SetAccountCursor records a finished sync: the new history cursor and when it
+// ran.
+func (r *Repo) SetAccountCursor(ctx context.Context, id uuid.UUID, historyID string, syncedAt time.Time) error {
+	n, err := r.q.SetAccountCursor(ctx, db.SetAccountCursorParams{ID: id, HistoryID: &historyID, SyncedAt: &syncedAt})
+	if err != nil {
+		return fmt.Errorf("set account cursor: %w", mapErr(err))
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// InsertMessage stores a message. It reports false, and stores nothing, when
+// the account already has a message with that provider id.
+func (r *Repo) InsertMessage(ctx context.Context, arg db.InsertMessageParams) (db.Message, bool, error) {
+	m, err := r.q.InsertMessage(ctx, arg)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return db.Message{}, false, nil
+	}
+	if err != nil {
+		return db.Message{}, false, fmt.Errorf("insert message: %w", err)
+	}
+	return m, true, nil
+}
+
+// GetMessage returns one message of the owner.
+func (r *Repo) GetMessage(ctx context.Context, owner, id uuid.UUID) (db.Message, error) {
+	m, err := r.q.GetMessage(ctx, db.GetMessageParams{ID: id, OwnerID: owner})
+	return m, mapErr(err)
 }

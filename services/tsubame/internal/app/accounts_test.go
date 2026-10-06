@@ -37,6 +37,12 @@ func newAccounts(t *testing.T) (*app.Accounts, *pgxpool.Pool) {
 	if err := postgres.Migrate(ctx, pool, migrations.FS); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
+	return newAccountsOn(t, pool)
+}
+
+// newAccountsOn returns Accounts on an already migrated pool.
+func newAccountsOn(t *testing.T, pool *pgxpool.Pool) (*app.Accounts, *pgxpool.Pool) {
+	t.Helper()
 	ring, err := envelope.NewKeyring("k1", map[string][]byte{"k1": bytes.Repeat([]byte{7}, envelope.KeySize)})
 	if err != nil {
 		t.Fatal(err)

@@ -10,6 +10,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
+	"github.com/0xHoaxen/shogun/services/tsubame/internal/jobs"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/gmail"
 )
 
@@ -43,9 +44,9 @@ func loadKeyring(lookup config.LookupFunc) (*envelope.Keyring, error) {
 	return envelope.NewKeyring(id, map[string][]byte{id: key})
 }
 
-// newConnector wires account connection to Gmail. The Google client id,
-// secret and redirect URL are required.
-func newConnector(lookup config.LookupFunc, pool *pgxpool.Pool, keys *envelope.Keyring, log *slog.Logger) (*app.Connector, error) {
+// newGmail builds the Gmail client from the Google client id, secret and
+// redirect URL, which are required.
+func newGmail(lookup config.LookupFunc) (*gmail.Client, error) {
 	var cfg gmail.Config
 	for _, f := range []struct {
 		env string
@@ -61,9 +62,25 @@ func newConnector(lookup config.LookupFunc, pool *pgxpool.Pool, keys *envelope.K
 		}
 		*f.dst = v
 	}
-	client, err := gmail.New(cfg)
+	return gmail.New(cfg)
+}
+
+// mailServices is what the mail use cases need, built once.
+type mailServices struct {
+	connector *app.Connector
+	setup     jobs.Setup
+}
+
+// newMailServices wires account connection and the scheduled sync to Gmail.
+func newMailServices(lookup config.LookupFunc, pool *pgxpool.Pool, keys *envelope.Keyring, log *slog.Logger) (*mailServices, error) {
+	client, err := newGmail(lookup)
 	if err != nil {
 		return nil, err
 	}
-	return app.NewConnector(app.NewAccounts(pool, keys), client, client, keys, log, nil), nil
+	accounts := app.NewAccounts(pool, keys)
+	syncer := app.NewSyncer(pool, accounts, client, nil, log, nil)
+	return &mailServices{
+		connector: app.NewConnector(accounts, client, client, keys, log, nil),
+		setup:     jobs.NewSetup(syncer, log),
+	}, nil
 }

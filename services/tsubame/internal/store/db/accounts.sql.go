@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -73,6 +74,62 @@ func (q *Queries) ListAccounts(ctx context.Context, ownerID uuid.UUID) ([]Accoun
 		return nil, err
 	}
 	return items, nil
+}
+
+const listActiveAccounts = `-- name: ListActiveAccounts :many
+SELECT id, owner_id, provider, address, token_ciphertext, token_key_id, history_id, status, last_synced_at, created_at, updated_at FROM accounts WHERE status = 'active' ORDER BY id
+`
+
+// Every owner's accounts that can be synced.
+func (q *Queries) ListActiveAccounts(ctx context.Context) ([]Account, error) {
+	rows, err := q.db.Query(ctx, listActiveAccounts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Account{}
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.Provider,
+			&i.Address,
+			&i.TokenCiphertext,
+			&i.TokenKeyID,
+			&i.HistoryID,
+			&i.Status,
+			&i.LastSyncedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setAccountCursor = `-- name: SetAccountCursor :execrows
+UPDATE accounts SET history_id = $1, last_synced_at = $2, updated_at = now()
+WHERE id = $3
+`
+
+type SetAccountCursorParams struct {
+	HistoryID *string
+	SyncedAt  *time.Time
+	ID        uuid.UUID
+}
+
+func (q *Queries) SetAccountCursor(ctx context.Context, arg SetAccountCursorParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setAccountCursor, arg.HistoryID, arg.SyncedAt, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const setAccountStatus = `-- name: SetAccountStatus :execrows
