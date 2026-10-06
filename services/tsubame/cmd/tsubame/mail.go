@@ -37,6 +37,12 @@ const (
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
 	apiKeyEnv      = "ANTHROPIC_API_KEY"
+	baseURLEnv     = "ANTHROPIC_BASE_URL"
+
+	// Optional overrides of Google's addresses, for the end-to-end stack only.
+	gmailAPIBaseEnv  = "TSUBAME_GMAIL_API_BASE"
+	gmailAuthURLEnv  = "TSUBAME_GMAIL_AUTH_URL"
+	gmailTokenURLEnv = "TSUBAME_GMAIL_TOKEN_URL"
 )
 
 // loadKeyring reads the master key that wraps the data key of every stored
@@ -77,6 +83,9 @@ func newGmail(lookup config.LookupFunc) (*gmail.Client, error) {
 		}
 		*f.dst = v
 	}
+	cfg.APIBase = config.String(lookup, gmailAPIBaseEnv, "")
+	cfg.AuthURL = config.String(lookup, gmailAuthURLEnv, "")
+	cfg.TokenURL = config.String(lookup, gmailTokenURLEnv, "")
 	return gmail.New(cfg)
 }
 
@@ -197,7 +206,7 @@ func newCompleter(lookup config.LookupFunc, apiKey string, meter llm.Meter, log 
 	if err != nil {
 		return nil, err
 	}
-	return llm.New(cfg, llm.NewAnthropicAPI(apiKey), meter, llm.WithLogger(log))
+	return llm.New(cfg, llm.NewAnthropicAPI(apiKey, llm.AnthropicBaseURL(config.String(lookup, baseURLEnv, ""))), meter, llm.WithLogger(log))
 }
 
 type noKeyCompleter struct{}

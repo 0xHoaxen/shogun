@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"math"
+	"net/http"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -20,6 +21,18 @@ type AnthropicAPI struct {
 func NewAnthropicAPI(apiKey string, opts ...option.RequestOption) *AnthropicAPI {
 	all := append([]option.RequestOption{option.WithAPIKey(apiKey)}, opts...)
 	return &AnthropicAPI{client: anthropic.NewClient(all...)}
+}
+
+// AnthropicBaseURL points the client at another host, such as a stub in the
+// end-to-end stack. Services pass it to NewAnthropicAPI without importing the
+// SDK. An empty url leaves the client on Anthropic's own address.
+func AnthropicBaseURL(url string) option.RequestOption {
+	if url == "" {
+		return option.WithMiddleware(func(r *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+			return next(r)
+		})
+	}
+	return option.WithBaseURL(url)
 }
 
 // CountTokens implements API.

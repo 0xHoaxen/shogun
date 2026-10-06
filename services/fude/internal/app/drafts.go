@@ -254,6 +254,29 @@ func (s *Service) Discard(ctx context.Context, draftID string, version int32) (d
 	return res, err
 }
 
+// MarkPosted moves an approved copy-only draft to sent, once the owner has
+// posted it themselves.
+func (s *Service) MarkPosted(ctx context.Context, draftID string, version int32) (db.Draft, error) {
+	owner, id, err := ownerAndDraft(ctx, draftID, version)
+	if err != nil {
+		return db.Draft{}, err
+	}
+	var res db.Draft
+	err = s.inTx(ctx, func(_ pgx.Tx, repo *store.Repo) error {
+		d, getErr := repo.GetDraft(ctx, owner, id)
+		if getErr != nil {
+			return getErr
+		}
+		next, moveErr := toDomain(d).MarkPosted(domain.Channel(d.Channel), s.now())
+		if moveErr != nil {
+			return moveErr
+		}
+		res, getErr = saveState(ctx, repo, owner, d, next, version)
+		return getErr
+	})
+	return res, err
+}
+
 // GetDraft returns a draft with all of its versions, newest first.
 func (s *Service) GetDraft(ctx context.Context, draftID string) (DraftDetail, error) {
 	owner, err := ownerFrom(ctx)

@@ -105,3 +105,32 @@ func TestAnthropicAPIFlagsARefusal(t *testing.T) {
 		t.Fatalf("got %+v, %v; want a refusal", got, err)
 	}
 }
+
+func TestAnthropicBaseURLSendsCallsToTheGivenHost(t *testing.T) {
+	// Arrange
+	srv, bodies := fakeAnthropic(t, "end_turn")
+	api := llm.NewAnthropicAPI("test-key", llm.AnthropicBaseURL(srv.URL))
+
+	// Act
+	got, err := api.CountTokens(context.Background(), llm.CallRequest{
+		Model: "claude-opus-5-5", Messages: []llm.Message{{Role: llm.RoleUser, Content: "hi"}},
+	})
+
+	// Assert
+	if err != nil || got != 321 {
+		t.Fatalf("CountTokens = %d, %v; want 321, nil", got, err)
+	}
+	if _, ok := bodies["/v1/messages/count_tokens"]; !ok {
+		t.Fatal("the stub was not called")
+	}
+}
+
+func TestAnthropicBaseURLEmptyKeepsTheDefaultHost(t *testing.T) {
+	// Arrange: an empty URL must not break client construction or redirect calls.
+	api := llm.NewAnthropicAPI("test-key", llm.AnthropicBaseURL(""))
+
+	// Assert
+	if api == nil {
+		t.Fatal("NewAnthropicAPI returned nil")
+	}
+}

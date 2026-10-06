@@ -1201,6 +1201,102 @@ func (x *DiscardResponse) GetDraft() *Draft {
 	return nil
 }
 
+type MarkPostedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DraftId       string                 `protobuf:"bytes,1,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	Version       int32                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkPostedRequest) Reset() {
+	*x = MarkPostedRequest{}
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkPostedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkPostedRequest) ProtoMessage() {}
+
+func (x *MarkPostedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkPostedRequest.ProtoReflect.Descriptor instead.
+func (*MarkPostedRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *MarkPostedRequest) GetDraftId() string {
+	if x != nil {
+		return x.DraftId
+	}
+	return ""
+}
+
+func (x *MarkPostedRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type MarkPostedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Draft         *Draft                 `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkPostedResponse) Reset() {
+	*x = MarkPostedResponse{}
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkPostedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkPostedResponse) ProtoMessage() {}
+
+func (x *MarkPostedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkPostedResponse.ProtoReflect.Descriptor instead.
+func (*MarkPostedResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *MarkPostedResponse) GetDraft() *Draft {
+	if x != nil {
+		return x.Draft
+	}
+	return nil
+}
+
 type ListQueueRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// state filters the queue; unspecified means pending.
@@ -1213,7 +1309,7 @@ type ListQueueRequest struct {
 
 func (x *ListQueueRequest) Reset() {
 	*x = ListQueueRequest{}
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[13]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1225,7 +1321,7 @@ func (x *ListQueueRequest) String() string {
 func (*ListQueueRequest) ProtoMessage() {}
 
 func (x *ListQueueRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[13]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1238,7 +1334,7 @@ func (x *ListQueueRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQueueRequest.ProtoReflect.Descriptor instead.
 func (*ListQueueRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{13}
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListQueueRequest) GetState() DraftState {
@@ -1272,7 +1368,7 @@ type ListQueueResponse struct {
 
 func (x *ListQueueResponse) Reset() {
 	*x = ListQueueResponse{}
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[14]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1284,7 +1380,7 @@ func (x *ListQueueResponse) String() string {
 func (*ListQueueResponse) ProtoMessage() {}
 
 func (x *ListQueueResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[14]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1297,7 +1393,7 @@ func (x *ListQueueResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListQueueResponse.ProtoReflect.Descriptor instead.
 func (*ListQueueResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{14}
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListQueueResponse) GetDrafts() []*Draft {
@@ -1323,7 +1419,7 @@ type GetDraftRequest struct {
 
 func (x *GetDraftRequest) Reset() {
 	*x = GetDraftRequest{}
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[15]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1335,7 +1431,7 @@ func (x *GetDraftRequest) String() string {
 func (*GetDraftRequest) ProtoMessage() {}
 
 func (x *GetDraftRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[15]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1348,7 +1444,7 @@ func (x *GetDraftRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDraftRequest.ProtoReflect.Descriptor instead.
 func (*GetDraftRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{15}
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetDraftRequest) GetDraftId() string {
@@ -1368,7 +1464,7 @@ type GetDraftResponse struct {
 
 func (x *GetDraftResponse) Reset() {
 	*x = GetDraftResponse{}
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[16]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1380,7 +1476,7 @@ func (x *GetDraftResponse) String() string {
 func (*GetDraftResponse) ProtoMessage() {}
 
 func (x *GetDraftResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[16]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1393,7 +1489,7 @@ func (x *GetDraftResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDraftResponse.ProtoReflect.Descriptor instead.
 func (*GetDraftResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{16}
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetDraftResponse) GetDraft() *Draft {
@@ -1420,7 +1516,7 @@ type AddVoiceSampleRequest struct {
 
 func (x *AddVoiceSampleRequest) Reset() {
 	*x = AddVoiceSampleRequest{}
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[17]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1432,7 +1528,7 @@ func (x *AddVoiceSampleRequest) String() string {
 func (*AddVoiceSampleRequest) ProtoMessage() {}
 
 func (x *AddVoiceSampleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[17]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1445,7 +1541,7 @@ func (x *AddVoiceSampleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddVoiceSampleRequest.ProtoReflect.Descriptor instead.
 func (*AddVoiceSampleRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{17}
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *AddVoiceSampleRequest) GetChannel() Channel {
@@ -1471,7 +1567,7 @@ type AddVoiceSampleResponse struct {
 
 func (x *AddVoiceSampleResponse) Reset() {
 	*x = AddVoiceSampleResponse{}
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[18]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1483,7 +1579,7 @@ func (x *AddVoiceSampleResponse) String() string {
 func (*AddVoiceSampleResponse) ProtoMessage() {}
 
 func (x *AddVoiceSampleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_fude_v1_fude_proto_msgTypes[18]
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1496,7 +1592,7 @@ func (x *AddVoiceSampleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddVoiceSampleResponse.ProtoReflect.Descriptor instead.
 func (*AddVoiceSampleResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{18}
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *AddVoiceSampleResponse) GetSample() *VoiceSample {
@@ -1587,6 +1683,11 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\">\n" +
 	"\x0fDiscardResponse\x12+\n" +
+	"\x05draft\x18\x01 \x01(\v2\x15.shogun.fude.v1.DraftR\x05draft\"H\n" +
+	"\x11MarkPostedRequest\x12\x19\n" +
+	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\x05R\aversion\"A\n" +
+	"\x12MarkPostedResponse\x12+\n" +
 	"\x05draft\x18\x01 \x01(\v2\x15.shogun.fude.v1.DraftR\x05draft\"\x80\x01\n" +
 	"\x10ListQueueRequest\x120\n" +
 	"\x05state\x18\x01 \x01(\x0e2\x1a.shogun.fude.v1.DraftStateR\x05state\x12\x1b\n" +
@@ -1638,14 +1739,16 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\rVersionAuthor\x12\x1e\n" +
 	"\x1aVERSION_AUTHOR_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11VERSION_AUTHOR_AI\x10\x01\x12\x17\n" +
-	"\x13VERSION_AUTHOR_USER\x10\x022\xac\x05\n" +
+	"\x13VERSION_AUTHOR_USER\x10\x022\x81\x06\n" +
 	"\vFudeService\x12\\\n" +
 	"\rGenerateDraft\x12$.shogun.fude.v1.GenerateDraftRequest\x1a%.shogun.fude.v1.GenerateDraftResponse\x12S\n" +
 	"\n" +
 	"Regenerate\x12!.shogun.fude.v1.RegenerateRequest\x1a\".shogun.fude.v1.RegenerateResponse\x12P\n" +
 	"\tEditDraft\x12 .shogun.fude.v1.EditDraftRequest\x1a!.shogun.fude.v1.EditDraftResponse\x12J\n" +
 	"\aApprove\x12\x1e.shogun.fude.v1.ApproveRequest\x1a\x1f.shogun.fude.v1.ApproveResponse\x12J\n" +
-	"\aDiscard\x12\x1e.shogun.fude.v1.DiscardRequest\x1a\x1f.shogun.fude.v1.DiscardResponse\x12P\n" +
+	"\aDiscard\x12\x1e.shogun.fude.v1.DiscardRequest\x1a\x1f.shogun.fude.v1.DiscardResponse\x12S\n" +
+	"\n" +
+	"MarkPosted\x12!.shogun.fude.v1.MarkPostedRequest\x1a\".shogun.fude.v1.MarkPostedResponse\x12P\n" +
 	"\tListQueue\x12 .shogun.fude.v1.ListQueueRequest\x1a!.shogun.fude.v1.ListQueueResponse\x12M\n" +
 	"\bGetDraft\x12\x1f.shogun.fude.v1.GetDraftRequest\x1a .shogun.fude.v1.GetDraftResponse\x12_\n" +
 	"\x0eAddVoiceSample\x12%.shogun.fude.v1.AddVoiceSampleRequest\x1a&.shogun.fude.v1.AddVoiceSampleResponseB\xb2\x01\n" +
@@ -1664,7 +1767,7 @@ func file_shogun_fude_v1_fude_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_fude_v1_fude_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_shogun_fude_v1_fude_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_shogun_fude_v1_fude_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_shogun_fude_v1_fude_proto_goTypes = []any{
 	(DraftKind)(0),                 // 0: shogun.fude.v1.DraftKind
 	(TargetType)(0),                // 1: shogun.fude.v1.TargetType
@@ -1684,25 +1787,27 @@ var file_shogun_fude_v1_fude_proto_goTypes = []any{
 	(*ApproveResponse)(nil),        // 15: shogun.fude.v1.ApproveResponse
 	(*DiscardRequest)(nil),         // 16: shogun.fude.v1.DiscardRequest
 	(*DiscardResponse)(nil),        // 17: shogun.fude.v1.DiscardResponse
-	(*ListQueueRequest)(nil),       // 18: shogun.fude.v1.ListQueueRequest
-	(*ListQueueResponse)(nil),      // 19: shogun.fude.v1.ListQueueResponse
-	(*GetDraftRequest)(nil),        // 20: shogun.fude.v1.GetDraftRequest
-	(*GetDraftResponse)(nil),       // 21: shogun.fude.v1.GetDraftResponse
-	(*AddVoiceSampleRequest)(nil),  // 22: shogun.fude.v1.AddVoiceSampleRequest
-	(*AddVoiceSampleResponse)(nil), // 23: shogun.fude.v1.AddVoiceSampleResponse
-	(*timestamppb.Timestamp)(nil),  // 24: google.protobuf.Timestamp
+	(*MarkPostedRequest)(nil),      // 18: shogun.fude.v1.MarkPostedRequest
+	(*MarkPostedResponse)(nil),     // 19: shogun.fude.v1.MarkPostedResponse
+	(*ListQueueRequest)(nil),       // 20: shogun.fude.v1.ListQueueRequest
+	(*ListQueueResponse)(nil),      // 21: shogun.fude.v1.ListQueueResponse
+	(*GetDraftRequest)(nil),        // 22: shogun.fude.v1.GetDraftRequest
+	(*GetDraftResponse)(nil),       // 23: shogun.fude.v1.GetDraftResponse
+	(*AddVoiceSampleRequest)(nil),  // 24: shogun.fude.v1.AddVoiceSampleRequest
+	(*AddVoiceSampleResponse)(nil), // 25: shogun.fude.v1.AddVoiceSampleResponse
+	(*timestamppb.Timestamp)(nil),  // 26: google.protobuf.Timestamp
 }
 var file_shogun_fude_v1_fude_proto_depIdxs = []int32{
 	0,  // 0: shogun.fude.v1.Draft.kind:type_name -> shogun.fude.v1.DraftKind
 	1,  // 1: shogun.fude.v1.Draft.target_type:type_name -> shogun.fude.v1.TargetType
 	2,  // 2: shogun.fude.v1.Draft.channel:type_name -> shogun.fude.v1.Channel
 	3,  // 3: shogun.fude.v1.Draft.state:type_name -> shogun.fude.v1.DraftState
-	24, // 4: shogun.fude.v1.Draft.created_at:type_name -> google.protobuf.Timestamp
-	24, // 5: shogun.fude.v1.Draft.updated_at:type_name -> google.protobuf.Timestamp
+	26, // 4: shogun.fude.v1.Draft.created_at:type_name -> google.protobuf.Timestamp
+	26, // 5: shogun.fude.v1.Draft.updated_at:type_name -> google.protobuf.Timestamp
 	4,  // 6: shogun.fude.v1.DraftVersion.created_by:type_name -> shogun.fude.v1.VersionAuthor
-	24, // 7: shogun.fude.v1.DraftVersion.created_at:type_name -> google.protobuf.Timestamp
+	26, // 7: shogun.fude.v1.DraftVersion.created_at:type_name -> google.protobuf.Timestamp
 	2,  // 8: shogun.fude.v1.VoiceSample.channel:type_name -> shogun.fude.v1.Channel
-	24, // 9: shogun.fude.v1.VoiceSample.created_at:type_name -> google.protobuf.Timestamp
+	26, // 9: shogun.fude.v1.VoiceSample.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 10: shogun.fude.v1.GenerateDraftRequest.kind:type_name -> shogun.fude.v1.DraftKind
 	1,  // 11: shogun.fude.v1.GenerateDraftRequest.target_type:type_name -> shogun.fude.v1.TargetType
 	2,  // 12: shogun.fude.v1.GenerateDraftRequest.channel:type_name -> shogun.fude.v1.Channel
@@ -1712,33 +1817,36 @@ var file_shogun_fude_v1_fude_proto_depIdxs = []int32{
 	6,  // 16: shogun.fude.v1.EditDraftResponse.draft_version:type_name -> shogun.fude.v1.DraftVersion
 	5,  // 17: shogun.fude.v1.ApproveResponse.draft:type_name -> shogun.fude.v1.Draft
 	5,  // 18: shogun.fude.v1.DiscardResponse.draft:type_name -> shogun.fude.v1.Draft
-	3,  // 19: shogun.fude.v1.ListQueueRequest.state:type_name -> shogun.fude.v1.DraftState
-	5,  // 20: shogun.fude.v1.ListQueueResponse.drafts:type_name -> shogun.fude.v1.Draft
-	5,  // 21: shogun.fude.v1.GetDraftResponse.draft:type_name -> shogun.fude.v1.Draft
-	6,  // 22: shogun.fude.v1.GetDraftResponse.versions:type_name -> shogun.fude.v1.DraftVersion
-	2,  // 23: shogun.fude.v1.AddVoiceSampleRequest.channel:type_name -> shogun.fude.v1.Channel
-	7,  // 24: shogun.fude.v1.AddVoiceSampleResponse.sample:type_name -> shogun.fude.v1.VoiceSample
-	8,  // 25: shogun.fude.v1.FudeService.GenerateDraft:input_type -> shogun.fude.v1.GenerateDraftRequest
-	10, // 26: shogun.fude.v1.FudeService.Regenerate:input_type -> shogun.fude.v1.RegenerateRequest
-	12, // 27: shogun.fude.v1.FudeService.EditDraft:input_type -> shogun.fude.v1.EditDraftRequest
-	14, // 28: shogun.fude.v1.FudeService.Approve:input_type -> shogun.fude.v1.ApproveRequest
-	16, // 29: shogun.fude.v1.FudeService.Discard:input_type -> shogun.fude.v1.DiscardRequest
-	18, // 30: shogun.fude.v1.FudeService.ListQueue:input_type -> shogun.fude.v1.ListQueueRequest
-	20, // 31: shogun.fude.v1.FudeService.GetDraft:input_type -> shogun.fude.v1.GetDraftRequest
-	22, // 32: shogun.fude.v1.FudeService.AddVoiceSample:input_type -> shogun.fude.v1.AddVoiceSampleRequest
-	9,  // 33: shogun.fude.v1.FudeService.GenerateDraft:output_type -> shogun.fude.v1.GenerateDraftResponse
-	11, // 34: shogun.fude.v1.FudeService.Regenerate:output_type -> shogun.fude.v1.RegenerateResponse
-	13, // 35: shogun.fude.v1.FudeService.EditDraft:output_type -> shogun.fude.v1.EditDraftResponse
-	15, // 36: shogun.fude.v1.FudeService.Approve:output_type -> shogun.fude.v1.ApproveResponse
-	17, // 37: shogun.fude.v1.FudeService.Discard:output_type -> shogun.fude.v1.DiscardResponse
-	19, // 38: shogun.fude.v1.FudeService.ListQueue:output_type -> shogun.fude.v1.ListQueueResponse
-	21, // 39: shogun.fude.v1.FudeService.GetDraft:output_type -> shogun.fude.v1.GetDraftResponse
-	23, // 40: shogun.fude.v1.FudeService.AddVoiceSample:output_type -> shogun.fude.v1.AddVoiceSampleResponse
-	33, // [33:41] is the sub-list for method output_type
-	25, // [25:33] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	5,  // 19: shogun.fude.v1.MarkPostedResponse.draft:type_name -> shogun.fude.v1.Draft
+	3,  // 20: shogun.fude.v1.ListQueueRequest.state:type_name -> shogun.fude.v1.DraftState
+	5,  // 21: shogun.fude.v1.ListQueueResponse.drafts:type_name -> shogun.fude.v1.Draft
+	5,  // 22: shogun.fude.v1.GetDraftResponse.draft:type_name -> shogun.fude.v1.Draft
+	6,  // 23: shogun.fude.v1.GetDraftResponse.versions:type_name -> shogun.fude.v1.DraftVersion
+	2,  // 24: shogun.fude.v1.AddVoiceSampleRequest.channel:type_name -> shogun.fude.v1.Channel
+	7,  // 25: shogun.fude.v1.AddVoiceSampleResponse.sample:type_name -> shogun.fude.v1.VoiceSample
+	8,  // 26: shogun.fude.v1.FudeService.GenerateDraft:input_type -> shogun.fude.v1.GenerateDraftRequest
+	10, // 27: shogun.fude.v1.FudeService.Regenerate:input_type -> shogun.fude.v1.RegenerateRequest
+	12, // 28: shogun.fude.v1.FudeService.EditDraft:input_type -> shogun.fude.v1.EditDraftRequest
+	14, // 29: shogun.fude.v1.FudeService.Approve:input_type -> shogun.fude.v1.ApproveRequest
+	16, // 30: shogun.fude.v1.FudeService.Discard:input_type -> shogun.fude.v1.DiscardRequest
+	18, // 31: shogun.fude.v1.FudeService.MarkPosted:input_type -> shogun.fude.v1.MarkPostedRequest
+	20, // 32: shogun.fude.v1.FudeService.ListQueue:input_type -> shogun.fude.v1.ListQueueRequest
+	22, // 33: shogun.fude.v1.FudeService.GetDraft:input_type -> shogun.fude.v1.GetDraftRequest
+	24, // 34: shogun.fude.v1.FudeService.AddVoiceSample:input_type -> shogun.fude.v1.AddVoiceSampleRequest
+	9,  // 35: shogun.fude.v1.FudeService.GenerateDraft:output_type -> shogun.fude.v1.GenerateDraftResponse
+	11, // 36: shogun.fude.v1.FudeService.Regenerate:output_type -> shogun.fude.v1.RegenerateResponse
+	13, // 37: shogun.fude.v1.FudeService.EditDraft:output_type -> shogun.fude.v1.EditDraftResponse
+	15, // 38: shogun.fude.v1.FudeService.Approve:output_type -> shogun.fude.v1.ApproveResponse
+	17, // 39: shogun.fude.v1.FudeService.Discard:output_type -> shogun.fude.v1.DiscardResponse
+	19, // 40: shogun.fude.v1.FudeService.MarkPosted:output_type -> shogun.fude.v1.MarkPostedResponse
+	21, // 41: shogun.fude.v1.FudeService.ListQueue:output_type -> shogun.fude.v1.ListQueueResponse
+	23, // 42: shogun.fude.v1.FudeService.GetDraft:output_type -> shogun.fude.v1.GetDraftResponse
+	25, // 43: shogun.fude.v1.FudeService.AddVoiceSample:output_type -> shogun.fude.v1.AddVoiceSampleResponse
+	35, // [35:44] is the sub-list for method output_type
+	26, // [26:35] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_shogun_fude_v1_fude_proto_init() }
@@ -1752,7 +1860,7 @@ func file_shogun_fude_v1_fude_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_fude_v1_fude_proto_rawDesc), len(file_shogun_fude_v1_fude_proto_rawDesc)),
 			NumEnums:      5,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

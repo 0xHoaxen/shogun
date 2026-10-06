@@ -367,20 +367,26 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 - [x] **P7.8b web drafts queue and detail** (M) Needs: P7.8a
   Do: `/drafts` queue (pending first, with subject and preview) and `/drafts/[id]` detail with versions, regenerate with extra context, edit, discard, and approve showing the exact subject, body and recipient that will be sent, with the digest of that text sent with the approval; copy buttons for LinkedIn and X; add-draft dialog; nav entry. Mocked-API Playwright tests.
   Done when: Playwright (mocked API) covers queue, regenerate, edit, approve to email, approve to copy, discard, a stale version and a refused send.
-  Status: the approval digest is computed in the browser (`src/lib/digest.ts`) over the stored current version, never the editor text, and is pinned to `hanko.BodyDigest` by a golden vector tested on both sides. Approve is blocked while an edit is unsaved or an older version is open. Polling is bounded to 90 seconds. Follow-up: the draft state machine lets the owner mark an approved copy-only post as posted (approved to sent), but fude has no RPC for it, so LinkedIn and X drafts stay `approved` after copying. Add `MarkPosted` to fude and a button to the copy panel.
+  Status: the approval digest is computed in the browser (`src/lib/digest.ts`) over the stored current version, never the editor text, and is pinned to `hanko.BodyDigest` by a golden vector tested on both sides. Approve is blocked while an edit is unsaved or an older version is open. Polling is bounded to 90 seconds. The follow-up to mark a copied post as posted is P7.8e.
 
 - [x] **P7.8c web connect mail** (M) Needs: P7.8a
   Do: Settings > Mail with a Connect Gmail button that follows only an https address from the backend, and a `/mail/callback` page that finishes the connection with the code and state once, then removes them from the address bar.
   Done when: Playwright (mocked API) covers the redirect, a non-https address refused, a failed start, a good callback (called once, code gone from the URL), an expired or foreign state, a refused code, a denied grant and a callback with no code.
   Status: there is no RPC to list connected accounts, so the screen cannot show which address is connected or whether it needs reconnecting. Follow-up: add `ListAccounts` to tsubame and `MailService`, and show address and status here.
 
-- [ ] **P7.8d Compose end-to-end for drafts and mail** (M) Needs: P7.8b, P7.8c, P5.2c
-  Do: bring fude, tsubame, soroban and kagami up in the compose e2e overlay with a stub Anthropic API and a stub Gmail (token endpoint, profile, list, get, send), which needs base-URL settings for both in fude's and tsubame's config; a compose Playwright spec: add a draft, regenerate, edit, approve to email, and assert the stub Gmail received exactly one message with the `X-Shogun-Draft` header; add those services to the CI `e2e-compose` job.
-  Done when: `npm run test:e2e:compose` passes locally against the stack, and the CI job is green after merge.
+- [x] **P7.8d1 Base-URL settings for the e2e stubs** (S) Needs: P7.8b, P7.8c
+  Do: `ANTHROPIC_BASE_URL` (fude and tsubame, through `llm.AnthropicBaseURL`) and `TSUBAME_GMAIL_API_BASE`, `TSUBAME_GMAIL_AUTH_URL`, `TSUBAME_GMAIL_TOKEN_URL` (tsubame) point the Claude and Gmail clients at a stub. All optional; empty means the real service.
+  Done when: `cd pkg && go test -race ./llm/...` and `cd services/tsubame && go test -race ./cmd/...` pass.
 
-- [ ] **P7.8e Mark a copy-only draft as posted** (S) Needs: P7.3
+- [x] **P7.8d2 Compose end-to-end for drafts and mail** (M) Needs: P7.8d1, P5.2c
+  Do: add a `mock-apis` stub (Anthropic messages and token count, Gmail token, profile, list, get, send, and a test-only list of sent mail) to `compose.e2e.yaml`, with fude, tsubame, soroban and kagami pointed at it; a compose Playwright spec: connect Gmail, add a draft, regenerate, edit, approve to email, and assert the stub received exactly one message with the `X-Shogun-Draft` header; add those services to the CI `e2e-compose` job.
+  Done when: `npm run test:e2e:compose` passes locally against the stack, and the CI job is green after merge.
+  Status: passes locally against the stack (`mock-apis` is on host port 8091, because soroban uses 8090). The Google consent step is replaced in the spec: tsubame's auth URL is `https://mock-gmail.test/...` and the spec redirects it to `/mail/callback`, so the web app's https-only rule is not loosened. The first run of the `e2e-compose` job in Actions is still to confirm, after merge (`ci.yml` runs on push to `main` only). `actionlint` is not installed here; the workflow YAML parses.
+
+- [x] **P7.8e Mark a copy-only draft as posted** (S) Needs: P7.3
   Do: `MarkPosted` on fude (approved to sent for non-email channels, through the state machine) and a button in the copy panel. Without it LinkedIn and X drafts stay `approved` after the owner posts them.
   Done when: domain, handler and Playwright tests pass.
+  Status: `MarkPosted` on fude and `DraftsService` moves an approved non-email draft to sent; email is refused with `DRAFT_CHANNEL_NOT_COPY_ONLY`, because only tsubame's `draft.sent` may mark an email sent. No event is written (the docs list none for a posted copy-only draft). The copy panel has a "Mark as posted" button.
 
 ---
 

@@ -102,11 +102,15 @@ export function ApprovePanel({ draft, version, blocked, pending, error, onApprov
 interface CopyPanelProps {
   channel: DraftChannel;
   version: DraftVersion;
+  onMarkPosted: () => void;
+  markingPosted: boolean;
+  markPostedError?: string;
 }
 
 // CopyPanel is what an approved LinkedIn, X or copy-only draft shows: Shogun
-// never posts for the owner, so they copy the text and post it themselves.
-export function CopyPanel({ channel, version }: CopyPanelProps) {
+// never posts for the owner, so they copy the text, post it themselves and
+// then say so.
+export function CopyPanel({ channel, version, onMarkPosted, markingPosted, markPostedError }: CopyPanelProps) {
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -129,9 +133,19 @@ export function CopyPanel({ channel, version }: CopyPanelProps) {
       <p className="mb-3 text-muted-ink">
         Shogun does not post to {draftChannelLabel(channel)} for you. Nothing has left yet.
       </p>
-      <Button variant="primary" onClick={copy}>
-        {copied ? "Copied" : "Copy text"}
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button variant="primary" onClick={copy}>
+          {copied ? "Copied" : "Copy text"}
+        </Button>
+        <Button disabled={markingPosted} onClick={onMarkPosted}>
+          Mark as posted
+        </Button>
+      </div>
+      {markPostedError ? (
+        <p role="alert" className="mt-3 border border-ink bg-strip px-3 py-2">
+          {markPostedError}
+        </p>
+      ) : null}
       {failed ? (
         <p role="alert" className="mt-3 border border-ink bg-strip px-3 py-2">
           Your browser blocked copying. Select the text above and copy it by hand.

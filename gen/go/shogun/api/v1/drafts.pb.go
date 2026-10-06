@@ -1308,6 +1308,102 @@ func (x *DiscardResponse) GetDraft() *Draft {
 	return nil
 }
 
+type MarkPostedRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Version       int32                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkPostedRequest) Reset() {
+	*x = MarkPostedRequest{}
+	mi := &file_shogun_api_v1_drafts_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkPostedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkPostedRequest) ProtoMessage() {}
+
+func (x *MarkPostedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_drafts_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkPostedRequest.ProtoReflect.Descriptor instead.
+func (*MarkPostedRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_drafts_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *MarkPostedRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *MarkPostedRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type MarkPostedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Draft         *Draft                 `protobuf:"bytes,1,opt,name=draft,proto3" json:"draft,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkPostedResponse) Reset() {
+	*x = MarkPostedResponse{}
+	mi := &file_shogun_api_v1_drafts_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkPostedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkPostedResponse) ProtoMessage() {}
+
+func (x *MarkPostedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_drafts_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkPostedResponse.ProtoReflect.Descriptor instead.
+func (*MarkPostedResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_drafts_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *MarkPostedResponse) GetDraft() *Draft {
+	if x != nil {
+		return x.Draft
+	}
+	return nil
+}
+
 var File_shogun_api_v1_drafts_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_drafts_proto_rawDesc = "" +
@@ -1388,6 +1484,11 @@ const file_shogun_api_v1_drafts_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\"=\n" +
 	"\x0fDiscardResponse\x12*\n" +
+	"\x05draft\x18\x01 \x01(\v2\x14.shogun.api.v1.DraftR\x05draft\"=\n" +
+	"\x11MarkPostedRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\x05R\aversion\"@\n" +
+	"\x12MarkPostedResponse\x12*\n" +
 	"\x05draft\x18\x01 \x01(\v2\x14.shogun.api.v1.DraftR\x05draft*\xa4\x01\n" +
 	"\tDraftKind\x12\x1a\n" +
 	"\x16DRAFT_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
@@ -1419,7 +1520,7 @@ const file_shogun_api_v1_drafts_proto_rawDesc = "" +
 	"\rVersionAuthor\x12\x1e\n" +
 	"\x1aVERSION_AUTHOR_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11VERSION_AUTHOR_AI\x10\x01\x12\x17\n" +
-	"\x13VERSION_AUTHOR_USER\x10\x022\xbf\x04\n" +
+	"\x13VERSION_AUTHOR_USER\x10\x022\x92\x05\n" +
 	"\rDraftsService\x12N\n" +
 	"\tListQueue\x12\x1f.shogun.api.v1.ListQueueRequest\x1a .shogun.api.v1.ListQueueResponse\x12K\n" +
 	"\bGetDraft\x12\x1e.shogun.api.v1.GetDraftRequest\x1a\x1f.shogun.api.v1.GetDraftResponse\x12Z\n" +
@@ -1428,7 +1529,9 @@ const file_shogun_api_v1_drafts_proto_rawDesc = "" +
 	"Regenerate\x12 .shogun.api.v1.RegenerateRequest\x1a!.shogun.api.v1.RegenerateResponse\x12N\n" +
 	"\tEditDraft\x12\x1f.shogun.api.v1.EditDraftRequest\x1a .shogun.api.v1.EditDraftResponse\x12H\n" +
 	"\aApprove\x12\x1d.shogun.api.v1.ApproveRequest\x1a\x1e.shogun.api.v1.ApproveResponse\x12H\n" +
-	"\aDiscard\x12\x1d.shogun.api.v1.DiscardRequest\x1a\x1e.shogun.api.v1.DiscardResponseB\xad\x01\n" +
+	"\aDiscard\x12\x1d.shogun.api.v1.DiscardRequest\x1a\x1e.shogun.api.v1.DiscardResponse\x12Q\n" +
+	"\n" +
+	"MarkPosted\x12 .shogun.api.v1.MarkPostedRequest\x1a!.shogun.api.v1.MarkPostedResponseB\xad\x01\n" +
 	"\x11com.shogun.api.v1B\vDraftsProtoP\x01Z5github.com/0xHoaxen/shogun/gen/go/shogun/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\rShogun.Api.V1\xca\x02\rShogun\\Api\\V1\xe2\x02\x19Shogun\\Api\\V1\\GPBMetadata\xea\x02\x0fShogun::Api::V1b\x06proto3"
 
 var (
@@ -1444,7 +1547,7 @@ func file_shogun_api_v1_drafts_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_api_v1_drafts_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_shogun_api_v1_drafts_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_shogun_api_v1_drafts_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_shogun_api_v1_drafts_proto_goTypes = []any{
 	(DraftKind)(0),                // 0: shogun.api.v1.DraftKind
 	(DraftChannel)(0),             // 1: shogun.api.v1.DraftChannel
@@ -1467,17 +1570,19 @@ var file_shogun_api_v1_drafts_proto_goTypes = []any{
 	(*ApproveResponse)(nil),       // 18: shogun.api.v1.ApproveResponse
 	(*DiscardRequest)(nil),        // 19: shogun.api.v1.DiscardRequest
 	(*DiscardResponse)(nil),       // 20: shogun.api.v1.DiscardResponse
-	(*timestamppb.Timestamp)(nil), // 21: google.protobuf.Timestamp
+	(*MarkPostedRequest)(nil),     // 21: shogun.api.v1.MarkPostedRequest
+	(*MarkPostedResponse)(nil),    // 22: shogun.api.v1.MarkPostedResponse
+	(*timestamppb.Timestamp)(nil), // 23: google.protobuf.Timestamp
 }
 var file_shogun_api_v1_drafts_proto_depIdxs = []int32{
 	0,  // 0: shogun.api.v1.Draft.kind:type_name -> shogun.api.v1.DraftKind
 	3,  // 1: shogun.api.v1.Draft.target:type_name -> shogun.api.v1.DraftTarget
 	1,  // 2: shogun.api.v1.Draft.channel:type_name -> shogun.api.v1.DraftChannel
 	2,  // 3: shogun.api.v1.Draft.state:type_name -> shogun.api.v1.DraftState
-	21, // 4: shogun.api.v1.Draft.created_at:type_name -> google.protobuf.Timestamp
-	21, // 5: shogun.api.v1.Draft.updated_at:type_name -> google.protobuf.Timestamp
+	23, // 4: shogun.api.v1.Draft.created_at:type_name -> google.protobuf.Timestamp
+	23, // 5: shogun.api.v1.Draft.updated_at:type_name -> google.protobuf.Timestamp
 	4,  // 6: shogun.api.v1.DraftVersion.author:type_name -> shogun.api.v1.VersionAuthor
-	21, // 7: shogun.api.v1.DraftVersion.created_at:type_name -> google.protobuf.Timestamp
+	23, // 7: shogun.api.v1.DraftVersion.created_at:type_name -> google.protobuf.Timestamp
 	2,  // 8: shogun.api.v1.ListQueueRequest.state:type_name -> shogun.api.v1.DraftState
 	5,  // 9: shogun.api.v1.ListQueueResponse.drafts:type_name -> shogun.api.v1.Draft
 	5,  // 10: shogun.api.v1.GetDraftResponse.draft:type_name -> shogun.api.v1.Draft
@@ -1491,25 +1596,28 @@ var file_shogun_api_v1_drafts_proto_depIdxs = []int32{
 	6,  // 18: shogun.api.v1.EditDraftResponse.draft_version:type_name -> shogun.api.v1.DraftVersion
 	5,  // 19: shogun.api.v1.ApproveResponse.draft:type_name -> shogun.api.v1.Draft
 	5,  // 20: shogun.api.v1.DiscardResponse.draft:type_name -> shogun.api.v1.Draft
-	7,  // 21: shogun.api.v1.DraftsService.ListQueue:input_type -> shogun.api.v1.ListQueueRequest
-	9,  // 22: shogun.api.v1.DraftsService.GetDraft:input_type -> shogun.api.v1.GetDraftRequest
-	11, // 23: shogun.api.v1.DraftsService.GenerateDraft:input_type -> shogun.api.v1.GenerateDraftRequest
-	13, // 24: shogun.api.v1.DraftsService.Regenerate:input_type -> shogun.api.v1.RegenerateRequest
-	15, // 25: shogun.api.v1.DraftsService.EditDraft:input_type -> shogun.api.v1.EditDraftRequest
-	17, // 26: shogun.api.v1.DraftsService.Approve:input_type -> shogun.api.v1.ApproveRequest
-	19, // 27: shogun.api.v1.DraftsService.Discard:input_type -> shogun.api.v1.DiscardRequest
-	8,  // 28: shogun.api.v1.DraftsService.ListQueue:output_type -> shogun.api.v1.ListQueueResponse
-	10, // 29: shogun.api.v1.DraftsService.GetDraft:output_type -> shogun.api.v1.GetDraftResponse
-	12, // 30: shogun.api.v1.DraftsService.GenerateDraft:output_type -> shogun.api.v1.GenerateDraftResponse
-	14, // 31: shogun.api.v1.DraftsService.Regenerate:output_type -> shogun.api.v1.RegenerateResponse
-	16, // 32: shogun.api.v1.DraftsService.EditDraft:output_type -> shogun.api.v1.EditDraftResponse
-	18, // 33: shogun.api.v1.DraftsService.Approve:output_type -> shogun.api.v1.ApproveResponse
-	20, // 34: shogun.api.v1.DraftsService.Discard:output_type -> shogun.api.v1.DiscardResponse
-	28, // [28:35] is the sub-list for method output_type
-	21, // [21:28] is the sub-list for method input_type
-	21, // [21:21] is the sub-list for extension type_name
-	21, // [21:21] is the sub-list for extension extendee
-	0,  // [0:21] is the sub-list for field type_name
+	5,  // 21: shogun.api.v1.MarkPostedResponse.draft:type_name -> shogun.api.v1.Draft
+	7,  // 22: shogun.api.v1.DraftsService.ListQueue:input_type -> shogun.api.v1.ListQueueRequest
+	9,  // 23: shogun.api.v1.DraftsService.GetDraft:input_type -> shogun.api.v1.GetDraftRequest
+	11, // 24: shogun.api.v1.DraftsService.GenerateDraft:input_type -> shogun.api.v1.GenerateDraftRequest
+	13, // 25: shogun.api.v1.DraftsService.Regenerate:input_type -> shogun.api.v1.RegenerateRequest
+	15, // 26: shogun.api.v1.DraftsService.EditDraft:input_type -> shogun.api.v1.EditDraftRequest
+	17, // 27: shogun.api.v1.DraftsService.Approve:input_type -> shogun.api.v1.ApproveRequest
+	19, // 28: shogun.api.v1.DraftsService.Discard:input_type -> shogun.api.v1.DiscardRequest
+	21, // 29: shogun.api.v1.DraftsService.MarkPosted:input_type -> shogun.api.v1.MarkPostedRequest
+	8,  // 30: shogun.api.v1.DraftsService.ListQueue:output_type -> shogun.api.v1.ListQueueResponse
+	10, // 31: shogun.api.v1.DraftsService.GetDraft:output_type -> shogun.api.v1.GetDraftResponse
+	12, // 32: shogun.api.v1.DraftsService.GenerateDraft:output_type -> shogun.api.v1.GenerateDraftResponse
+	14, // 33: shogun.api.v1.DraftsService.Regenerate:output_type -> shogun.api.v1.RegenerateResponse
+	16, // 34: shogun.api.v1.DraftsService.EditDraft:output_type -> shogun.api.v1.EditDraftResponse
+	18, // 35: shogun.api.v1.DraftsService.Approve:output_type -> shogun.api.v1.ApproveResponse
+	20, // 36: shogun.api.v1.DraftsService.Discard:output_type -> shogun.api.v1.DiscardResponse
+	22, // 37: shogun.api.v1.DraftsService.MarkPosted:output_type -> shogun.api.v1.MarkPostedResponse
+	30, // [30:38] is the sub-list for method output_type
+	22, // [22:30] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_shogun_api_v1_drafts_proto_init() }
@@ -1523,7 +1631,7 @@ func file_shogun_api_v1_drafts_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_api_v1_drafts_proto_rawDesc), len(file_shogun_api_v1_drafts_proto_rawDesc)),
 			NumEnums:      5,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

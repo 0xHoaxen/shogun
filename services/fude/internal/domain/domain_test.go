@@ -211,3 +211,36 @@ func TestDraftRecordSendFailed(t *testing.T) {
 		})
 	}
 }
+
+func TestMarkPosted(t *testing.T) {
+	now := time.Date(2026, 10, 7, 8, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name       string
+		from       DraftState
+		channel    Channel
+		wantReason string
+	}{
+		{"approved linkedin post is sent", DraftApproved, ChannelLinkedIn, ""},
+		{"approved x post is sent", DraftApproved, ChannelX, ""},
+		{"approved other draft is sent", DraftApproved, ChannelOther, ""},
+		{"approved email is refused", DraftApproved, ChannelEmail, ReasonDraftChannelNotCopyOnly},
+		{"pending post is refused", DraftPending, ChannelLinkedIn, ReasonDraftStateInvalidTransition},
+		{"sent post is refused", DraftSent, ChannelLinkedIn, ReasonDraftStateInvalidTransition},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Draft{State: tt.from}.MarkPosted(tt.channel, now)
+
+			if tt.wantReason == "" {
+				if err != nil || got.State != DraftSent || !got.UpdatedAt.Equal(now) {
+					t.Fatalf("want sent, got %+v, %v", got, err)
+				}
+				return
+			}
+			var te *TransitionError
+			if !errors.As(err, &te) || te.Reason != tt.wantReason || got.State != tt.from {
+				t.Fatalf("want %s and no change, got %+v, %v", tt.wantReason, got, err)
+			}
+		})
+	}
+}

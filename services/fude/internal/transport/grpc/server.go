@@ -72,6 +72,15 @@ func (s *Server) Discard(ctx context.Context, req *fudev1.DiscardRequest) (*fude
 	return &fudev1.DiscardResponse{Draft: draftToProto(d)}, nil
 }
 
+// MarkPosted implements fude.v1.FudeService.
+func (s *Server) MarkPosted(ctx context.Context, req *fudev1.MarkPostedRequest) (*fudev1.MarkPostedResponse, error) {
+	d, err := s.svc.MarkPosted(ctx, req.GetDraftId(), req.GetVersion())
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &fudev1.MarkPostedResponse{Draft: draftToProto(d)}, nil
+}
+
 // GetDraft implements fude.v1.FudeService.
 func (s *Server) GetDraft(ctx context.Context, req *fudev1.GetDraftRequest) (*fudev1.GetDraftResponse, error) {
 	detail, err := s.svc.GetDraft(ctx, req.GetDraftId())
