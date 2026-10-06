@@ -15,3 +15,7 @@ SELECT * FROM accounts WHERE id = @id AND owner_id = @owner_id;
 
 -- name: ListAccounts :many
 SELECT * FROM accounts WHERE owner_id = @owner_id ORDER BY created_at, id;
+
+-- name: SetAccountStatus :execrows
+UPDATE accounts SET status = @status, updated_at = now()
+WHERE id = @id AND owner_id = @owner_id;

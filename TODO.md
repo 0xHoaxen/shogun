@@ -320,7 +320,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: migration `00002_mail.sql` (`accounts messages sends`, as in the DDL); `internal/envelope` (AES-256-GCM, a data key per value wrapped by an id-tagged master key, bound to its row so a copied token will not open); `app.Accounts` with Connect (reconnect keeps the id and sync cursor, clears a reauth status) and Token.
   Done when: `cd services/tsubame && go test -race ./...` passes: round trip, tamper, wrong row, rotation, reconnect, disabled account, no plaintext in the stored column.
 
-- [ ] **P7.4b tsubame MailProvider and Gmail** (M) Needs: P7.4a
+- [x] **P7.4b tsubame MailProvider and Gmail** (M) Needs: P7.4a
   Do: `MailProvider` interface (List, Get, Send, History) and a fake; Gmail implemented over its REST API with `net/http` and `golang.org/x/oauth2` (`google.golang.org/api` needs Go 1.25.8 and the repo is pinned to 1.25.4 by the linter), base URL injectable for tests; the refresh token is exchanged per call and never logged.
   Done when: tests against an `httptest` Gmail and token endpoint cover list, get, history (including an expired cursor), send, a revoked token marking the account for reauth, and no token in log output.
 

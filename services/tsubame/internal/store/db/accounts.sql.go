@@ -75,6 +75,25 @@ func (q *Queries) ListAccounts(ctx context.Context, ownerID uuid.UUID) ([]Accoun
 	return items, nil
 }
 
+const setAccountStatus = `-- name: SetAccountStatus :execrows
+UPDATE accounts SET status = $1, updated_at = now()
+WHERE id = $2 AND owner_id = $3
+`
+
+type SetAccountStatusParams struct {
+	Status  string
+	ID      uuid.UUID
+	OwnerID uuid.UUID
+}
+
+func (q *Queries) SetAccountStatus(ctx context.Context, arg SetAccountStatusParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setAccountStatus, arg.Status, arg.ID, arg.OwnerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const upsertAccount = `-- name: UpsertAccount :one
 INSERT INTO accounts (id, owner_id, provider, address, token_ciphertext, token_key_id)
 VALUES ($1, $2, $3, $4, $5, $6)

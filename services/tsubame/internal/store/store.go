@@ -60,3 +60,16 @@ func (r *Repo) ListAccounts(ctx context.Context, owner uuid.UUID) ([]db.Account,
 	}
 	return as, nil
 }
+
+// SetAccountStatus changes an account's status. It is ErrNotFound when the
+// account is not the owner's.
+func (r *Repo) SetAccountStatus(ctx context.Context, owner, id uuid.UUID, status string) error {
+	n, err := r.q.SetAccountStatus(ctx, db.SetAccountStatusParams{ID: id, OwnerID: owner, Status: status})
+	if err != nil {
+		return fmt.Errorf("set account status: %w", mapErr(err))
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}

@@ -7,6 +7,7 @@ require (
 	github.com/0xHoaxen/shogun/pkg v0.0.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
+	golang.org/x/oauth2 v0.34.0
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.12
 )

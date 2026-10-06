@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"os"
 	"strings"
 	"testing"
@@ -15,6 +16,8 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
+	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail"
+	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/mailtest"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/store"
 	"github.com/0xHoaxen/shogun/services/tsubame/migrations"
 )
@@ -135,5 +138,77 @@ func TestConnectRejectsIncompleteInput(t *testing.T) {
 				t.Fatal("want an error")
 			}
 		})
+	}
+}
+
+func TestAProviderThatFindsAccessRevokedMarksTheAccountForReauth(t *testing.T) {
+	accounts, pool := newAccounts(t)
+	ctx := context.Background()
+	owner := uuid.New()
+	acc, _ := accounts.Connect(ctx, owner, "gmail", "me@example.com", refresh)
+	fake := &mailtest.Fake{Err: mail.ErrAuthRevoked}
+	var logs bytes.Buffer
+	log := slog.New(slog.NewTextHandler(&logs, nil))
+	p, err := accounts.Provider(ctx, owner, acc.ID, fake, log)
+	if err != nil {
+		t.Fatalf("provider: %v", err)
+	}
+
+	_, callErr := p.List(ctx, mail.ListQuery{})
+	var status string
+	_ = pool.QueryRow(ctx, `SELECT status FROM accounts WHERE id = $1`, acc.ID).Scan(&status)
+	_, again := accounts.Provider(ctx, owner, acc.ID, fake, log)
+
+	if !errors.Is(callErr, mail.ErrAuthRevoked) || status != "reauth_required" {
+		t.Fatalf("call %v, status %q", callErr, status)
+	}
+	if !errors.Is(again, app.ErrAccountNotUsable) {
+		t.Fatalf("an account needing reauth was opened again: %v", again)
+	}
+	if len(fake.Tokens) != 1 || fake.Tokens[0] != refresh {
+		t.Fatalf("factory got tokens %v", fake.Tokens)
+	}
+	if strings.Contains(logs.String(), refresh) || !strings.Contains(logs.String(), acc.ID.String()) {
+		t.Fatalf("log must name the account and never the token:\n%s", logs.String())
+	}
+}
+
+func TestOtherProviderErrorsLeaveTheAccountActive(t *testing.T) {
+	accounts, pool := newAccounts(t)
+	ctx := context.Background()
+	owner := uuid.New()
+	acc, _ := accounts.Connect(ctx, owner, "gmail", "me@example.com", refresh)
+	fake := &mailtest.Fake{Err: &mail.APIError{Status: 429, Message: "RESOURCE_EXHAUSTED"}}
+	p, _ := accounts.Provider(ctx, owner, acc.ID, fake, slog.New(slog.DiscardHandler))
+
+	_, err := p.Get(ctx, "m1")
+	var status string
+	_ = pool.QueryRow(ctx, `SELECT status FROM accounts WHERE id = $1`, acc.ID).Scan(&status)
+
+	var api *mail.APIError
+	if !errors.As(err, &api) || status != "active" {
+		t.Fatalf("err %v, status %q", err, status)
+	}
+}
+
+func TestAGuardedProviderPassesCallsThrough(t *testing.T) {
+	accounts, _ := newAccounts(t)
+	ctx := context.Background()
+	owner := uuid.New()
+	acc, _ := accounts.Connect(ctx, owner, "gmail", "me@example.com", refresh)
+	fake := &mailtest.Fake{Address: "me@example.com", Messages: []mail.Message{{ID: "m1", Subject: "hi"}}}
+	p, _ := accounts.Provider(ctx, owner, acc.ID, fake, slog.New(slog.DiscardHandler))
+
+	profile, pErr := p.Profile(ctx)
+	page, lErr := p.List(ctx, mail.ListQuery{})
+	msg, gErr := p.Get(ctx, "m1")
+	hist, hErr := p.History(ctx, "0")
+	sent, sErr := p.Send(ctx, mail.Outgoing{To: []string{"a@b.example"}, DraftID: "d1"})
+
+	if pErr != nil || lErr != nil || gErr != nil || hErr != nil || sErr != nil {
+		t.Fatalf("errors: %v %v %v %v %v", pErr, lErr, gErr, hErr, sErr)
+	}
+	if profile.Address != "me@example.com" || len(page.IDs) != 1 || msg.Subject != "hi" || len(hist.AddedIDs) != 1 || sent.ID == "" || fake.SentCount() != 1 {
+		t.Fatalf("got %+v %+v %+v %+v %+v", profile, page, msg, hist, sent)
 	}
 }
