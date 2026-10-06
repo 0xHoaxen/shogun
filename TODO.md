@@ -213,7 +213,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `cd services/torii && go test -race ./internal/transport/...` passes: unauthenticated, unknown and expired sessions return `Unauthenticated`; `GetSession`, `Logout`, renewal and identity propagation work.
 
 - [ ] **P4.9d Torii housekeeping** (S) Needs: P4.9c2
-  Do: River periodic job deleting expired `torii.sessions` rows (`store.Sessions.DeleteExpired` exists); add the new torii variables (`GOOGLE_*`, `TORII_ALLOWED_EMAILS`, `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR`) to `deploy/helm/values/staging/torii.yaml`. `TODO(owner)`: production values and the real Google client are yours to set.
+  Do: River periodic job deleting expired `torii.sessions` rows (`store.Sessions.DeleteExpired` exists); add the new torii variables (`GOOGLE_*`, `TORII_ALLOWED_EMAILS`, `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR`, `KAGAMI_ADDR`, `SOROBAN_ADDR`) to `deploy/helm/values/staging/torii.yaml`. `TODO(owner)`: production values and the real Google client are yours to set.
   Done when: a test with a fake clock shows only expired sessions removed; `helm template` passes for staging torii.
 
 - [x] **P4.9c2 Public listener, config, rate limit, size cap** (M) Needs: P4.9c1
@@ -258,19 +258,27 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 6: soroban (cost control) and pkg/llm
 
-- [ ] **P6.1 soroban migrations and proto** (M) Needs: P2.3
+- [x] **P6.1 soroban migrations and proto** (M) Needs: P2.3
   Do: `prices budgets budget_periods reservations ledger` per the DDL; RPCs Reserve, Commit, Release, GetSpend, SetBudget, ListBudgets, SetPrice, ListPrices; events `cost.threshold_reached`, `cost.budget_exhausted`. Seed prices for the models in use and default budgets ($20 global monthly hard, $15 `fude` monthly hard, $3 other services monthly hard, $1 per feature daily soft) with `TODO(owner)` to confirm numbers.
   Done when: `make proto` and `make migrate` pass.
 
-- [ ] **P6.2 Reserve / Commit / Release** (L, split) Needs: P6.1, P1.5
-  Do: transactional Reserve locking matching `budget_periods` rows `FOR UPDATE`, checking `spent + reserved + estimate <= limit` for hard budgets, creating periods lazily at local midnight boundaries; Commit moves reserved to spent and writes `ledger`; Release; `expire_reservations` job every minute; threshold events emitted once per period.
-  Done when: concurrency test with 50 parallel Reserve calls against a small hard budget never exceeds the limit; commit and release leave `reserved_micros` at 0.
+- [x] **P6.2a Reserve** (M) Needs: P6.1, P1.5
+  Do: transactional Reserve locking matching `budget_periods` rows `FOR UPDATE` (ordered by id), checking `spent + reserved + estimate <= limit` for hard budgets, creating periods lazily at local midnight boundaries (Asia/Kolkata); default budgets copied from the nil-owner templates on first use; a refusal is `ResourceExhausted` with reason `BUDGET_EXHAUSTED` and `resets_at`, and `cost.budget_exhausted` is emitted once per period.
+  Done when: concurrency test with 50 parallel Reserve calls against a small hard budget never exceeds the limit.
 
-- [ ] **P6.3 pkg/llm** (M) Needs: P6.2, P1.7
+- [x] **P6.2b Commit / Release / expiry / thresholds** (M) Needs: P6.2a
+  Do: Commit moves reserved to spent and writes `ledger` (a commit on an expired reservation still records the spend); Release; `expire_reservations` River job every minute; `cost.threshold_reached` emitted once per period and threshold. `cost.*` routes in `pkg/bus/routes.go` are added with their consumers (taiko, sensei), as for the other events.
+  Done when: commit and release leave `reserved_micros` at 0; a threshold is emitted once per period.
+
+- [x] **P6.2c soroban read and admin RPCs** (M) Needs: P6.2b
+  Do: GetSpend (group by service, feature, model, day), SetBudget (optimistic `version`), ListBudgets (with current period spent and reserved), SetPrice, ListPrices.
+  Done when: handler tests pass, including a stale-version SetBudget and spend grouped by each key.
+
+- [x] **P6.3 pkg/llm** (M) Needs: P6.2b, P1.7
   Do: `llm.Complete(ctx, feature, req)`: count tokens, estimate cost, Reserve, call the Claude API, Commit actual usage (or Release on error), prompt caching for system prompt, optional response cache by prompt hash for 24 h; fails closed when soroban is unreachable; model per feature from config; API client behind an interface with a fake for tests.
   Done when: tests with the fake API cover allowed, denied (`ResourceExhausted` with `resets_at`), API error releases reservation, soroban down fails closed.
 
-- [ ] **P6.4 soroban admin endpoints in torii and a spend screen** (M) Needs: P6.3, P5.1
+- [x] **P6.4 soroban admin endpoints in torii and a spend screen** (M) Needs: P6.2c, P6.3, P5.1
   Do: `CostsService` in `api/v1` (spend by day/service/feature, budgets CRUD) and a Settings > Spend page.
   Done when: Playwright test edits a budget and sees updated spend.
 

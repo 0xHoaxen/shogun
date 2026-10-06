@@ -14,10 +14,12 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/api/v1"
 	"github.com/0xHoaxen/shogun/gen/go/shogun/api/v1/apiv1connect"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/pkg/server"
@@ -44,6 +46,7 @@ func addLoginSettings(t *testing.T, env map[string]string) *idptest.IDP {
 	env["TORII_PUBLIC_ADDR"] = "127.0.0.1:0"
 	// The connection is lazy, so tests that never call kagami need no server.
 	env["KAGAMI_ADDR"] = "127.0.0.1:1"
+	env["SOROBAN_ADDR"] = "127.0.0.1:1"
 	return idp
 }
 
@@ -88,6 +91,45 @@ func (f *fakeKagami) identityToken() string {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.identity
+}
+
+// fakeSoroban answers ListBudgets with one budget and keeps the identity token
+// the call carried.
+type fakeSoroban struct {
+	sorobanv1.UnimplementedSorobanServiceServer
+	mu       sync.Mutex
+	identity string
+}
+
+func (f *fakeSoroban) ListBudgets(ctx context.Context, _ *sorobanv1.ListBudgetsRequest) (*sorobanv1.ListBudgetsResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if values := md.Get("x-shogun-identity"); len(values) > 0 {
+		f.identity = values[0]
+	}
+	return &sorobanv1.ListBudgetsResponse{Budgets: []*sorobanv1.Budget{{
+		Id: "budget-1", ScopeType: sorobanv1.ScopeType_SCOPE_TYPE_GLOBAL, Period: sorobanv1.BudgetPeriod_BUDGET_PERIOD_MONTHLY,
+		LimitMicros: 20_000_000, Mode: sorobanv1.BudgetMode_BUDGET_MODE_HARD, Enabled: true, Version: 1,
+		SpentMicros: 1_500_000, ResetsAt: timestamppb.New(time.Date(2026, 10, 31, 18, 30, 0, 0, time.UTC)),
+	}}}, nil
+}
+
+func (f *fakeSoroban) identityToken() string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.identity
+}
+
+func startFakeSoroban(t *testing.T) (*fakeSoroban, string) {
+	t.Helper()
+	lis := listen(t)
+	srv := grpc.NewServer()
+	fake := &fakeSoroban{}
+	sorobanv1.RegisterSorobanServiceServer(srv, fake)
+	go func() { _ = srv.Serve(lis) }()
+	t.Cleanup(srv.Stop)
+	return fake, lis.Addr().String()
 }
 
 func startFakeKagami(t *testing.T) (*fakeKagami, string) {
@@ -210,6 +252,49 @@ func TestRunBoardCallsKagamiAsTheSignedInOwner(t *testing.T) {
 	identity, verifyErr := authority.Verify(kagami.identityToken())
 	if verifyErr != nil || identity.OwnerID == "" {
 		t.Fatalf("kagami got identity %+v, verify error %v; want a valid token naming the owner", identity, verifyErr)
+	}
+}
+
+func TestRunListBudgetsCallsSorobanAsTheSignedInOwner(t *testing.T) {
+	// Arrange
+	soroban, sorobanAddr := startFakeSoroban(t)
+	base, idp := startTorii(t, map[string]string{"SOROBAN_ADDR": sorobanAddr})
+	browser := newBrowser(t)
+	signIn(t, browser, base, idp)
+	costs := apiv1connect.NewCostsServiceClient(browser, base)
+
+	// Act
+	resp, err := costs.ListBudgets(context.Background(), connect.NewRequest(&apiv1.ListBudgetsRequest{}))
+	// Assert
+	if err != nil {
+		t.Fatalf("ListBudgets: %v", err)
+	}
+	budgets := resp.Msg.GetBudgets()
+	if len(budgets) != 1 || budgets[0].GetLimitMicros() != 20_000_000 || budgets[0].GetSpentMicros() != 1_500_000 ||
+		budgets[0].GetScope() != apiv1.BudgetScope_BUDGET_SCOPE_GLOBAL || budgets[0].GetResetsAt() != "2026-10-31T18:30:00Z" {
+		t.Fatalf("budgets = %v", budgets)
+	}
+	authority, authErr := authz.New([]byte(testIdentityKey))
+	if authErr != nil {
+		t.Fatal(authErr)
+	}
+	identity, verifyErr := authority.Verify(soroban.identityToken())
+	if verifyErr != nil || identity.OwnerID == "" {
+		t.Fatalf("soroban got identity %+v, verify error %v; want a valid token naming the owner", identity, verifyErr)
+	}
+}
+
+func TestRunCostsWithoutSessionAreUnauthenticated(t *testing.T) {
+	// Arrange
+	base, _ := startTorii(t, nil)
+	costs := apiv1connect.NewCostsServiceClient(newBrowser(t), base)
+
+	// Act
+	_, err := costs.ListBudgets(context.Background(), connect.NewRequest(&apiv1.ListBudgetsRequest{}))
+
+	// Assert
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Fatalf("code = %v, want Unauthenticated (err %v)", connect.CodeOf(err), err)
 	}
 }
 

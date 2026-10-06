@@ -9,7 +9,9 @@ package sorobanv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +22,1720 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ScopeType int32
+
+const (
+	ScopeType_SCOPE_TYPE_UNSPECIFIED ScopeType = 0
+	ScopeType_SCOPE_TYPE_GLOBAL      ScopeType = 1
+	ScopeType_SCOPE_TYPE_SERVICE     ScopeType = 2
+	ScopeType_SCOPE_TYPE_FEATURE     ScopeType = 3
+)
+
+// Enum value maps for ScopeType.
+var (
+	ScopeType_name = map[int32]string{
+		0: "SCOPE_TYPE_UNSPECIFIED",
+		1: "SCOPE_TYPE_GLOBAL",
+		2: "SCOPE_TYPE_SERVICE",
+		3: "SCOPE_TYPE_FEATURE",
+	}
+	ScopeType_value = map[string]int32{
+		"SCOPE_TYPE_UNSPECIFIED": 0,
+		"SCOPE_TYPE_GLOBAL":      1,
+		"SCOPE_TYPE_SERVICE":     2,
+		"SCOPE_TYPE_FEATURE":     3,
+	}
+)
+
+func (x ScopeType) Enum() *ScopeType {
+	p := new(ScopeType)
+	*p = x
+	return p
+}
+
+func (x ScopeType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ScopeType) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_soroban_v1_soroban_proto_enumTypes[0].Descriptor()
+}
+
+func (ScopeType) Type() protoreflect.EnumType {
+	return &file_shogun_soroban_v1_soroban_proto_enumTypes[0]
+}
+
+func (x ScopeType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ScopeType.Descriptor instead.
+func (ScopeType) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{0}
+}
+
+type BudgetPeriod int32
+
+const (
+	BudgetPeriod_BUDGET_PERIOD_UNSPECIFIED BudgetPeriod = 0
+	BudgetPeriod_BUDGET_PERIOD_DAILY       BudgetPeriod = 1
+	BudgetPeriod_BUDGET_PERIOD_MONTHLY     BudgetPeriod = 2
+)
+
+// Enum value maps for BudgetPeriod.
+var (
+	BudgetPeriod_name = map[int32]string{
+		0: "BUDGET_PERIOD_UNSPECIFIED",
+		1: "BUDGET_PERIOD_DAILY",
+		2: "BUDGET_PERIOD_MONTHLY",
+	}
+	BudgetPeriod_value = map[string]int32{
+		"BUDGET_PERIOD_UNSPECIFIED": 0,
+		"BUDGET_PERIOD_DAILY":       1,
+		"BUDGET_PERIOD_MONTHLY":     2,
+	}
+)
+
+func (x BudgetPeriod) Enum() *BudgetPeriod {
+	p := new(BudgetPeriod)
+	*p = x
+	return p
+}
+
+func (x BudgetPeriod) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BudgetPeriod) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_soroban_v1_soroban_proto_enumTypes[1].Descriptor()
+}
+
+func (BudgetPeriod) Type() protoreflect.EnumType {
+	return &file_shogun_soroban_v1_soroban_proto_enumTypes[1]
+}
+
+func (x BudgetPeriod) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BudgetPeriod.Descriptor instead.
+func (BudgetPeriod) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{1}
+}
+
+type BudgetMode int32
+
+const (
+	BudgetMode_BUDGET_MODE_UNSPECIFIED BudgetMode = 0
+	BudgetMode_BUDGET_MODE_HARD        BudgetMode = 1
+	BudgetMode_BUDGET_MODE_SOFT        BudgetMode = 2
+)
+
+// Enum value maps for BudgetMode.
+var (
+	BudgetMode_name = map[int32]string{
+		0: "BUDGET_MODE_UNSPECIFIED",
+		1: "BUDGET_MODE_HARD",
+		2: "BUDGET_MODE_SOFT",
+	}
+	BudgetMode_value = map[string]int32{
+		"BUDGET_MODE_UNSPECIFIED": 0,
+		"BUDGET_MODE_HARD":        1,
+		"BUDGET_MODE_SOFT":        2,
+	}
+)
+
+func (x BudgetMode) Enum() *BudgetMode {
+	p := new(BudgetMode)
+	*p = x
+	return p
+}
+
+func (x BudgetMode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BudgetMode) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_soroban_v1_soroban_proto_enumTypes[2].Descriptor()
+}
+
+func (BudgetMode) Type() protoreflect.EnumType {
+	return &file_shogun_soroban_v1_soroban_proto_enumTypes[2]
+}
+
+func (x BudgetMode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BudgetMode.Descriptor instead.
+func (BudgetMode) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{2}
+}
+
+type SpendGroup int32
+
+const (
+	SpendGroup_SPEND_GROUP_UNSPECIFIED SpendGroup = 0
+	SpendGroup_SPEND_GROUP_SERVICE     SpendGroup = 1
+	SpendGroup_SPEND_GROUP_FEATURE     SpendGroup = 2
+	SpendGroup_SPEND_GROUP_MODEL       SpendGroup = 3
+	SpendGroup_SPEND_GROUP_DAY         SpendGroup = 4
+)
+
+// Enum value maps for SpendGroup.
+var (
+	SpendGroup_name = map[int32]string{
+		0: "SPEND_GROUP_UNSPECIFIED",
+		1: "SPEND_GROUP_SERVICE",
+		2: "SPEND_GROUP_FEATURE",
+		3: "SPEND_GROUP_MODEL",
+		4: "SPEND_GROUP_DAY",
+	}
+	SpendGroup_value = map[string]int32{
+		"SPEND_GROUP_UNSPECIFIED": 0,
+		"SPEND_GROUP_SERVICE":     1,
+		"SPEND_GROUP_FEATURE":     2,
+		"SPEND_GROUP_MODEL":       3,
+		"SPEND_GROUP_DAY":         4,
+	}
+)
+
+func (x SpendGroup) Enum() *SpendGroup {
+	p := new(SpendGroup)
+	*p = x
+	return p
+}
+
+func (x SpendGroup) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SpendGroup) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_soroban_v1_soroban_proto_enumTypes[3].Descriptor()
+}
+
+func (SpendGroup) Type() protoreflect.EnumType {
+	return &file_shogun_soroban_v1_soroban_proto_enumTypes[3]
+}
+
+func (x SpendGroup) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SpendGroup.Descriptor instead.
+func (SpendGroup) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{3}
+}
+
+// Usage is the token counts of one call.
+type Usage struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	InputTokens      int32                  `protobuf:"varint,1,opt,name=input_tokens,json=inputTokens,proto3" json:"input_tokens,omitempty"`
+	OutputTokens     int32                  `protobuf:"varint,2,opt,name=output_tokens,json=outputTokens,proto3" json:"output_tokens,omitempty"`
+	CacheReadTokens  int32                  `protobuf:"varint,3,opt,name=cache_read_tokens,json=cacheReadTokens,proto3" json:"cache_read_tokens,omitempty"`
+	CacheWriteTokens int32                  `protobuf:"varint,4,opt,name=cache_write_tokens,json=cacheWriteTokens,proto3" json:"cache_write_tokens,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *Usage) Reset() {
+	*x = Usage{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Usage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Usage) ProtoMessage() {}
+
+func (x *Usage) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Usage.ProtoReflect.Descriptor instead.
+func (*Usage) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Usage) GetInputTokens() int32 {
+	if x != nil {
+		return x.InputTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetOutputTokens() int32 {
+	if x != nil {
+		return x.OutputTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheReadTokens() int32 {
+	if x != nil {
+		return x.CacheReadTokens
+	}
+	return 0
+}
+
+func (x *Usage) GetCacheWriteTokens() int32 {
+	if x != nil {
+		return x.CacheWriteTokens
+	}
+	return 0
+}
+
+type ReserveRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Service string                 `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
+	// feature is service.name, for example fude.cover_letter.
+	Feature         string `protobuf:"bytes,2,opt,name=feature,proto3" json:"feature,omitempty"`
+	Model           string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	EstInputTokens  int32  `protobuf:"varint,4,opt,name=est_input_tokens,json=estInputTokens,proto3" json:"est_input_tokens,omitempty"`
+	EstOutputTokens int32  `protobuf:"varint,5,opt,name=est_output_tokens,json=estOutputTokens,proto3" json:"est_output_tokens,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ReserveRequest) Reset() {
+	*x = ReserveRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReserveRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReserveRequest) ProtoMessage() {}
+
+func (x *ReserveRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReserveRequest.ProtoReflect.Descriptor instead.
+func (*ReserveRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ReserveRequest) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *ReserveRequest) GetFeature() string {
+	if x != nil {
+		return x.Feature
+	}
+	return ""
+}
+
+func (x *ReserveRequest) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *ReserveRequest) GetEstInputTokens() int32 {
+	if x != nil {
+		return x.EstInputTokens
+	}
+	return 0
+}
+
+func (x *ReserveRequest) GetEstOutputTokens() int32 {
+	if x != nil {
+		return x.EstOutputTokens
+	}
+	return 0
+}
+
+type ReserveResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	EstMicros     int64                  `protobuf:"varint,3,opt,name=est_micros,json=estMicros,proto3" json:"est_micros,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReserveResponse) Reset() {
+	*x = ReserveResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReserveResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReserveResponse) ProtoMessage() {}
+
+func (x *ReserveResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReserveResponse.ProtoReflect.Descriptor instead.
+func (*ReserveResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ReserveResponse) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *ReserveResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *ReserveResponse) GetEstMicros() int64 {
+	if x != nil {
+		return x.EstMicros
+	}
+	return 0
+}
+
+type CommitRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	Usage         *Usage                 `protobuf:"bytes,2,opt,name=usage,proto3" json:"usage,omitempty"`
+	RequestId     string                 `protobuf:"bytes,3,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommitRequest) Reset() {
+	*x = CommitRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommitRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitRequest) ProtoMessage() {}
+
+func (x *CommitRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitRequest.ProtoReflect.Descriptor instead.
+func (*CommitRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CommitRequest) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *CommitRequest) GetUsage() *Usage {
+	if x != nil {
+		return x.Usage
+	}
+	return nil
+}
+
+func (x *CommitRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+type LedgerEntry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ReservationId string                 `protobuf:"bytes,2,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	Service       string                 `protobuf:"bytes,3,opt,name=service,proto3" json:"service,omitempty"`
+	Feature       string                 `protobuf:"bytes,4,opt,name=feature,proto3" json:"feature,omitempty"`
+	Model         string                 `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
+	Usage         *Usage                 `protobuf:"bytes,6,opt,name=usage,proto3" json:"usage,omitempty"`
+	CostMicros    int64                  `protobuf:"varint,7,opt,name=cost_micros,json=costMicros,proto3" json:"cost_micros,omitempty"`
+	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LedgerEntry) Reset() {
+	*x = LedgerEntry{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LedgerEntry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LedgerEntry) ProtoMessage() {}
+
+func (x *LedgerEntry) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LedgerEntry.ProtoReflect.Descriptor instead.
+func (*LedgerEntry) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *LedgerEntry) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LedgerEntry) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+func (x *LedgerEntry) GetService() string {
+	if x != nil {
+		return x.Service
+	}
+	return ""
+}
+
+func (x *LedgerEntry) GetFeature() string {
+	if x != nil {
+		return x.Feature
+	}
+	return ""
+}
+
+func (x *LedgerEntry) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *LedgerEntry) GetUsage() *Usage {
+	if x != nil {
+		return x.Usage
+	}
+	return nil
+}
+
+func (x *LedgerEntry) GetCostMicros() int64 {
+	if x != nil {
+		return x.CostMicros
+	}
+	return 0
+}
+
+func (x *LedgerEntry) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
+}
+
+type CommitResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Entry         *LedgerEntry           `protobuf:"bytes,1,opt,name=entry,proto3" json:"entry,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CommitResponse) Reset() {
+	*x = CommitResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CommitResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CommitResponse) ProtoMessage() {}
+
+func (x *CommitResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CommitResponse.ProtoReflect.Descriptor instead.
+func (*CommitResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CommitResponse) GetEntry() *LedgerEntry {
+	if x != nil {
+		return x.Entry
+	}
+	return nil
+}
+
+type ReleaseRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseRequest) Reset() {
+	*x = ReleaseRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseRequest) ProtoMessage() {}
+
+func (x *ReleaseRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseRequest.ProtoReflect.Descriptor instead.
+func (*ReleaseRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ReleaseRequest) GetReservationId() string {
+	if x != nil {
+		return x.ReservationId
+	}
+	return ""
+}
+
+type ReleaseResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseResponse) Reset() {
+	*x = ReleaseResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseResponse) ProtoMessage() {}
+
+func (x *ReleaseResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseResponse.ProtoReflect.Descriptor instead.
+func (*ReleaseResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{7}
+}
+
+type GetSpendRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	From          *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	To            *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	GroupBy       SpendGroup             `protobuf:"varint,3,opt,name=group_by,json=groupBy,proto3,enum=shogun.soroban.v1.SpendGroup" json:"group_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSpendRequest) Reset() {
+	*x = GetSpendRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSpendRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSpendRequest) ProtoMessage() {}
+
+func (x *GetSpendRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSpendRequest.ProtoReflect.Descriptor instead.
+func (*GetSpendRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *GetSpendRequest) GetFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.From
+	}
+	return nil
+}
+
+func (x *GetSpendRequest) GetTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *GetSpendRequest) GetGroupBy() SpendGroup {
+	if x != nil {
+		return x.GroupBy
+	}
+	return SpendGroup_SPEND_GROUP_UNSPECIFIED
+}
+
+type SpendRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the group value: a service, feature, model or YYYY-MM-DD day.
+	Key           string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	CostMicros    int64  `protobuf:"varint,2,opt,name=cost_micros,json=costMicros,proto3" json:"cost_micros,omitempty"`
+	Usage         *Usage `protobuf:"bytes,3,opt,name=usage,proto3" json:"usage,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SpendRow) Reset() {
+	*x = SpendRow{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SpendRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SpendRow) ProtoMessage() {}
+
+func (x *SpendRow) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SpendRow.ProtoReflect.Descriptor instead.
+func (*SpendRow) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *SpendRow) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *SpendRow) GetCostMicros() int64 {
+	if x != nil {
+		return x.CostMicros
+	}
+	return 0
+}
+
+func (x *SpendRow) GetUsage() *Usage {
+	if x != nil {
+		return x.Usage
+	}
+	return nil
+}
+
+type GetSpendResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rows          []*SpendRow            `protobuf:"bytes,1,rep,name=rows,proto3" json:"rows,omitempty"`
+	TotalMicros   int64                  `protobuf:"varint,2,opt,name=total_micros,json=totalMicros,proto3" json:"total_micros,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetSpendResponse) Reset() {
+	*x = GetSpendResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetSpendResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSpendResponse) ProtoMessage() {}
+
+func (x *GetSpendResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSpendResponse.ProtoReflect.Descriptor instead.
+func (*GetSpendResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *GetSpendResponse) GetRows() []*SpendRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+func (x *GetSpendResponse) GetTotalMicros() int64 {
+	if x != nil {
+		return x.TotalMicros
+	}
+	return 0
+}
+
+type Budget struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ScopeType ScopeType              `protobuf:"varint,2,opt,name=scope_type,json=scopeType,proto3,enum=shogun.soroban.v1.ScopeType" json:"scope_type,omitempty"`
+	// scope_value is empty for global, a service, or service.feature.
+	ScopeValue  string       `protobuf:"bytes,3,opt,name=scope_value,json=scopeValue,proto3" json:"scope_value,omitempty"`
+	Period      BudgetPeriod `protobuf:"varint,4,opt,name=period,proto3,enum=shogun.soroban.v1.BudgetPeriod" json:"period,omitempty"`
+	LimitMicros int64        `protobuf:"varint,5,opt,name=limit_micros,json=limitMicros,proto3" json:"limit_micros,omitempty"`
+	Mode        BudgetMode   `protobuf:"varint,6,opt,name=mode,proto3,enum=shogun.soroban.v1.BudgetMode" json:"mode,omitempty"`
+	Thresholds  []int32      `protobuf:"varint,7,rep,packed,name=thresholds,proto3" json:"thresholds,omitempty"`
+	Enabled     bool         `protobuf:"varint,8,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Version     int32        `protobuf:"varint,9,opt,name=version,proto3" json:"version,omitempty"`
+	// spent_micros and reserved_micros are for the current period; ListBudgets
+	// fills them.
+	SpentMicros    int64                  `protobuf:"varint,10,opt,name=spent_micros,json=spentMicros,proto3" json:"spent_micros,omitempty"`
+	ReservedMicros int64                  `protobuf:"varint,11,opt,name=reserved_micros,json=reservedMicros,proto3" json:"reserved_micros,omitempty"`
+	ResetsAt       *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=resets_at,json=resetsAt,proto3" json:"resets_at,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *Budget) Reset() {
+	*x = Budget{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Budget) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Budget) ProtoMessage() {}
+
+func (x *Budget) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Budget.ProtoReflect.Descriptor instead.
+func (*Budget) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *Budget) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Budget) GetScopeType() ScopeType {
+	if x != nil {
+		return x.ScopeType
+	}
+	return ScopeType_SCOPE_TYPE_UNSPECIFIED
+}
+
+func (x *Budget) GetScopeValue() string {
+	if x != nil {
+		return x.ScopeValue
+	}
+	return ""
+}
+
+func (x *Budget) GetPeriod() BudgetPeriod {
+	if x != nil {
+		return x.Period
+	}
+	return BudgetPeriod_BUDGET_PERIOD_UNSPECIFIED
+}
+
+func (x *Budget) GetLimitMicros() int64 {
+	if x != nil {
+		return x.LimitMicros
+	}
+	return 0
+}
+
+func (x *Budget) GetMode() BudgetMode {
+	if x != nil {
+		return x.Mode
+	}
+	return BudgetMode_BUDGET_MODE_UNSPECIFIED
+}
+
+func (x *Budget) GetThresholds() []int32 {
+	if x != nil {
+		return x.Thresholds
+	}
+	return nil
+}
+
+func (x *Budget) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *Budget) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Budget) GetSpentMicros() int64 {
+	if x != nil {
+		return x.SpentMicros
+	}
+	return 0
+}
+
+func (x *Budget) GetReservedMicros() int64 {
+	if x != nil {
+		return x.ReservedMicros
+	}
+	return 0
+}
+
+func (x *Budget) GetResetsAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ResetsAt
+	}
+	return nil
+}
+
+type SetBudgetRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// id is empty to create. On update version must match the stored one.
+	Id            string       `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ScopeType     ScopeType    `protobuf:"varint,2,opt,name=scope_type,json=scopeType,proto3,enum=shogun.soroban.v1.ScopeType" json:"scope_type,omitempty"`
+	ScopeValue    string       `protobuf:"bytes,3,opt,name=scope_value,json=scopeValue,proto3" json:"scope_value,omitempty"`
+	Period        BudgetPeriod `protobuf:"varint,4,opt,name=period,proto3,enum=shogun.soroban.v1.BudgetPeriod" json:"period,omitempty"`
+	LimitMicros   int64        `protobuf:"varint,5,opt,name=limit_micros,json=limitMicros,proto3" json:"limit_micros,omitempty"`
+	Mode          BudgetMode   `protobuf:"varint,6,opt,name=mode,proto3,enum=shogun.soroban.v1.BudgetMode" json:"mode,omitempty"`
+	Thresholds    []int32      `protobuf:"varint,7,rep,packed,name=thresholds,proto3" json:"thresholds,omitempty"`
+	Enabled       bool         `protobuf:"varint,8,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	Version       int32        `protobuf:"varint,9,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetBudgetRequest) Reset() {
+	*x = SetBudgetRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetBudgetRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetBudgetRequest) ProtoMessage() {}
+
+func (x *SetBudgetRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetBudgetRequest.ProtoReflect.Descriptor instead.
+func (*SetBudgetRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SetBudgetRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *SetBudgetRequest) GetScopeType() ScopeType {
+	if x != nil {
+		return x.ScopeType
+	}
+	return ScopeType_SCOPE_TYPE_UNSPECIFIED
+}
+
+func (x *SetBudgetRequest) GetScopeValue() string {
+	if x != nil {
+		return x.ScopeValue
+	}
+	return ""
+}
+
+func (x *SetBudgetRequest) GetPeriod() BudgetPeriod {
+	if x != nil {
+		return x.Period
+	}
+	return BudgetPeriod_BUDGET_PERIOD_UNSPECIFIED
+}
+
+func (x *SetBudgetRequest) GetLimitMicros() int64 {
+	if x != nil {
+		return x.LimitMicros
+	}
+	return 0
+}
+
+func (x *SetBudgetRequest) GetMode() BudgetMode {
+	if x != nil {
+		return x.Mode
+	}
+	return BudgetMode_BUDGET_MODE_UNSPECIFIED
+}
+
+func (x *SetBudgetRequest) GetThresholds() []int32 {
+	if x != nil {
+		return x.Thresholds
+	}
+	return nil
+}
+
+func (x *SetBudgetRequest) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *SetBudgetRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type SetBudgetResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Budget        *Budget                `protobuf:"bytes,1,opt,name=budget,proto3" json:"budget,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetBudgetResponse) Reset() {
+	*x = SetBudgetResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetBudgetResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetBudgetResponse) ProtoMessage() {}
+
+func (x *SetBudgetResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetBudgetResponse.ProtoReflect.Descriptor instead.
+func (*SetBudgetResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SetBudgetResponse) GetBudget() *Budget {
+	if x != nil {
+		return x.Budget
+	}
+	return nil
+}
+
+type ListBudgetsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBudgetsRequest) Reset() {
+	*x = ListBudgetsRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBudgetsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBudgetsRequest) ProtoMessage() {}
+
+func (x *ListBudgetsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBudgetsRequest.ProtoReflect.Descriptor instead.
+func (*ListBudgetsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{14}
+}
+
+type ListBudgetsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Budgets       []*Budget              `protobuf:"bytes,1,rep,name=budgets,proto3" json:"budgets,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListBudgetsResponse) Reset() {
+	*x = ListBudgetsResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListBudgetsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListBudgetsResponse) ProtoMessage() {}
+
+func (x *ListBudgetsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListBudgetsResponse.ProtoReflect.Descriptor instead.
+func (*ListBudgetsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListBudgetsResponse) GetBudgets() []*Budget {
+	if x != nil {
+		return x.Budgets
+	}
+	return nil
+}
+
+type Price struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Model string                 `protobuf:"bytes,1,opt,name=model,proto3" json:"model,omitempty"`
+	// effective_from is a YYYY-MM-DD date.
+	EffectiveFrom           string `protobuf:"bytes,2,opt,name=effective_from,json=effectiveFrom,proto3" json:"effective_from,omitempty"`
+	InputMicrosPerMtok      int64  `protobuf:"varint,3,opt,name=input_micros_per_mtok,json=inputMicrosPerMtok,proto3" json:"input_micros_per_mtok,omitempty"`
+	OutputMicrosPerMtok     int64  `protobuf:"varint,4,opt,name=output_micros_per_mtok,json=outputMicrosPerMtok,proto3" json:"output_micros_per_mtok,omitempty"`
+	CacheReadMicrosPerMtok  int64  `protobuf:"varint,5,opt,name=cache_read_micros_per_mtok,json=cacheReadMicrosPerMtok,proto3" json:"cache_read_micros_per_mtok,omitempty"`
+	CacheWriteMicrosPerMtok int64  `protobuf:"varint,6,opt,name=cache_write_micros_per_mtok,json=cacheWriteMicrosPerMtok,proto3" json:"cache_write_micros_per_mtok,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *Price) Reset() {
+	*x = Price{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Price) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Price) ProtoMessage() {}
+
+func (x *Price) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Price.ProtoReflect.Descriptor instead.
+func (*Price) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *Price) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *Price) GetEffectiveFrom() string {
+	if x != nil {
+		return x.EffectiveFrom
+	}
+	return ""
+}
+
+func (x *Price) GetInputMicrosPerMtok() int64 {
+	if x != nil {
+		return x.InputMicrosPerMtok
+	}
+	return 0
+}
+
+func (x *Price) GetOutputMicrosPerMtok() int64 {
+	if x != nil {
+		return x.OutputMicrosPerMtok
+	}
+	return 0
+}
+
+func (x *Price) GetCacheReadMicrosPerMtok() int64 {
+	if x != nil {
+		return x.CacheReadMicrosPerMtok
+	}
+	return 0
+}
+
+func (x *Price) GetCacheWriteMicrosPerMtok() int64 {
+	if x != nil {
+		return x.CacheWriteMicrosPerMtok
+	}
+	return 0
+}
+
+type SetPriceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Price         *Price                 `protobuf:"bytes,1,opt,name=price,proto3" json:"price,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPriceRequest) Reset() {
+	*x = SetPriceRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPriceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPriceRequest) ProtoMessage() {}
+
+func (x *SetPriceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPriceRequest.ProtoReflect.Descriptor instead.
+func (*SetPriceRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *SetPriceRequest) GetPrice() *Price {
+	if x != nil {
+		return x.Price
+	}
+	return nil
+}
+
+type SetPriceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Price         *Price                 `protobuf:"bytes,1,opt,name=price,proto3" json:"price,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPriceResponse) Reset() {
+	*x = SetPriceResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPriceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPriceResponse) ProtoMessage() {}
+
+func (x *SetPriceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPriceResponse.ProtoReflect.Descriptor instead.
+func (*SetPriceResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *SetPriceResponse) GetPrice() *Price {
+	if x != nil {
+		return x.Price
+	}
+	return nil
+}
+
+type ListPricesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPricesRequest) Reset() {
+	*x = ListPricesRequest{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPricesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPricesRequest) ProtoMessage() {}
+
+func (x *ListPricesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPricesRequest.ProtoReflect.Descriptor instead.
+func (*ListPricesRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{19}
+}
+
+type ListPricesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Prices        []*Price               `protobuf:"bytes,1,rep,name=prices,proto3" json:"prices,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPricesResponse) Reset() {
+	*x = ListPricesResponse{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPricesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPricesResponse) ProtoMessage() {}
+
+func (x *ListPricesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPricesResponse.ProtoReflect.Descriptor instead.
+func (*ListPricesResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListPricesResponse) GetPrices() []*Price {
+	if x != nil {
+		return x.Prices
+	}
+	return nil
+}
+
 var File_shogun_soroban_v1_soroban_proto protoreflect.FileDescriptor
 
 const file_shogun_soroban_v1_soroban_proto_rawDesc = "" +
 	"\n" +
-	"\x1fshogun/soroban/v1/soroban.proto\x12\x11shogun.soroban.v12\x10\n" +
-	"\x0eSorobanServiceB\xca\x01\n" +
+	"\x1fshogun/soroban/v1/soroban.proto\x12\x11shogun.soroban.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa9\x01\n" +
+	"\x05Usage\x12!\n" +
+	"\finput_tokens\x18\x01 \x01(\x05R\vinputTokens\x12#\n" +
+	"\routput_tokens\x18\x02 \x01(\x05R\foutputTokens\x12*\n" +
+	"\x11cache_read_tokens\x18\x03 \x01(\x05R\x0fcacheReadTokens\x12,\n" +
+	"\x12cache_write_tokens\x18\x04 \x01(\x05R\x10cacheWriteTokens\"\xb0\x01\n" +
+	"\x0eReserveRequest\x12\x18\n" +
+	"\aservice\x18\x01 \x01(\tR\aservice\x12\x18\n" +
+	"\afeature\x18\x02 \x01(\tR\afeature\x12\x14\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\x12(\n" +
+	"\x10est_input_tokens\x18\x04 \x01(\x05R\x0eestInputTokens\x12*\n" +
+	"\x11est_output_tokens\x18\x05 \x01(\x05R\x0festOutputTokens\"\x92\x01\n" +
+	"\x0fReserveResponse\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x129\n" +
+	"\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x1d\n" +
+	"\n" +
+	"est_micros\x18\x03 \x01(\x03R\testMicros\"\x85\x01\n" +
+	"\rCommitRequest\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x12.\n" +
+	"\x05usage\x18\x02 \x01(\v2\x18.shogun.soroban.v1.UsageR\x05usage\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x03 \x01(\tR\trequestId\"\x9c\x02\n" +
+	"\vLedgerEntry\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
+	"\x0ereservation_id\x18\x02 \x01(\tR\rreservationId\x12\x18\n" +
+	"\aservice\x18\x03 \x01(\tR\aservice\x12\x18\n" +
+	"\afeature\x18\x04 \x01(\tR\afeature\x12\x14\n" +
+	"\x05model\x18\x05 \x01(\tR\x05model\x12.\n" +
+	"\x05usage\x18\x06 \x01(\v2\x18.shogun.soroban.v1.UsageR\x05usage\x12\x1f\n" +
+	"\vcost_micros\x18\a \x01(\x03R\n" +
+	"costMicros\x12;\n" +
+	"\voccurred_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"occurredAt\"F\n" +
+	"\x0eCommitResponse\x124\n" +
+	"\x05entry\x18\x01 \x01(\v2\x1e.shogun.soroban.v1.LedgerEntryR\x05entry\"7\n" +
+	"\x0eReleaseRequest\x12%\n" +
+	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\"\x11\n" +
+	"\x0fReleaseResponse\"\xa7\x01\n" +
+	"\x0fGetSpendRequest\x12.\n" +
+	"\x04from\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
+	"\x02to\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x128\n" +
+	"\bgroup_by\x18\x03 \x01(\x0e2\x1d.shogun.soroban.v1.SpendGroupR\agroupBy\"m\n" +
+	"\bSpendRow\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1f\n" +
+	"\vcost_micros\x18\x02 \x01(\x03R\n" +
+	"costMicros\x12.\n" +
+	"\x05usage\x18\x03 \x01(\v2\x18.shogun.soroban.v1.UsageR\x05usage\"f\n" +
+	"\x10GetSpendResponse\x12/\n" +
+	"\x04rows\x18\x01 \x03(\v2\x1b.shogun.soroban.v1.SpendRowR\x04rows\x12!\n" +
+	"\ftotal_micros\x18\x02 \x01(\x03R\vtotalMicros\"\xde\x03\n" +
+	"\x06Budget\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
+	"\n" +
+	"scope_type\x18\x02 \x01(\x0e2\x1c.shogun.soroban.v1.ScopeTypeR\tscopeType\x12\x1f\n" +
+	"\vscope_value\x18\x03 \x01(\tR\n" +
+	"scopeValue\x127\n" +
+	"\x06period\x18\x04 \x01(\x0e2\x1f.shogun.soroban.v1.BudgetPeriodR\x06period\x12!\n" +
+	"\flimit_micros\x18\x05 \x01(\x03R\vlimitMicros\x121\n" +
+	"\x04mode\x18\x06 \x01(\x0e2\x1d.shogun.soroban.v1.BudgetModeR\x04mode\x12\x1e\n" +
+	"\n" +
+	"thresholds\x18\a \x03(\x05R\n" +
+	"thresholds\x12\x18\n" +
+	"\aenabled\x18\b \x01(\bR\aenabled\x12\x18\n" +
+	"\aversion\x18\t \x01(\x05R\aversion\x12!\n" +
+	"\fspent_micros\x18\n" +
+	" \x01(\x03R\vspentMicros\x12'\n" +
+	"\x0freserved_micros\x18\v \x01(\x03R\x0ereservedMicros\x127\n" +
+	"\tresets_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\bresetsAt\"\xe3\x02\n" +
+	"\x10SetBudgetRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
+	"\n" +
+	"scope_type\x18\x02 \x01(\x0e2\x1c.shogun.soroban.v1.ScopeTypeR\tscopeType\x12\x1f\n" +
+	"\vscope_value\x18\x03 \x01(\tR\n" +
+	"scopeValue\x127\n" +
+	"\x06period\x18\x04 \x01(\x0e2\x1f.shogun.soroban.v1.BudgetPeriodR\x06period\x12!\n" +
+	"\flimit_micros\x18\x05 \x01(\x03R\vlimitMicros\x121\n" +
+	"\x04mode\x18\x06 \x01(\x0e2\x1d.shogun.soroban.v1.BudgetModeR\x04mode\x12\x1e\n" +
+	"\n" +
+	"thresholds\x18\a \x03(\x05R\n" +
+	"thresholds\x12\x18\n" +
+	"\aenabled\x18\b \x01(\bR\aenabled\x12\x18\n" +
+	"\aversion\x18\t \x01(\x05R\aversion\"F\n" +
+	"\x11SetBudgetResponse\x121\n" +
+	"\x06budget\x18\x01 \x01(\v2\x19.shogun.soroban.v1.BudgetR\x06budget\"\x14\n" +
+	"\x12ListBudgetsRequest\"J\n" +
+	"\x13ListBudgetsResponse\x123\n" +
+	"\abudgets\x18\x01 \x03(\v2\x19.shogun.soroban.v1.BudgetR\abudgets\"\xa6\x02\n" +
+	"\x05Price\x12\x14\n" +
+	"\x05model\x18\x01 \x01(\tR\x05model\x12%\n" +
+	"\x0eeffective_from\x18\x02 \x01(\tR\reffectiveFrom\x121\n" +
+	"\x15input_micros_per_mtok\x18\x03 \x01(\x03R\x12inputMicrosPerMtok\x123\n" +
+	"\x16output_micros_per_mtok\x18\x04 \x01(\x03R\x13outputMicrosPerMtok\x12:\n" +
+	"\x1acache_read_micros_per_mtok\x18\x05 \x01(\x03R\x16cacheReadMicrosPerMtok\x12<\n" +
+	"\x1bcache_write_micros_per_mtok\x18\x06 \x01(\x03R\x17cacheWriteMicrosPerMtok\"A\n" +
+	"\x0fSetPriceRequest\x12.\n" +
+	"\x05price\x18\x01 \x01(\v2\x18.shogun.soroban.v1.PriceR\x05price\"B\n" +
+	"\x10SetPriceResponse\x12.\n" +
+	"\x05price\x18\x01 \x01(\v2\x18.shogun.soroban.v1.PriceR\x05price\"\x13\n" +
+	"\x11ListPricesRequest\"F\n" +
+	"\x12ListPricesResponse\x120\n" +
+	"\x06prices\x18\x01 \x03(\v2\x18.shogun.soroban.v1.PriceR\x06prices*n\n" +
+	"\tScopeType\x12\x1a\n" +
+	"\x16SCOPE_TYPE_UNSPECIFIED\x10\x00\x12\x15\n" +
+	"\x11SCOPE_TYPE_GLOBAL\x10\x01\x12\x16\n" +
+	"\x12SCOPE_TYPE_SERVICE\x10\x02\x12\x16\n" +
+	"\x12SCOPE_TYPE_FEATURE\x10\x03*a\n" +
+	"\fBudgetPeriod\x12\x1d\n" +
+	"\x19BUDGET_PERIOD_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13BUDGET_PERIOD_DAILY\x10\x01\x12\x19\n" +
+	"\x15BUDGET_PERIOD_MONTHLY\x10\x02*U\n" +
+	"\n" +
+	"BudgetMode\x12\x1b\n" +
+	"\x17BUDGET_MODE_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10BUDGET_MODE_HARD\x10\x01\x12\x14\n" +
+	"\x10BUDGET_MODE_SOFT\x10\x02*\x87\x01\n" +
+	"\n" +
+	"SpendGroup\x12\x1b\n" +
+	"\x17SPEND_GROUP_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13SPEND_GROUP_SERVICE\x10\x01\x12\x17\n" +
+	"\x13SPEND_GROUP_FEATURE\x10\x02\x12\x15\n" +
+	"\x11SPEND_GROUP_MODEL\x10\x03\x12\x13\n" +
+	"\x0fSPEND_GROUP_DAY\x10\x042\xbe\x05\n" +
+	"\x0eSorobanService\x12P\n" +
+	"\aReserve\x12!.shogun.soroban.v1.ReserveRequest\x1a\".shogun.soroban.v1.ReserveResponse\x12M\n" +
+	"\x06Commit\x12 .shogun.soroban.v1.CommitRequest\x1a!.shogun.soroban.v1.CommitResponse\x12P\n" +
+	"\aRelease\x12!.shogun.soroban.v1.ReleaseRequest\x1a\".shogun.soroban.v1.ReleaseResponse\x12S\n" +
+	"\bGetSpend\x12\".shogun.soroban.v1.GetSpendRequest\x1a#.shogun.soroban.v1.GetSpendResponse\x12V\n" +
+	"\tSetBudget\x12#.shogun.soroban.v1.SetBudgetRequest\x1a$.shogun.soroban.v1.SetBudgetResponse\x12\\\n" +
+	"\vListBudgets\x12%.shogun.soroban.v1.ListBudgetsRequest\x1a&.shogun.soroban.v1.ListBudgetsResponse\x12S\n" +
+	"\bSetPrice\x12\".shogun.soroban.v1.SetPriceRequest\x1a#.shogun.soroban.v1.SetPriceResponse\x12Y\n" +
+	"\n" +
+	"ListPrices\x12$.shogun.soroban.v1.ListPricesRequest\x1a%.shogun.soroban.v1.ListPricesResponseB\xca\x01\n" +
 	"\x15com.shogun.soroban.v1B\fSorobanProtoP\x01Z=github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1;sorobanv1\xa2\x02\x03SSX\xaa\x02\x11Shogun.Soroban.V1\xca\x02\x11Shogun\\Soroban\\V1\xe2\x02\x1dShogun\\Soroban\\V1\\GPBMetadata\xea\x02\x13Shogun::Soroban::V1b\x06proto3"
 
-var file_shogun_soroban_v1_soroban_proto_goTypes = []any{}
+var (
+	file_shogun_soroban_v1_soroban_proto_rawDescOnce sync.Once
+	file_shogun_soroban_v1_soroban_proto_rawDescData []byte
+)
+
+func file_shogun_soroban_v1_soroban_proto_rawDescGZIP() []byte {
+	file_shogun_soroban_v1_soroban_proto_rawDescOnce.Do(func() {
+		file_shogun_soroban_v1_soroban_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_soroban_v1_soroban_proto_rawDesc), len(file_shogun_soroban_v1_soroban_proto_rawDesc)))
+	})
+	return file_shogun_soroban_v1_soroban_proto_rawDescData
+}
+
+var file_shogun_soroban_v1_soroban_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
+var file_shogun_soroban_v1_soroban_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_shogun_soroban_v1_soroban_proto_goTypes = []any{
+	(ScopeType)(0),                // 0: shogun.soroban.v1.ScopeType
+	(BudgetPeriod)(0),             // 1: shogun.soroban.v1.BudgetPeriod
+	(BudgetMode)(0),               // 2: shogun.soroban.v1.BudgetMode
+	(SpendGroup)(0),               // 3: shogun.soroban.v1.SpendGroup
+	(*Usage)(nil),                 // 4: shogun.soroban.v1.Usage
+	(*ReserveRequest)(nil),        // 5: shogun.soroban.v1.ReserveRequest
+	(*ReserveResponse)(nil),       // 6: shogun.soroban.v1.ReserveResponse
+	(*CommitRequest)(nil),         // 7: shogun.soroban.v1.CommitRequest
+	(*LedgerEntry)(nil),           // 8: shogun.soroban.v1.LedgerEntry
+	(*CommitResponse)(nil),        // 9: shogun.soroban.v1.CommitResponse
+	(*ReleaseRequest)(nil),        // 10: shogun.soroban.v1.ReleaseRequest
+	(*ReleaseResponse)(nil),       // 11: shogun.soroban.v1.ReleaseResponse
+	(*GetSpendRequest)(nil),       // 12: shogun.soroban.v1.GetSpendRequest
+	(*SpendRow)(nil),              // 13: shogun.soroban.v1.SpendRow
+	(*GetSpendResponse)(nil),      // 14: shogun.soroban.v1.GetSpendResponse
+	(*Budget)(nil),                // 15: shogun.soroban.v1.Budget
+	(*SetBudgetRequest)(nil),      // 16: shogun.soroban.v1.SetBudgetRequest
+	(*SetBudgetResponse)(nil),     // 17: shogun.soroban.v1.SetBudgetResponse
+	(*ListBudgetsRequest)(nil),    // 18: shogun.soroban.v1.ListBudgetsRequest
+	(*ListBudgetsResponse)(nil),   // 19: shogun.soroban.v1.ListBudgetsResponse
+	(*Price)(nil),                 // 20: shogun.soroban.v1.Price
+	(*SetPriceRequest)(nil),       // 21: shogun.soroban.v1.SetPriceRequest
+	(*SetPriceResponse)(nil),      // 22: shogun.soroban.v1.SetPriceResponse
+	(*ListPricesRequest)(nil),     // 23: shogun.soroban.v1.ListPricesRequest
+	(*ListPricesResponse)(nil),    // 24: shogun.soroban.v1.ListPricesResponse
+	(*timestamppb.Timestamp)(nil), // 25: google.protobuf.Timestamp
+}
 var file_shogun_soroban_v1_soroban_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	25, // 0: shogun.soroban.v1.ReserveResponse.expires_at:type_name -> google.protobuf.Timestamp
+	4,  // 1: shogun.soroban.v1.CommitRequest.usage:type_name -> shogun.soroban.v1.Usage
+	4,  // 2: shogun.soroban.v1.LedgerEntry.usage:type_name -> shogun.soroban.v1.Usage
+	25, // 3: shogun.soroban.v1.LedgerEntry.occurred_at:type_name -> google.protobuf.Timestamp
+	8,  // 4: shogun.soroban.v1.CommitResponse.entry:type_name -> shogun.soroban.v1.LedgerEntry
+	25, // 5: shogun.soroban.v1.GetSpendRequest.from:type_name -> google.protobuf.Timestamp
+	25, // 6: shogun.soroban.v1.GetSpendRequest.to:type_name -> google.protobuf.Timestamp
+	3,  // 7: shogun.soroban.v1.GetSpendRequest.group_by:type_name -> shogun.soroban.v1.SpendGroup
+	4,  // 8: shogun.soroban.v1.SpendRow.usage:type_name -> shogun.soroban.v1.Usage
+	13, // 9: shogun.soroban.v1.GetSpendResponse.rows:type_name -> shogun.soroban.v1.SpendRow
+	0,  // 10: shogun.soroban.v1.Budget.scope_type:type_name -> shogun.soroban.v1.ScopeType
+	1,  // 11: shogun.soroban.v1.Budget.period:type_name -> shogun.soroban.v1.BudgetPeriod
+	2,  // 12: shogun.soroban.v1.Budget.mode:type_name -> shogun.soroban.v1.BudgetMode
+	25, // 13: shogun.soroban.v1.Budget.resets_at:type_name -> google.protobuf.Timestamp
+	0,  // 14: shogun.soroban.v1.SetBudgetRequest.scope_type:type_name -> shogun.soroban.v1.ScopeType
+	1,  // 15: shogun.soroban.v1.SetBudgetRequest.period:type_name -> shogun.soroban.v1.BudgetPeriod
+	2,  // 16: shogun.soroban.v1.SetBudgetRequest.mode:type_name -> shogun.soroban.v1.BudgetMode
+	15, // 17: shogun.soroban.v1.SetBudgetResponse.budget:type_name -> shogun.soroban.v1.Budget
+	15, // 18: shogun.soroban.v1.ListBudgetsResponse.budgets:type_name -> shogun.soroban.v1.Budget
+	20, // 19: shogun.soroban.v1.SetPriceRequest.price:type_name -> shogun.soroban.v1.Price
+	20, // 20: shogun.soroban.v1.SetPriceResponse.price:type_name -> shogun.soroban.v1.Price
+	20, // 21: shogun.soroban.v1.ListPricesResponse.prices:type_name -> shogun.soroban.v1.Price
+	5,  // 22: shogun.soroban.v1.SorobanService.Reserve:input_type -> shogun.soroban.v1.ReserveRequest
+	7,  // 23: shogun.soroban.v1.SorobanService.Commit:input_type -> shogun.soroban.v1.CommitRequest
+	10, // 24: shogun.soroban.v1.SorobanService.Release:input_type -> shogun.soroban.v1.ReleaseRequest
+	12, // 25: shogun.soroban.v1.SorobanService.GetSpend:input_type -> shogun.soroban.v1.GetSpendRequest
+	16, // 26: shogun.soroban.v1.SorobanService.SetBudget:input_type -> shogun.soroban.v1.SetBudgetRequest
+	18, // 27: shogun.soroban.v1.SorobanService.ListBudgets:input_type -> shogun.soroban.v1.ListBudgetsRequest
+	21, // 28: shogun.soroban.v1.SorobanService.SetPrice:input_type -> shogun.soroban.v1.SetPriceRequest
+	23, // 29: shogun.soroban.v1.SorobanService.ListPrices:input_type -> shogun.soroban.v1.ListPricesRequest
+	6,  // 30: shogun.soroban.v1.SorobanService.Reserve:output_type -> shogun.soroban.v1.ReserveResponse
+	9,  // 31: shogun.soroban.v1.SorobanService.Commit:output_type -> shogun.soroban.v1.CommitResponse
+	11, // 32: shogun.soroban.v1.SorobanService.Release:output_type -> shogun.soroban.v1.ReleaseResponse
+	14, // 33: shogun.soroban.v1.SorobanService.GetSpend:output_type -> shogun.soroban.v1.GetSpendResponse
+	17, // 34: shogun.soroban.v1.SorobanService.SetBudget:output_type -> shogun.soroban.v1.SetBudgetResponse
+	19, // 35: shogun.soroban.v1.SorobanService.ListBudgets:output_type -> shogun.soroban.v1.ListBudgetsResponse
+	22, // 36: shogun.soroban.v1.SorobanService.SetPrice:output_type -> shogun.soroban.v1.SetPriceResponse
+	24, // 37: shogun.soroban.v1.SorobanService.ListPrices:output_type -> shogun.soroban.v1.ListPricesResponse
+	30, // [30:38] is the sub-list for method output_type
+	22, // [22:30] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_shogun_soroban_v1_soroban_proto_init() }
@@ -47,13 +1748,15 @@ func file_shogun_soroban_v1_soroban_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_soroban_v1_soroban_proto_rawDesc), len(file_shogun_soroban_v1_soroban_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      4,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_soroban_v1_soroban_proto_goTypes,
 		DependencyIndexes: file_shogun_soroban_v1_soroban_proto_depIdxs,
+		EnumInfos:         file_shogun_soroban_v1_soroban_proto_enumTypes,
+		MessageInfos:      file_shogun_soroban_v1_soroban_proto_msgTypes,
 	}.Build()
 	File_shogun_soroban_v1_soroban_proto = out.File
 	file_shogun_soroban_v1_soroban_proto_goTypes = nil

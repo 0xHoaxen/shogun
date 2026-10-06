@@ -2,5 +2,189 @@ syntax = "proto3";
 
 package shogun.soroban.v1;
 
-// The RPCs of soroban are added with its first feature task.
-service SorobanService {}
+import "google/protobuf/timestamp.proto";
+
+// SorobanService meters and caps paid calls. A caller reserves an estimate
+// before a call, then commits the real usage or releases the reservation.
+// Money is int64 micro-dollars.
+service SorobanService {
+  // Reserve holds est tokens' worth of cost against every budget in scope.
+  // A hard budget that would be passed is ResourceExhausted with reason
+  // BUDGET_EXHAUSTED and metadata budget_id and resets_at. Callers: pkg/llm.
+  rpc Reserve(ReserveRequest) returns (ReserveResponse);
+  // Commit prices the real usage, writes a ledger row and moves the amount
+  // from reserved to spent. Committing twice returns the same entry.
+  rpc Commit(CommitRequest) returns (CommitResponse);
+  // Release gives a reservation back after a failed call.
+  rpc Release(ReleaseRequest) returns (ReleaseResponse);
+  // GetSpend totals the ledger over a range. Callers: torii, sensei.
+  rpc GetSpend(GetSpendRequest) returns (GetSpendResponse);
+  // SetBudget creates a budget when id is empty. Otherwise it updates the
+  // limit, mode, thresholds and enabled flag of that budget if version
+  // matches; scope and period identify a budget and are not read. Empty
+  // thresholds mean the defaults, 50, 80 and 100.
+  rpc SetBudget(SetBudgetRequest) returns (SetBudgetResponse);
+  rpc ListBudgets(ListBudgetsRequest) returns (ListBudgetsResponse);
+  rpc SetPrice(SetPriceRequest) returns (SetPriceResponse);
+  rpc ListPrices(ListPricesRequest) returns (ListPricesResponse);
+}
+
+enum ScopeType {
+  SCOPE_TYPE_UNSPECIFIED = 0;
+  SCOPE_TYPE_GLOBAL = 1;
+  SCOPE_TYPE_SERVICE = 2;
+  SCOPE_TYPE_FEATURE = 3;
+}
+
+enum BudgetPeriod {
+  BUDGET_PERIOD_UNSPECIFIED = 0;
+  BUDGET_PERIOD_DAILY = 1;
+  BUDGET_PERIOD_MONTHLY = 2;
+}
+
+enum BudgetMode {
+  BUDGET_MODE_UNSPECIFIED = 0;
+  BUDGET_MODE_HARD = 1;
+  BUDGET_MODE_SOFT = 2;
+}
+
+enum SpendGroup {
+  SPEND_GROUP_UNSPECIFIED = 0;
+  SPEND_GROUP_SERVICE = 1;
+  SPEND_GROUP_FEATURE = 2;
+  SPEND_GROUP_MODEL = 3;
+  SPEND_GROUP_DAY = 4;
+}
+
+// Usage is the token counts of one call.
+message Usage {
+  int32 input_tokens = 1;
+  int32 output_tokens = 2;
+  int32 cache_read_tokens = 3;
+  int32 cache_write_tokens = 4;
+}
+
+message ReserveRequest {
+  string service = 1;
+  // feature is service.name, for example fude.cover_letter.
+  string feature = 2;
+  string model = 3;
+  int32 est_input_tokens = 4;
+  int32 est_output_tokens = 5;
+}
+
+message ReserveResponse {
+  string reservation_id = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  int64 est_micros = 3;
+}
+
+message CommitRequest {
+  string reservation_id = 1;
+  Usage usage = 2;
+  string request_id = 3;
+}
+
+message LedgerEntry {
+  string id = 1;
+  string reservation_id = 2;
+  string service = 3;
+  string feature = 4;
+  string model = 5;
+  Usage usage = 6;
+  int64 cost_micros = 7;
+  google.protobuf.Timestamp occurred_at = 8;
+}
+
+message CommitResponse {
+  LedgerEntry entry = 1;
+}
+
+message ReleaseRequest {
+  string reservation_id = 1;
+}
+
+message ReleaseResponse {}
+
+message GetSpendRequest {
+  google.protobuf.Timestamp from = 1;
+  google.protobuf.Timestamp to = 2;
+  SpendGroup group_by = 3;
+}
+
+message SpendRow {
+  // key is the group value: a service, feature, model or YYYY-MM-DD day.
+  string key = 1;
+  int64 cost_micros = 2;
+  Usage usage = 3;
+}
+
+message GetSpendResponse {
+  repeated SpendRow rows = 1;
+  int64 total_micros = 2;
+}
+
+message Budget {
+  string id = 1;
+  ScopeType scope_type = 2;
+  // scope_value is empty for global, a service, or service.feature.
+  string scope_value = 3;
+  BudgetPeriod period = 4;
+  int64 limit_micros = 5;
+  BudgetMode mode = 6;
+  repeated int32 thresholds = 7;
+  bool enabled = 8;
+  int32 version = 9;
+  // spent_micros and reserved_micros are for the current period; ListBudgets
+  // fills them.
+  int64 spent_micros = 10;
+  int64 reserved_micros = 11;
+  google.protobuf.Timestamp resets_at = 12;
+}
+
+message SetBudgetRequest {
+  // id is empty to create. On update version must match the stored one.
+  string id = 1;
+  ScopeType scope_type = 2;
+  string scope_value = 3;
+  BudgetPeriod period = 4;
+  int64 limit_micros = 5;
+  BudgetMode mode = 6;
+  repeated int32 thresholds = 7;
+  bool enabled = 8;
+  int32 version = 9;
+}
+
+message SetBudgetResponse {
+  Budget budget = 1;
+}
+
+message ListBudgetsRequest {}
+
+message ListBudgetsResponse {
+  repeated Budget budgets = 1;
+}
+
+message Price {
+  string model = 1;
+  // effective_from is a YYYY-MM-DD date.
+  string effective_from = 2;
+  int64 input_micros_per_mtok = 3;
+  int64 output_micros_per_mtok = 4;
+  int64 cache_read_micros_per_mtok = 5;
+  int64 cache_write_micros_per_mtok = 6;
+}
+
+message SetPriceRequest {
+  Price price = 1;
+}
+
+message SetPriceResponse {
+  Price price = 1;
+}
+
+message ListPricesRequest {}
+
+message ListPricesResponse {
+  repeated Price prices = 1;
+}

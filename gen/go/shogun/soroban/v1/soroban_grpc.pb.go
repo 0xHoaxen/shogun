@@ -7,7 +7,10 @@
 package sorobanv1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,44 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	SorobanService_Reserve_FullMethodName     = "/shogun.soroban.v1.SorobanService/Reserve"
+	SorobanService_Commit_FullMethodName      = "/shogun.soroban.v1.SorobanService/Commit"
+	SorobanService_Release_FullMethodName     = "/shogun.soroban.v1.SorobanService/Release"
+	SorobanService_GetSpend_FullMethodName    = "/shogun.soroban.v1.SorobanService/GetSpend"
+	SorobanService_SetBudget_FullMethodName   = "/shogun.soroban.v1.SorobanService/SetBudget"
+	SorobanService_ListBudgets_FullMethodName = "/shogun.soroban.v1.SorobanService/ListBudgets"
+	SorobanService_SetPrice_FullMethodName    = "/shogun.soroban.v1.SorobanService/SetPrice"
+	SorobanService_ListPrices_FullMethodName  = "/shogun.soroban.v1.SorobanService/ListPrices"
+)
+
 // SorobanServiceClient is the client API for SorobanService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of soroban are added with its first feature task.
+// SorobanService meters and caps paid calls. A caller reserves an estimate
+// before a call, then commits the real usage or releases the reservation.
+// Money is int64 micro-dollars.
 type SorobanServiceClient interface {
+	// Reserve holds est tokens' worth of cost against every budget in scope.
+	// A hard budget that would be passed is ResourceExhausted with reason
+	// BUDGET_EXHAUSTED and metadata budget_id and resets_at. Callers: pkg/llm.
+	Reserve(ctx context.Context, in *ReserveRequest, opts ...grpc.CallOption) (*ReserveResponse, error)
+	// Commit prices the real usage, writes a ledger row and moves the amount
+	// from reserved to spent. Committing twice returns the same entry.
+	Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*CommitResponse, error)
+	// Release gives a reservation back after a failed call.
+	Release(ctx context.Context, in *ReleaseRequest, opts ...grpc.CallOption) (*ReleaseResponse, error)
+	// GetSpend totals the ledger over a range. Callers: torii, sensei.
+	GetSpend(ctx context.Context, in *GetSpendRequest, opts ...grpc.CallOption) (*GetSpendResponse, error)
+	// SetBudget creates a budget when id is empty. Otherwise it updates the
+	// limit, mode, thresholds and enabled flag of that budget if version
+	// matches; scope and period identify a budget and are not read. Empty
+	// thresholds mean the defaults, 50, 80 and 100.
+	SetBudget(ctx context.Context, in *SetBudgetRequest, opts ...grpc.CallOption) (*SetBudgetResponse, error)
+	ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error)
+	SetPrice(ctx context.Context, in *SetPriceRequest, opts ...grpc.CallOption) (*SetPriceResponse, error)
+	ListPrices(ctx context.Context, in *ListPricesRequest, opts ...grpc.CallOption) (*ListPricesResponse, error)
 }
 
 type sorobanServiceClient struct {
@@ -31,12 +66,113 @@ func NewSorobanServiceClient(cc grpc.ClientConnInterface) SorobanServiceClient {
 	return &sorobanServiceClient{cc}
 }
 
+func (c *sorobanServiceClient) Reserve(ctx context.Context, in *ReserveRequest, opts ...grpc.CallOption) (*ReserveResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReserveResponse)
+	err := c.cc.Invoke(ctx, SorobanService_Reserve_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) Commit(ctx context.Context, in *CommitRequest, opts ...grpc.CallOption) (*CommitResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CommitResponse)
+	err := c.cc.Invoke(ctx, SorobanService_Commit_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) Release(ctx context.Context, in *ReleaseRequest, opts ...grpc.CallOption) (*ReleaseResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReleaseResponse)
+	err := c.cc.Invoke(ctx, SorobanService_Release_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) GetSpend(ctx context.Context, in *GetSpendRequest, opts ...grpc.CallOption) (*GetSpendResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetSpendResponse)
+	err := c.cc.Invoke(ctx, SorobanService_GetSpend_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) SetBudget(ctx context.Context, in *SetBudgetRequest, opts ...grpc.CallOption) (*SetBudgetResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetBudgetResponse)
+	err := c.cc.Invoke(ctx, SorobanService_SetBudget_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListBudgetsResponse)
+	err := c.cc.Invoke(ctx, SorobanService_ListBudgets_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) SetPrice(ctx context.Context, in *SetPriceRequest, opts ...grpc.CallOption) (*SetPriceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetPriceResponse)
+	err := c.cc.Invoke(ctx, SorobanService_SetPrice_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) ListPrices(ctx context.Context, in *ListPricesRequest, opts ...grpc.CallOption) (*ListPricesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPricesResponse)
+	err := c.cc.Invoke(ctx, SorobanService_ListPrices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SorobanServiceServer is the server API for SorobanService service.
 // All implementations must embed UnimplementedSorobanServiceServer
 // for forward compatibility.
 //
-// The RPCs of soroban are added with its first feature task.
+// SorobanService meters and caps paid calls. A caller reserves an estimate
+// before a call, then commits the real usage or releases the reservation.
+// Money is int64 micro-dollars.
 type SorobanServiceServer interface {
+	// Reserve holds est tokens' worth of cost against every budget in scope.
+	// A hard budget that would be passed is ResourceExhausted with reason
+	// BUDGET_EXHAUSTED and metadata budget_id and resets_at. Callers: pkg/llm.
+	Reserve(context.Context, *ReserveRequest) (*ReserveResponse, error)
+	// Commit prices the real usage, writes a ledger row and moves the amount
+	// from reserved to spent. Committing twice returns the same entry.
+	Commit(context.Context, *CommitRequest) (*CommitResponse, error)
+	// Release gives a reservation back after a failed call.
+	Release(context.Context, *ReleaseRequest) (*ReleaseResponse, error)
+	// GetSpend totals the ledger over a range. Callers: torii, sensei.
+	GetSpend(context.Context, *GetSpendRequest) (*GetSpendResponse, error)
+	// SetBudget creates a budget when id is empty. Otherwise it updates the
+	// limit, mode, thresholds and enabled flag of that budget if version
+	// matches; scope and period identify a budget and are not read. Empty
+	// thresholds mean the defaults, 50, 80 and 100.
+	SetBudget(context.Context, *SetBudgetRequest) (*SetBudgetResponse, error)
+	ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error)
+	SetPrice(context.Context, *SetPriceRequest) (*SetPriceResponse, error)
+	ListPrices(context.Context, *ListPricesRequest) (*ListPricesResponse, error)
 	mustEmbedUnimplementedSorobanServiceServer()
 }
 
@@ -47,6 +183,30 @@ type SorobanServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSorobanServiceServer struct{}
 
+func (UnimplementedSorobanServiceServer) Reserve(context.Context, *ReserveRequest) (*ReserveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Reserve not implemented")
+}
+func (UnimplementedSorobanServiceServer) Commit(context.Context, *CommitRequest) (*CommitResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Commit not implemented")
+}
+func (UnimplementedSorobanServiceServer) Release(context.Context, *ReleaseRequest) (*ReleaseResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Release not implemented")
+}
+func (UnimplementedSorobanServiceServer) GetSpend(context.Context, *GetSpendRequest) (*GetSpendResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSpend not implemented")
+}
+func (UnimplementedSorobanServiceServer) SetBudget(context.Context, *SetBudgetRequest) (*SetBudgetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetBudget not implemented")
+}
+func (UnimplementedSorobanServiceServer) ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListBudgets not implemented")
+}
+func (UnimplementedSorobanServiceServer) SetPrice(context.Context, *SetPriceRequest) (*SetPriceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetPrice not implemented")
+}
+func (UnimplementedSorobanServiceServer) ListPrices(context.Context, *ListPricesRequest) (*ListPricesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPrices not implemented")
+}
 func (UnimplementedSorobanServiceServer) mustEmbedUnimplementedSorobanServiceServer() {}
 func (UnimplementedSorobanServiceServer) testEmbeddedByValue()                        {}
 
@@ -68,13 +228,190 @@ func RegisterSorobanServiceServer(s grpc.ServiceRegistrar, srv SorobanServiceSer
 	s.RegisterService(&SorobanService_ServiceDesc, srv)
 }
 
+func _SorobanService_Reserve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReserveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).Reserve(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_Reserve_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).Reserve(ctx, req.(*ReserveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_Commit_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CommitRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).Commit(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_Commit_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).Commit(ctx, req.(*CommitRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_Release_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).Release(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_Release_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).Release(ctx, req.(*ReleaseRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_GetSpend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSpendRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).GetSpend(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_GetSpend_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).GetSpend(ctx, req.(*GetSpendRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_SetBudget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetBudgetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).SetBudget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_SetBudget_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).SetBudget(ctx, req.(*SetBudgetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_ListBudgets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListBudgetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).ListBudgets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_ListBudgets_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).ListBudgets(ctx, req.(*ListBudgetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_SetPrice_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPriceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).SetPrice(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_SetPrice_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).SetPrice(ctx, req.(*SetPriceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_ListPrices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPricesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).ListPrices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_ListPrices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).ListPrices(ctx, req.(*ListPricesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SorobanService_ServiceDesc is the grpc.ServiceDesc for SorobanService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SorobanService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.soroban.v1.SorobanService",
 	HandlerType: (*SorobanServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/soroban/v1/soroban.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Reserve",
+			Handler:    _SorobanService_Reserve_Handler,
+		},
+		{
+			MethodName: "Commit",
+			Handler:    _SorobanService_Commit_Handler,
+		},
+		{
+			MethodName: "Release",
+			Handler:    _SorobanService_Release_Handler,
+		},
+		{
+			MethodName: "GetSpend",
+			Handler:    _SorobanService_GetSpend_Handler,
+		},
+		{
+			MethodName: "SetBudget",
+			Handler:    _SorobanService_SetBudget_Handler,
+		},
+		{
+			MethodName: "ListBudgets",
+			Handler:    _SorobanService_ListBudgets_Handler,
+		},
+		{
+			MethodName: "SetPrice",
+			Handler:    _SorobanService_SetPrice_Handler,
+		},
+		{
+			MethodName: "ListPrices",
+			Handler:    _SorobanService_ListPrices_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/soroban/v1/soroban.proto",
 }

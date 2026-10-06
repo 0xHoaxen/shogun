@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package shogun.soroban.v1;
+
+import "google/protobuf/timestamp.proto";
+import "shogun/soroban/v1/soroban.proto";
+
+// Payloads of events soroban produces. Routes live in pkg/bus/routes.go.
+
+// CostThresholdReached is the payload of cost.threshold_reached.
+message CostThresholdReached {
+  string budget_id = 1;
+  ScopeType scope_type = 2;
+  string scope_value = 3;
+  BudgetPeriod period = 4;
+  // percent is the threshold crossed, for example 80.
+  int32 percent = 5;
+  int64 spent_micros = 6;
+  int64 limit_micros = 7;
+}
+
+// CostBudgetExhausted is the payload of cost.budget_exhausted.
+message CostBudgetExhausted {
+  string budget_id = 1;
+  ScopeType scope_type = 2;
+  string scope_value = 3;
+  BudgetPeriod period = 4;
+  google.protobuf.Timestamp resets_at = 5;
+}

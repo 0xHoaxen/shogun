@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+// CostsService is the screen-shaped cost API of the Settings > Spend page.
+// Torii maps it onto soroban. Money is int64 micro-dollars; days are
+// YYYY-MM-DD dates in Asia/Kolkata.
+service CostsService {
+  // GetSpend totals the spend of the days from_day to to_day, both included,
+  // grouped as asked.
+  rpc GetSpend(GetSpendRequest) returns (GetSpendResponse);
+  // ListBudgets returns every budget with the spend of its current period.
+  rpc ListBudgets(ListBudgetsRequest) returns (ListBudgetsResponse);
+  // UpdateBudget changes a budget's limit, mode, thresholds and enabled flag
+  // if version is the stored one; a stale version is Aborted with reason
+  // VERSION_CONFLICT.
+  rpc UpdateBudget(UpdateBudgetRequest) returns (UpdateBudgetResponse);
+}
+
+enum SpendGroup {
+  SPEND_GROUP_UNSPECIFIED = 0;
+  SPEND_GROUP_DAY = 1;
+  SPEND_GROUP_SERVICE = 2;
+  SPEND_GROUP_FEATURE = 3;
+  SPEND_GROUP_MODEL = 4;
+}
+
+enum BudgetMode {
+  BUDGET_MODE_UNSPECIFIED = 0;
+  // HARD blocks new calls once the limit is reached.
+  BUDGET_MODE_HARD = 1;
+  // SOFT only notifies.
+  BUDGET_MODE_SOFT = 2;
+}
+
+enum BudgetScope {
+  BUDGET_SCOPE_UNSPECIFIED = 0;
+  BUDGET_SCOPE_GLOBAL = 1;
+  BUDGET_SCOPE_SERVICE = 2;
+  BUDGET_SCOPE_FEATURE = 3;
+}
+
+enum BudgetPeriod {
+  BUDGET_PERIOD_UNSPECIFIED = 0;
+  BUDGET_PERIOD_DAILY = 1;
+  BUDGET_PERIOD_MONTHLY = 2;
+}
+
+message GetSpendRequest {
+  string from_day = 1;
+  string to_day = 2;
+  SpendGroup group_by = 3;
+}
+
+// SpendRow is the spend of one group: a day, service, feature or model.
+message SpendRow {
+  string key = 1;
+  int64 cost_micros = 2;
+  int64 input_tokens = 3;
+  int64 output_tokens = 4;
+  int64 cache_read_tokens = 5;
+  int64 cache_write_tokens = 6;
+}
+
+message GetSpendResponse {
+  repeated SpendRow rows = 1;
+  int64 total_micros = 2;
+}
+
+// Budget is one row of the budgets table.
+message Budget {
+  string id = 1;
+  BudgetScope scope = 2;
+  // scope_value is empty for global, a service, or service.feature.
+  string scope_value = 3;
+  BudgetPeriod period = 4;
+  int64 limit_micros = 5;
+  BudgetMode mode = 6;
+  repeated int32 thresholds = 7;
+  bool enabled = 8;
+  int32 version = 9;
+  // spent_micros and reserved_micros are for the current period.
+  int64 spent_micros = 10;
+  int64 reserved_micros = 11;
+  // resets_at is when the current period ends, an RFC 3339 time.
+  string resets_at = 12;
+}
+
+message ListBudgetsRequest {}
+
+message ListBudgetsResponse {
+  repeated Budget budgets = 1;
+}
+
+message UpdateBudgetRequest {
+  string id = 1;
+  int64 limit_micros = 2;
+  BudgetMode mode = 3;
+  // thresholds echoes the budget's thresholds; the screen does not edit them.
+  repeated int32 thresholds = 4;
+  bool enabled = 5;
+  int32 version = 6;
+}
+
+message UpdateBudgetResponse {
+  Budget budget = 1;
+}

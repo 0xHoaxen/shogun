@@ -12,6 +12,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
+	"github.com/0xHoaxen/shogun/services/soroban/internal/jobs"
 )
 
 // relayOwnerPrefix builds the system identity relay deliveries run under.
@@ -34,6 +35,7 @@ func startRelay(
 	lookup config.LookupFunc,
 	signer grpcclient.Signer,
 	timeout time.Duration,
+	scheduled jobs.Setup,
 	overrides relayOverrides,
 ) (func(), error) {
 	sink := overrides.bus
@@ -50,7 +52,10 @@ func startRelay(
 		sink, closeBus = dialed, dialed.Close
 	}
 
-	r, err := relay.New(relay.Config{Pool: pool, Bus: sink, Routes: overrides.routes, Logger: log})
+	r, err := relay.New(relay.Config{
+		Pool: pool, Bus: sink, Routes: overrides.routes, Logger: log,
+		Workers: scheduled.Workers, Queues: scheduled.Queues, PeriodicJobs: scheduled.PeriodicJobs,
+	})
 	if err != nil {
 		_ = closeBus()
 		return nil, err

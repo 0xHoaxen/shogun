@@ -14,6 +14,7 @@ import (
 
 	"github.com/0xHoaxen/shogun/gen/go/shogun/api/v1/apiv1connect"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/services/torii/internal/app"
 	"github.com/0xHoaxen/shogun/services/torii/internal/settings"
@@ -76,6 +77,12 @@ func newPublicServer(
 		return nil, nil, fmt.Errorf("dial kagami: %w", err)
 	}
 	kagami := kagamiv1.NewKagamiServiceClient(kagamiConn)
+	sorobanConn, err := grpcclient.Dial(ctx, s.SorobanAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = kagamiConn.Close()
+		return nil, nil, fmt.Errorf("dial soroban: %w", err)
+	}
+	soroban := sorobanv1.NewSorobanServiceClient(sorobanConn)
 
 	interceptor := connectapi.NewSessionInterceptor(connectapi.InterceptorConfig{
 		Auth:          auth,
@@ -92,18 +99,21 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewAuthServiceHandler(connectapi.NewAuthServer(auth, secure, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewJobsServiceHandler(connectapi.NewJobsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewContactsServiceHandler(connectapi.NewContactsServer(kagami, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewCostsServiceHandler(connectapi.NewCostsServer(soroban, log), handlerOpts...))
 
 	srv := &http.Server{
 		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
 		ReadHeaderTimeout: publicReadHeaderTimeout,
 		IdleTimeout:       publicIdleTimeout,
 	}
-	closeKagami := func() {
-		if err := kagamiConn.Close(); err != nil {
-			log.Warn("close kagami connection", slog.Any("error", err))
+	closeBackends := func() {
+		for name, conn := range map[string]interface{ Close() error }{"kagami": kagamiConn, "soroban": sorobanConn} {
+			if err := conn.Close(); err != nil {
+				log.Warn("close backend connection", slog.String("backend", name), slog.Any("error", err))
+			}
 		}
 	}
-	return srv, closeKagami, nil
+	return srv, closeBackends, nil
 }
 
 // servePublic serves srv on lis in the background. A failure other than a
