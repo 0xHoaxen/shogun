@@ -31,6 +31,7 @@ const (
 	KagamiService_ChangeContactStatus_FullMethodName = "/shogun.kagami.v1.KagamiService/ChangeContactStatus"
 	KagamiService_ImportContacts_FullMethodName      = "/shogun.kagami.v1.KagamiService/ImportContacts"
 	KagamiService_ListDueFollowUps_FullMethodName    = "/shogun.kagami.v1.KagamiService/ListDueFollowUps"
+	KagamiService_FindMailLinks_FullMethodName       = "/shogun.kagami.v1.KagamiService/FindMailLinks"
 )
 
 // KagamiServiceClient is the client API for KagamiService service.
@@ -62,6 +63,9 @@ type KagamiServiceClient interface {
 	// ListDueFollowUps returns jobs and contacts whose next_follow_up is on or
 	// before a date. Callers: torii, taiko.
 	ListDueFollowUps(ctx context.Context, in *ListDueFollowUpsRequest, opts ...grpc.CallOption) (*ListDueFollowUpsResponse, error)
+	// FindMailLinks says which contact and job a piece of mail is about. Callers:
+	// tsubame.
+	FindMailLinks(ctx context.Context, in *FindMailLinksRequest, opts ...grpc.CallOption) (*FindMailLinksResponse, error)
 }
 
 type kagamiServiceClient struct {
@@ -192,6 +196,16 @@ func (c *kagamiServiceClient) ListDueFollowUps(ctx context.Context, in *ListDueF
 	return out, nil
 }
 
+func (c *kagamiServiceClient) FindMailLinks(ctx context.Context, in *FindMailLinksRequest, opts ...grpc.CallOption) (*FindMailLinksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(FindMailLinksResponse)
+	err := c.cc.Invoke(ctx, KagamiService_FindMailLinks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KagamiServiceServer is the server API for KagamiService service.
 // All implementations must embed UnimplementedKagamiServiceServer
 // for forward compatibility.
@@ -221,6 +235,9 @@ type KagamiServiceServer interface {
 	// ListDueFollowUps returns jobs and contacts whose next_follow_up is on or
 	// before a date. Callers: torii, taiko.
 	ListDueFollowUps(context.Context, *ListDueFollowUpsRequest) (*ListDueFollowUpsResponse, error)
+	// FindMailLinks says which contact and job a piece of mail is about. Callers:
+	// tsubame.
+	FindMailLinks(context.Context, *FindMailLinksRequest) (*FindMailLinksResponse, error)
 	mustEmbedUnimplementedKagamiServiceServer()
 }
 
@@ -266,6 +283,9 @@ func (UnimplementedKagamiServiceServer) ImportContacts(context.Context, *ImportC
 }
 func (UnimplementedKagamiServiceServer) ListDueFollowUps(context.Context, *ListDueFollowUpsRequest) (*ListDueFollowUpsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDueFollowUps not implemented")
+}
+func (UnimplementedKagamiServiceServer) FindMailLinks(context.Context, *FindMailLinksRequest) (*FindMailLinksResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindMailLinks not implemented")
 }
 func (UnimplementedKagamiServiceServer) mustEmbedUnimplementedKagamiServiceServer() {}
 func (UnimplementedKagamiServiceServer) testEmbeddedByValue()                       {}
@@ -504,6 +524,24 @@ func _KagamiService_ListDueFollowUps_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KagamiService_FindMailLinks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FindMailLinksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).FindMailLinks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_FindMailLinks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).FindMailLinks(ctx, req.(*FindMailLinksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KagamiService_ServiceDesc is the grpc.ServiceDesc for KagamiService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -558,6 +596,10 @@ var KagamiService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListDueFollowUps",
 			Handler:    _KagamiService_ListDueFollowUps_Handler,
+		},
+		{
+			MethodName: "FindMailLinks",
+			Handler:    _KagamiService_FindMailLinks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

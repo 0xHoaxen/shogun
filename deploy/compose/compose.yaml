@@ -124,6 +124,13 @@ services:
     environment:
       <<: *env
       DATABASE_URL: postgres://tsubame:${TSUBAME_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+      TSUBAME_TOKEN_MASTER_KEY: ${TSUBAME_TOKEN_MASTER_KEY:?copy .env.example to .env}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TSUBAME_TOKEN_KEY_ID: ${TSUBAME_TOKEN_KEY_ID:-tsubame-1}
+      TSUBAME_HANKO_VERIFY_KEYS: ${TSUBAME_HANKO_VERIFY_KEYS:?copy .env.example to .env}
+      TSUBAME_GMAIL_CLIENT_ID: ${TSUBAME_GMAIL_CLIENT_ID:?copy .env.example to .env}
+      TSUBAME_GMAIL_CLIENT_SECRET: ${TSUBAME_GMAIL_CLIENT_SECRET:?copy .env.example to .env}
+      TSUBAME_GMAIL_REDIRECT_URL: ${TSUBAME_GMAIL_REDIRECT_URL:?copy .env.example to .env}
     ports:
       - "127.0.0.1:8083:8080"
       - "127.0.0.1:9093:9090"
@@ -139,6 +146,9 @@ services:
     environment:
       <<: *env
       DATABASE_URL: postgres://fude:${FUDE_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      FUDE_HANKO_SIGNING_KEY: ${FUDE_HANKO_SIGNING_KEY:?copy .env.example to .env}
+      FUDE_HANKO_KEY_ID: ${FUDE_HANKO_KEY_ID:-fude-1}
     ports:
       - "127.0.0.1:8084:8080"
       - "127.0.0.1:9094:9090"

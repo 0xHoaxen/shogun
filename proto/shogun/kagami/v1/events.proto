@@ -14,6 +14,8 @@ message JobAdded {
   string company = 3;
   string url = 4;
   string source = 5;
+  // owner_id lets consumers act for the owner without a caller identity.
+  string owner_id = 6;
 }
 
 // JobStatusChanged is the payload of job.status_changed.
@@ -42,7 +44,10 @@ message ContactStatusChanged {
   string contact_id = 1;
   ContactStatus from = 2;
   ContactStatus to = 3;
+  // channel is the contact's preferred channel (email, linkedin, x, phone,
+  // other), empty when none is set.
   string channel = 4;
+  string owner_id = 5;
 }
 
 // ContactFollowUpDue is the payload of contact.follow_up_due.

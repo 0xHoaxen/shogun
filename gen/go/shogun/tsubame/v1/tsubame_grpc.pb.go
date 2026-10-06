@@ -7,7 +7,10 @@
 package tsubamev1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,28 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	TsubameService_ConnectAccount_FullMethodName  = "/shogun.tsubame.v1.TsubameService/ConnectAccount"
+	TsubameService_CompleteConnect_FullMethodName = "/shogun.tsubame.v1.TsubameService/CompleteConnect"
+	TsubameService_Send_FullMethodName            = "/shogun.tsubame.v1.TsubameService/Send"
+)
+
 // TsubameServiceClient is the client API for TsubameService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of tsubame are added with its first feature task.
+// TsubameService syncs and classifies mail and is the only service that sends
+// it. Callers: torii.
 type TsubameServiceClient interface {
+	// ConnectAccount starts connecting a mail account and returns where to send
+	// the owner to grant access.
+	ConnectAccount(ctx context.Context, in *ConnectAccountRequest, opts ...grpc.CallOption) (*ConnectAccountResponse, error)
+	// CompleteConnect finishes it with the code and state the provider sent back
+	// to the redirect URL.
+	CompleteConnect(ctx context.Context, in *CompleteConnectRequest, opts ...grpc.CallOption) (*CompleteConnectResponse, error)
+	// Send sends an approved draft by email. It checks the Hanko token, and
+	// sends nothing without a valid one. Callers: fude only.
+	Send(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*SendResponse, error)
 }
 
 type tsubameServiceClient struct {
@@ -31,12 +50,52 @@ func NewTsubameServiceClient(cc grpc.ClientConnInterface) TsubameServiceClient {
 	return &tsubameServiceClient{cc}
 }
 
+func (c *tsubameServiceClient) ConnectAccount(ctx context.Context, in *ConnectAccountRequest, opts ...grpc.CallOption) (*ConnectAccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConnectAccountResponse)
+	err := c.cc.Invoke(ctx, TsubameService_ConnectAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tsubameServiceClient) CompleteConnect(ctx context.Context, in *CompleteConnectRequest, opts ...grpc.CallOption) (*CompleteConnectResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompleteConnectResponse)
+	err := c.cc.Invoke(ctx, TsubameService_CompleteConnect_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tsubameServiceClient) Send(ctx context.Context, in *SendRequest, opts ...grpc.CallOption) (*SendResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendResponse)
+	err := c.cc.Invoke(ctx, TsubameService_Send_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TsubameServiceServer is the server API for TsubameService service.
 // All implementations must embed UnimplementedTsubameServiceServer
 // for forward compatibility.
 //
-// The RPCs of tsubame are added with its first feature task.
+// TsubameService syncs and classifies mail and is the only service that sends
+// it. Callers: torii.
 type TsubameServiceServer interface {
+	// ConnectAccount starts connecting a mail account and returns where to send
+	// the owner to grant access.
+	ConnectAccount(context.Context, *ConnectAccountRequest) (*ConnectAccountResponse, error)
+	// CompleteConnect finishes it with the code and state the provider sent back
+	// to the redirect URL.
+	CompleteConnect(context.Context, *CompleteConnectRequest) (*CompleteConnectResponse, error)
+	// Send sends an approved draft by email. It checks the Hanko token, and
+	// sends nothing without a valid one. Callers: fude only.
+	Send(context.Context, *SendRequest) (*SendResponse, error)
 	mustEmbedUnimplementedTsubameServiceServer()
 }
 
@@ -47,6 +106,15 @@ type TsubameServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedTsubameServiceServer struct{}
 
+func (UnimplementedTsubameServiceServer) ConnectAccount(context.Context, *ConnectAccountRequest) (*ConnectAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConnectAccount not implemented")
+}
+func (UnimplementedTsubameServiceServer) CompleteConnect(context.Context, *CompleteConnectRequest) (*CompleteConnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteConnect not implemented")
+}
+func (UnimplementedTsubameServiceServer) Send(context.Context, *SendRequest) (*SendResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Send not implemented")
+}
 func (UnimplementedTsubameServiceServer) mustEmbedUnimplementedTsubameServiceServer() {}
 func (UnimplementedTsubameServiceServer) testEmbeddedByValue()                        {}
 
@@ -68,13 +136,80 @@ func RegisterTsubameServiceServer(s grpc.ServiceRegistrar, srv TsubameServiceSer
 	s.RegisterService(&TsubameService_ServiceDesc, srv)
 }
 
+func _TsubameService_ConnectAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TsubameServiceServer).ConnectAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TsubameService_ConnectAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TsubameServiceServer).ConnectAccount(ctx, req.(*ConnectAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TsubameService_CompleteConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteConnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TsubameServiceServer).CompleteConnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TsubameService_CompleteConnect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TsubameServiceServer).CompleteConnect(ctx, req.(*CompleteConnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TsubameService_Send_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TsubameServiceServer).Send(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TsubameService_Send_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TsubameServiceServer).Send(ctx, req.(*SendRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TsubameService_ServiceDesc is the grpc.ServiceDesc for TsubameService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var TsubameService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.tsubame.v1.TsubameService",
 	HandlerType: (*TsubameServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/tsubame/v1/tsubame.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ConnectAccount",
+			Handler:    _TsubameService_ConnectAccount_Handler,
+		},
+		{
+			MethodName: "CompleteConnect",
+			Handler:    _TsubameService_CompleteConnect_Handler,
+		},
+		{
+			MethodName: "Send",
+			Handler:    _TsubameService_Send_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/tsubame/v1/tsubame.proto",
 }

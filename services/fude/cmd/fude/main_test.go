@@ -23,6 +23,8 @@ import (
 
 const (
 	testIdentityKey = "0123456789abcdef0123456789abcdef"
+	testHankoKey    = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=" // 32 bytes, test only
+	unusedAddr      = "127.0.0.1:1"                                  // dialed lazily, never called
 	testConsumer    = "consumer"
 	testEventType   = "test.happened"
 	startupTimeout  = 30 * time.Second
@@ -36,9 +38,13 @@ func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
 func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 	// Arrange
 	env := map[string]string{
-		"ENVIRONMENT":          "test",
-		"DATABASE_URL":         postgrestest.NewDatabase(t),
-		"IDENTITY_SIGNING_KEY": testIdentityKey,
+		"ENVIRONMENT":            "test",
+		"DATABASE_URL":           postgrestest.NewDatabase(t),
+		"IDENTITY_SIGNING_KEY":   testIdentityKey,
+		"FUDE_HANKO_SIGNING_KEY": testHankoKey,
+		"SOROBAN_ADDR":           unusedAddr,
+		"KAGAMI_ADDR":            unusedAddr,
+		"TSUBAME_ADDR":           unusedAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -92,9 +98,13 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 	// Arrange
 	dbURL := postgrestest.NewDatabase(t)
 	env := map[string]string{
-		"ENVIRONMENT":          "test",
-		"DATABASE_URL":         dbURL,
-		"IDENTITY_SIGNING_KEY": testIdentityKey,
+		"ENVIRONMENT":            "test",
+		"DATABASE_URL":           dbURL,
+		"IDENTITY_SIGNING_KEY":   testIdentityKey,
+		"FUDE_HANKO_SIGNING_KEY": testHankoKey,
+		"SOROBAN_ADDR":           unusedAddr,
+		"KAGAMI_ADDR":            unusedAddr,
+		"TSUBAME_ADDR":           unusedAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

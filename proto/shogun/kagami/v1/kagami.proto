@@ -32,6 +32,10 @@ service KagamiService {
   // ListDueFollowUps returns jobs and contacts whose next_follow_up is on or
   // before a date. Callers: torii, taiko.
   rpc ListDueFollowUps(ListDueFollowUpsRequest) returns (ListDueFollowUpsResponse);
+
+  // FindMailLinks says which contact and job a piece of mail is about. Callers:
+  // tsubame.
+  rpc FindMailLinks(FindMailLinksRequest) returns (FindMailLinksResponse);
 }
 
 enum JobStatus {
@@ -291,4 +295,20 @@ message ListDueFollowUpsRequest {
 message ListDueFollowUpsResponse {
   repeated Job jobs = 1;
   repeated Contact contacts = 2;
+}
+
+message FindMailLinksRequest {
+  // from_email is the sender's address.
+  string from_email = 1;
+  // urls are links found in the mail, to match against job posting URLs.
+  repeated string urls = 2;
+}
+
+message FindMailLinksResponse {
+  // contact_id is the contact with that email address, empty when none.
+  string contact_id = 1;
+  // job_id is the job the mail is most likely about, empty when none: a job
+  // whose posting URL is in the mail, else an open job at the sender's company
+  // (matched by the sender's domain), else the contact's own job.
+  string job_id = 2;
 }

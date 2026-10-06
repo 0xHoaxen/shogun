@@ -1,0 +1,73 @@
+package grpc
+
+import (
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
+	"github.com/0xHoaxen/shogun/services/fude/internal/domain"
+	"github.com/0xHoaxen/shogun/services/fude/internal/store"
+	"github.com/0xHoaxen/shogun/services/fude/internal/store/db"
+	"github.com/0xHoaxen/shogun/services/fude/internal/wire"
+)
+
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func draftToProto(d db.Draft) *fudev1.Draft {
+	targetID := ""
+	if d.TargetID != nil {
+		targetID = d.TargetID.String()
+	}
+	return &fudev1.Draft{
+		Id:             d.ID.String(),
+		Kind:           wire.KindToProto(domain.Kind(d.Kind)),
+		TargetType:     wire.TargetTypeToProto(domain.TargetType(d.TargetType)),
+		TargetId:       targetID,
+		Channel:        wire.ChannelToProto(domain.Channel(d.Channel)),
+		State:          wire.StateToProto(domain.DraftState(d.State)),
+		CurrentVersion: d.CurrentVersion,
+		Recipient:      deref(d.Recipient),
+		FailureReason:  deref(d.FailureReason),
+		Version:        d.Version,
+		CreatedAt:      timestamppb.New(d.CreatedAt),
+		UpdatedAt:      timestamppb.New(d.UpdatedAt),
+	}
+}
+
+func versionToProto(v db.DraftVersion) *fudev1.DraftVersion {
+	return &fudev1.DraftVersion{
+		DraftId:      v.DraftID.String(),
+		Version:      v.Version,
+		Subject:      deref(v.Subject),
+		Body:         v.Body,
+		BodySha256:   v.BodySha256,
+		ExtraContext: deref(v.ExtraContext),
+		Model:        deref(v.Model),
+		CreatedBy:    wire.AuthorToProto(v.CreatedBy),
+		CreatedAt:    timestamppb.New(v.CreatedAt),
+	}
+}
+
+// queueItemToProto converts a queue row: the draft plus the subject and preview
+// of its newest version.
+func queueItemToProto(i store.QueueItem) *fudev1.Draft {
+	d := draftToProto(i.Draft)
+	d.Subject, d.Preview = i.Subject, i.Preview
+	return d
+}
+
+// previewLen is how much of a body the queue shows.
+const previewLen = 200
+
+// preview returns the start of a body, cut on a character boundary.
+func preview(body string) string {
+	runes := []rune(body)
+	if len(runes) <= previewLen {
+		return body
+	}
+	return string(runes[:previewLen])
+}

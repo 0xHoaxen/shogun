@@ -13,8 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/gen/go/shogun/api/v1/apiv1connect"
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
+	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/services/torii/internal/app"
 	"github.com/0xHoaxen/shogun/services/torii/internal/settings"
@@ -83,6 +85,21 @@ func newPublicServer(
 		return nil, nil, fmt.Errorf("dial soroban: %w", err)
 	}
 	soroban := sorobanv1.NewSorobanServiceClient(sorobanConn)
+	fudeConn, err := grpcclient.Dial(ctx, s.FudeAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = kagamiConn.Close()
+		_ = sorobanConn.Close()
+		return nil, nil, fmt.Errorf("dial fude: %w", err)
+	}
+	fude := fudev1.NewFudeServiceClient(fudeConn)
+	tsubameConn, err := grpcclient.Dial(ctx, s.TsubameAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = kagamiConn.Close()
+		_ = sorobanConn.Close()
+		_ = fudeConn.Close()
+		return nil, nil, fmt.Errorf("dial tsubame: %w", err)
+	}
+	tsubame := tsubamev1.NewTsubameServiceClient(tsubameConn)
 
 	interceptor := connectapi.NewSessionInterceptor(connectapi.InterceptorConfig{
 		Auth:          auth,
@@ -100,6 +117,8 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewJobsServiceHandler(connectapi.NewJobsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewContactsServiceHandler(connectapi.NewContactsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewCostsServiceHandler(connectapi.NewCostsServer(soroban, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewDraftsServiceHandler(connectapi.NewDraftsServer(fude, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewMailServiceHandler(connectapi.NewMailServer(tsubame, log), handlerOpts...))
 
 	srv := &http.Server{
 		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
@@ -107,7 +126,9 @@ func newPublicServer(
 		IdleTimeout:       publicIdleTimeout,
 	}
 	closeBackends := func() {
-		for name, conn := range map[string]interface{ Close() error }{"kagami": kagamiConn, "soroban": sorobanConn} {
+		for name, conn := range map[string]interface{ Close() error }{
+			"kagami": kagamiConn, "soroban": sorobanConn, "fude": fudeConn, "tsubame": tsubameConn,
+		} {
 			if err := conn.Close(); err != nil {
 				log.Warn("close backend connection", slog.String("backend", name), slog.Any("error", err))
 			}

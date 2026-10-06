@@ -7,7 +7,10 @@
 package fudev1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,39 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	FudeService_GenerateDraft_FullMethodName  = "/shogun.fude.v1.FudeService/GenerateDraft"
+	FudeService_Regenerate_FullMethodName     = "/shogun.fude.v1.FudeService/Regenerate"
+	FudeService_EditDraft_FullMethodName      = "/shogun.fude.v1.FudeService/EditDraft"
+	FudeService_Approve_FullMethodName        = "/shogun.fude.v1.FudeService/Approve"
+	FudeService_Discard_FullMethodName        = "/shogun.fude.v1.FudeService/Discard"
+	FudeService_ListQueue_FullMethodName      = "/shogun.fude.v1.FudeService/ListQueue"
+	FudeService_GetDraft_FullMethodName       = "/shogun.fude.v1.FudeService/GetDraft"
+	FudeService_AddVoiceSample_FullMethodName = "/shogun.fude.v1.FudeService/AddVoiceSample"
+)
+
 // FudeServiceClient is the client API for FudeService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of fude are added with its first feature task.
+// FudeService holds AI drafts, their versions and the approval queue. Only
+// Approve signs a Hanko token. Digests are raw SHA-256 bytes.
 type FudeServiceClient interface {
+	// GenerateDraft creates a draft in state generating and queues generation.
+	GenerateDraft(ctx context.Context, in *GenerateDraftRequest, opts ...grpc.CallOption) (*GenerateDraftResponse, error)
+	// Regenerate queues a new AI version of a pending draft.
+	Regenerate(ctx context.Context, in *RegenerateRequest, opts ...grpc.CallOption) (*RegenerateResponse, error)
+	// EditDraft stores the owner's text as a new version (created_by user). An
+	// edit of an approved draft puts it back to pending.
+	EditDraft(ctx context.Context, in *EditDraftRequest, opts ...grpc.CallOption) (*EditDraftResponse, error)
+	// Approve stamps a Hanko for the newest version and sends or hands back
+	// copy-ready text. Callers: torii only.
+	Approve(ctx context.Context, in *ApproveRequest, opts ...grpc.CallOption) (*ApproveResponse, error)
+	Discard(ctx context.Context, in *DiscardRequest, opts ...grpc.CallOption) (*DiscardResponse, error)
+	ListQueue(ctx context.Context, in *ListQueueRequest, opts ...grpc.CallOption) (*ListQueueResponse, error)
+	// GetDraft returns the draft with all of its versions.
+	GetDraft(ctx context.Context, in *GetDraftRequest, opts ...grpc.CallOption) (*GetDraftResponse, error)
+	AddVoiceSample(ctx context.Context, in *AddVoiceSampleRequest, opts ...grpc.CallOption) (*AddVoiceSampleResponse, error)
 }
 
 type fudeServiceClient struct {
@@ -31,12 +61,108 @@ func NewFudeServiceClient(cc grpc.ClientConnInterface) FudeServiceClient {
 	return &fudeServiceClient{cc}
 }
 
+func (c *fudeServiceClient) GenerateDraft(ctx context.Context, in *GenerateDraftRequest, opts ...grpc.CallOption) (*GenerateDraftResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateDraftResponse)
+	err := c.cc.Invoke(ctx, FudeService_GenerateDraft_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) Regenerate(ctx context.Context, in *RegenerateRequest, opts ...grpc.CallOption) (*RegenerateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegenerateResponse)
+	err := c.cc.Invoke(ctx, FudeService_Regenerate_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) EditDraft(ctx context.Context, in *EditDraftRequest, opts ...grpc.CallOption) (*EditDraftResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EditDraftResponse)
+	err := c.cc.Invoke(ctx, FudeService_EditDraft_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) Approve(ctx context.Context, in *ApproveRequest, opts ...grpc.CallOption) (*ApproveResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ApproveResponse)
+	err := c.cc.Invoke(ctx, FudeService_Approve_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) Discard(ctx context.Context, in *DiscardRequest, opts ...grpc.CallOption) (*DiscardResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DiscardResponse)
+	err := c.cc.Invoke(ctx, FudeService_Discard_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) ListQueue(ctx context.Context, in *ListQueueRequest, opts ...grpc.CallOption) (*ListQueueResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListQueueResponse)
+	err := c.cc.Invoke(ctx, FudeService_ListQueue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) GetDraft(ctx context.Context, in *GetDraftRequest, opts ...grpc.CallOption) (*GetDraftResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDraftResponse)
+	err := c.cc.Invoke(ctx, FudeService_GetDraft_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fudeServiceClient) AddVoiceSample(ctx context.Context, in *AddVoiceSampleRequest, opts ...grpc.CallOption) (*AddVoiceSampleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddVoiceSampleResponse)
+	err := c.cc.Invoke(ctx, FudeService_AddVoiceSample_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FudeServiceServer is the server API for FudeService service.
 // All implementations must embed UnimplementedFudeServiceServer
 // for forward compatibility.
 //
-// The RPCs of fude are added with its first feature task.
+// FudeService holds AI drafts, their versions and the approval queue. Only
+// Approve signs a Hanko token. Digests are raw SHA-256 bytes.
 type FudeServiceServer interface {
+	// GenerateDraft creates a draft in state generating and queues generation.
+	GenerateDraft(context.Context, *GenerateDraftRequest) (*GenerateDraftResponse, error)
+	// Regenerate queues a new AI version of a pending draft.
+	Regenerate(context.Context, *RegenerateRequest) (*RegenerateResponse, error)
+	// EditDraft stores the owner's text as a new version (created_by user). An
+	// edit of an approved draft puts it back to pending.
+	EditDraft(context.Context, *EditDraftRequest) (*EditDraftResponse, error)
+	// Approve stamps a Hanko for the newest version and sends or hands back
+	// copy-ready text. Callers: torii only.
+	Approve(context.Context, *ApproveRequest) (*ApproveResponse, error)
+	Discard(context.Context, *DiscardRequest) (*DiscardResponse, error)
+	ListQueue(context.Context, *ListQueueRequest) (*ListQueueResponse, error)
+	// GetDraft returns the draft with all of its versions.
+	GetDraft(context.Context, *GetDraftRequest) (*GetDraftResponse, error)
+	AddVoiceSample(context.Context, *AddVoiceSampleRequest) (*AddVoiceSampleResponse, error)
 	mustEmbedUnimplementedFudeServiceServer()
 }
 
@@ -47,6 +173,30 @@ type FudeServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedFudeServiceServer struct{}
 
+func (UnimplementedFudeServiceServer) GenerateDraft(context.Context, *GenerateDraftRequest) (*GenerateDraftResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateDraft not implemented")
+}
+func (UnimplementedFudeServiceServer) Regenerate(context.Context, *RegenerateRequest) (*RegenerateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Regenerate not implemented")
+}
+func (UnimplementedFudeServiceServer) EditDraft(context.Context, *EditDraftRequest) (*EditDraftResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EditDraft not implemented")
+}
+func (UnimplementedFudeServiceServer) Approve(context.Context, *ApproveRequest) (*ApproveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Approve not implemented")
+}
+func (UnimplementedFudeServiceServer) Discard(context.Context, *DiscardRequest) (*DiscardResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Discard not implemented")
+}
+func (UnimplementedFudeServiceServer) ListQueue(context.Context, *ListQueueRequest) (*ListQueueResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListQueue not implemented")
+}
+func (UnimplementedFudeServiceServer) GetDraft(context.Context, *GetDraftRequest) (*GetDraftResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDraft not implemented")
+}
+func (UnimplementedFudeServiceServer) AddVoiceSample(context.Context, *AddVoiceSampleRequest) (*AddVoiceSampleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddVoiceSample not implemented")
+}
 func (UnimplementedFudeServiceServer) mustEmbedUnimplementedFudeServiceServer() {}
 func (UnimplementedFudeServiceServer) testEmbeddedByValue()                     {}
 
@@ -68,13 +218,190 @@ func RegisterFudeServiceServer(s grpc.ServiceRegistrar, srv FudeServiceServer) {
 	s.RegisterService(&FudeService_ServiceDesc, srv)
 }
 
+func _FudeService_GenerateDraft_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateDraftRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).GenerateDraft(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_GenerateDraft_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).GenerateDraft(ctx, req.(*GenerateDraftRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_Regenerate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegenerateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).Regenerate(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_Regenerate_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).Regenerate(ctx, req.(*RegenerateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_EditDraft_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EditDraftRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).EditDraft(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_EditDraft_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).EditDraft(ctx, req.(*EditDraftRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_Approve_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).Approve(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_Approve_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).Approve(ctx, req.(*ApproveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_Discard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DiscardRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).Discard(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_Discard_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).Discard(ctx, req.(*DiscardRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_ListQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListQueueRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).ListQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_ListQueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).ListQueue(ctx, req.(*ListQueueRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_GetDraft_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDraftRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).GetDraft(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_GetDraft_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).GetDraft(ctx, req.(*GetDraftRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FudeService_AddVoiceSample_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddVoiceSampleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).AddVoiceSample(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_AddVoiceSample_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).AddVoiceSample(ctx, req.(*AddVoiceSampleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FudeService_ServiceDesc is the grpc.ServiceDesc for FudeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FudeService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.fude.v1.FudeService",
 	HandlerType: (*FudeServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/fude/v1/fude.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GenerateDraft",
+			Handler:    _FudeService_GenerateDraft_Handler,
+		},
+		{
+			MethodName: "Regenerate",
+			Handler:    _FudeService_Regenerate_Handler,
+		},
+		{
+			MethodName: "EditDraft",
+			Handler:    _FudeService_EditDraft_Handler,
+		},
+		{
+			MethodName: "Approve",
+			Handler:    _FudeService_Approve_Handler,
+		},
+		{
+			MethodName: "Discard",
+			Handler:    _FudeService_Discard_Handler,
+		},
+		{
+			MethodName: "ListQueue",
+			Handler:    _FudeService_ListQueue_Handler,
+		},
+		{
+			MethodName: "GetDraft",
+			Handler:    _FudeService_GetDraft_Handler,
+		},
+		{
+			MethodName: "AddVoiceSample",
+			Handler:    _FudeService_AddVoiceSample_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/fude/v1/fude.proto",
 }

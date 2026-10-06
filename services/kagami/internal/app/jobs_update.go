@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -60,44 +62,60 @@ func (s *Service) ChangeJobStatus(ctx context.Context, in ChangeJobStatusInput) 
 		if current.Version != in.Version {
 			return store.ErrVersionConflict
 		}
-		from := domain.JobStatus(current.Status)
-		moved, err := domain.Job{Status: from}.ChangeStatus(in.To, s.now().UTC())
-		if err != nil {
-			return err
-		}
-
-		appliedOn := current.AppliedOn
-		if moved.Status == domain.JobApplied && appliedOn == nil {
-			day := s.today()
-			appliedOn = &day
-		}
-		updated, err = repo.UpdateJobStatus(ctx, db.UpdateJobStatusParams{
-			ID: id, OwnerID: owner, Version: in.Version, Status: string(moved.Status), AppliedOn: appliedOn,
-		})
-		if err != nil {
-			return err
-		}
-
-		fromText, toText := string(from), string(moved.Status)
-		payload := map[string]any{}
-		if in.Note != "" {
-			payload["note"] = in.Note
-		}
-		if err := s.addJobEvent(ctx, repo, id, jobEventStatus, &fromText, &toText, payload); err != nil {
-			return err
-		}
-		_, err = outbox.Write(ctx, tx, eventSource, eventJobStatusChanged, id.String(), &kagamiv1.JobStatusChanged{
-			JobId: id.String(),
-			From:  wire.JobStatusToProto(from),
-			To:    wire.JobStatusToProto(moved.Status),
-			At:    timestamppb.New(s.now().UTC()),
-		})
-		if err != nil {
-			return fmt.Errorf("write %s event: %w", eventJobStatusChanged, err)
-		}
-		return nil
+		updated, err = s.moveJob(ctx, tx, repo, owner, current, in.To, in.Note, nil)
+		return err
 	})
 	return updated, err
+}
+
+// moveJob moves a job to a new status inside tx: the row (with its optimistic
+// version, which must be the one in current), a timeline entry and a
+// job.status_changed event. note and extra go to the timeline entry's payload.
+// An invalid move is a *domain.TransitionError. The user's ChangeJobStatus and
+// the mail event handler share it.
+func (s *Service) moveJob(
+	ctx context.Context, tx pgx.Tx, repo *store.Repo, owner uuid.UUID, current db.Job,
+	to domain.JobStatus, note string, extra map[string]any,
+) (db.Job, error) {
+	from := domain.JobStatus(current.Status)
+	moved, err := domain.Job{Status: from}.ChangeStatus(to, s.now().UTC())
+	if err != nil {
+		return db.Job{}, err
+	}
+
+	appliedOn := current.AppliedOn
+	if moved.Status == domain.JobApplied && appliedOn == nil {
+		day := s.today()
+		appliedOn = &day
+	}
+	updated, err := repo.UpdateJobStatus(ctx, db.UpdateJobStatusParams{
+		ID: current.ID, OwnerID: owner, Version: current.Version, Status: string(moved.Status), AppliedOn: appliedOn,
+	})
+	if err != nil {
+		return db.Job{}, err
+	}
+
+	fromText, toText := string(from), string(moved.Status)
+	payload := map[string]any{}
+	for k, v := range extra {
+		payload[k] = v
+	}
+	if note != "" {
+		payload["note"] = note
+	}
+	if err := s.addJobEvent(ctx, repo, current.ID, jobEventStatus, &fromText, &toText, payload); err != nil {
+		return db.Job{}, err
+	}
+	_, err = outbox.Write(ctx, tx, eventSource, eventJobStatusChanged, current.ID.String(), &kagamiv1.JobStatusChanged{
+		JobId: current.ID.String(),
+		From:  wire.JobStatusToProto(from),
+		To:    wire.JobStatusToProto(moved.Status),
+		At:    timestamppb.New(s.now().UTC()),
+	})
+	if err != nil {
+		return db.Job{}, fmt.Errorf("write %s event: %w", eventJobStatusChanged, err)
+	}
+	return updated, nil
 }
 
 // UpdateJob applies the masked fields to a job when the version is current.

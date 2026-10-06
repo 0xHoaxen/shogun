@@ -286,37 +286,101 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 7: fude (drafts) + hanko + tsubame (mail)
 
-- [ ] **P7.1 fude migrations, proto, domain** (M) Needs: P6.3
+- [x] **P7.1 fude migrations, proto, domain** (M) Needs: P6.3
   Do: tables `drafts draft_versions approvals voice_samples templates`; RPCs GenerateDraft, Regenerate, EditDraft, Approve, Discard, ListQueue, GetDraft, AddVoiceSample; draft state machine from the System Design diagram; events `draft.ready/failed/approved`.
   Done when: domain tests cover all transitions including "edit after approval returns to pending".
 
-- [ ] **P7.2 fude generation pipeline** (L, split) Needs: P7.1
-  Do: `generate_draft` River job (keyed by draft id and version): gather context, top 5 voice samples by pgvector similarity, template for kind and contact status, call `pkg/llm` feature `fude.<kind>`, write `draft_versions`, emit `draft.ready`; on 5 failures set `failed` and emit `draft.failed`. Event handlers: `job.added` (cover letter), `contact.status_changed` (outreach), `learning.activity_added` (post).
-  Done when: tests with fake LLM cover success, retries, final failure, budget denial snoozing the job.
+- [x] **P7.2a fude store, use cases and handlers** (M) Needs: P7.1
+  Do: sqlc store for drafts, versions and voice samples; GenerateDraft (idempotency key, queue seam), Regenerate, EditDraft (new user version, digest from `hanko.BodyDigest`), Discard, ListQueue, GetDraft, AddVoiceSample use cases; gRPC handlers with authz, optimistic `version` and stable `ErrorInfo.reason`; register `FudeService`.
+  Done when: `cd services/fude && go test -race ./...` passes: store integration tests (stale version, pagination, duplicate key) and a handler test per RPC. `draft.*` events are written by the generation job (P7.2b) and Approve (P7.3), so no outbox row is written here. The `app.Queue` seam is nil until P7.2b wires River.
 
-- [ ] **P7.3 Approve and Hanko** (M) Needs: P7.1, P1.9
+- [x] **P7.2b1 fude generation use case** (M) Needs: P7.2a
+  Do: `app.Generator.Generate`: read the draft, describe its target through a `ContextSource`, take the owner's 5 newest voice samples, pick the template for kind, channel and contact status (default instructions otherwise), call `pkg/llm` feature `fude.<kind>` (follow-up and one-off share `fude.outreach`), write `draft_versions` with its digest, move the draft to pending and emit `draft.ready`. `Fail` marks a generating draft failed (a failed regenerate stays pending) and emits `draft.failed` once with a short reason. Skips a version that already exists or a draft that is no longer waiting.
+  Done when: `cd services/fude && go test -race ./internal/app/...` passes with a fake LLM: first version, regenerate, template choice, retry after success, every failure reason, `Fail` for generating and pending drafts. Voice samples are the newest 5; ranking by pgvector similarity moves to P7.2c with the Embedder.
+
+- [x] **P7.2b2 fude generation job and wiring** (M) Needs: P7.2b1
+  Do: `generate_draft` River worker (queue `fude`, 2 workers, 5 tries, unique by draft id and version) calling `Generator`; a `*llm.BudgetError` snoozes the job until `ResetsAt`; after the last try call `Fail` and finish; `app.Queue` implementation inserting the job in the caller's transaction; kagami `ContextSource` over `pkg/grpcclient` (`KAGAMI_ADDR`); wire `pkg/llm`, the worker and the queue into `cmd/fude` and add the env vars to `.env.example` and compose.
+  Done when: worker tests cover success, retry, final failure and budget denial snoozing; an integration test shows GenerateDraft leading to a pending draft through River with a fake LLM.
+  Status: `ANTHROPIC_API_KEY` is required only when `ENVIRONMENT=production`; elsewhere an empty key logs a warning and drafts fail with `generation_failed`. `TODO(owner)`: set `SOROBAN_ADDR`, `KAGAMI_ADDR` and the API key secret in `deploy/helm/values/staging/fude.yaml`, as P4.9d does for torii.
+
+- [x] **P7.2c1 fude embeddings** (M) Needs: P7.2b2
+  Do: `Embedder` interface (1024 dimensions) and `VoiceEmbedder`; `embed_voice_sample` job (3 tries, unique per sample) queued by AddVoiceSample in its transaction; the generator ranks the top 5 samples by pgvector cosine distance to the draft's topic, unembedded ones last, and falls back to the newest 5 when the embedder fails. `TODO(owner)`: choose the embedding provider. With none (`cmd/fude` passes a nil embedder), no embed job is queued and the newest samples are used.
+  Done when: tests with a fake embedder cover storing a vector, wrong width, provider error, a missing sample, ranking by closeness, the fallback, and an embed through River.
+
+- [x] **P7.2c2 fude event handlers** (M) Needs: P7.2c1
+  Do: inbox handlers for `job.added` (cover letter, channel other) and `contact.status_changed` (outreach on the contact's preferred channel; for email the generation job fills the recipient from the contact), each creating the draft in the inbox transaction with the event id as idempotency key; routes for both in `pkg/bus/routes.go`. Kagami's payloads gained `owner_id` for this (commit `14a58bc`). `learning.activity_added` waits for dojo's `events.proto` (see P9.1).
+  Done when: consumer tests for both handlers including a duplicate delivery and a payload without an owner.
+
+- [x] **P7.3 Approve and Hanko** (M) Needs: P7.1, P1.9
   Do: `fude.Approve(draft_id, version, body_sha256)` checks state, current version, hash; stamps Hanko; writes `approvals`; sets `approved`; emits `draft.approved`; a test (and a depguard/grep check in CI) asserts `hanko.Sign` is referenced only from `fude/internal/app/approve.go`.
   Done when: tests cover stale version, hash mismatch, double approve, and the single-reference check passes.
+  Status: `Approver.Approve` returns the token to its caller only; tsubame.Send (P7.6) will use it, so nothing is stored or logged. `hanko.RecipientDigest` joins `hanko.BodyDigest` in `pkg/hanko` for tsubame to recompute. Copy-only channels are stamped too (the `approvals` row needs a jti) but the token is discarded. `FUDE_HANKO_SIGNING_KEY` (base64 Ed25519 seed) is required at startup. `TODO(owner)`: set `FUDE_HANKO_SIGNING_KEY` and `FUDE_HANKO_KEY_ID` as a secret in the staging and production helm values.
 
-- [ ] **P7.4 tsubame accounts, Gmail OAuth, provider interface** (M) Needs: P2.3
-  Do: migrations `accounts messages sends`; `MailProvider` interface (List, Get, Send, History) with a Gmail implementation and a fake; envelope-encrypted token storage; ConnectAccount / CompleteConnect RPCs.
-  Done when: tests with the fake provider and a mocked Google token endpoint pass; tokens are never logged (test greps log output).
+- [x] **P7.4a tsubame tables and encrypted accounts** (M) Needs: P2.3
+  Do: migration `00002_mail.sql` (`accounts messages sends`, as in the DDL); `internal/envelope` (AES-256-GCM, a data key per value wrapped by an id-tagged master key, bound to its row so a copied token will not open); `app.Accounts` with Connect (reconnect keeps the id and sync cursor, clears a reauth status) and Token.
+  Done when: `cd services/tsubame && go test -race ./...` passes: round trip, tamper, wrong row, rotation, reconnect, disabled account, no plaintext in the stored column.
 
-- [ ] **P7.5 tsubame sync and classification** (L, split) Needs: P7.4, P6.3
-  Do: `gmail_sync` every 5 min using `history_id`; `classify_message` rules first, `pkg/llm` feature `tsubame.classify` only when unsure; link to job or contact by domain, URL, thread, email; emit `mail.classified` and `mail.reply_detected`.
-  Done when: fixture mails cover each classification; the cursor advances only on success.
+- [x] **P7.4b tsubame MailProvider and Gmail** (M) Needs: P7.4a
+  Do: `MailProvider` interface (List, Get, Send, History) and a fake; Gmail implemented over its REST API with `net/http` and `golang.org/x/oauth2` (`google.golang.org/api` needs Go 1.25.8 and the repo is pinned to 1.25.4 by the linter), base URL injectable for tests; the refresh token is exchanged per call and never logged.
+  Done when: tests against an `httptest` Gmail and token endpoint cover list, get, history (including an expired cursor), send, a revoked token marking the account for reauth, and no token in log output.
 
-- [ ] **P7.6 tsubame Send with Hanko** (M) Needs: P7.4, P1.9
-  Do: `Send(hanko, to, subject, body)` verifies signature, audience, expiry, recomputed hashes, inserts `sends` with unique `token_jti`, sends once, adds the `X-Shogun-Draft` header, emits `draft.sent`; reconciler checks Sent mail for the header before any retry.
-  Done when: tests cover each rejection, token reuse (`PermissionDenied`), provider failure (row marked failed, draft back to pending via event), and no code path sends without verification.
+- [x] **P7.4c tsubame ConnectAccount and CompleteConnect** (M) Needs: P7.4b
+  Do: `ConnectAccount` (provider to auth URL) and `CompleteConnect` (code and state to Account) in `tsubame.proto`, with a PKCE verifier and owner sealed into the opaque `state` (no extra table), `TSUBAME_GMAIL_CLIENT_ID`, `TSUBAME_GMAIL_CLIENT_SECRET`, `TSUBAME_GMAIL_REDIRECT_URL` and `TSUBAME_TOKEN_MASTER_KEY` config, wiring in `cmd/tsubame`. The account address comes from Gmail's profile. Torii's callback route and the web "connect mail" screen are new work: add them under P7.8.
+  Done when: tests with a mocked Google token endpoint cover a good connect, a bad or expired or foreign state, a reused code, and a test greps captured log output for tokens.
+  Status: `TSUBAME_TOKEN_MASTER_KEY` and the three `TSUBAME_GMAIL_*` variables are required at startup (placeholders in `.env.example`). Only one master key is read; rolling a new one needs a way to load the old ones too, which is not built yet. A state is not single-use (the code is, at Google). `TODO(owner)`: create the Google OAuth client with the Gmail API enabled, and set the key and client secret as secrets in the staging and production helm values.
 
-- [ ] **P7.7 kagami consumes mail and draft events** (M) Needs: P7.5, P7.6, P4.6
+- [x] **P7.5a tsubame mail sync** (M) Needs: P7.4
+  Do: `app.Syncer` reads each active account by `history_id`, falling back to a full read of the last 30 days (capped at 500) when there is no cursor or Gmail dropped it, and stores messages, queues classification of inbound ones and advances the cursor in one transaction; `gmail_sync` River periodic job every 5 minutes (unique while one waits or runs, no retries, 4 minute timeout).
+  Done when: fixture tests with the fake provider cover first sync, incremental, expired cursor, a failure part way (cursor and rows unchanged, then retried), a deleted message, outbound mail not queued, and one account failing without stopping the others; a test shows River running the scheduled sync.
+
+- [x] **P7.5b1 kagami FindMailLinks** (M) Needs: P4.6
+  Do: `FindMailLinks(from_email, urls)` on kagami: the contact by the sender's address, and the job by a posting URL in the mail, else by the sender's company domain (parent domains too, never a free-mail provider, an open job before a rejected one), else the contact's own job.
+  Done when: handler tests cover each key, the preferences between them, free-mail senders, per-owner isolation and a missing owner.
+
+- [x] **P7.5b2 tsubame classification** (M) Needs: P7.5a, P7.5b1, P6.3
+  Do: `classify_message` River job (3 tries): rules first; `pkg/llm` feature `tsubame.classify` only when the rules are unsure; link the message by thread, then through kagami `FindMailLinks`; emit `mail.classified` and `mail.reply_detected` (new `tsubame/v1/events.proto`); route both to kagami; wire the queue into the syncer.
+  Done when: fixture mails cover each classification, the LLM is not called when a rule is sure, and linking works for each key.
+  Status: `mail.classified` and `mail.reply_detected` carry `owner_id` for their consumers. Their routes to kagami are added with kagami's handlers in P7.7, so until then the events stay in tsubame's outbox undelivered, which is harmless. Mail with no rule match and no link to a job or contact is stored as `other` without a model call, to save budget. A message that fails classification three times stays unclassified. `ANTHROPIC_API_KEY` is required in production only.
+
+- [x] **P7.6a tsubame Send with Hanko** (M) Needs: P7.4, P1.9
+  Do: `Send(hanko, draft_id, version, to, subject, body, contact_id?, job_id?)`: verify signature, audience, issuer, expiry, the owner, and the body and recipient hashes recomputed from the request; pick the owner's active Gmail account before spending the token; insert `sends` (unique `token_jti`, and one live send per draft version) and commit it before calling the provider; send once with the `X-Shogun-Draft: <draft_id>:<version>` header; record `sent` or `failed` with `draft.sent` or `draft.send_failed` in the same transaction. `sends` gained `contact_id` and `job_id` (migration 00003; DDL and LLD updated, with the new `draft.send_failed` event and fude as a `draft.sent` consumer).
+  Done when: tests cover each rejection (changed text, subject, recipients, version, draft, no or garbage token, wrong key, key id, audience, issuer, expiry, another owner), token reuse and a second token for one version (both `PermissionDenied`), 8 concurrent sends of one token sending once, a provider failure (row failed, event written, a fresh approval can send), a revoked account marked for reauth, no account (token not spent), and bad input.
+
+- [x] **P7.6b tsubame send reconciler** (M) Needs: P7.6a
+  Do: River periodic job that resolves sends left in `sending` (a crash between recording and the provider's answer): look for `X-Shogun-Draft: <draft_id>:<version>` in the provider's recent Sent mail; found means record `sent` and emit `draft.sent`, not found after ten minutes means record `failed` and emit `draft.send_failed`; younger rows are left alone. Never sends anything itself.
+  Done when: tests with the fake provider cover found, not found and too young, a provider error leaving the row alone, and that the reconciler never calls Send.
+
+- [x] **P7.6c fude sends approved email and follows the outcome** (M) Needs: P7.6a, P7.3
+  Do: `Approve` of an email draft calls `tsubame.Send` with the token (retrying the same token on connection errors, which is safe because a token works once); a definite refusal (no account, not approved) puts the draft back to pending; fude consumes `draft.sent` (approved to sent) and `draft.send_failed` (approved to pending) and never decides that itself; routes `draft.sent` and `draft.send_failed` to fude. `TODO(owner)`: `TSUBAME_HANKO_VERIFY_KEYS` (the public key of `FUDE_HANKO_SIGNING_KEY`) goes in the staging and production helm values.
+  Done when: tests with a fake tsubame cover send success, a refusal reverting the draft, retry on connection errors, both event handlers, a duplicate delivery, and a `draft.sent` that arrives for a draft already put back to pending.
+  Status: `Approve` of an email draft calls `tsubame.Send` after the approval commits. Only a definite refusal (no account, not approved) or an unreachable tsubame after three tries puts the draft back; a provider failure waits for `draft.send_failed`; an unclear outcome (deadline, internal error) leaves it approved rather than guessing. Nothing but `draft.sent` ever marks a draft sent. Routes for both events to fude are in `pkg/bus/routes.go`; kagami is added in P7.7. `TSUBAME_ADDR` is now required by fude.
+
+- [x] **P7.7 kagami consumes mail and draft events** (M) Needs: P7.5, P7.6, P4.6
   Do: handlers for `mail.classified` (apply at confidence 0.9 or more, else notification suggestion), `mail.reply_detected`, `draft.sent` (contact status and last_contacted); stale-event guard via `occurred_at`.
   Done when: tests include out-of-order and duplicate events.
+  Status: mail moves a job only at confidence 0.9 or more, only where the state machine allows, never out of `rejected`, and never repeats the current status; below 0.9 it only leaves a `mail_linked` timeline note (taiko raises the suggestion from `mail.classified` in P8.1). An event that occurred before the job's or contact's latest status change (by event time, kept in the timeline payload) is ignored. `draft.sent` moves a contact not yet reached to `reached_out` and moves `last_contacted` forward only. `ChangeJobStatus` and `ChangeContactStatus` now share `moveJob` and `moveContact` with the handlers. Routes for the three events to kagami are in `pkg/bus/routes.go`. `TODO(owner)`: `contact.status_changed` makes fude draft an outreach message for every status change, including `reached_out` caused by fude's own send and `replied` caused by a reply; decide which statuses should draft (the LLD lists templates per status).
 
-- [ ] **P7.8 Draft queue UI** (L, split) Needs: P7.3, P5.1
-  Do: torii `DraftsService`; web screens for queue, draft detail with versions, regenerate with extra context, edit, approve (shows exactly what will be sent), copy button for LinkedIn and X.
-  Done when: Playwright: generate, regenerate, edit, approve to email via fake provider, verify one send.
+- [x] **P7.8a torii DraftsService and MailService** (M) Needs: P7.3, P7.4c, P5.1
+  Do: `api/v1/drafts.proto` (`ListQueue GetDraft GenerateDraft Regenerate EditDraft Approve Discard`) and `api/v1/mail.proto` (`ConnectAccount CompleteConnect`) with Connect handlers over fude and tsubame (`FUDE_ADDR`, `TSUBAME_ADDR`), the same error mapping as jobs and contacts, and `Idempotency-Key` passthrough on GenerateDraft. Approve keeps the `SEND_UNAVAILABLE` and `SEND_STATUS_UNKNOWN` reasons so the screen can say whether the mail may have gone out. fude's queue now carries each draft's subject and a 200 character preview.
+  Done when: `cd services/torii && go test -race ./...` passes: each RPC, enum mapping, owner propagation, the approve error reasons, no session, no internals or codes in errors.
+
+- [x] **P7.8b web drafts queue and detail** (M) Needs: P7.8a
+  Do: `/drafts` queue (pending first, with subject and preview) and `/drafts/[id]` detail with versions, regenerate with extra context, edit, discard, and approve showing the exact subject, body and recipient that will be sent, with the digest of that text sent with the approval; copy buttons for LinkedIn and X; add-draft dialog; nav entry. Mocked-API Playwright tests.
+  Done when: Playwright (mocked API) covers queue, regenerate, edit, approve to email, approve to copy, discard, a stale version and a refused send.
+  Status: the approval digest is computed in the browser (`src/lib/digest.ts`) over the stored current version, never the editor text, and is pinned to `hanko.BodyDigest` by a golden vector tested on both sides. Approve is blocked while an edit is unsaved or an older version is open. Polling is bounded to 90 seconds. Follow-up: the draft state machine lets the owner mark an approved copy-only post as posted (approved to sent), but fude has no RPC for it, so LinkedIn and X drafts stay `approved` after copying. Add `MarkPosted` to fude and a button to the copy panel.
+
+- [x] **P7.8c web connect mail** (M) Needs: P7.8a
+  Do: Settings > Mail with a Connect Gmail button that follows only an https address from the backend, and a `/mail/callback` page that finishes the connection with the code and state once, then removes them from the address bar.
+  Done when: Playwright (mocked API) covers the redirect, a non-https address refused, a failed start, a good callback (called once, code gone from the URL), an expired or foreign state, a refused code, a denied grant and a callback with no code.
+  Status: there is no RPC to list connected accounts, so the screen cannot show which address is connected or whether it needs reconnecting. Follow-up: add `ListAccounts` to tsubame and `MailService`, and show address and status here.
+
+- [ ] **P7.8d Compose end-to-end for drafts and mail** (M) Needs: P7.8b, P7.8c, P5.2c
+  Do: bring fude, tsubame, soroban and kagami up in the compose e2e overlay with a stub Anthropic API and a stub Gmail (token endpoint, profile, list, get, send), which needs base-URL settings for both in fude's and tsubame's config; a compose Playwright spec: add a draft, regenerate, edit, approve to email, and assert the stub Gmail received exactly one message with the `X-Shogun-Draft` header; add those services to the CI `e2e-compose` job.
+  Done when: `npm run test:e2e:compose` passes locally against the stack, and the CI job is green after merge.
+
+- [ ] **P7.8e Mark a copy-only draft as posted** (S) Needs: P7.3
+  Do: `MarkPosted` on fude (approved to sent for non-email channels, through the state machine) and a button in the copy panel. Without it LinkedIn and X drafts stay `approved` after the owner posts them.
+  Done when: domain, handler and Playwright tests pass.
 
 ---
 
@@ -339,7 +403,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 ## Phase 9: dojo, katana, shinobi, sensei
 
 - [ ] **P9.1 dojo** (M) Needs: P2.3
-  Do: tables, RPCs (items, activities, GeneratePost), events `learning.activity_added`, `learning.item_completed`; torii endpoints; Learning screen.
+  Do: tables, RPCs (items, activities, GeneratePost), events `learning.activity_added`, `learning.item_completed`; torii endpoints; Learning screen. Also add fude's `learning.activity_added` handler (post draft) and its route, deferred from P7.2c.
   Done when: logging an activity leads to a pending post draft in the queue (E2E with fake LLM).
 
 - [ ] **P9.2 katana** (L, split) Needs: P6.3

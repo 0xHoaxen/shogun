@@ -24,12 +24,14 @@ const (
 
 // JobAdded is the payload of job.added.
 type JobAdded struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	JobId         string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Company       string                 `protobuf:"bytes,3,opt,name=company,proto3" json:"company,omitempty"`
-	Url           string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
-	Source        string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	JobId   string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	Title   string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Company string                 `protobuf:"bytes,3,opt,name=company,proto3" json:"company,omitempty"`
+	Url     string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Source  string                 `protobuf:"bytes,5,opt,name=source,proto3" json:"source,omitempty"`
+	// owner_id lets consumers act for the owner without a caller identity.
+	OwnerId       string `protobuf:"bytes,6,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -95,6 +97,13 @@ func (x *JobAdded) GetUrl() string {
 func (x *JobAdded) GetSource() string {
 	if x != nil {
 		return x.Source
+	}
+	return ""
+}
+
+func (x *JobAdded) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
 	}
 	return ""
 }
@@ -277,11 +286,14 @@ func (x *ContactAdded) GetStatus() ContactStatus {
 
 // ContactStatusChanged is the payload of contact.status_changed.
 type ContactStatusChanged struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ContactId     string                 `protobuf:"bytes,1,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
-	From          ContactStatus          `protobuf:"varint,2,opt,name=from,proto3,enum=shogun.kagami.v1.ContactStatus" json:"from,omitempty"`
-	To            ContactStatus          `protobuf:"varint,3,opt,name=to,proto3,enum=shogun.kagami.v1.ContactStatus" json:"to,omitempty"`
-	Channel       string                 `protobuf:"bytes,4,opt,name=channel,proto3" json:"channel,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	ContactId string                 `protobuf:"bytes,1,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
+	From      ContactStatus          `protobuf:"varint,2,opt,name=from,proto3,enum=shogun.kagami.v1.ContactStatus" json:"from,omitempty"`
+	To        ContactStatus          `protobuf:"varint,3,opt,name=to,proto3,enum=shogun.kagami.v1.ContactStatus" json:"to,omitempty"`
+	// channel is the contact's preferred channel (email, linkedin, x, phone,
+	// other), empty when none is set.
+	Channel       string `protobuf:"bytes,4,opt,name=channel,proto3" json:"channel,omitempty"`
+	OwnerId       string `protobuf:"bytes,5,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -344,6 +356,13 @@ func (x *ContactStatusChanged) GetChannel() string {
 	return ""
 }
 
+func (x *ContactStatusChanged) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 // ContactFollowUpDue is the payload of contact.follow_up_due.
 type ContactFollowUpDue struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -401,13 +420,14 @@ var File_shogun_kagami_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_kagami_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x1dshogun/kagami/v1/events.proto\x12\x10shogun.kagami.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dshogun/kagami/v1/kagami.proto\"{\n" +
+	"\x1dshogun/kagami/v1/events.proto\x12\x10shogun.kagami.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1dshogun/kagami/v1/kagami.proto\"\x96\x01\n" +
 	"\bJobAdded\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
 	"\acompany\x18\x03 \x01(\tR\acompany\x12\x10\n" +
 	"\x03url\x18\x04 \x01(\tR\x03url\x12\x16\n" +
-	"\x06source\x18\x05 \x01(\tR\x06source\"\xb3\x01\n" +
+	"\x06source\x18\x05 \x01(\tR\x06source\x12\x19\n" +
+	"\bowner_id\x18\x06 \x01(\tR\aownerId\"\xb3\x01\n" +
 	"\x10JobStatusChanged\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12/\n" +
 	"\x04from\x18\x02 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\x04from\x12+\n" +
@@ -419,13 +439,14 @@ const file_shogun_kagami_v1_events_proto_rawDesc = "" +
 	"\fContactAdded\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x127\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x06status\"\xb5\x01\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x06status\"\xd0\x01\n" +
 	"\x14ContactStatusChanged\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x123\n" +
 	"\x04from\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x04from\x12/\n" +
 	"\x02to\x18\x03 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x02to\x12\x18\n" +
-	"\achannel\x18\x04 \x01(\tR\achannel\"J\n" +
+	"\achannel\x18\x04 \x01(\tR\achannel\x12\x19\n" +
+	"\bowner_id\x18\x05 \x01(\tR\aownerId\"J\n" +
 	"\x12ContactFollowUpDue\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x12\x15\n" +

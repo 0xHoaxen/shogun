@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -22,6 +23,9 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/fude/internal/app"
+	fudeevents "github.com/0xHoaxen/shogun/services/fude/internal/events"
+	fudegrpc "github.com/0xHoaxen/shogun/services/fude/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/fude/migrations"
 )
 
@@ -89,6 +93,11 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
+	hankoKey, hankoKeyID, err := loadHankoKey(lookup)
+	if err != nil {
+		return err
+	}
+
 	shutdownTelemetry, err := telemetry.Setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -107,12 +116,24 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
+	gen, err := newGeneration(ctx, lookup, cfg, pool, authority, log)
+	if err != nil {
+		return err
+	}
+	defer gen.close()
+
+	approver, err := app.NewApprover(pool, hankoKey, hankoKeyID, nil, app.WithMailer(gen.mailer, log))
 	if err != nil {
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	svc := app.NewService(pool, gen.queue, nil).WithLogger(log)
+	sink, err := bus.NewSinkServer(pool, fudeevents.Handlers(svc, log), log)
+	if err != nil {
+		return err
+	}
+
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, gen.setup, overrides)
 	if err != nil {
 		return err
 	}
@@ -124,6 +145,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc, approver))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

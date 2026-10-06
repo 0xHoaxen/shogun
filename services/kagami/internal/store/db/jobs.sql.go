@@ -12,6 +12,85 @@ import (
 	"github.com/google/uuid"
 )
 
+const findJobByCompanyDomains = `-- name: FindJobByCompanyDomains :one
+SELECT j.id, j.owner_id, j.company_id, j.title, j.url, j.source, j.status, j.applied_on, j.next_follow_up, j.location, j.salary_text, j.description, j.idempotency_key, j.version, j.created_at, j.updated_at, j.archived_at FROM jobs j
+JOIN companies c ON c.id = j.company_id AND c.owner_id = j.owner_id
+WHERE j.owner_id = $1 AND j.archived_at IS NULL AND c.archived_at IS NULL
+  AND c.domain = ANY($2::text[])
+ORDER BY (j.status <> 'rejected') DESC, length(c.domain) DESC, j.updated_at DESC, j.id DESC
+LIMIT 1
+`
+
+type FindJobByCompanyDomainsParams struct {
+	OwnerID uuid.UUID
+	Domains []string
+}
+
+// A job at a company with one of the given domains: an open job before a
+// rejected one, the longest (most specific) domain first, then the newest.
+func (q *Queries) FindJobByCompanyDomains(ctx context.Context, arg FindJobByCompanyDomainsParams) (Job, error) {
+	row := q.db.QueryRow(ctx, findJobByCompanyDomains, arg.OwnerID, arg.Domains)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CompanyID,
+		&i.Title,
+		&i.Url,
+		&i.Source,
+		&i.Status,
+		&i.AppliedOn,
+		&i.NextFollowUp,
+		&i.Location,
+		&i.SalaryText,
+		&i.Description,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
+}
+
+const findJobByURLs = `-- name: FindJobByURLs :one
+SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
+WHERE owner_id = $1 AND archived_at IS NULL AND url = ANY($2::text[])
+ORDER BY updated_at DESC, id DESC
+LIMIT 1
+`
+
+type FindJobByURLsParams struct {
+	OwnerID uuid.UUID
+	Urls    []string
+}
+
+// The job whose posting URL is one of the given URLs; the newest when several.
+func (q *Queries) FindJobByURLs(ctx context.Context, arg FindJobByURLsParams) (Job, error) {
+	row := q.db.QueryRow(ctx, findJobByURLs, arg.OwnerID, arg.Urls)
+	var i Job
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.CompanyID,
+		&i.Title,
+		&i.Url,
+		&i.Source,
+		&i.Status,
+		&i.AppliedOn,
+		&i.NextFollowUp,
+		&i.Location,
+		&i.SalaryText,
+		&i.Description,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
+}
+
 const getJob = `-- name: GetJob :one
 SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs WHERE id = $1 AND owner_id = $2
 `
@@ -220,6 +299,25 @@ func (q *Queries) InsertJobEvent(ctx context.Context, arg InsertJobEventParams) 
 		&i.OccurredAt,
 	)
 	return i, err
+}
+
+const latestJobStatusAnchor = `-- name: LatestJobStatusAnchor :one
+SELECT COALESCE((payload->>'event_at')::timestamptz, occurred_at)::timestamptz AS anchor
+FROM job_events
+WHERE job_id = $1 AND kind = 'status_changed'
+ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
+LIMIT 1
+`
+
+// When the job's status last changed, as an event time: a change made from
+// mail carries the time of the mail event in its payload; any other change is
+// anchored at the moment it was made. A mail event that occurred before this
+// is out of date.
+func (q *Queries) LatestJobStatusAnchor(ctx context.Context, jobID uuid.UUID) (time.Time, error) {
+	row := q.db.QueryRow(ctx, latestJobStatusAnchor, jobID)
+	var anchor time.Time
+	err := row.Scan(&anchor)
+	return anchor, err
 }
 
 const listDueJobs = `-- name: ListDueJobs :many

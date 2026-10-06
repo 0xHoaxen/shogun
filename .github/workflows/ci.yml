@@ -99,6 +99,16 @@ jobs:
           version: ${{ needs.modules.outputs.golangci-lint }}
           working-directory: ${{ matrix.dir }}
 
+  hanko-boundary:
+    name: hanko boundary
+    needs: modules
+    if: needs.modules.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Only fude's approve.go may call hanko.Sign
+        run: scripts/check-hanko-sign.sh
+
   lint-config:
     name: lint config
     needs: modules
@@ -246,7 +256,7 @@ jobs:
   ci-ok:
     name: ci ok
     if: always()
-    needs: [modules, lint, lint-config, test, isolated-build, build, docker-build, web, e2e-compose]
+    needs: [modules, lint, lint-config, hanko-boundary, test, isolated-build, build, docker-build, web, e2e-compose]
     runs-on: ubuntu-latest
     steps:
       # Matrix jobs are skipped when nothing they cover changed, so a skipped

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -164,7 +165,7 @@ func (s *Service) createContact(ctx context.Context, tx pgx.Tx, repo *store.Repo
 	if err != nil {
 		return db.Contact{}, err
 	}
-	if err := s.addContactEvent(ctx, repo, contact.ID, contactEventCreated, nil, &contact.Status, nil); err != nil {
+	if err := s.addContactEvent(ctx, repo, contact.ID, contactEventCreated, nil, &contact.Status, nil, nil); err != nil {
 		return db.Contact{}, err
 	}
 	_, err = outbox.Write(ctx, tx, eventSource, eventContactAdded, contact.ID.String(), &kagamiv1.ContactAdded{
@@ -205,10 +206,13 @@ func checkJobRef(ctx context.Context, repo *store.Repo, owner uuid.UUID, id *uui
 }
 
 // addContactEvent appends one entry to a contact's timeline.
-func (s *Service) addContactEvent(ctx context.Context, repo *store.Repo, contactID uuid.UUID, kind string, channel, from, to *string) error {
+func (s *Service) addContactEvent(ctx context.Context, repo *store.Repo, contactID uuid.UUID, kind string, channel, from, to *string, payload map[string]any) error {
+	if payload == nil {
+		payload = map[string]any{}
+	}
 	_, err := repo.InsertContactEvent(ctx, db.InsertContactEventParams{
 		ID: store.NewID(), ContactID: contactID, Kind: kind, Channel: channel, FromStatus: from, ToStatus: to,
-		Payload: []byte(`{}`), OccurredAt: s.now().UTC(),
+		Payload: jsonObject(payload), OccurredAt: s.now().UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("add %s contact event: %w", kind, err)
@@ -344,32 +348,47 @@ func (s *Service) ChangeContactStatus(ctx context.Context, in ChangeContactStatu
 		if current.Version != in.Version {
 			return store.ErrVersionConflict
 		}
-		from := domain.ContactStatus(current.Status)
-		moved, err := domain.Contact{Status: from}.ChangeStatus(in.To, s.now().UTC())
-		if err != nil {
-			return err
-		}
-		updated, err = repo.UpdateContactStatus(ctx, db.UpdateContactStatusParams{
-			ID: id, OwnerID: owner, Version: in.Version, Status: string(moved.Status),
-			LastContacted: current.LastContacted,
-		})
-		if err != nil {
-			return err
-		}
-
-		fromText, toText := string(from), string(moved.Status)
-		if err := s.addContactEvent(ctx, repo, id, contactEventStatus, nil, &fromText, &toText); err != nil {
-			return err
-		}
-		_, err = outbox.Write(ctx, tx, eventSource, eventContactStatusChanged, id.String(), &kagamiv1.ContactStatusChanged{
-			ContactId: id.String(),
-			From:      wire.ContactStatusToProto(from),
-			To:        wire.ContactStatusToProto(moved.Status),
-		})
-		if err != nil {
-			return fmt.Errorf("write %s event: %w", eventContactStatusChanged, err)
-		}
-		return nil
+		updated, err = s.moveContact(ctx, tx, repo, owner, current, in.To, current.LastContacted, nil)
+		return err
 	})
 	return updated, err
+}
+
+// moveContact moves a contact to a new status inside tx: the row (with its
+// optimistic version, which must be the one in current), a timeline entry and a
+// contact.status_changed event. lastContacted is written along with it. An
+// invalid move is a *domain.TransitionError. The user's ChangeContactStatus and
+// the mail and draft event handlers share it.
+func (s *Service) moveContact(
+	ctx context.Context, tx pgx.Tx, repo *store.Repo, owner uuid.UUID, current db.Contact,
+	to domain.ContactStatus, lastContacted *time.Time, extra map[string]any,
+) (db.Contact, error) {
+	from := domain.ContactStatus(current.Status)
+	moved, err := domain.Contact{Status: from}.ChangeStatus(to, s.now().UTC())
+	if err != nil {
+		return db.Contact{}, err
+	}
+	updated, err := repo.UpdateContactStatus(ctx, db.UpdateContactStatusParams{
+		ID: current.ID, OwnerID: owner, Version: current.Version, Status: string(moved.Status),
+		LastContacted: lastContacted,
+	})
+	if err != nil {
+		return db.Contact{}, err
+	}
+
+	fromText, toText := string(from), string(moved.Status)
+	if err := s.addContactEvent(ctx, repo, current.ID, contactEventStatus, nil, &fromText, &toText, extra); err != nil {
+		return db.Contact{}, err
+	}
+	_, err = outbox.Write(ctx, tx, eventSource, eventContactStatusChanged, current.ID.String(), &kagamiv1.ContactStatusChanged{
+		ContactId: current.ID.String(),
+		From:      wire.ContactStatusToProto(from),
+		To:        wire.ContactStatusToProto(moved.Status),
+		Channel:   deref(updated.PreferredChannel),
+		OwnerId:   owner.String(),
+	})
+	if err != nil {
+		return db.Contact{}, fmt.Errorf("write %s event: %w", eventContactStatusChanged, err)
+	}
+	return updated, nil
 }

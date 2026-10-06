@@ -9,7 +9,9 @@ package tsubamev1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +22,615 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type MailProvider int32
+
+const (
+	MailProvider_MAIL_PROVIDER_UNSPECIFIED MailProvider = 0
+	MailProvider_MAIL_PROVIDER_GMAIL       MailProvider = 1
+)
+
+// Enum value maps for MailProvider.
+var (
+	MailProvider_name = map[int32]string{
+		0: "MAIL_PROVIDER_UNSPECIFIED",
+		1: "MAIL_PROVIDER_GMAIL",
+	}
+	MailProvider_value = map[string]int32{
+		"MAIL_PROVIDER_UNSPECIFIED": 0,
+		"MAIL_PROVIDER_GMAIL":       1,
+	}
+)
+
+func (x MailProvider) Enum() *MailProvider {
+	p := new(MailProvider)
+	*p = x
+	return p
+}
+
+func (x MailProvider) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (MailProvider) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_tsubame_v1_tsubame_proto_enumTypes[0].Descriptor()
+}
+
+func (MailProvider) Type() protoreflect.EnumType {
+	return &file_shogun_tsubame_v1_tsubame_proto_enumTypes[0]
+}
+
+func (x MailProvider) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use MailProvider.Descriptor instead.
+func (MailProvider) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{0}
+}
+
+type AccountStatus int32
+
+const (
+	AccountStatus_ACCOUNT_STATUS_UNSPECIFIED AccountStatus = 0
+	AccountStatus_ACCOUNT_STATUS_ACTIVE      AccountStatus = 1
+	// REAUTH_REQUIRED means access was revoked; connect the account again.
+	AccountStatus_ACCOUNT_STATUS_REAUTH_REQUIRED AccountStatus = 2
+	AccountStatus_ACCOUNT_STATUS_DISABLED        AccountStatus = 3
+)
+
+// Enum value maps for AccountStatus.
+var (
+	AccountStatus_name = map[int32]string{
+		0: "ACCOUNT_STATUS_UNSPECIFIED",
+		1: "ACCOUNT_STATUS_ACTIVE",
+		2: "ACCOUNT_STATUS_REAUTH_REQUIRED",
+		3: "ACCOUNT_STATUS_DISABLED",
+	}
+	AccountStatus_value = map[string]int32{
+		"ACCOUNT_STATUS_UNSPECIFIED":     0,
+		"ACCOUNT_STATUS_ACTIVE":          1,
+		"ACCOUNT_STATUS_REAUTH_REQUIRED": 2,
+		"ACCOUNT_STATUS_DISABLED":        3,
+	}
+)
+
+func (x AccountStatus) Enum() *AccountStatus {
+	p := new(AccountStatus)
+	*p = x
+	return p
+}
+
+func (x AccountStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AccountStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_tsubame_v1_tsubame_proto_enumTypes[1].Descriptor()
+}
+
+func (AccountStatus) Type() protoreflect.EnumType {
+	return &file_shogun_tsubame_v1_tsubame_proto_enumTypes[1]
+}
+
+func (x AccountStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AccountStatus.Descriptor instead.
+func (AccountStatus) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{1}
+}
+
+// Account is a connected mailbox. It never carries a token.
+type Account struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Provider      MailProvider           `protobuf:"varint,2,opt,name=provider,proto3,enum=shogun.tsubame.v1.MailProvider" json:"provider,omitempty"`
+	Address       string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	Status        AccountStatus          `protobuf:"varint,4,opt,name=status,proto3,enum=shogun.tsubame.v1.AccountStatus" json:"status,omitempty"`
+	LastSyncedAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=last_synced_at,json=lastSyncedAt,proto3" json:"last_synced_at,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Account) Reset() {
+	*x = Account{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Account) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Account) ProtoMessage() {}
+
+func (x *Account) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Account.ProtoReflect.Descriptor instead.
+func (*Account) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Account) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Account) GetProvider() MailProvider {
+	if x != nil {
+		return x.Provider
+	}
+	return MailProvider_MAIL_PROVIDER_UNSPECIFIED
+}
+
+func (x *Account) GetAddress() string {
+	if x != nil {
+		return x.Address
+	}
+	return ""
+}
+
+func (x *Account) GetStatus() AccountStatus {
+	if x != nil {
+		return x.Status
+	}
+	return AccountStatus_ACCOUNT_STATUS_UNSPECIFIED
+}
+
+func (x *Account) GetLastSyncedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSyncedAt
+	}
+	return nil
+}
+
+func (x *Account) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type ConnectAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Provider      MailProvider           `protobuf:"varint,1,opt,name=provider,proto3,enum=shogun.tsubame.v1.MailProvider" json:"provider,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConnectAccountRequest) Reset() {
+	*x = ConnectAccountRequest{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConnectAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectAccountRequest) ProtoMessage() {}
+
+func (x *ConnectAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectAccountRequest.ProtoReflect.Descriptor instead.
+func (*ConnectAccountRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ConnectAccountRequest) GetProvider() MailProvider {
+	if x != nil {
+		return x.Provider
+	}
+	return MailProvider_MAIL_PROVIDER_UNSPECIFIED
+}
+
+type ConnectAccountResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// auth_url is where to send the owner. It is good for ten minutes.
+	AuthUrl       string `protobuf:"bytes,1,opt,name=auth_url,json=authUrl,proto3" json:"auth_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConnectAccountResponse) Reset() {
+	*x = ConnectAccountResponse{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConnectAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectAccountResponse) ProtoMessage() {}
+
+func (x *ConnectAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectAccountResponse.ProtoReflect.Descriptor instead.
+func (*ConnectAccountResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ConnectAccountResponse) GetAuthUrl() string {
+	if x != nil {
+		return x.AuthUrl
+	}
+	return ""
+}
+
+type CompleteConnectRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteConnectRequest) Reset() {
+	*x = CompleteConnectRequest{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteConnectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteConnectRequest) ProtoMessage() {}
+
+func (x *CompleteConnectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteConnectRequest.ProtoReflect.Descriptor instead.
+func (*CompleteConnectRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CompleteConnectRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *CompleteConnectRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+type CompleteConnectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Account       *Account               `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteConnectResponse) Reset() {
+	*x = CompleteConnectResponse{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteConnectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteConnectResponse) ProtoMessage() {}
+
+func (x *CompleteConnectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteConnectResponse.ProtoReflect.Descriptor instead.
+func (*CompleteConnectResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CompleteConnectResponse) GetAccount() *Account {
+	if x != nil {
+		return x.Account
+	}
+	return nil
+}
+
+type SendRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// hanko is the token fude stamped when the owner approved this version.
+	Hanko   string   `protobuf:"bytes,1,opt,name=hanko,proto3" json:"hanko,omitempty"`
+	DraftId string   `protobuf:"bytes,2,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	Version int32    `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	To      []string `protobuf:"bytes,4,rep,name=to,proto3" json:"to,omitempty"`
+	Subject string   `protobuf:"bytes,5,opt,name=subject,proto3" json:"subject,omitempty"`
+	Body    string   `protobuf:"bytes,6,opt,name=body,proto3" json:"body,omitempty"`
+	// contact_id and job_id are what the draft is about; they are echoed in
+	// draft.sent and are not covered by the token.
+	ContactId     string `protobuf:"bytes,7,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
+	JobId         string `protobuf:"bytes,8,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SendRequest) Reset() {
+	*x = SendRequest{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendRequest) ProtoMessage() {}
+
+func (x *SendRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendRequest.ProtoReflect.Descriptor instead.
+func (*SendRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *SendRequest) GetHanko() string {
+	if x != nil {
+		return x.Hanko
+	}
+	return ""
+}
+
+func (x *SendRequest) GetDraftId() string {
+	if x != nil {
+		return x.DraftId
+	}
+	return ""
+}
+
+func (x *SendRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *SendRequest) GetTo() []string {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *SendRequest) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *SendRequest) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *SendRequest) GetContactId() string {
+	if x != nil {
+		return x.ContactId
+	}
+	return ""
+}
+
+func (x *SendRequest) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
+type SendResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider_message_id is the id the mail provider gave the sent message.
+	ProviderMessageId string `protobuf:"bytes,1,opt,name=provider_message_id,json=providerMessageId,proto3" json:"provider_message_id,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *SendResponse) Reset() {
+	*x = SendResponse{}
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SendResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SendResponse) ProtoMessage() {}
+
+func (x *SendResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_tsubame_v1_tsubame_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SendResponse.ProtoReflect.Descriptor instead.
+func (*SendResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *SendResponse) GetProviderMessageId() string {
+	if x != nil {
+		return x.ProviderMessageId
+	}
+	return ""
+}
+
 var File_shogun_tsubame_v1_tsubame_proto protoreflect.FileDescriptor
 
 const file_shogun_tsubame_v1_tsubame_proto_rawDesc = "" +
 	"\n" +
-	"\x1fshogun/tsubame/v1/tsubame.proto\x12\x11shogun.tsubame.v12\x10\n" +
-	"\x0eTsubameServiceB\xca\x01\n" +
+	"\x1fshogun/tsubame/v1/tsubame.proto\x12\x11shogun.tsubame.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa7\x02\n" +
+	"\aAccount\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12;\n" +
+	"\bprovider\x18\x02 \x01(\x0e2\x1f.shogun.tsubame.v1.MailProviderR\bprovider\x12\x18\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x128\n" +
+	"\x06status\x18\x04 \x01(\x0e2 .shogun.tsubame.v1.AccountStatusR\x06status\x12@\n" +
+	"\x0elast_synced_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\flastSyncedAt\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"T\n" +
+	"\x15ConnectAccountRequest\x12;\n" +
+	"\bprovider\x18\x01 \x01(\x0e2\x1f.shogun.tsubame.v1.MailProviderR\bprovider\"3\n" +
+	"\x16ConnectAccountResponse\x12\x19\n" +
+	"\bauth_url\x18\x01 \x01(\tR\aauthUrl\"B\n" +
+	"\x16CompleteConnectRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\"O\n" +
+	"\x17CompleteConnectResponse\x124\n" +
+	"\aaccount\x18\x01 \x01(\v2\x1a.shogun.tsubame.v1.AccountR\aaccount\"\xcc\x01\n" +
+	"\vSendRequest\x12\x14\n" +
+	"\x05hanko\x18\x01 \x01(\tR\x05hanko\x12\x19\n" +
+	"\bdraft_id\x18\x02 \x01(\tR\adraftId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\x12\x0e\n" +
+	"\x02to\x18\x04 \x03(\tR\x02to\x12\x18\n" +
+	"\asubject\x18\x05 \x01(\tR\asubject\x12\x12\n" +
+	"\x04body\x18\x06 \x01(\tR\x04body\x12\x1d\n" +
+	"\n" +
+	"contact_id\x18\a \x01(\tR\tcontactId\x12\x15\n" +
+	"\x06job_id\x18\b \x01(\tR\x05jobId\">\n" +
+	"\fSendResponse\x12.\n" +
+	"\x13provider_message_id\x18\x01 \x01(\tR\x11providerMessageId*F\n" +
+	"\fMailProvider\x12\x1d\n" +
+	"\x19MAIL_PROVIDER_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13MAIL_PROVIDER_GMAIL\x10\x01*\x8b\x01\n" +
+	"\rAccountStatus\x12\x1e\n" +
+	"\x1aACCOUNT_STATUS_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15ACCOUNT_STATUS_ACTIVE\x10\x01\x12\"\n" +
+	"\x1eACCOUNT_STATUS_REAUTH_REQUIRED\x10\x02\x12\x1b\n" +
+	"\x17ACCOUNT_STATUS_DISABLED\x10\x032\xaa\x02\n" +
+	"\x0eTsubameService\x12e\n" +
+	"\x0eConnectAccount\x12(.shogun.tsubame.v1.ConnectAccountRequest\x1a).shogun.tsubame.v1.ConnectAccountResponse\x12h\n" +
+	"\x0fCompleteConnect\x12).shogun.tsubame.v1.CompleteConnectRequest\x1a*.shogun.tsubame.v1.CompleteConnectResponse\x12G\n" +
+	"\x04Send\x12\x1e.shogun.tsubame.v1.SendRequest\x1a\x1f.shogun.tsubame.v1.SendResponseB\xca\x01\n" +
 	"\x15com.shogun.tsubame.v1B\fTsubameProtoP\x01Z=github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1;tsubamev1\xa2\x02\x03STX\xaa\x02\x11Shogun.Tsubame.V1\xca\x02\x11Shogun\\Tsubame\\V1\xe2\x02\x1dShogun\\Tsubame\\V1\\GPBMetadata\xea\x02\x13Shogun::Tsubame::V1b\x06proto3"
 
-var file_shogun_tsubame_v1_tsubame_proto_goTypes = []any{}
+var (
+	file_shogun_tsubame_v1_tsubame_proto_rawDescOnce sync.Once
+	file_shogun_tsubame_v1_tsubame_proto_rawDescData []byte
+)
+
+func file_shogun_tsubame_v1_tsubame_proto_rawDescGZIP() []byte {
+	file_shogun_tsubame_v1_tsubame_proto_rawDescOnce.Do(func() {
+		file_shogun_tsubame_v1_tsubame_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_tsubame_v1_tsubame_proto_rawDesc), len(file_shogun_tsubame_v1_tsubame_proto_rawDesc)))
+	})
+	return file_shogun_tsubame_v1_tsubame_proto_rawDescData
+}
+
+var file_shogun_tsubame_v1_tsubame_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_shogun_tsubame_v1_tsubame_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_shogun_tsubame_v1_tsubame_proto_goTypes = []any{
+	(MailProvider)(0),               // 0: shogun.tsubame.v1.MailProvider
+	(AccountStatus)(0),              // 1: shogun.tsubame.v1.AccountStatus
+	(*Account)(nil),                 // 2: shogun.tsubame.v1.Account
+	(*ConnectAccountRequest)(nil),   // 3: shogun.tsubame.v1.ConnectAccountRequest
+	(*ConnectAccountResponse)(nil),  // 4: shogun.tsubame.v1.ConnectAccountResponse
+	(*CompleteConnectRequest)(nil),  // 5: shogun.tsubame.v1.CompleteConnectRequest
+	(*CompleteConnectResponse)(nil), // 6: shogun.tsubame.v1.CompleteConnectResponse
+	(*SendRequest)(nil),             // 7: shogun.tsubame.v1.SendRequest
+	(*SendResponse)(nil),            // 8: shogun.tsubame.v1.SendResponse
+	(*timestamppb.Timestamp)(nil),   // 9: google.protobuf.Timestamp
+}
 var file_shogun_tsubame_v1_tsubame_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: shogun.tsubame.v1.Account.provider:type_name -> shogun.tsubame.v1.MailProvider
+	1, // 1: shogun.tsubame.v1.Account.status:type_name -> shogun.tsubame.v1.AccountStatus
+	9, // 2: shogun.tsubame.v1.Account.last_synced_at:type_name -> google.protobuf.Timestamp
+	9, // 3: shogun.tsubame.v1.Account.created_at:type_name -> google.protobuf.Timestamp
+	0, // 4: shogun.tsubame.v1.ConnectAccountRequest.provider:type_name -> shogun.tsubame.v1.MailProvider
+	2, // 5: shogun.tsubame.v1.CompleteConnectResponse.account:type_name -> shogun.tsubame.v1.Account
+	3, // 6: shogun.tsubame.v1.TsubameService.ConnectAccount:input_type -> shogun.tsubame.v1.ConnectAccountRequest
+	5, // 7: shogun.tsubame.v1.TsubameService.CompleteConnect:input_type -> shogun.tsubame.v1.CompleteConnectRequest
+	7, // 8: shogun.tsubame.v1.TsubameService.Send:input_type -> shogun.tsubame.v1.SendRequest
+	4, // 9: shogun.tsubame.v1.TsubameService.ConnectAccount:output_type -> shogun.tsubame.v1.ConnectAccountResponse
+	6, // 10: shogun.tsubame.v1.TsubameService.CompleteConnect:output_type -> shogun.tsubame.v1.CompleteConnectResponse
+	8, // 11: shogun.tsubame.v1.TsubameService.Send:output_type -> shogun.tsubame.v1.SendResponse
+	9, // [9:12] is the sub-list for method output_type
+	6, // [6:9] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_shogun_tsubame_v1_tsubame_proto_init() }
@@ -47,13 +643,15 @@ func file_shogun_tsubame_v1_tsubame_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_tsubame_v1_tsubame_proto_rawDesc), len(file_shogun_tsubame_v1_tsubame_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      2,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_tsubame_v1_tsubame_proto_goTypes,
 		DependencyIndexes: file_shogun_tsubame_v1_tsubame_proto_depIdxs,
+		EnumInfos:         file_shogun_tsubame_v1_tsubame_proto_enumTypes,
+		MessageInfos:      file_shogun_tsubame_v1_tsubame_proto_msgTypes,
 	}.Build()
 	File_shogun_tsubame_v1_tsubame_proto = out.File
 	file_shogun_tsubame_v1_tsubame_proto_goTypes = nil

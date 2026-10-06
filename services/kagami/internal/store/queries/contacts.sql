@@ -98,3 +98,11 @@ RETURNING *;
 
 -- name: ListContactEvents :many
 SELECT * FROM contact_events WHERE contact_id = @contact_id ORDER BY occurred_at DESC, id DESC;
+
+-- name: LatestContactStatusAnchor :one
+-- See LatestJobStatusAnchor.
+SELECT COALESCE((payload->>'event_at')::timestamptz, occurred_at)::timestamptz AS anchor
+FROM contact_events
+WHERE contact_id = @contact_id AND kind = 'status_changed'
+ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
+LIMIT 1;

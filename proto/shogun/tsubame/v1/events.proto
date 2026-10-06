@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package shogun.tsubame.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Payloads of the events tsubame produces. Routes live in pkg/bus/routes.go.
+
+// MailClass is what a message was classified as.
+enum MailClass {
+  MAIL_CLASS_UNSPECIFIED = 0;
+  MAIL_CLASS_APPLICATION_CONFIRMATION = 1;
+  MAIL_CLASS_INTERVIEW_INVITE = 2;
+  MAIL_CLASS_REJECTION = 3;
+  MAIL_CLASS_OFFER = 4;
+  MAIL_CLASS_RECRUITER_OUTREACH = 5;
+  MAIL_CLASS_REPLY = 6;
+  MAIL_CLASS_OTHER = 7;
+}
+
+// MailClassified is the payload of mail.classified.
+message MailClassified {
+  // owner_id lets consumers act for the owner without a caller identity.
+  string owner_id = 1;
+  string message_id = 2;
+  MailClass classification = 3;
+  // confidence is between 0 and 1.
+  float confidence = 4;
+  // job_id and contact_id are the kagami ids the mail was linked to, empty
+  // when it was not.
+  string job_id = 5;
+  string contact_id = 6;
+  // classified_by is rule or llm.
+  string classified_by = 7;
+}
+
+// MailReplyDetected is the payload of mail.reply_detected: a contact wrote back.
+message MailReplyDetected {
+  string owner_id = 1;
+  string message_id = 2;
+  string contact_id = 3;
+}
+
+// DraftSent is the payload of draft.sent: the mail went out.
+message DraftSent {
+  string owner_id = 1;
+  string draft_id = 2;
+  int32 version = 3;
+  string contact_id = 4;
+  string job_id = 5;
+  google.protobuf.Timestamp sent_at = 6;
+}
+
+// DraftSendFailed is the payload of draft.send_failed: the mail did not go out
+// and the draft needs a new approval.
+message DraftSendFailed {
+  string owner_id = 1;
+  string draft_id = 2;
+  int32 version = 3;
+  // reason is a short code such as provider_error or auth_revoked, never text
+  // from the mail.
+  string reason = 4;
+}

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -144,4 +145,32 @@ func (r *Repo) ListJobEvents(ctx context.Context, jobID uuid.UUID) ([]db.JobEven
 		return nil, fmt.Errorf("list job events: %w", mapErr(err))
 	}
 	return events, nil
+}
+
+// FindJobByURLs returns the owner's job posted at one of urls, the newest when
+// several. It is ErrNotFound when none is.
+func (r *Repo) FindJobByURLs(ctx context.Context, owner uuid.UUID, urls []string) (db.Job, error) {
+	j, err := r.q.FindJobByURLs(ctx, db.FindJobByURLsParams{OwnerID: owner, Urls: urls})
+	return j, mapErr(err)
+}
+
+// FindJobByCompanyDomains returns a job at a company with one of the domains,
+// preferring an open job and the most specific domain. It is ErrNotFound when
+// none is.
+func (r *Repo) FindJobByCompanyDomains(ctx context.Context, owner uuid.UUID, domains []string) (db.Job, error) {
+	j, err := r.q.FindJobByCompanyDomains(ctx, db.FindJobByCompanyDomainsParams{OwnerID: owner, Domains: domains})
+	return j, mapErr(err)
+}
+
+// LatestJobStatusAnchor returns the event time of the job's latest status
+// change, and false when it has had none.
+func (r *Repo) LatestJobStatusAnchor(ctx context.Context, jobID uuid.UUID) (time.Time, bool, error) {
+	at, err := r.q.LatestJobStatusAnchor(ctx, jobID)
+	if errors.Is(mapErr(err), ErrNotFound) {
+		return time.Time{}, false, nil
+	}
+	if err != nil {
+		return time.Time{}, false, fmt.Errorf("latest job status anchor: %w", mapErr(err))
+	}
+	return at, true, nil
 }

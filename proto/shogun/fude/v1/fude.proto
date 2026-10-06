@@ -2,5 +2,196 @@ syntax = "proto3";
 
 package shogun.fude.v1;
 
-// The RPCs of fude are added with its first feature task.
-service FudeService {}
+import "google/protobuf/timestamp.proto";
+
+// FudeService holds AI drafts, their versions and the approval queue. Only
+// Approve signs a Hanko token. Digests are raw SHA-256 bytes.
+service FudeService {
+  // GenerateDraft creates a draft in state generating and queues generation.
+  rpc GenerateDraft(GenerateDraftRequest) returns (GenerateDraftResponse);
+  // Regenerate queues a new AI version of a pending draft.
+  rpc Regenerate(RegenerateRequest) returns (RegenerateResponse);
+  // EditDraft stores the owner's text as a new version (created_by user). An
+  // edit of an approved draft puts it back to pending.
+  rpc EditDraft(EditDraftRequest) returns (EditDraftResponse);
+  // Approve stamps a Hanko for the newest version and sends or hands back
+  // copy-ready text. Callers: torii only.
+  rpc Approve(ApproveRequest) returns (ApproveResponse);
+  rpc Discard(DiscardRequest) returns (DiscardResponse);
+  rpc ListQueue(ListQueueRequest) returns (ListQueueResponse);
+  // GetDraft returns the draft with all of its versions.
+  rpc GetDraft(GetDraftRequest) returns (GetDraftResponse);
+  rpc AddVoiceSample(AddVoiceSampleRequest) returns (AddVoiceSampleResponse);
+}
+
+enum DraftKind {
+  DRAFT_KIND_UNSPECIFIED = 0;
+  DRAFT_KIND_COVER_LETTER = 1;
+  DRAFT_KIND_OUTREACH = 2;
+  DRAFT_KIND_FOLLOW_UP = 3;
+  DRAFT_KIND_POST = 4;
+  DRAFT_KIND_ONE_OFF = 5;
+}
+
+enum TargetType {
+  TARGET_TYPE_UNSPECIFIED = 0;
+  TARGET_TYPE_JOB = 1;
+  TARGET_TYPE_CONTACT = 2;
+  TARGET_TYPE_LEARNING_ACTIVITY = 3;
+  TARGET_TYPE_NONE = 4;
+}
+
+enum Channel {
+  CHANNEL_UNSPECIFIED = 0;
+  CHANNEL_EMAIL = 1;
+  CHANNEL_LINKEDIN = 2;
+  CHANNEL_X = 3;
+  CHANNEL_OTHER = 4;
+}
+
+enum DraftState {
+  DRAFT_STATE_UNSPECIFIED = 0;
+  DRAFT_STATE_GENERATING = 1;
+  DRAFT_STATE_PENDING = 2;
+  DRAFT_STATE_APPROVED = 3;
+  DRAFT_STATE_SENT = 4;
+  DRAFT_STATE_DISCARDED = 5;
+  DRAFT_STATE_FAILED = 6;
+}
+
+enum VersionAuthor {
+  VERSION_AUTHOR_UNSPECIFIED = 0;
+  VERSION_AUTHOR_AI = 1;
+  VERSION_AUTHOR_USER = 2;
+}
+
+message Draft {
+  string id = 1;
+  DraftKind kind = 2;
+  TargetType target_type = 3;
+  string target_id = 4;
+  Channel channel = 5;
+  DraftState state = 6;
+  // current_version is the newest draft_versions row, 0 while generating.
+  int32 current_version = 7;
+  string recipient = 8;
+  string failure_reason = 9;
+  // version is the optimistic lock on the draft row.
+  int32 version = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  // subject and preview come from the newest version and are filled by ListQueue
+  // and GetDraft: the subject, and the first characters of the body.
+  string subject = 13;
+  string preview = 14;
+}
+
+message DraftVersion {
+  string draft_id = 1;
+  int32 version = 2;
+  string subject = 3;
+  string body = 4;
+  bytes body_sha256 = 5;
+  string extra_context = 6;
+  string model = 7;
+  VersionAuthor created_by = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message VoiceSample {
+  string id = 1;
+  Channel channel = 2;
+  string text = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message GenerateDraftRequest {
+  DraftKind kind = 1;
+  TargetType target_type = 2;
+  string target_id = 3;
+  Channel channel = 4;
+  string extra_context = 5;
+  // recipient is the email address when channel is email.
+  string recipient = 6;
+  // idempotency_key makes a retried call return the original draft.
+  string idempotency_key = 7;
+}
+
+message GenerateDraftResponse {
+  Draft draft = 1;
+}
+
+message RegenerateRequest {
+  string draft_id = 1;
+  string extra_context = 2;
+  int32 version = 3;
+}
+
+message RegenerateResponse {
+  Draft draft = 1;
+}
+
+message EditDraftRequest {
+  string draft_id = 1;
+  string subject = 2;
+  string body = 3;
+  int32 version = 4;
+}
+
+message EditDraftResponse {
+  Draft draft = 1;
+  DraftVersion draft_version = 2;
+}
+
+message ApproveRequest {
+  string draft_id = 1;
+  // version is the draft version the owner saw and approves.
+  int32 version = 2;
+  // body_sha256 is the digest of subject and body the owner saw.
+  bytes body_sha256 = 3;
+}
+
+message ApproveResponse {
+  Draft draft = 1;
+  // copy_ready is true for channels that are copied by hand (LinkedIn, X).
+  bool copy_ready = 2;
+}
+
+message DiscardRequest {
+  string draft_id = 1;
+  int32 version = 2;
+}
+
+message DiscardResponse {
+  Draft draft = 1;
+}
+
+message ListQueueRequest {
+  // state filters the queue; unspecified means pending.
+  DraftState state = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListQueueResponse {
+  repeated Draft drafts = 1;
+  string next_page_token = 2;
+}
+
+message GetDraftRequest {
+  string draft_id = 1;
+}
+
+message GetDraftResponse {
+  Draft draft = 1;
+  repeated DraftVersion versions = 2;
+}
+
+message AddVoiceSampleRequest {
+  Channel channel = 1;
+  string text = 2;
+}
+
+message AddVoiceSampleResponse {
+  VoiceSample sample = 1;
+}

@@ -157,3 +157,31 @@ func (r *Repo) InsertImport(ctx context.Context, arg db.InsertImportParams) (db.
 	}
 	return i, nil
 }
+
+// LatestContactStatusAnchor returns the event time of the contact's latest
+// status change, and false when it has had none.
+func (r *Repo) LatestContactStatusAnchor(ctx context.Context, contactID uuid.UUID) (time.Time, bool, error) {
+	at, err := r.q.LatestContactStatusAnchor(ctx, contactID)
+	if errors.Is(mapErr(err), ErrNotFound) {
+		return time.Time{}, false, nil
+	}
+	if err != nil {
+		return time.Time{}, false, fmt.Errorf("latest contact status anchor: %w", mapErr(err))
+	}
+	return at, true, nil
+}
+
+// UpdateContactLastContacted moves a contact's last_contacted without changing
+// its status, bumping its version. The row must still be at the version in c.
+func (r *Repo) UpdateContactLastContacted(ctx context.Context, owner uuid.UUID, c db.Contact, lastContacted *time.Time) (db.Contact, error) {
+	updated, err := r.q.UpdateContactStatus(ctx, db.UpdateContactStatusParams{
+		ID: c.ID, OwnerID: owner, Version: c.Version, Status: c.Status, LastContacted: lastContacted,
+	})
+	if err != nil {
+		return db.Contact{}, staleOrMissing(err, func() error {
+			_, getErr := r.q.GetContact(ctx, db.GetContactParams{ID: c.ID, OwnerID: owner})
+			return getErr
+		})
+	}
+	return updated, nil
+}

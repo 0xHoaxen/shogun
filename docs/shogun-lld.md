@@ -192,7 +192,7 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | tsubame | `ConnectAccount` / `CompleteConnect` | provider / oauth code, state | auth URL / Account | torii |
 | tsubame | `ListMessages` | classification, linked\_job\_id | Messages | torii |
 | tsubame | `SyncNow` | account\_id | SyncResult | torii |
-| tsubame | `Send` | hanko token, to, subject, body | SendResult | fude only |
+| tsubame | `Send` | hanko token, draft\_id, version, to, subject, body, contact\_id?, job\_id? | SendResult | fude only |
 | fude | `GenerateDraft` | kind, target\_type, target\_id, channel, extra\_context | Draft (state generating) | torii, internal events |
 | fude | `Regenerate` | draft\_id, extra\_context | Draft (new version) | torii |
 | fude | `EditDraft` | draft\_id, subject, body | Draft (new version, created\_by user) | torii |
@@ -238,7 +238,8 @@ Events are delivered at least once, pushed from the producer's outbox to each co
 | `draft.ready` | fude | draft\_id, kind, target, version | taiko |
 | `draft.failed` | fude | draft\_id, reason | taiko |
 | `draft.approved` | fude | draft\_id, version, channel | sensei |
-| `draft.sent` | tsubame | draft\_id, version, contact\_id?, job\_id?, sent\_at | kagami (contact status, last\_contacted), sensei |
+| `draft.sent` | tsubame | draft\_id, version, contact\_id?, job\_id?, sent\_at | fude (draft to sent), kagami (contact status, last\_contacted), sensei |
+| `draft.send_failed` | tsubame | draft\_id, version, reason | fude (draft back to pending), taiko |
 | `learning.activity_added` | dojo | activity\_id, item\_id, summary | fude (post draft) |
 | `learning.item_completed` | dojo | item\_id, title, kind | katana, fude (post draft) |
 | `profile.suggestion_ready` | katana | suggestion\_id, target | taiko |
@@ -276,7 +277,7 @@ A hanko is a PASETO `v4.public` token (Ed25519): `fude` holds the only private k
 
 **Stamp** (in `fude.Approve` only): torii passes the user's session identity, `fude` checks the draft is `pending`, the version is current and `body_sha256` matches what the user saw, signs, sets the draft to `approved`, then calls `tsubame.Send`.
 
-**Verify** (in `tsubame.Send`): signature, `aud`, `exp`, recompute both hashes from the request, then `INSERT INTO sends (token_jti …)`. The unique `token_jti` makes the hanko single use even across replicas. Any failure returns `PermissionDenied` and sends nothing.
+**Verify** (in `tsubame.Send`): signature, `aud`, `exp`, recompute both hashes from the request, then `INSERT INTO sends (token_jti …)`. The unique `token_jti` makes the hanko single use even across replicas. Any failure returns `PermissionDenied` and sends nothing. The `sends` row is committed before the provider is called, so a crash can never lead to a second send: a row left in `sending` is resolved by a reconciler that looks for the `X-Shogun-Draft: <draft_id>:<version>` header in the provider's Sent mail, then records `sent` and emits `draft.sent`, or after ten minutes records `failed` and emits `draft.send_failed`. fude moves the draft from `approved` to `sent` on `draft.sent` and back to `pending` on `draft.send_failed`; it never decides that for itself.
 
 **Keys** live in the secret store (`FUDE_HANKO_SIGNING_KEY`, `TSUBAME_HANKO_VERIFY_KEY`) and carry a key id, so rotation keeps two public keys valid for one day. No River worker, schedule or AI step has a code path to `Approve`; a test asserts the signer is referenced from exactly one package.
 
@@ -315,7 +316,7 @@ Starting defaults, all editable in the app: global $20 per month hard, `fude` $1
 
 Torii is a backend-for-frontend: the web app speaks ConnectRPC to it, and it speaks gRPC to the services. It owns no business data, only sessions.
 
-- **Public API.** A separate proto package `shogun.api.v1` shaped for screens (`DashboardService.GetToday`, `JobsService`, `ContactsService`, `DraftsService`, `InboxService`, `NotificationsService.Stream`). Internal protos can change without breaking the UI, and one screen is one call. `CostsService` backs the spend and budgets screen.
+- **Public API.** A separate proto package `shogun.api.v1` shaped for screens (`DashboardService.GetToday`, `JobsService`, `ContactsService`, `DraftsService`, `InboxService`, `MailService` for connecting an account, `NotificationsService.Stream`). Internal protos can change without breaking the UI, and one screen is one call. `CostsService` backs the spend and budgets screen.
 - **Web client.** `buf generate` also emits TypeScript with `@connectrpc/connect-web` into `web/src/gen`, so the UI is typed end to end. Connect speaks plain HTTP/1.1 JSON, so it is debuggable with `curl`.
 - **Login.** Google OAuth (the same Google account Gmail uses), with an allowlist of one email. On success torii stores a session in `torii.sessions` and sets an `HttpOnly`, `Secure`, `SameSite=Lax` cookie valid for 30 days with sliding renewal.
 - **CSRF.** Connect requires `Content-Type: application/json` or `application/proto` plus a `Connect-Protocol-Version` header, which a cross-site form cannot send; the cookie is also `SameSite`.

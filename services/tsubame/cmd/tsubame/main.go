@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -22,6 +23,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	tsubamegrpc "github.com/0xHoaxen/shogun/services/tsubame/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/tsubame/migrations"
 )
 
@@ -89,6 +91,11 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
+	keys, err := loadKeyring(lookup)
+	if err != nil {
+		return err
+	}
+
 	shutdownTelemetry, err := telemetry.Setup(ctx, cfg)
 	if err != nil {
 		return err
@@ -107,12 +114,19 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
+	mailSvc, err := newMailServices(ctx, lookup, cfg, pool, keys, authority, log)
+	if err != nil {
+		return err
+	}
+
+	defer mailSvc.close()
+
 	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
 	if err != nil {
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, mailSvc.setup, overrides)
 	if err != nil {
 		return err
 	}
@@ -124,6 +138,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		tsubamev1.RegisterTsubameServiceServer(s, tsubamegrpc.New(mailSvc.connector, mailSvc.sender))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

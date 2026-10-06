@@ -2,5 +2,78 @@ syntax = "proto3";
 
 package shogun.tsubame.v1;
 
-// The RPCs of tsubame are added with its first feature task.
-service TsubameService {}
+import "google/protobuf/timestamp.proto";
+
+// TsubameService syncs and classifies mail and is the only service that sends
+// it. Callers: torii.
+service TsubameService {
+  // ConnectAccount starts connecting a mail account and returns where to send
+  // the owner to grant access.
+  rpc ConnectAccount(ConnectAccountRequest) returns (ConnectAccountResponse);
+  // CompleteConnect finishes it with the code and state the provider sent back
+  // to the redirect URL.
+  rpc CompleteConnect(CompleteConnectRequest) returns (CompleteConnectResponse);
+  // Send sends an approved draft by email. It checks the Hanko token, and
+  // sends nothing without a valid one. Callers: fude only.
+  rpc Send(SendRequest) returns (SendResponse);
+}
+
+enum MailProvider {
+  MAIL_PROVIDER_UNSPECIFIED = 0;
+  MAIL_PROVIDER_GMAIL = 1;
+}
+
+enum AccountStatus {
+  ACCOUNT_STATUS_UNSPECIFIED = 0;
+  ACCOUNT_STATUS_ACTIVE = 1;
+  // REAUTH_REQUIRED means access was revoked; connect the account again.
+  ACCOUNT_STATUS_REAUTH_REQUIRED = 2;
+  ACCOUNT_STATUS_DISABLED = 3;
+}
+
+// Account is a connected mailbox. It never carries a token.
+message Account {
+  string id = 1;
+  MailProvider provider = 2;
+  string address = 3;
+  AccountStatus status = 4;
+  google.protobuf.Timestamp last_synced_at = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message ConnectAccountRequest {
+  MailProvider provider = 1;
+}
+
+message ConnectAccountResponse {
+  // auth_url is where to send the owner. It is good for ten minutes.
+  string auth_url = 1;
+}
+
+message CompleteConnectRequest {
+  string code = 1;
+  string state = 2;
+}
+
+message CompleteConnectResponse {
+  Account account = 1;
+}
+
+message SendRequest {
+  // hanko is the token fude stamped when the owner approved this version.
+  string hanko = 1;
+  string draft_id = 2;
+  int32 version = 3;
+  repeated string to = 4;
+  string subject = 5;
+  string body = 6;
+  // contact_id and job_id are what the draft is about; they are echoed in
+  // draft.sent and are not covered by the token.
+  string contact_id = 7;
+  string job_id = 8;
+}
+
+message SendResponse {
+  // provider_message_id is the id the mail provider gave the sent message.
+  string provider_message_id = 1;
+}
