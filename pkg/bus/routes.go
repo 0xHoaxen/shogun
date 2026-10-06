@@ -6,7 +6,10 @@ import "slices"
 // the consumer services that must receive it. Consumer names are service
 // names (for example "taiko"). Entries are added together with the producer
 // and consumer of each event, as listed in the Shogun LLD event catalog.
-var routes = map[string][]string{}
+var routes = map[string][]string{
+	"job.added":              {"fude"},
+	"contact.status_changed": {"fude"},
+}
 
 // Consumers returns the services subscribed to eventType, or nil when there
 // are none. The result is a copy and may be modified by the caller.

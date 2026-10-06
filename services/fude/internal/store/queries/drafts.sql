@@ -36,3 +36,9 @@ UPDATE drafts SET
     updated_at = now()
 WHERE id = @id AND owner_id = @owner_id AND version = @version
 RETURNING *;
+
+-- name: SetDraftRecipient :execrows
+-- Fills in the recipient of a draft that has none; a recipient the owner gave
+-- is never replaced.
+UPDATE drafts SET recipient = @recipient
+WHERE id = @id AND owner_id = @owner_id AND recipient IS NULL;

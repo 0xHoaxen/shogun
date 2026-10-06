@@ -299,3 +299,48 @@ func TestFailIgnoresAVersionThatAlreadyExists(t *testing.T) {
 		t.Fatalf("a finished version must not be failed, err %v", err)
 	}
 }
+
+func TestGenerateAddressesAnEmailDraftToTheContactOnlyWhenItHasNoRecipient(t *testing.T) {
+	tests := []struct {
+		name      string
+		recipient *string
+		want      string
+	}{
+		{"created without a recipient", nil, "priya@lumen.example"},
+		{"keeps the one the owner gave", strPtr("owner@given.example"), "owner@given.example"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			e := newEnv(t, fakeSource{target: app.TargetContext{Summary: "Priya", Email: "priya@lumen.example"}})
+			d, err := store.New(e.pool).InsertDraft(context.Background(), db.InsertDraftParams{
+				ID: store.NewID(), OwnerID: e.owner, Kind: "outreach", TargetType: "contact", TargetID: ptr(store.NewID()),
+				Channel: "email", Recipient: tt.recipient,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = e.gen.Generate(context.Background(), e.args(d, 1))
+
+			got := e.draft(t, d)
+			if err != nil || got.Recipient == nil || *got.Recipient != tt.want {
+				t.Fatalf("err %v, recipient %v, want %s", err, got.Recipient, tt.want)
+			}
+		})
+	}
+}
+
+func TestGenerateLeavesALinkedinDraftWithoutARecipient(t *testing.T) {
+	e := newEnv(t, fakeSource{target: app.TargetContext{Summary: "Priya", Email: "priya@lumen.example"}})
+	d := e.newDraft(t, "outreach", "linkedin")
+
+	err := e.gen.Generate(context.Background(), e.args(d, 1))
+
+	if got := e.draft(t, d); err != nil || got.Recipient != nil {
+		t.Fatalf("err %v, recipient %v; a copy-only draft has no recipient", err, got.Recipient)
+	}
+}
+
+func strPtr(s string) *string { return &s }
+
+func ptr[T any](v T) *T { return &v }

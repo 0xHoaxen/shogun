@@ -24,6 +24,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/fude/internal/app"
+	fudeevents "github.com/0xHoaxen/shogun/services/fude/internal/events"
 	fudegrpc "github.com/0xHoaxen/shogun/services/fude/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/fude/migrations"
 )
@@ -110,16 +111,17 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
-	if err != nil {
-		return err
-	}
-
 	gen, err := newGeneration(ctx, lookup, cfg, pool, authority, log)
 	if err != nil {
 		return err
 	}
 	defer gen.close()
+
+	svc := app.NewService(pool, gen.queue, nil)
+	sink, err := bus.NewSinkServer(pool, fudeevents.Handlers(svc, log), log)
+	if err != nil {
+		return err
+	}
 
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, gen.setup, overrides)
 	if err != nil {
@@ -131,7 +133,6 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		server.WithAuth(authority.UnaryServerInterceptor(), authority.StreamServerInterceptor()),
 		server.WithReadinessCheck(pool.Ping),
 	}, opts...)
-	svc := app.NewService(pool, gen.queue, nil)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
 		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc))

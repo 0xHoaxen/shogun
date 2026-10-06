@@ -65,6 +65,7 @@ func (s *Source) contact(ctx context.Context, id uuid.UUID) (app.TargetContext, 
 	status := strings.ToLower(strings.TrimPrefix(c.GetStatus().String(), contactStatusPrefix))
 	return app.TargetContext{
 		ContactStatus: status,
+		Email:         c.GetEmail(),
 		Summary: lines(
 			"Name: "+c.GetFullName(),
 			"Role: "+c.GetRole(),

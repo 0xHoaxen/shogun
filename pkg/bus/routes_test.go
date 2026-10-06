@@ -24,8 +24,13 @@ func TestConsumersInUnknownTypeReturnsNil(t *testing.T) {
 	}
 }
 
-func TestConsumersStartsEmpty(t *testing.T) {
-	if got := Consumers("job.added"); got != nil {
-		t.Fatalf("consumers = %v, want nil while routes are empty", got)
+func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
+	for _, eventType := range []string{"job.added", "contact.status_changed"} {
+		if got := Consumers(eventType); !slices.Contains(got, "fude") {
+			t.Errorf("Consumers(%q) = %v, want fude among them", eventType, got)
+		}
+	}
+	if got := Consumers("no.such_event"); got != nil {
+		t.Errorf("consumers = %v, want nil for an event nobody consumes", got)
 	}
 }

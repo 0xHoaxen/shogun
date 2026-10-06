@@ -53,6 +53,9 @@ type TargetContext struct {
 	Summary string
 	// ContactStatus picks the outreach template; empty when not about a contact.
 	ContactStatus string
+	// Email is the contact's address, used as the recipient of an email draft
+	// that was created without one.
+	Email string
 }
 
 // ContextSource describes a draft's target, from the service that owns it.
@@ -103,7 +106,7 @@ func (g *Generator) Generate(ctx context.Context, args GenerateArgs) error {
 		return nil
 	}
 
-	in, err := g.gather(ctx, repo, d, args)
+	in, target, err := g.gather(ctx, repo, d, args)
 	if err != nil {
 		return err
 	}
@@ -115,7 +118,7 @@ func (g *Generator) Generate(ctx context.Context, args GenerateArgs) error {
 	if err != nil {
 		return err
 	}
-	return g.save(ctx, args, d, subject, body, resp.Model, in)
+	return g.save(ctx, args, d, subject, body, resp.Model, in, target.Email)
 }
 
 // waitingForVersion reports whether a draft still needs version v written: it
@@ -131,27 +134,27 @@ type contextError struct{ err error }
 func (e *contextError) Error() string { return "describe target: " + e.err.Error() }
 func (e *contextError) Unwrap() error { return e.err }
 
-func (g *Generator) gather(ctx context.Context, repo *store.Repo, d db.Draft, args GenerateArgs) (promptInput, error) {
+func (g *Generator) gather(ctx context.Context, repo *store.Repo, d db.Draft, args GenerateArgs) (promptInput, TargetContext, error) {
 	kind, channel := domain.Kind(d.Kind), domain.Channel(d.Channel)
 	var target TargetContext
 	if d.TargetID != nil && domain.TargetType(d.TargetType).NeedsTargetID() {
 		var err error
 		if target, err = g.context.Describe(ctx, args.OwnerID, domain.TargetType(d.TargetType), *d.TargetID); err != nil {
-			return promptInput{}, &contextError{err: err}
+			return promptInput{}, TargetContext{}, &contextError{err: err}
 		}
 	}
 	voice, err := g.voiceSamples(ctx, repo, args.OwnerID, d.Channel, target.Summary+"\n"+args.ExtraContext)
 	if err != nil {
-		return promptInput{}, err
+		return promptInput{}, TargetContext{}, err
 	}
 	instructions, err := g.instructions(ctx, repo, args.OwnerID, kind, channel, target.ContactStatus)
 	if err != nil {
-		return promptInput{}, err
+		return promptInput{}, TargetContext{}, err
 	}
 	return promptInput{
 		Kind: kind, Channel: channel, Instructions: instructions, Target: target.Summary,
 		ExtraContext: args.ExtraContext, Voice: voice,
-	}, nil
+	}, target, nil
 }
 
 // voiceSamples returns the texts of the samples that shape a draft: the ones
@@ -206,7 +209,7 @@ func (g *Generator) instructions(ctx context.Context, repo *store.Repo, owner uu
 
 // save writes the version, moves the draft and records draft.ready in one
 // transaction.
-func (g *Generator) save(ctx context.Context, args GenerateArgs, d db.Draft, subject, body, model string, in promptInput) error {
+func (g *Generator) save(ctx context.Context, args GenerateArgs, d db.Draft, subject, body, model string, in promptInput, targetEmail string) error {
 	promptContext, err := json.Marshal(map[string]any{
 		"feature": featureFor(in.Kind), "voice_samples": len(in.Voice), "has_target": in.Target != "",
 	})
@@ -230,6 +233,9 @@ func (g *Generator) save(ctx context.Context, args GenerateArgs, d db.Draft, sub
 		if err != nil {
 			return err
 		}
+		if err := fillRecipient(ctx, repo, saved, targetEmail); err != nil {
+			return err
+		}
 		if _, err := repo.InsertDraftVersion(ctx, db.InsertDraftVersionParams{
 			DraftID: d.ID, Version: args.Version, Subject: strPtr(subject), Body: body,
 			BodySha256: hanko.BodyDigest(subject, body), ExtraContext: strPtr(args.ExtraContext),
@@ -244,6 +250,16 @@ func (g *Generator) save(ctx context.Context, args GenerateArgs, d db.Draft, sub
 		})
 		return err
 	})
+}
+
+// fillRecipient addresses an email draft that was created without a recipient,
+// as an event-created outreach draft is, to the contact it is about.
+func fillRecipient(ctx context.Context, repo *store.Repo, d db.Draft, email string) error {
+	if email == "" || d.Recipient != nil || domain.Channel(d.Channel) != domain.ChannelEmail {
+		return nil
+	}
+	_, err := repo.SetDraftRecipient(ctx, d.OwnerID, d.ID, email)
+	return err
 }
 
 func targetID(d db.Draft) string {

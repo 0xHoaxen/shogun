@@ -188,6 +188,27 @@ func (q *Queries) ListDrafts(ctx context.Context, arg ListDraftsParams) ([]Draft
 	return items, nil
 }
 
+const setDraftRecipient = `-- name: SetDraftRecipient :execrows
+UPDATE drafts SET recipient = $1
+WHERE id = $2 AND owner_id = $3 AND recipient IS NULL
+`
+
+type SetDraftRecipientParams struct {
+	Recipient *string
+	ID        uuid.UUID
+	OwnerID   uuid.UUID
+}
+
+// Fills in the recipient of a draft that has none; a recipient the owner gave
+// is never replaced.
+func (q *Queries) SetDraftRecipient(ctx context.Context, arg SetDraftRecipientParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setDraftRecipient, arg.Recipient, arg.ID, arg.OwnerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const updateDraftState = `-- name: UpdateDraftState :one
 UPDATE drafts SET
     state = $1,

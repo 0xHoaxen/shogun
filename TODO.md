@@ -307,7 +307,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Do: `Embedder` interface (1024 dimensions) and `VoiceEmbedder`; `embed_voice_sample` job (3 tries, unique per sample) queued by AddVoiceSample in its transaction; the generator ranks the top 5 samples by pgvector cosine distance to the draft's topic, unembedded ones last, and falls back to the newest 5 when the embedder fails. `TODO(owner)`: choose the embedding provider. With none (`cmd/fude` passes a nil embedder), no embed job is queued and the newest samples are used.
   Done when: tests with a fake embedder cover storing a vector, wrong width, provider error, a missing sample, ranking by closeness, the fallback, and an embed through River.
 
-- [ ] **P7.2c2 fude event handlers** (M) Needs: P7.2c1
+- [x] **P7.2c2 fude event handlers** (M) Needs: P7.2c1
   Do: inbox handlers for `job.added` (cover letter, channel other) and `contact.status_changed` (outreach on the contact's preferred channel; for email the generation job fills the recipient from the contact), each creating the draft in the inbox transaction with the event id as idempotency key; routes for both in `pkg/bus/routes.go`. Kagami's payloads gained `owner_id` for this (commit `14a58bc`). `learning.activity_added` waits for dojo's `events.proto` (see P9.1).
   Done when: consumer tests for both handlers including a duplicate delivery and a payload without an owner.
 

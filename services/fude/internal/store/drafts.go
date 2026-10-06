@@ -109,3 +109,13 @@ func (r *Repo) GetTemplate(ctx context.Context, owner uuid.UUID, kind, channel s
 	t, err := r.q.GetTemplate(ctx, db.GetTemplateParams{OwnerID: owner, Kind: kind, Channel: channel, ContactStatus: contactStatus})
 	return t, mapErr(err)
 }
+
+// SetDraftRecipient gives a draft without a recipient one. It reports whether
+// a recipient was set.
+func (r *Repo) SetDraftRecipient(ctx context.Context, owner, id uuid.UUID, recipient string) (bool, error) {
+	n, err := r.q.SetDraftRecipient(ctx, db.SetDraftRecipientParams{ID: id, OwnerID: owner, Recipient: &recipient})
+	if err != nil {
+		return false, fmt.Errorf("set draft recipient: %w", mapErr(err))
+	}
+	return n > 0, nil
+}
