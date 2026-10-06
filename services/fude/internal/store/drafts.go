@@ -91,3 +91,21 @@ func (r *Repo) InsertVoiceSample(ctx context.Context, arg db.InsertVoiceSamplePa
 	}
 	return v, nil
 }
+
+// ListRecentVoiceSamples returns up to limit of the owner's newest samples for
+// a channel.
+func (r *Repo) ListRecentVoiceSamples(ctx context.Context, owner uuid.UUID, channel string, limit int32) ([]db.ListRecentVoiceSamplesRow, error) {
+	rows, err := r.q.ListRecentVoiceSamples(ctx, db.ListRecentVoiceSamplesParams{OwnerID: owner, Channel: channel, RowLimit: limit})
+	if err != nil {
+		return nil, fmt.Errorf("list voice samples: %w", mapErr(err))
+	}
+	return rows, nil
+}
+
+// GetTemplate returns the owner's template for a kind and channel, tied to a
+// contact status when contactStatus is not nil. It is ErrNotFound when the
+// owner has not written one.
+func (r *Repo) GetTemplate(ctx context.Context, owner uuid.UUID, kind, channel string, contactStatus *string) (db.Template, error) {
+	t, err := r.q.GetTemplate(ctx, db.GetTemplateParams{OwnerID: owner, Kind: kind, Channel: channel, ContactStatus: contactStatus})
+	return t, mapErr(err)
+}

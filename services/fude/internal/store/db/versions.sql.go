@@ -13,21 +13,24 @@ import (
 
 const insertDraftVersion = `-- name: InsertDraftVersion :one
 INSERT INTO draft_versions (
-    draft_id, version, subject, body, body_sha256, extra_context, created_by
+    draft_id, version, subject, body, body_sha256, extra_context, model, prompt_context, created_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7,
+    COALESCE($8::jsonb, '{}'), $9
 )
 RETURNING draft_id, version, subject, body, body_sha256, extra_context, prompt_context, model, reservation_id, created_by, created_at
 `
 
 type InsertDraftVersionParams struct {
-	DraftID      uuid.UUID
-	Version      int32
-	Subject      *string
-	Body         string
-	BodySha256   []byte
-	ExtraContext *string
-	CreatedBy    string
+	DraftID       uuid.UUID
+	Version       int32
+	Subject       *string
+	Body          string
+	BodySha256    []byte
+	ExtraContext  *string
+	Model         *string
+	PromptContext []byte
+	CreatedBy     string
 }
 
 func (q *Queries) InsertDraftVersion(ctx context.Context, arg InsertDraftVersionParams) (DraftVersion, error) {
@@ -38,6 +41,8 @@ func (q *Queries) InsertDraftVersion(ctx context.Context, arg InsertDraftVersion
 		arg.Body,
 		arg.BodySha256,
 		arg.ExtraContext,
+		arg.Model,
+		arg.PromptContext,
 		arg.CreatedBy,
 	)
 	var i DraftVersion

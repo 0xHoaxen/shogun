@@ -19,6 +19,7 @@ import (
 
 // GenerateArgs asks the queue to write one AI version of a draft.
 type GenerateArgs struct {
+	OwnerID uuid.UUID
 	DraftID uuid.UUID
 	// Version is the draft_versions number the job writes.
 	Version int32

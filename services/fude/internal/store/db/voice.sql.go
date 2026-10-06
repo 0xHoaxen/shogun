@@ -50,3 +50,52 @@ func (q *Queries) InsertVoiceSample(ctx context.Context, arg InsertVoiceSamplePa
 	)
 	return i, err
 }
+
+const listRecentVoiceSamples = `-- name: ListRecentVoiceSamples :many
+SELECT id, owner_id, channel, text, created_at FROM voice_samples
+WHERE owner_id = $1 AND channel = $2
+ORDER BY created_at DESC, id DESC
+LIMIT $3
+`
+
+type ListRecentVoiceSamplesParams struct {
+	OwnerID  uuid.UUID
+	Channel  string
+	RowLimit int32
+}
+
+type ListRecentVoiceSamplesRow struct {
+	ID        uuid.UUID
+	OwnerID   uuid.UUID
+	Channel   string
+	Text      string
+	CreatedAt time.Time
+}
+
+// The owner's newest samples for a channel, used when no embedding is there to
+// rank them by similarity.
+func (q *Queries) ListRecentVoiceSamples(ctx context.Context, arg ListRecentVoiceSamplesParams) ([]ListRecentVoiceSamplesRow, error) {
+	rows, err := q.db.Query(ctx, listRecentVoiceSamples, arg.OwnerID, arg.Channel, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRecentVoiceSamplesRow{}
+	for rows.Next() {
+		var i ListRecentVoiceSamplesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OwnerID,
+			&i.Channel,
+			&i.Text,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

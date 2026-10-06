@@ -87,7 +87,7 @@ func (s *Service) GenerateDraft(ctx context.Context, in GenerateDraftInput) (db.
 			return insErr
 		}
 		res = d
-		return s.enqueue(ctx, tx, GenerateArgs{DraftID: d.ID, Version: 1, ExtraContext: in.ExtraContext})
+		return s.enqueue(ctx, tx, GenerateArgs{OwnerID: owner, DraftID: d.ID, Version: 1, ExtraContext: in.ExtraContext})
 	})
 	return res, err
 }
@@ -174,7 +174,7 @@ func (s *Service) Regenerate(ctx context.Context, draftID string, extraContext s
 			return saveErr
 		}
 		res = saved
-		return s.enqueue(ctx, tx, GenerateArgs{DraftID: id, Version: saved.CurrentVersion + 1, ExtraContext: extraContext})
+		return s.enqueue(ctx, tx, GenerateArgs{OwnerID: owner, DraftID: id, Version: saved.CurrentVersion + 1, ExtraContext: extraContext})
 	})
 	return res, err
 }
