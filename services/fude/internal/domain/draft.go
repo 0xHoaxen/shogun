@@ -134,3 +134,40 @@ func (d Draft) invalidMove(to DraftState) *TransitionError {
 		To:     string(to),
 	}
 }
+
+// RecordSent returns the draft sent, once tsubame reports that version went
+// out. changed is false when nothing needs to be written: the draft is already
+// sent, or the report is for a version the draft is no longer on.
+//
+// A draft normally goes approved to sent. A pending draft on the same version
+// is accepted too: it was put back to pending after a send looked lost, and the
+// mail went out after all. The mail is out, so the draft says so. Any other
+// state is a *TransitionError.
+func (d Draft) RecordSent(version int32, now time.Time) (next Draft, changed bool, err error) {
+	if d.State == DraftSent {
+		return d, false, nil
+	}
+	if version != d.CurrentVersion {
+		return d, false, nil
+	}
+	switch d.State {
+	case DraftApproved, DraftPending:
+		d.State = DraftSent
+		d.UpdatedAt = now
+		return d, true, nil
+	default:
+		return d, false, d.invalidMove(DraftSent)
+	}
+}
+
+// RecordSendFailed returns an approved draft back to pending, once tsubame
+// reports its send did not go out, so the owner can approve it again. changed
+// is false when the report is stale: the draft is no longer approved on that
+// version (it was edited or has moved on), and there is nothing to undo.
+func (d Draft) RecordSendFailed(version int32, now time.Time) (next Draft, changed bool, err error) {
+	if d.State != DraftApproved || version != d.CurrentVersion {
+		return d, false, nil
+	}
+	moved, err := d.Move(DraftPending, now)
+	return moved, err == nil, err
+}

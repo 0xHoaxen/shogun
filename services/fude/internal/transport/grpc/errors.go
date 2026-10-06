@@ -22,6 +22,10 @@ const (
 	reasonAlreadyExists   = "ALREADY_EXISTS"
 	reasonInvalidToken    = "INVALID_PAGE_TOKEN"
 	reasonOwnerRequired   = "OWNER_REQUIRED"
+	reasonSendRefused     = "SEND_REFUSED"
+	reasonSendFailed      = "SEND_FAILED"
+	reasonSendUnavailable = "SEND_UNAVAILABLE"
+	reasonSendUnknown     = "SEND_STATUS_UNKNOWN"
 	reasonInternal        = "INTERNAL"
 )
 
@@ -39,6 +43,14 @@ func toStatus(err error) error {
 		return withReason(codes.FailedPrecondition, te.Reason, te.Error())
 	case errors.As(err, &ia):
 		return withReason(codes.InvalidArgument, ia.Reason, ia.Msg)
+	case errors.Is(err, app.ErrSendRefused):
+		return withReason(codes.FailedPrecondition, reasonSendRefused, "the mail could not be sent, for example because no mail account is connected; the draft is back in the queue")
+	case errors.Is(err, app.ErrSendFailed):
+		return withReason(codes.FailedPrecondition, reasonSendFailed, "the mail provider did not send the mail; the draft is back in the queue")
+	case errors.Is(err, app.ErrSendUnavailable):
+		return withReason(codes.Unavailable, reasonSendUnavailable, "the mail service is unavailable; the draft is back in the queue")
+	case errors.Is(err, app.ErrSendUnknown):
+		return withReason(codes.Unavailable, reasonSendUnknown, "could not confirm whether the mail was sent; check again shortly")
 	case errors.Is(err, app.ErrNoOwner):
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner")
 	case errors.Is(err, store.ErrNotFound):

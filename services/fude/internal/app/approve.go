@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -45,15 +46,18 @@ const (
 
 // Approver approves drafts: it is the only holder of the signing key.
 type Approver struct {
-	pool *pgxpool.Pool
-	key  ed25519.PrivateKey
-	kid  string
-	now  func() time.Time
+	pool    *pgxpool.Pool
+	key     ed25519.PrivateKey
+	kid     string
+	now     func() time.Time
+	mailer  Mailer
+	log     *slog.Logger
+	backoff time.Duration
 }
 
 // NewApprover returns an Approver that signs with key, labelled kid. A nil now
 // means time.Now.
-func NewApprover(pool *pgxpool.Pool, key ed25519.PrivateKey, kid string, now func() time.Time) (*Approver, error) {
+func NewApprover(pool *pgxpool.Pool, key ed25519.PrivateKey, kid string, now func() time.Time, opts ...ApproverOption) (*Approver, error) {
 	if len(key) != ed25519.PrivateKeySize {
 		return nil, errors.New("approver: bad signing key length")
 	}
@@ -63,7 +67,11 @@ func NewApprover(pool *pgxpool.Pool, key ed25519.PrivateKey, kid string, now fun
 	if now == nil {
 		now = time.Now
 	}
-	return &Approver{pool: pool, key: key, kid: kid, now: now}, nil
+	a := &Approver{pool: pool, key: key, kid: kid, now: now, log: slog.Default(), backoff: sendBackoff}
+	for _, opt := range opts {
+		opt(a)
+	}
+	return a, nil
 }
 
 // ApproveInput is what the owner saw and approves.
@@ -107,6 +115,9 @@ func (a *Approver) Approve(ctx context.Context, in ApproveInput) (ApproveResult,
 	})
 	if err != nil {
 		return ApproveResult{}, err
+	}
+	if err := a.dispatch(ctx, owner, res); err != nil {
+		return res, err
 	}
 	return res, nil
 }

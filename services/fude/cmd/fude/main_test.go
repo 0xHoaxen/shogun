@@ -44,6 +44,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 		"FUDE_HANKO_SIGNING_KEY": testHankoKey,
 		"SOROBAN_ADDR":           unusedAddr,
 		"KAGAMI_ADDR":            unusedAddr,
+		"TSUBAME_ADDR":           unusedAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -103,6 +104,7 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 		"FUDE_HANKO_SIGNING_KEY": testHankoKey,
 		"SOROBAN_ADDR":           unusedAddr,
 		"KAGAMI_ADDR":            unusedAddr,
+		"TSUBAME_ADDR":           unusedAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

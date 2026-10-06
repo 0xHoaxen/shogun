@@ -16,6 +16,7 @@ import (
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
@@ -187,5 +188,142 @@ func TestEventsThatCannotBeHandledAreAcknowledgedWithoutADraft(t *testing.T) {
 				t.Fatalf("err %v, drafts %d, jobs %d; want a quiet acknowledgement", err, len(c.drafts(t)), len(c.queue.jobs))
 			}
 		})
+	}
+}
+
+// draftIn stores a draft in a state on a version and returns its id.
+func (c *consumer) draftIn(t *testing.T, owner uuid.UUID, state string, version int32) uuid.UUID {
+	t.Helper()
+	id := uuid.New()
+	if _, err := c.pool.Exec(context.Background(), `INSERT INTO drafts (id, owner_id, kind, target_type, channel, state, current_version)
+		VALUES ($1, $2, 'cover_letter', 'job', 'email', $3, $4)`, id, owner, state, version); err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func (c *consumer) stateOf(t *testing.T, id uuid.UUID) string {
+	t.Helper()
+	var state string
+	if err := c.pool.QueryRow(context.Background(), `SELECT state FROM drafts WHERE id = $1`, id).Scan(&state); err != nil {
+		t.Fatal(err)
+	}
+	return state
+}
+
+func sentEvent(owner, draft uuid.UUID, version int32) *tsubamev1.DraftSent {
+	return &tsubamev1.DraftSent{OwnerId: owner.String(), DraftId: draft.String(), Version: version}
+}
+
+func failedEvent(owner, draft uuid.UUID, version int32) *tsubamev1.DraftSendFailed {
+	return &tsubamev1.DraftSendFailed{OwnerId: owner.String(), DraftId: draft.String(), Version: version, Reason: "provider_error"}
+}
+
+func TestDraftSentMovesAnApprovedDraftToSent(t *testing.T) {
+	c := newConsumer(t)
+	owner := uuid.New()
+	id := c.draftIn(t, owner, "approved", 2)
+
+	err := c.deliver(t, uuid.NewString(), "draft.sent", sentEvent(owner, id, 2))
+
+	if got := c.stateOf(t, id); err != nil || got != "sent" {
+		t.Fatalf("err %v, state %q", err, got)
+	}
+}
+
+func TestDraftSendFailedPutsAnApprovedDraftBackToPending(t *testing.T) {
+	c := newConsumer(t)
+	owner := uuid.New()
+	id := c.draftIn(t, owner, "approved", 2)
+
+	err := c.deliver(t, uuid.NewString(), "draft.send_failed", failedEvent(owner, id, 2))
+
+	if got := c.stateOf(t, id); err != nil || got != "pending" {
+		t.Fatalf("err %v, state %q", err, got)
+	}
+}
+
+func TestADuplicateOutcomeDeliveryChangesNothingTheSecondTime(t *testing.T) {
+	c := newConsumer(t)
+	owner := uuid.New()
+	id := c.draftIn(t, owner, "approved", 2)
+	event := uuid.NewString()
+
+	first := c.deliver(t, event, "draft.sent", sentEvent(owner, id, 2))
+	again := c.deliver(t, event, "draft.sent", sentEvent(owner, id, 2))
+
+	if got := c.stateOf(t, id); first != nil || again != nil || got != "sent" {
+		t.Fatalf("errs %v %v, state %q", first, again, got)
+	}
+}
+
+func TestALateDraftSentForADraftPutBackToPendingStillRecordsThatTheMailWentOut(t *testing.T) {
+	c := newConsumer(t)
+	owner := uuid.New()
+	id := c.draftIn(t, owner, "pending", 2) // reverted after a send that looked lost
+
+	err := c.deliver(t, uuid.NewString(), "draft.sent", sentEvent(owner, id, 2))
+
+	if got := c.stateOf(t, id); err != nil || got != "sent" {
+		t.Fatalf("err %v, state %q; the mail is out, so the draft must say so", err, got)
+	}
+}
+
+func TestStaleOrIrrelevantOutcomesAreAcknowledgedAndChangeNothing(t *testing.T) {
+	owner := uuid.New()
+	tests := []struct {
+		name      string
+		state     string
+		version   int32
+		eventType string
+		payload   func(owner, id uuid.UUID) proto.Message
+		want      string
+	}{
+		{"sent for an older version", "approved", 3, "draft.sent", func(o, id uuid.UUID) proto.Message { return sentEvent(o, id, 2) }, "approved"},
+		{"send_failed for an older version", "approved", 3, "draft.send_failed", func(o, id uuid.UUID) proto.Message { return failedEvent(o, id, 2) }, "approved"},
+		{"send_failed after the draft was edited back to pending", "pending", 3, "draft.send_failed", func(o, id uuid.UUID) proto.Message { return failedEvent(o, id, 2) }, "pending"},
+		{"send_failed for a draft already sent", "sent", 2, "draft.send_failed", func(o, id uuid.UUID) proto.Message { return failedEvent(o, id, 2) }, "sent"},
+		{"sent for a discarded draft", "discarded", 2, "draft.sent", func(o, id uuid.UUID) proto.Message { return sentEvent(o, id, 2) }, "discarded"},
+		{"sent for a draft still generating", "generating", 2, "draft.sent", func(o, id uuid.UUID) proto.Message { return sentEvent(o, id, 2) }, "generating"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := newConsumer(t)
+			id := c.draftIn(t, owner, tt.state, tt.version)
+
+			err := c.deliver(t, uuid.NewString(), tt.eventType, tt.payload(owner, id))
+
+			if got := c.stateOf(t, id); err != nil || got != tt.want {
+				t.Fatalf("err %v, state %q, want %q", err, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOutcomesForAnotherOwnerOrAMissingDraftOrBadIDsAreAcknowledgedQuietly(t *testing.T) {
+	c := newConsumer(t)
+	owner := uuid.New()
+	id := c.draftIn(t, owner, "approved", 2)
+	cases := []struct {
+		name    string
+		typ     string
+		payload proto.Message
+	}{
+		{"another owner's draft", "draft.sent", sentEvent(uuid.New(), id, 2)},
+		{"a draft that is gone", "draft.sent", sentEvent(owner, uuid.New(), 2)},
+		{"a failure for a draft that is gone", "draft.send_failed", failedEvent(owner, uuid.New(), 2)},
+		{"a bad draft id", "draft.sent", &tsubamev1.DraftSent{OwnerId: owner.String(), DraftId: "nope", Version: 2}},
+		{"no owner", "draft.send_failed", &tsubamev1.DraftSendFailed{DraftId: id.String(), Version: 2}},
+		{"a payload of another type", "draft.sent", wrapperspb.String("x")},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := c.deliver(t, uuid.NewString(), tc.typ, tc.payload); err != nil {
+				t.Fatalf("got %v, want a quiet acknowledgement", err)
+			}
+		})
+	}
+	if got := c.stateOf(t, id); got != "approved" {
+		t.Fatalf("state %q: none of those events concerned this draft", got)
 	}
 }

@@ -116,18 +116,18 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	approver, err := app.NewApprover(pool, hankoKey, hankoKeyID, nil)
-	if err != nil {
-		return err
-	}
-
 	gen, err := newGeneration(ctx, lookup, cfg, pool, authority, log)
 	if err != nil {
 		return err
 	}
 	defer gen.close()
 
-	svc := app.NewService(pool, gen.queue, nil)
+	approver, err := app.NewApprover(pool, hankoKey, hankoKeyID, nil, app.WithMailer(gen.mailer, log))
+	if err != nil {
+		return err
+	}
+
+	svc := app.NewService(pool, gen.queue, nil).WithLogger(log)
 	sink, err := bus.NewSinkServer(pool, fudeevents.Handlers(svc, log), log)
 	if err != nil {
 		return err

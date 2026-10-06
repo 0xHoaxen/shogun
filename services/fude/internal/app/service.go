@@ -4,6 +4,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,6 +43,7 @@ type Service struct {
 	pool  *pgxpool.Pool
 	queue Queue
 	now   func() time.Time
+	log   *slog.Logger
 }
 
 // NewService returns a Service on pool. A nil now means time.Now. A nil queue
@@ -49,7 +52,14 @@ func NewService(pool *pgxpool.Pool, queue Queue, now func() time.Time) *Service 
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{pool: pool, queue: queue, now: now}
+	return &Service{pool: pool, queue: queue, now: now, log: slog.Default()}
+}
+
+// WithLogger returns the Service logging to log.
+func (s *Service) WithLogger(log *slog.Logger) *Service {
+	copied := *s
+	copied.log = log
+	return &copied
 }
 
 // inTx runs fn in one transaction with a Repo bound to it.
@@ -123,3 +133,6 @@ func saveState(ctx context.Context, repo *store.Repo, owner uuid.UUID, d db.Draf
 		FailureReason: strPtr(next.FailureReason), Version: version,
 	})
 }
+
+// isNotFound reports whether err is a missing row.
+func isNotFound(err error) bool { return errors.Is(err, store.ErrNotFound) }

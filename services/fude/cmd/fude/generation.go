@@ -10,15 +10,18 @@ import (
 
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
+	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/fude/internal/app"
 	"github.com/0xHoaxen/shogun/services/fude/internal/jobs"
 	kagamisource "github.com/0xHoaxen/shogun/services/fude/internal/transport/kagami"
+	tsubamemailer "github.com/0xHoaxen/shogun/services/fude/internal/transport/tsubame"
 )
 
 const (
+	tsubameAddrEnv = "TSUBAME_ADDR"
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
 	apiKeyEnv      = "ANTHROPIC_API_KEY"
@@ -31,9 +34,10 @@ var errNoAPIKey = errors.New(apiKeyEnv + " is not set")
 // relay's client, the queue the use cases insert through, and a function that
 // releases the connections.
 type generation struct {
-	setup jobs.Setup
-	queue *jobs.RiverQueue
-	close func()
+	setup  jobs.Setup
+	queue  *jobs.RiverQueue
+	mailer app.Mailer
+	close  func()
 }
 
 // newGeneration connects to soroban and kagami and builds the generator. The
@@ -52,6 +56,10 @@ func newGeneration(
 		return nil, err
 	}
 	kagamiAddr, err := config.Required(lookup, kagamiAddrEnv)
+	if err != nil {
+		return nil, err
+	}
+	tsubameAddr, err := config.Required(lookup, tsubameAddrEnv)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +84,13 @@ func newGeneration(
 		_ = sorobanConn.Close()
 		return nil, fmt.Errorf("dial kagami: %w", err)
 	}
-	closeConns := func() { _ = sorobanConn.Close(); _ = kagamiConn.Close() }
+	tsubameConn, err := grpcclient.Dial(ctx, tsubameAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = sorobanConn.Close()
+		_ = kagamiConn.Close()
+		return nil, fmt.Errorf("dial tsubame: %w", err)
+	}
+	closeConns := func() { _ = sorobanConn.Close(); _ = kagamiConn.Close(); _ = tsubameConn.Close() }
 
 	completer, err := newCompleter(lookup, apiKey, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
 	if err != nil {
@@ -89,7 +103,10 @@ func newGeneration(
 	if embedder != nil {
 		sampleEmbedder = app.NewVoiceEmbedder(pool, embedder)
 	}
-	return &generation{queue: queue, close: closeConns, setup: jobs.NewSetup(generator, sampleEmbedder, log)}, nil
+	return &generation{
+		queue: queue, close: closeConns, setup: jobs.NewSetup(generator, sampleEmbedder, log),
+		mailer: tsubamemailer.New(tsubamev1.NewTsubameServiceClient(tsubameConn)),
+	}, nil
 }
 
 // newCompleter returns the metered Claude client, or one that fails every call

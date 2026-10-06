@@ -24,6 +24,7 @@ type approval struct {
 	env      *env
 	approver *app.Approver
 	pub      ed25519.PublicKey
+	priv     ed25519.PrivateKey
 }
 
 func newApproval(t *testing.T) *approval {
@@ -37,7 +38,7 @@ func newApproval(t *testing.T) *approval {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &approval{env: e, approver: a, pub: pub}
+	return &approval{env: e, approver: a, pub: pub, priv: priv}
 }
 
 // pendingDraft stores a pending draft whose newest version has real text.
@@ -63,6 +64,10 @@ func (a *approval) pendingDraft(t *testing.T, channel string, recipient *string)
 	}
 	d, _ = store.New(a.env.pool).GetDraft(ctx, a.env.owner, d.ID)
 	return d, subject, body
+}
+
+func (a *approval) pubPriv() (ed25519.PublicKey, ed25519.PrivateKey, error) {
+	return a.pub, a.priv, nil
 }
 
 func (a *approval) ctx() context.Context {

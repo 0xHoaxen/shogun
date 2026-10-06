@@ -153,3 +153,61 @@ func TestDraftRegenerateOnlyWhenPending(t *testing.T) {
 		})
 	}
 }
+
+func TestDraftRecordSent(t *testing.T) {
+	now := time.Date(2026, 10, 6, 8, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name        string
+		draft       Draft
+		version     int32
+		wantState   DraftState
+		wantChanged bool
+		wantErr     bool
+	}{
+		{"approved becomes sent", Draft{State: DraftApproved, CurrentVersion: 2}, 2, DraftSent, true, false},
+		{"pending on the same version becomes sent: the mail went out after all", Draft{State: DraftPending, CurrentVersion: 2}, 2, DraftSent, true, false},
+		{"already sent is left alone", Draft{State: DraftSent, CurrentVersion: 2}, 2, DraftSent, false, false},
+		{"a report for an older version is ignored", Draft{State: DraftApproved, CurrentVersion: 3}, 2, DraftApproved, false, false},
+		{"a pending draft on a newer version is ignored", Draft{State: DraftPending, CurrentVersion: 3}, 2, DraftPending, false, false},
+		{"a discarded draft cannot be sent", Draft{State: DraftDiscarded, CurrentVersion: 2}, 2, DraftDiscarded, false, true},
+		{"a generating draft cannot be sent", Draft{State: DraftGenerating, CurrentVersion: 2}, 2, DraftGenerating, false, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, changed, err := tt.draft.RecordSent(tt.version, now)
+
+			if (err != nil) != tt.wantErr || changed != tt.wantChanged || got.State != tt.wantState {
+				t.Fatalf("got %s changed %v err %v", got.State, changed, err)
+			}
+			if changed && !got.UpdatedAt.Equal(now) {
+				t.Fatalf("updated at %v", got.UpdatedAt)
+			}
+		})
+	}
+}
+
+func TestDraftRecordSendFailed(t *testing.T) {
+	now := time.Date(2026, 10, 6, 8, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name        string
+		draft       Draft
+		version     int32
+		wantState   DraftState
+		wantChanged bool
+	}{
+		{"approved goes back to pending", Draft{State: DraftApproved, CurrentVersion: 2}, 2, DraftPending, true},
+		{"a stale report for an older version is ignored", Draft{State: DraftApproved, CurrentVersion: 3}, 2, DraftApproved, false},
+		{"a draft already edited back to pending is left alone", Draft{State: DraftPending, CurrentVersion: 3}, 2, DraftPending, false},
+		{"a sent draft is not undone", Draft{State: DraftSent, CurrentVersion: 2}, 2, DraftSent, false},
+		{"a discarded draft is left alone", Draft{State: DraftDiscarded, CurrentVersion: 2}, 2, DraftDiscarded, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, changed, err := tt.draft.RecordSendFailed(tt.version, now)
+
+			if err != nil || changed != tt.wantChanged || got.State != tt.wantState {
+				t.Fatalf("got %s changed %v err %v", got.State, changed, err)
+			}
+		})
+	}
+}
