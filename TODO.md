@@ -415,7 +415,12 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: a handler test per RPC; a stream test where a consumed event reaches an open `Subscribe` within 1 s, including replay and recovery after the `LISTEN` connection drops.
   Status: `Subscribe` sends response headers once the stream is registered, so a client (torii, tests) knows anything created from then on will arrive. A stream that falls 32 notifications behind, or whose `LISTEN` connection dropped or came back, ends with `Unavailable` / `STREAM_RESET`; the client reconnects with the last id it saw and the table replays the rest. Replay relies on UUIDv7 id order, which holds for one taiko replica; revisit before running more. `List` returns the total `unread_count`. Verified by removing `pg_notify` (four stream tests then fail).
 
-- [ ] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P5.1
+- [x] **P8.2a0 Session interceptor for streams** (S) Needs: P5.1
+  Do: `NewSessionInterceptor` returns a full `connect.Interceptor` that also authenticates server streams. It was a `UnaryInterceptorFunc`, which Connect leaves out of streaming handlers, so a stream handler would have run with no session check.
+  Done when: `cd services/torii && go test -race ./...` passes with stream tests: no cookie, unknown token and expired session are Unauthenticated and never reach the handler; an authenticated stream runs as the owner; a renewed session sets the cookie.
+  Status: a stream is authenticated once when it opens and not rechecked while it runs, so it can outlive its session; P8.2a ends streams after a bounded time. Verified by making the stream wrapper a pass-through (three stream tests then fail).
+
+- [ ] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P8.2a0
   Do: `proto/shogun/api/v1/notifications.proto` (`List`, `MarkRead`, `MarkAllRead`, `Stream` with last-seen-id); Connect handlers bridging `taiko.Subscribe`; `TAIKO_ADDR` config. Check the stream through the real proxy chain early, since it is the first server stream.
   Done when: torii handler tests including a stream bridge with a fake taiko client.
 

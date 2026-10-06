@@ -27,6 +27,7 @@ const (
 	ownerEmail = "owner@example.com"
 	sessionTTL = 24 * time.Hour
 	probePath  = "/test.Probe/Do"
+	watchPath  = "/test.Probe/Watch"
 )
 
 type harness struct {
@@ -34,6 +35,7 @@ type harness struct {
 	sessions *apptest.MemSessions
 	client   apiv1connect.AuthServiceClient
 	probe    *connect.Client[emptypb.Empty, emptypb.Empty]
+	watch    *connect.Client[emptypb.Empty, emptypb.Empty]
 	identity chan authz.Identity
 	now      *time.Time
 }
@@ -62,12 +64,19 @@ func newHarness(t *testing.T) *harness {
 			identity <- id
 			return connect.NewResponse(&emptypb.Empty{}), nil
 		}, connect.WithInterceptors(interceptor)))
+	mux.Handle(watchPath, connect.NewServerStreamHandler(watchPath,
+		func(ctx context.Context, _ *connect.Request[emptypb.Empty], stream *connect.ServerStream[emptypb.Empty]) error {
+			id, _ := authz.FromContext(ctx)
+			identity <- id
+			return stream.Send(&emptypb.Empty{})
+		}, connect.WithInterceptors(interceptor)))
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 	return &harness{
 		auth: auth, sessions: sessions, identity: identity, now: &now,
 		client: apiv1connect.NewAuthServiceClient(srv.Client(), srv.URL),
 		probe:  connect.NewClient[emptypb.Empty, emptypb.Empty](srv.Client(), srv.URL+probePath),
+		watch:  connect.NewClient[emptypb.Empty, emptypb.Empty](srv.Client(), srv.URL+watchPath),
 	}
 }
 
