@@ -102,3 +102,22 @@ func textPtr(s string) *string {
 	}
 	return &s
 }
+
+// Get returns one of the owner's notifications, or ErrNotFound.
+func (r *Repo) Get(ctx context.Context, owner, id uuid.UUID) (db.Notification, error) {
+	row, err := r.q.GetNotification(ctx, db.GetNotificationParams{OwnerID: owner, ID: id})
+	return row, wrap("get notification", err)
+}
+
+// NotifyChannel is the Postgres channel that announces a new notification to
+// the streams. Channels are shared by the whole database, so the name is taiko's
+// own.
+const NotifyChannel = "taiko_notifications"
+
+// Notify announces a stored notification to everyone listening on
+// NotifyChannel. On a transaction it is sent when the transaction commits, so a
+// listener can read the row it hears about. The payload is "<owner>:<id>".
+func (r *Repo) Notify(ctx context.Context, owner, id uuid.UUID) error {
+	_, err := r.d.Exec(ctx, `SELECT pg_notify($1, $2)`, NotifyChannel, owner.String()+":"+id.String())
+	return wrap("notify", err)
+}

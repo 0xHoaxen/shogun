@@ -24,11 +24,12 @@ type DBTX = db.DBTX
 // connection it was built on.
 type Repo struct {
 	q *db.Queries
+	d DBTX
 }
 
 // New returns a Repo that runs on d.
 func New(d DBTX) *Repo {
-	return &Repo{q: db.New(d)}
+	return &Repo{q: db.New(d), d: d}
 }
 
 // NewID returns a new UUIDv7. Notification ids sort by creation time, which

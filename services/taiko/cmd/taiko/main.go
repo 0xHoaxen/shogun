@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	taikov1 "github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -24,6 +25,8 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/app"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/events"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/live"
+	taikogrpc "github.com/0xHoaxen/shogun/services/taiko/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/taiko/migrations"
 )
 
@@ -109,10 +112,17 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, events.Handlers(app.NewService(pool, nil), log), log)
+	svc := app.NewService(pool, nil)
+	sink, err := bus.NewSinkServer(pool, events.Handlers(svc, log), log)
 	if err != nil {
 		return err
 	}
+
+	stopLive, err := live.New(pool, svc, log).Start(ctx)
+	if err != nil {
+		return err
+	}
+	defer stopLive()
 
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
 	if err != nil {
@@ -126,6 +136,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		taikov1.RegisterTaikoServiceServer(s, taikogrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

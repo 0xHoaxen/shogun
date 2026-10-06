@@ -37,3 +37,6 @@ WHERE owner_id = @owner_id AND id = ANY(@ids::uuid[]) AND read_at IS NULL;
 -- name: MarkAllNotificationsRead :execrows
 UPDATE notifications SET read_at = @read_at
 WHERE owner_id = @owner_id AND read_at IS NULL;
+
+-- name: GetNotification :one
+SELECT * FROM notifications WHERE owner_id = @owner_id AND id = @id;

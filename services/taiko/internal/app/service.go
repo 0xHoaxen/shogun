@@ -15,8 +15,9 @@ import (
 
 // Service runs the notification use cases.
 type Service struct {
-	pool *pgxpool.Pool
-	now  func() time.Time
+	pool   *pgxpool.Pool
+	now    func() time.Time
+	broker *broker
 }
 
 // NewService returns a Service on pool. now is the clock; nil means time.Now.
@@ -24,7 +25,7 @@ func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{pool: pool, now: now}
+	return &Service{pool: pool, now: now, broker: newBroker()}
 }
 
 // RecordInput describes a notification caused by an event.
@@ -37,13 +38,21 @@ type RecordInput struct {
 }
 
 // Record stores a notification in tx, the transaction that also marks the event
-// as seen. A repeated event stores nothing.
+// as seen, and announces it to the streams when tx commits. A repeated event
+// stores and announces nothing.
 func (s *Service) Record(ctx context.Context, tx pgx.Tx, in RecordInput) error {
-	_, _, err := store.New(tx).Insert(ctx, store.NewNotification{
+	repo := store.New(tx)
+	row, created, err := repo.Insert(ctx, store.NewNotification{
 		ID: store.NewID(), OwnerID: in.OwnerID, Notice: in.Notice,
 		CreatedAt: s.now().UTC(), SourceEventID: &in.EventID,
 	})
 	if err != nil {
+		return fmt.Errorf("record notification: %w", err)
+	}
+	if !created {
+		return nil
+	}
+	if err := repo.Notify(ctx, in.OwnerID, row.ID); err != nil {
 		return fmt.Errorf("record notification: %w", err)
 	}
 	return nil

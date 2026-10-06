@@ -410,9 +410,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: a handler test per event type and an idempotency test (the same envelope twice gives one notification).
   Status: `job.status_changed` is not consumed although the LLD catalog lists taiko for it. A mail-driven move to interview or offer would notify twice (once from `mail.classified`, once from the status change), and a drag on the board would echo the owner's own action. `TODO(owner)`: say if you want it anyway. Mail and job notifications link to `/jobs` since the board has no job page yet. Ids that end up in links must be uuids or the event is dropped.
 
-- [ ] **P8.1c taiko RPCs and Subscribe stream** (M) Needs: P8.1b
+- [x] **P8.1c taiko RPCs and Subscribe stream** (M) Needs: P8.1b
   Do: use cases and gRPC handlers for List, MarkRead, MarkAllRead, Subscribe; `pg_notify` on insert, one `LISTEN` connection feeding an in-process broker, replay from `after_id` after subscribing so no gap; register `TaikoService`.
   Done when: a handler test per RPC; a stream test where a consumed event reaches an open `Subscribe` within 1 s, including replay and recovery after the `LISTEN` connection drops.
+  Status: `Subscribe` sends response headers once the stream is registered, so a client (torii, tests) knows anything created from then on will arrive. A stream that falls 32 notifications behind, or whose `LISTEN` connection dropped or came back, ends with `Unavailable` / `STREAM_RESET`; the client reconnects with the last id it saw and the table replays the rest. Replay relies on UUIDv7 id order, which holds for one taiko replica; revisit before running more. `List` returns the total `unread_count`. Verified by removing `pg_notify` (four stream tests then fail).
 
 - [ ] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P5.1
   Do: `proto/shogun/api/v1/notifications.proto` (`List`, `MarkRead`, `MarkAllRead`, `Stream` with last-seen-id); Connect handlers bridging `taiko.Subscribe`; `TAIKO_ADDR` config. Check the stream through the real proxy chain early, since it is the first server stream.

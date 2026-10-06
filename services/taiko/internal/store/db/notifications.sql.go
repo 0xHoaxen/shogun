@@ -24,6 +24,32 @@ func (q *Queries) CountUnread(ctx context.Context, ownerID uuid.UUID) (int32, er
 	return column_1, err
 }
 
+const getNotification = `-- name: GetNotification :one
+SELECT id, owner_id, type, title, body, link, source_event_id, read_at, created_at FROM notifications WHERE owner_id = $1 AND id = $2
+`
+
+type GetNotificationParams struct {
+	OwnerID uuid.UUID
+	ID      uuid.UUID
+}
+
+func (q *Queries) GetNotification(ctx context.Context, arg GetNotificationParams) (Notification, error) {
+	row := q.db.QueryRow(ctx, getNotification, arg.OwnerID, arg.ID)
+	var i Notification
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Type,
+		&i.Title,
+		&i.Body,
+		&i.Link,
+		&i.SourceEventID,
+		&i.ReadAt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const insertNotification = `-- name: InsertNotification :one
 INSERT INTO notifications (id, owner_id, type, title, body, link, source_event_id, created_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
