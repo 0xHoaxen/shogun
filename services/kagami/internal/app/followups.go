@@ -72,7 +72,7 @@ func (s *Service) ScanDueFollowUps(ctx context.Context, date time.Time) (int, er
 		}
 		for _, job := range jobs {
 			_, err := outbox.Write(ctx, tx, eventSource, eventJobFollowUpDue, job.ID.String(),
-				&kagamiv1.JobFollowUpDue{JobId: job.ID.String(), DueOn: dueOn})
+				&kagamiv1.JobFollowUpDue{JobId: job.ID.String(), DueOn: dueOn, OwnerId: job.OwnerID.String()})
 			if err != nil {
 				return fmt.Errorf("write %s event: %w", eventJobFollowUpDue, err)
 			}
@@ -83,7 +83,7 @@ func (s *Service) ScanDueFollowUps(ctx context.Context, date time.Time) (int, er
 		}
 		for _, contact := range contacts {
 			_, err := outbox.Write(ctx, tx, eventSource, eventContactFollowUpDue, contact.ID.String(),
-				&kagamiv1.ContactFollowUpDue{ContactId: contact.ID.String(), DueOn: dueOn})
+				&kagamiv1.ContactFollowUpDue{ContactId: contact.ID.String(), DueOn: dueOn, OwnerId: contact.OwnerID.String()})
 			if err != nil {
 				return fmt.Errorf("write %s event: %w", eventContactFollowUpDue, err)
 			}

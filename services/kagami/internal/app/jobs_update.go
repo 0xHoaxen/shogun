@@ -107,10 +107,11 @@ func (s *Service) moveJob(
 		return db.Job{}, err
 	}
 	_, err = outbox.Write(ctx, tx, eventSource, eventJobStatusChanged, current.ID.String(), &kagamiv1.JobStatusChanged{
-		JobId: current.ID.String(),
-		From:  wire.JobStatusToProto(from),
-		To:    wire.JobStatusToProto(moved.Status),
-		At:    timestamppb.New(s.now().UTC()),
+		JobId:   current.ID.String(),
+		From:    wire.JobStatusToProto(from),
+		To:      wire.JobStatusToProto(moved.Status),
+		At:      timestamppb.New(s.now().UTC()),
+		OwnerId: current.OwnerID.String(),
 	})
 	if err != nil {
 		return db.Job{}, fmt.Errorf("write %s event: %w", eventJobStatusChanged, err)

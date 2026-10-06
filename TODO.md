@@ -397,7 +397,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `cd services/taiko && go test -race ./...` passes: domain table tests and store integration tests (duplicate `source_event_id` stores one row, pagination, unread only, replay, mark read, settings).
   Status: `Subscribe` returns `SubscribeResponse` wrapping a `Notification`, as `buf lint` requires. The per-event title and link builders move to P8.1b, where the payloads are known.
 
-- [ ] **P8.1b0 Owner on kagami follow-up and status events** (S) Needs: P8.1a
+- [x] **P8.1b0 Owner on kagami follow-up and status events** (S) Needs: P8.1a
   Do: add `owner_id` to `JobStatusChanged`, `JobFollowUpDue` and `ContactFollowUpDue` in `proto/shogun/kagami/v1/events.proto` and fill it in kagami's producers; taiko cannot attribute a notification to the owner without it.
   Done when: `cd services/kagami && go test -race ./...` passes with the producer tests asserting `owner_id`.
 

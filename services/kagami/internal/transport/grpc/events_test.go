@@ -62,3 +62,20 @@ func TestContactStatusChangedEventNamesTheOwnerAndPreferredChannel(t *testing.T)
 		t.Fatalf("got %+v", &got)
 	}
 }
+
+func TestJobStatusChangedEventNamesTheOwner(t *testing.T) {
+	h := newHarness(t)
+	job := h.addJob(t, "Backend", "").GetJob()
+
+	if _, err := h.client.ChangeJobStatus(h.ctx(t), &kagamiv1.ChangeJobStatusRequest{
+		Id: job.GetId(), ToStatus: kagamiv1.JobStatus_JOB_STATUS_APPLIED, Version: job.GetVersion(),
+	}); err != nil {
+		t.Fatalf("change status: %v", err)
+	}
+	var got kagamiv1.JobStatusChanged
+	h.payloadOf(t, "job.status_changed", &got)
+
+	if got.GetOwnerId() != h.owner || got.GetJobId() != job.GetId() {
+		t.Fatalf("got %+v, want owner %s and job %s", &got, h.owner, job.GetId())
+	}
+}

@@ -115,6 +115,7 @@ type JobStatusChanged struct {
 	From          JobStatus              `protobuf:"varint,2,opt,name=from,proto3,enum=shogun.kagami.v1.JobStatus" json:"from,omitempty"`
 	To            JobStatus              `protobuf:"varint,3,opt,name=to,proto3,enum=shogun.kagami.v1.JobStatus" json:"to,omitempty"`
 	At            *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=at,proto3" json:"at,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,5,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -177,12 +178,20 @@ func (x *JobStatusChanged) GetAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *JobStatusChanged) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 // JobFollowUpDue is the payload of job.follow_up_due.
 type JobFollowUpDue struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	JobId string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
 	// due_on is a YYYY-MM-DD date.
 	DueOn         string `protobuf:"bytes,2,opt,name=due_on,json=dueOn,proto3" json:"due_on,omitempty"`
+	OwnerId       string `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -227,6 +236,13 @@ func (x *JobFollowUpDue) GetJobId() string {
 func (x *JobFollowUpDue) GetDueOn() string {
 	if x != nil {
 		return x.DueOn
+	}
+	return ""
+}
+
+func (x *JobFollowUpDue) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
 	}
 	return ""
 }
@@ -368,6 +384,7 @@ type ContactFollowUpDue struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContactId     string                 `protobuf:"bytes,1,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
 	DueOn         string                 `protobuf:"bytes,2,opt,name=due_on,json=dueOn,proto3" json:"due_on,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -416,6 +433,13 @@ func (x *ContactFollowUpDue) GetDueOn() string {
 	return ""
 }
 
+func (x *ContactFollowUpDue) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 var File_shogun_kagami_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_kagami_v1_events_proto_rawDesc = "" +
@@ -427,15 +451,17 @@ const file_shogun_kagami_v1_events_proto_rawDesc = "" +
 	"\acompany\x18\x03 \x01(\tR\acompany\x12\x10\n" +
 	"\x03url\x18\x04 \x01(\tR\x03url\x12\x16\n" +
 	"\x06source\x18\x05 \x01(\tR\x06source\x12\x19\n" +
-	"\bowner_id\x18\x06 \x01(\tR\aownerId\"\xb3\x01\n" +
+	"\bowner_id\x18\x06 \x01(\tR\aownerId\"\xce\x01\n" +
 	"\x10JobStatusChanged\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12/\n" +
 	"\x04from\x18\x02 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\x04from\x12+\n" +
 	"\x02to\x18\x03 \x01(\x0e2\x1b.shogun.kagami.v1.JobStatusR\x02to\x12*\n" +
-	"\x02at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\">\n" +
+	"\x02at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12\x19\n" +
+	"\bowner_id\x18\x05 \x01(\tR\aownerId\"Y\n" +
 	"\x0eJobFollowUpDue\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x15\n" +
-	"\x06due_on\x18\x02 \x01(\tR\x05dueOn\"f\n" +
+	"\x06due_on\x18\x02 \x01(\tR\x05dueOn\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\"f\n" +
 	"\fContactAdded\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x127\n" +
@@ -446,11 +472,12 @@ const file_shogun_kagami_v1_events_proto_rawDesc = "" +
 	"\x04from\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x04from\x12/\n" +
 	"\x02to\x18\x03 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x02to\x12\x18\n" +
 	"\achannel\x18\x04 \x01(\tR\achannel\x12\x19\n" +
-	"\bowner_id\x18\x05 \x01(\tR\aownerId\"J\n" +
+	"\bowner_id\x18\x05 \x01(\tR\aownerId\"e\n" +
 	"\x12ContactFollowUpDue\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x12\x15\n" +
-	"\x06due_on\x18\x02 \x01(\tR\x05dueOnB\xc2\x01\n" +
+	"\x06due_on\x18\x02 \x01(\tR\x05dueOn\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerIdB\xc2\x01\n" +
 	"\x14com.shogun.kagami.v1B\vEventsProtoP\x01Z;github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1;kagamiv1\xa2\x02\x03SKX\xaa\x02\x10Shogun.Kagami.V1\xca\x02\x10Shogun\\Kagami\\V1\xe2\x02\x1cShogun\\Kagami\\V1\\GPBMetadata\xea\x02\x12Shogun::Kagami::V1b\x06proto3"
 
 var (
