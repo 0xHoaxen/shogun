@@ -25,6 +25,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/app"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/soroban/internal/metrics"
 	sorobangrpc "github.com/0xHoaxen/shogun/services/soroban/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/soroban/migrations"
 )
@@ -126,6 +127,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	serverOpts := append([]server.Option{
 		server.WithAuth(authority.UnaryServerInterceptor(), authority.StreamServerInterceptor()),
 		server.WithReadinessCheck(pool.Ping),
+		server.WithCollector(metrics.NewBudgetUsed(pool, log)),
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)

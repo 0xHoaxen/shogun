@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -34,6 +35,7 @@ func Run(ctx context.Context, cfg config.Base, log *slog.Logger, register func(*
 	if err != nil {
 		return err
 	}
+	defer registerCollectors(log, s.collectors)()
 
 	grpcSrv := newGRPCServer(cfg, log, s, register)
 	httpSrv := newHTTPServer(s.readiness)
@@ -61,8 +63,8 @@ func Run(ctx context.Context, cfg config.Base, log *slog.Logger, register func(*
 }
 
 func newGRPCServer(cfg config.Base, log *slog.Logger, s settings, register func(*grpc.Server)) *grpc.Server {
-	unary := []grpc.UnaryServerInterceptor{recoverUnary(log), logUnary(log)}
-	stream := []grpc.StreamServerInterceptor{recoverStream(log), logStream(log)}
+	unary := []grpc.UnaryServerInterceptor{metricsUnary(), recoverUnary(log), logUnary(log)}
+	stream := []grpc.StreamServerInterceptor{metricsStream(), recoverStream(log), logStream(log)}
 	if s.authUnary != nil {
 		unary = append(unary, s.authUnary)
 	}
@@ -125,4 +127,22 @@ func shutdown(log *slog.Logger, timeout time.Duration, grpcSrv *grpc.Server, htt
 		errs = append(errs, errors.New("server: grpc graceful stop timed out"))
 	}
 	return errors.Join(errs...)
+}
+
+// registerCollectors registers collectors on the default registry and returns
+// a function that unregisters those that were accepted.
+func registerCollectors(log *slog.Logger, collectors []prometheus.Collector) func() {
+	var registered []prometheus.Collector
+	for _, c := range collectors {
+		if err := prometheus.Register(c); err != nil {
+			log.Warn("server: register metrics collector", slog.Any("error", err))
+			continue
+		}
+		registered = append(registered, c)
+	}
+	return func() {
+		for _, c := range registered {
+			prometheus.Unregister(c)
+		}
+	}
 }
