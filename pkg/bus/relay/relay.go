@@ -182,9 +182,12 @@ func (r *Relay) Start(ctx context.Context) error {
 	}
 	listenCtx, cancel := context.WithCancel(ctx)
 	r.cancel = cancel
-	r.done = make(chan struct{})
+	done := make(chan struct{})
+	r.done = done
+	// The goroutine keeps its own reference: Stop clears r.done, and a Stop
+	// right after Start would otherwise race with the goroutine reading it.
 	go func() {
-		defer close(r.done)
+		defer close(done)
 		r.listen(listenCtx)
 	}()
 	return nil
