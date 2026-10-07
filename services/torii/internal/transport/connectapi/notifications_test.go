@@ -66,6 +66,7 @@ type fakeTaiko struct {
 	subErr      error
 	sub         *fakeSub
 	subscribed  chan struct{}
+	settings    settingsFake
 }
 
 func (f *fakeTaiko) List(_ context.Context, in *taikov1.ListRequest, _ ...grpc.CallOption) (*taikov1.ListResponse, error) {

@@ -19,10 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TaikoService_List_FullMethodName        = "/shogun.taiko.v1.TaikoService/List"
-	TaikoService_MarkRead_FullMethodName    = "/shogun.taiko.v1.TaikoService/MarkRead"
-	TaikoService_MarkAllRead_FullMethodName = "/shogun.taiko.v1.TaikoService/MarkAllRead"
-	TaikoService_Subscribe_FullMethodName   = "/shogun.taiko.v1.TaikoService/Subscribe"
+	TaikoService_List_FullMethodName                = "/shogun.taiko.v1.TaikoService/List"
+	TaikoService_MarkRead_FullMethodName            = "/shogun.taiko.v1.TaikoService/MarkRead"
+	TaikoService_MarkAllRead_FullMethodName         = "/shogun.taiko.v1.TaikoService/MarkAllRead"
+	TaikoService_Subscribe_FullMethodName           = "/shogun.taiko.v1.TaikoService/Subscribe"
+	TaikoService_GetChannelSettings_FullMethodName  = "/shogun.taiko.v1.TaikoService/GetChannelSettings"
+	TaikoService_SaveChannelSettings_FullMethodName = "/shogun.taiko.v1.TaikoService/SaveChannelSettings"
 )
 
 // TaikoServiceClient is the client API for TaikoService service.
@@ -42,6 +44,13 @@ type TaikoServiceClient interface {
 	// the notifications created after that id, so a client can reconnect without
 	// missing any.
 	Subscribe(ctx context.Context, in *SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[SubscribeResponse], error)
+	// GetChannelSettings returns how the owner is reached. An owner who never
+	// saved any gets the defaults (in-app on, no quiet hours) at version 0.
+	GetChannelSettings(ctx context.Context, in *GetChannelSettingsRequest, opts ...grpc.CallOption) (*GetChannelSettingsResponse, error)
+	// SaveChannelSettings replaces the owner's settings. The version must be the
+	// one last read (0 when none was); a stale one is Aborted with reason
+	// VERSION_CONFLICT.
+	SaveChannelSettings(ctx context.Context, in *SaveChannelSettingsRequest, opts ...grpc.CallOption) (*SaveChannelSettingsResponse, error)
 }
 
 type taikoServiceClient struct {
@@ -101,6 +110,26 @@ func (c *taikoServiceClient) Subscribe(ctx context.Context, in *SubscribeRequest
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type TaikoService_SubscribeClient = grpc.ServerStreamingClient[SubscribeResponse]
 
+func (c *taikoServiceClient) GetChannelSettings(ctx context.Context, in *GetChannelSettingsRequest, opts ...grpc.CallOption) (*GetChannelSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetChannelSettingsResponse)
+	err := c.cc.Invoke(ctx, TaikoService_GetChannelSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taikoServiceClient) SaveChannelSettings(ctx context.Context, in *SaveChannelSettingsRequest, opts ...grpc.CallOption) (*SaveChannelSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveChannelSettingsResponse)
+	err := c.cc.Invoke(ctx, TaikoService_SaveChannelSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TaikoServiceServer is the server API for TaikoService service.
 // All implementations must embed UnimplementedTaikoServiceServer
 // for forward compatibility.
@@ -118,6 +147,13 @@ type TaikoServiceServer interface {
 	// the notifications created after that id, so a client can reconnect without
 	// missing any.
 	Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[SubscribeResponse]) error
+	// GetChannelSettings returns how the owner is reached. An owner who never
+	// saved any gets the defaults (in-app on, no quiet hours) at version 0.
+	GetChannelSettings(context.Context, *GetChannelSettingsRequest) (*GetChannelSettingsResponse, error)
+	// SaveChannelSettings replaces the owner's settings. The version must be the
+	// one last read (0 when none was); a stale one is Aborted with reason
+	// VERSION_CONFLICT.
+	SaveChannelSettings(context.Context, *SaveChannelSettingsRequest) (*SaveChannelSettingsResponse, error)
 	mustEmbedUnimplementedTaikoServiceServer()
 }
 
@@ -139,6 +175,12 @@ func (UnimplementedTaikoServiceServer) MarkAllRead(context.Context, *MarkAllRead
 }
 func (UnimplementedTaikoServiceServer) Subscribe(*SubscribeRequest, grpc.ServerStreamingServer[SubscribeResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
+func (UnimplementedTaikoServiceServer) GetChannelSettings(context.Context, *GetChannelSettingsRequest) (*GetChannelSettingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetChannelSettings not implemented")
+}
+func (UnimplementedTaikoServiceServer) SaveChannelSettings(context.Context, *SaveChannelSettingsRequest) (*SaveChannelSettingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveChannelSettings not implemented")
 }
 func (UnimplementedTaikoServiceServer) mustEmbedUnimplementedTaikoServiceServer() {}
 func (UnimplementedTaikoServiceServer) testEmbeddedByValue()                      {}
@@ -226,6 +268,42 @@ func _TaikoService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type TaikoService_SubscribeServer = grpc.ServerStreamingServer[SubscribeResponse]
 
+func _TaikoService_GetChannelSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetChannelSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaikoServiceServer).GetChannelSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaikoService_GetChannelSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaikoServiceServer).GetChannelSettings(ctx, req.(*GetChannelSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaikoService_SaveChannelSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveChannelSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaikoServiceServer).SaveChannelSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaikoService_SaveChannelSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaikoServiceServer).SaveChannelSettings(ctx, req.(*SaveChannelSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TaikoService_ServiceDesc is the grpc.ServiceDesc for TaikoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -244,6 +322,14 @@ var TaikoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarkAllRead",
 			Handler:    _TaikoService_MarkAllRead_Handler,
+		},
+		{
+			MethodName: "GetChannelSettings",
+			Handler:    _TaikoService_GetChannelSettings_Handler,
+		},
+		{
+			MethodName: "SaveChannelSettings",
+			Handler:    _TaikoService_SaveChannelSettings_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

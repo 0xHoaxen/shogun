@@ -555,6 +555,291 @@ func (x *StreamResponse) GetNotification() *Notification {
 	return nil
 }
 
+// QuietHours is a window of the day in which the daily digest is held back, in
+// minutes after midnight in the owner's zone. It may wrap past midnight (from
+// 22:00 to 08:00). The two ends must differ.
+type QuietHours struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromMinute    int32                  `protobuf:"varint,1,opt,name=from_minute,json=fromMinute,proto3" json:"from_minute,omitempty"`
+	ToMinute      int32                  `protobuf:"varint,2,opt,name=to_minute,json=toMinute,proto3" json:"to_minute,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuietHours) Reset() {
+	*x = QuietHours{}
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuietHours) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuietHours) ProtoMessage() {}
+
+func (x *QuietHours) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuietHours.ProtoReflect.Descriptor instead.
+func (*QuietHours) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_notifications_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *QuietHours) GetFromMinute() int32 {
+	if x != nil {
+		return x.FromMinute
+	}
+	return 0
+}
+
+func (x *QuietHours) GetToMinute() int32 {
+	if x != nil {
+		return x.ToMinute
+	}
+	return 0
+}
+
+type NotificationSettings struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	InAppEnabled bool                   `protobuf:"varint,1,opt,name=in_app_enabled,json=inAppEnabled,proto3" json:"in_app_enabled,omitempty"`
+	// quiet is unset when there are no quiet hours.
+	Quiet *QuietHours `protobuf:"bytes,2,opt,name=quiet,proto3" json:"quiet,omitempty"`
+	// version is the token to send back when saving; 0 until first saved.
+	Version       int64 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NotificationSettings) Reset() {
+	*x = NotificationSettings{}
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NotificationSettings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NotificationSettings) ProtoMessage() {}
+
+func (x *NotificationSettings) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NotificationSettings.ProtoReflect.Descriptor instead.
+func (*NotificationSettings) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_notifications_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *NotificationSettings) GetInAppEnabled() bool {
+	if x != nil {
+		return x.InAppEnabled
+	}
+	return false
+}
+
+func (x *NotificationSettings) GetQuiet() *QuietHours {
+	if x != nil {
+		return x.Quiet
+	}
+	return nil
+}
+
+func (x *NotificationSettings) GetVersion() int64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type GetNotificationSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetNotificationSettingsRequest) Reset() {
+	*x = GetNotificationSettingsRequest{}
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetNotificationSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetNotificationSettingsRequest) ProtoMessage() {}
+
+func (x *GetNotificationSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetNotificationSettingsRequest.ProtoReflect.Descriptor instead.
+func (*GetNotificationSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_notifications_proto_rawDescGZIP(), []int{11}
+}
+
+type GetNotificationSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *NotificationSettings  `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetNotificationSettingsResponse) Reset() {
+	*x = GetNotificationSettingsResponse{}
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetNotificationSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetNotificationSettingsResponse) ProtoMessage() {}
+
+func (x *GetNotificationSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetNotificationSettingsResponse.ProtoReflect.Descriptor instead.
+func (*GetNotificationSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_notifications_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetNotificationSettingsResponse) GetSettings() *NotificationSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type SaveNotificationSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *NotificationSettings  `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveNotificationSettingsRequest) Reset() {
+	*x = SaveNotificationSettingsRequest{}
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveNotificationSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveNotificationSettingsRequest) ProtoMessage() {}
+
+func (x *SaveNotificationSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveNotificationSettingsRequest.ProtoReflect.Descriptor instead.
+func (*SaveNotificationSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_notifications_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SaveNotificationSettingsRequest) GetSettings() *NotificationSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type SaveNotificationSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *NotificationSettings  `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveNotificationSettingsResponse) Reset() {
+	*x = SaveNotificationSettingsResponse{}
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveNotificationSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveNotificationSettingsResponse) ProtoMessage() {}
+
+func (x *SaveNotificationSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_notifications_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveNotificationSettingsResponse.ProtoReflect.Descriptor instead.
+func (*SaveNotificationSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_notifications_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SaveNotificationSettingsResponse) GetSettings() *NotificationSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
 var File_shogun_api_v1_notifications_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_notifications_proto_rawDesc = "" +
@@ -588,7 +873,23 @@ const file_shogun_api_v1_notifications_proto_rawDesc = "" +
 	"\flast_seen_id\x18\x01 \x01(\tR\n" +
 	"lastSeenId\"Q\n" +
 	"\x0eStreamResponse\x12?\n" +
-	"\fnotification\x18\x01 \x01(\v2\x1b.shogun.api.v1.NotificationR\fnotification*\xca\x03\n" +
+	"\fnotification\x18\x01 \x01(\v2\x1b.shogun.api.v1.NotificationR\fnotification\"J\n" +
+	"\n" +
+	"QuietHours\x12\x1f\n" +
+	"\vfrom_minute\x18\x01 \x01(\x05R\n" +
+	"fromMinute\x12\x1b\n" +
+	"\tto_minute\x18\x02 \x01(\x05R\btoMinute\"\x87\x01\n" +
+	"\x14NotificationSettings\x12$\n" +
+	"\x0ein_app_enabled\x18\x01 \x01(\bR\finAppEnabled\x12/\n" +
+	"\x05quiet\x18\x02 \x01(\v2\x19.shogun.api.v1.QuietHoursR\x05quiet\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x03R\aversion\" \n" +
+	"\x1eGetNotificationSettingsRequest\"b\n" +
+	"\x1fGetNotificationSettingsResponse\x12?\n" +
+	"\bsettings\x18\x01 \x01(\v2#.shogun.api.v1.NotificationSettingsR\bsettings\"b\n" +
+	"\x1fSaveNotificationSettingsRequest\x12?\n" +
+	"\bsettings\x18\x01 \x01(\v2#.shogun.api.v1.NotificationSettingsR\bsettings\"c\n" +
+	" SaveNotificationSettingsResponse\x12?\n" +
+	"\bsettings\x18\x01 \x01(\v2#.shogun.api.v1.NotificationSettingsR\bsettings*\xca\x03\n" +
 	"\x10NotificationType\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_DRAFT_READY\x10\x01\x12\"\n" +
@@ -602,12 +903,14 @@ const file_shogun_api_v1_notifications_proto_rawDesc = "" +
 	"\"NOTIFICATION_TYPE_BUDGET_THRESHOLD\x10\t\x12&\n" +
 	"\"NOTIFICATION_TYPE_BUDGET_EXHAUSTED\x10\n" +
 	"\x12\"\n" +
-	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v2\xb8\x03\n" +
+	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v2\xaf\x05\n" +
 	"\x14NotificationsService\x12f\n" +
 	"\x11ListNotifications\x12'.shogun.api.v1.ListNotificationsRequest\x1a(.shogun.api.v1.ListNotificationsResponse\x12r\n" +
 	"\x15MarkNotificationsRead\x12+.shogun.api.v1.MarkNotificationsReadRequest\x1a,.shogun.api.v1.MarkNotificationsReadResponse\x12{\n" +
 	"\x18MarkAllNotificationsRead\x12..shogun.api.v1.MarkAllNotificationsReadRequest\x1a/.shogun.api.v1.MarkAllNotificationsReadResponse\x12G\n" +
-	"\x06Stream\x12\x1c.shogun.api.v1.StreamRequest\x1a\x1d.shogun.api.v1.StreamResponse0\x01B\xb4\x01\n" +
+	"\x06Stream\x12\x1c.shogun.api.v1.StreamRequest\x1a\x1d.shogun.api.v1.StreamResponse0\x01\x12x\n" +
+	"\x17GetNotificationSettings\x12-.shogun.api.v1.GetNotificationSettingsRequest\x1a..shogun.api.v1.GetNotificationSettingsResponse\x12{\n" +
+	"\x18SaveNotificationSettings\x12..shogun.api.v1.SaveNotificationSettingsRequest\x1a/.shogun.api.v1.SaveNotificationSettingsResponseB\xb4\x01\n" +
 	"\x11com.shogun.api.v1B\x12NotificationsProtoP\x01Z5github.com/0xHoaxen/shogun/gen/go/shogun/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\rShogun.Api.V1\xca\x02\rShogun\\Api\\V1\xe2\x02\x19Shogun\\Api\\V1\\GPBMetadata\xea\x02\x0fShogun::Api::V1b\x06proto3"
 
 var (
@@ -623,7 +926,7 @@ func file_shogun_api_v1_notifications_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_api_v1_notifications_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_api_v1_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_shogun_api_v1_notifications_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_shogun_api_v1_notifications_proto_goTypes = []any{
 	(NotificationType)(0),                    // 0: shogun.api.v1.NotificationType
 	(*Notification)(nil),                     // 1: shogun.api.v1.Notification
@@ -635,27 +938,41 @@ var file_shogun_api_v1_notifications_proto_goTypes = []any{
 	(*MarkAllNotificationsReadResponse)(nil), // 7: shogun.api.v1.MarkAllNotificationsReadResponse
 	(*StreamRequest)(nil),                    // 8: shogun.api.v1.StreamRequest
 	(*StreamResponse)(nil),                   // 9: shogun.api.v1.StreamResponse
-	(*timestamppb.Timestamp)(nil),            // 10: google.protobuf.Timestamp
+	(*QuietHours)(nil),                       // 10: shogun.api.v1.QuietHours
+	(*NotificationSettings)(nil),             // 11: shogun.api.v1.NotificationSettings
+	(*GetNotificationSettingsRequest)(nil),   // 12: shogun.api.v1.GetNotificationSettingsRequest
+	(*GetNotificationSettingsResponse)(nil),  // 13: shogun.api.v1.GetNotificationSettingsResponse
+	(*SaveNotificationSettingsRequest)(nil),  // 14: shogun.api.v1.SaveNotificationSettingsRequest
+	(*SaveNotificationSettingsResponse)(nil), // 15: shogun.api.v1.SaveNotificationSettingsResponse
+	(*timestamppb.Timestamp)(nil),            // 16: google.protobuf.Timestamp
 }
 var file_shogun_api_v1_notifications_proto_depIdxs = []int32{
 	0,  // 0: shogun.api.v1.Notification.type:type_name -> shogun.api.v1.NotificationType
-	10, // 1: shogun.api.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
-	10, // 2: shogun.api.v1.Notification.read_at:type_name -> google.protobuf.Timestamp
+	16, // 1: shogun.api.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	16, // 2: shogun.api.v1.Notification.read_at:type_name -> google.protobuf.Timestamp
 	1,  // 3: shogun.api.v1.ListNotificationsResponse.notifications:type_name -> shogun.api.v1.Notification
 	1,  // 4: shogun.api.v1.StreamResponse.notification:type_name -> shogun.api.v1.Notification
-	2,  // 5: shogun.api.v1.NotificationsService.ListNotifications:input_type -> shogun.api.v1.ListNotificationsRequest
-	4,  // 6: shogun.api.v1.NotificationsService.MarkNotificationsRead:input_type -> shogun.api.v1.MarkNotificationsReadRequest
-	6,  // 7: shogun.api.v1.NotificationsService.MarkAllNotificationsRead:input_type -> shogun.api.v1.MarkAllNotificationsReadRequest
-	8,  // 8: shogun.api.v1.NotificationsService.Stream:input_type -> shogun.api.v1.StreamRequest
-	3,  // 9: shogun.api.v1.NotificationsService.ListNotifications:output_type -> shogun.api.v1.ListNotificationsResponse
-	5,  // 10: shogun.api.v1.NotificationsService.MarkNotificationsRead:output_type -> shogun.api.v1.MarkNotificationsReadResponse
-	7,  // 11: shogun.api.v1.NotificationsService.MarkAllNotificationsRead:output_type -> shogun.api.v1.MarkAllNotificationsReadResponse
-	9,  // 12: shogun.api.v1.NotificationsService.Stream:output_type -> shogun.api.v1.StreamResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	10, // 5: shogun.api.v1.NotificationSettings.quiet:type_name -> shogun.api.v1.QuietHours
+	11, // 6: shogun.api.v1.GetNotificationSettingsResponse.settings:type_name -> shogun.api.v1.NotificationSettings
+	11, // 7: shogun.api.v1.SaveNotificationSettingsRequest.settings:type_name -> shogun.api.v1.NotificationSettings
+	11, // 8: shogun.api.v1.SaveNotificationSettingsResponse.settings:type_name -> shogun.api.v1.NotificationSettings
+	2,  // 9: shogun.api.v1.NotificationsService.ListNotifications:input_type -> shogun.api.v1.ListNotificationsRequest
+	4,  // 10: shogun.api.v1.NotificationsService.MarkNotificationsRead:input_type -> shogun.api.v1.MarkNotificationsReadRequest
+	6,  // 11: shogun.api.v1.NotificationsService.MarkAllNotificationsRead:input_type -> shogun.api.v1.MarkAllNotificationsReadRequest
+	8,  // 12: shogun.api.v1.NotificationsService.Stream:input_type -> shogun.api.v1.StreamRequest
+	12, // 13: shogun.api.v1.NotificationsService.GetNotificationSettings:input_type -> shogun.api.v1.GetNotificationSettingsRequest
+	14, // 14: shogun.api.v1.NotificationsService.SaveNotificationSettings:input_type -> shogun.api.v1.SaveNotificationSettingsRequest
+	3,  // 15: shogun.api.v1.NotificationsService.ListNotifications:output_type -> shogun.api.v1.ListNotificationsResponse
+	5,  // 16: shogun.api.v1.NotificationsService.MarkNotificationsRead:output_type -> shogun.api.v1.MarkNotificationsReadResponse
+	7,  // 17: shogun.api.v1.NotificationsService.MarkAllNotificationsRead:output_type -> shogun.api.v1.MarkAllNotificationsReadResponse
+	9,  // 18: shogun.api.v1.NotificationsService.Stream:output_type -> shogun.api.v1.StreamResponse
+	13, // 19: shogun.api.v1.NotificationsService.GetNotificationSettings:output_type -> shogun.api.v1.GetNotificationSettingsResponse
+	15, // 20: shogun.api.v1.NotificationsService.SaveNotificationSettings:output_type -> shogun.api.v1.SaveNotificationSettingsResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_shogun_api_v1_notifications_proto_init() }
@@ -669,7 +986,7 @@ func file_shogun_api_v1_notifications_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_api_v1_notifications_proto_rawDesc), len(file_shogun_api_v1_notifications_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

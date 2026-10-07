@@ -29,6 +29,8 @@ type NotificationsBackend interface {
 	MarkRead(ctx context.Context, in *taikov1.MarkReadRequest, opts ...grpc.CallOption) (*taikov1.MarkReadResponse, error)
 	MarkAllRead(ctx context.Context, in *taikov1.MarkAllReadRequest, opts ...grpc.CallOption) (*taikov1.MarkAllReadResponse, error)
 	Subscribe(ctx context.Context, in *taikov1.SubscribeRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[taikov1.SubscribeResponse], error)
+	GetChannelSettings(ctx context.Context, in *taikov1.GetChannelSettingsRequest, opts ...grpc.CallOption) (*taikov1.GetChannelSettingsResponse, error)
+	SaveChannelSettings(ctx context.Context, in *taikov1.SaveChannelSettingsRequest, opts ...grpc.CallOption) (*taikov1.SaveChannelSettingsResponse, error)
 }
 
 // NotificationsServer implements shogun.api.v1.NotificationsService on taiko.
@@ -125,4 +127,28 @@ func (s *NotificationsServer) Stream(
 			return fromGRPC(ctx, s.log, err)
 		}
 	}
+}
+
+// GetNotificationSettings returns how the owner is reached.
+func (s *NotificationsServer) GetNotificationSettings(
+	ctx context.Context, _ *connect.Request[apiv1.GetNotificationSettingsRequest],
+) (*connect.Response[apiv1.GetNotificationSettingsResponse], error) {
+	resp, err := s.taiko.GetChannelSettings(ctx, &taikov1.GetChannelSettingsRequest{})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.GetNotificationSettingsResponse{Settings: settingsToAPI(resp.GetSettings())}), nil
+}
+
+// SaveNotificationSettings replaces how the owner is reached.
+func (s *NotificationsServer) SaveNotificationSettings(
+	ctx context.Context, req *connect.Request[apiv1.SaveNotificationSettingsRequest],
+) (*connect.Response[apiv1.SaveNotificationSettingsResponse], error) {
+	resp, err := s.taiko.SaveChannelSettings(ctx, &taikov1.SaveChannelSettingsRequest{
+		Settings: settingsFromAPI(req.Msg.GetSettings()),
+	})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.SaveNotificationSettingsResponse{Settings: settingsToAPI(resp.GetSettings())}), nil
 }

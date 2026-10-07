@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/notifications.proto.
  */
 export const file_shogun_api_v1_notifications: GenFile = /*@__PURE__*/
-  fileDesc("CiFzaG9ndW4vYXBpL3YxL25vdGlmaWNhdGlvbnMucHJvdG8SDXNob2d1bi5hcGkudjEi0QEKDE5vdGlmaWNhdGlvbhIKCgJpZBgBIAEoCRItCgR0eXBlGAIgASgOMh8uc2hvZ3VuLmFwaS52MS5Ob3RpZmljYXRpb25UeXBlEg0KBXRpdGxlGAMgASgJEgwKBGJvZHkYBCABKAkSDAoEbGluaxgFIAEoCRIuCgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgdyZWFkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJWChhMaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QSEwoLdW5yZWFkX29ubHkYASABKAgSEQoJcGFnZV9zaXplGAIgASgFEhIKCnBhZ2VfdG9rZW4YAyABKAkifgoZTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZRIyCg1ub3RpZmljYXRpb25zGAEgAygLMhsuc2hvZ3VuLmFwaS52MS5Ob3RpZmljYXRpb24SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhQKDHVucmVhZF9jb3VudBgDIAEoBSIrChxNYXJrTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0EgsKA2lkcxgBIAMoCSIfCh1NYXJrTm90aWZpY2F0aW9uc1JlYWRSZXNwb25zZSIhCh9NYXJrQWxsTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0IiIKIE1hcmtBbGxOb3RpZmljYXRpb25zUmVhZFJlc3BvbnNlIiUKDVN0cmVhbVJlcXVlc3QSFAoMbGFzdF9zZWVuX2lkGAEgASgJIkMKDlN0cmVhbVJlc3BvbnNlEjEKDG5vdGlmaWNhdGlvbhgBIAEoCzIbLnNob2d1bi5hcGkudjEuTm90aWZpY2F0aW9uKsoDChBOb3RpZmljYXRpb25UeXBlEiEKHU5PVElGSUNBVElPTl9UWVBFX1VOU1BFQ0lGSUVEEAASIQodTk9USUZJQ0FUSU9OX1RZUEVfRFJBRlRfUkVBRFkQARIiCh5OT1RJRklDQVRJT05fVFlQRV9EUkFGVF9GQUlMRUQQAhInCiNOT1RJRklDQVRJT05fVFlQRV9EUkFGVF9TRU5EX0ZBSUxFRBADEiYKIk5PVElGSUNBVElPTl9UWVBFX0lOVEVSVklFV19JTlZJVEUQBBIbChdOT1RJRklDQVRJT05fVFlQRV9PRkZFUhAFEh8KG05PVElGSUNBVElPTl9UWVBFX1JFSkVDVElPThAGEiQKIE5PVElGSUNBVElPTl9UWVBFX1JFUExZX0RFVEVDVEVEEAcSIwofTk9USUZJQ0FUSU9OX1RZUEVfRk9MTE9XX1VQX0RVRRAIEiYKIk5PVElGSUNBVElPTl9UWVBFX0JVREdFVF9USFJFU0hPTEQQCRImCiJOT1RJRklDQVRJT05fVFlQRV9CVURHRVRfRVhIQVVTVEVEEAoSIgoeTk9USUZJQ0FUSU9OX1RZUEVfREFJTFlfRElHRVNUEAsyuAMKFE5vdGlmaWNhdGlvbnNTZXJ2aWNlEmYKEUxpc3ROb3RpZmljYXRpb25zEicuc2hvZ3VuLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QaKC5zaG9ndW4uYXBpLnYxLkxpc3ROb3RpZmljYXRpb25zUmVzcG9uc2UScgoVTWFya05vdGlmaWNhdGlvbnNSZWFkEisuc2hvZ3VuLmFwaS52MS5NYXJrTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0Giwuc2hvZ3VuLmFwaS52MS5NYXJrTm90aWZpY2F0aW9uc1JlYWRSZXNwb25zZRJ7ChhNYXJrQWxsTm90aWZpY2F0aW9uc1JlYWQSLi5zaG9ndW4uYXBpLnYxLk1hcmtBbGxOb3RpZmljYXRpb25zUmVhZFJlcXVlc3QaLy5zaG9ndW4uYXBpLnYxLk1hcmtBbGxOb3RpZmljYXRpb25zUmVhZFJlc3BvbnNlEkcKBlN0cmVhbRIcLnNob2d1bi5hcGkudjEuU3RyZWFtUmVxdWVzdBodLnNob2d1bi5hcGkudjEuU3RyZWFtUmVzcG9uc2UwAWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("CiFzaG9ndW4vYXBpL3YxL25vdGlmaWNhdGlvbnMucHJvdG8SDXNob2d1bi5hcGkudjEi0QEKDE5vdGlmaWNhdGlvbhIKCgJpZBgBIAEoCRItCgR0eXBlGAIgASgOMh8uc2hvZ3VuLmFwaS52MS5Ob3RpZmljYXRpb25UeXBlEg0KBXRpdGxlGAMgASgJEgwKBGJvZHkYBCABKAkSDAoEbGluaxgFIAEoCRIuCgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCgdyZWFkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJWChhMaXN0Tm90aWZpY2F0aW9uc1JlcXVlc3QSEwoLdW5yZWFkX29ubHkYASABKAgSEQoJcGFnZV9zaXplGAIgASgFEhIKCnBhZ2VfdG9rZW4YAyABKAkifgoZTGlzdE5vdGlmaWNhdGlvbnNSZXNwb25zZRIyCg1ub3RpZmljYXRpb25zGAEgAygLMhsuc2hvZ3VuLmFwaS52MS5Ob3RpZmljYXRpb24SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJEhQKDHVucmVhZF9jb3VudBgDIAEoBSIrChxNYXJrTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0EgsKA2lkcxgBIAMoCSIfCh1NYXJrTm90aWZpY2F0aW9uc1JlYWRSZXNwb25zZSIhCh9NYXJrQWxsTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0IiIKIE1hcmtBbGxOb3RpZmljYXRpb25zUmVhZFJlc3BvbnNlIiUKDVN0cmVhbVJlcXVlc3QSFAoMbGFzdF9zZWVuX2lkGAEgASgJIkMKDlN0cmVhbVJlc3BvbnNlEjEKDG5vdGlmaWNhdGlvbhgBIAEoCzIbLnNob2d1bi5hcGkudjEuTm90aWZpY2F0aW9uIjQKClF1aWV0SG91cnMSEwoLZnJvbV9taW51dGUYASABKAUSEQoJdG9fbWludXRlGAIgASgFImkKFE5vdGlmaWNhdGlvblNldHRpbmdzEhYKDmluX2FwcF9lbmFibGVkGAEgASgIEigKBXF1aWV0GAIgASgLMhkuc2hvZ3VuLmFwaS52MS5RdWlldEhvdXJzEg8KB3ZlcnNpb24YAyABKAMiIAoeR2V0Tm90aWZpY2F0aW9uU2V0dGluZ3NSZXF1ZXN0IlgKH0dldE5vdGlmaWNhdGlvblNldHRpbmdzUmVzcG9uc2USNQoIc2V0dGluZ3MYASABKAsyIy5zaG9ndW4uYXBpLnYxLk5vdGlmaWNhdGlvblNldHRpbmdzIlgKH1NhdmVOb3RpZmljYXRpb25TZXR0aW5nc1JlcXVlc3QSNQoIc2V0dGluZ3MYASABKAsyIy5zaG9ndW4uYXBpLnYxLk5vdGlmaWNhdGlvblNldHRpbmdzIlkKIFNhdmVOb3RpZmljYXRpb25TZXR0aW5nc1Jlc3BvbnNlEjUKCHNldHRpbmdzGAEgASgLMiMuc2hvZ3VuLmFwaS52MS5Ob3RpZmljYXRpb25TZXR0aW5ncyrKAwoQTm90aWZpY2F0aW9uVHlwZRIhCh1OT1RJRklDQVRJT05fVFlQRV9VTlNQRUNJRklFRBAAEiEKHU5PVElGSUNBVElPTl9UWVBFX0RSQUZUX1JFQURZEAESIgoeTk9USUZJQ0FUSU9OX1RZUEVfRFJBRlRfRkFJTEVEEAISJwojTk9USUZJQ0FUSU9OX1RZUEVfRFJBRlRfU0VORF9GQUlMRUQQAxImCiJOT1RJRklDQVRJT05fVFlQRV9JTlRFUlZJRVdfSU5WSVRFEAQSGwoXTk9USUZJQ0FUSU9OX1RZUEVfT0ZGRVIQBRIfChtOT1RJRklDQVRJT05fVFlQRV9SRUpFQ1RJT04QBhIkCiBOT1RJRklDQVRJT05fVFlQRV9SRVBMWV9ERVRFQ1RFRBAHEiMKH05PVElGSUNBVElPTl9UWVBFX0ZPTExPV19VUF9EVUUQCBImCiJOT1RJRklDQVRJT05fVFlQRV9CVURHRVRfVEhSRVNIT0xEEAkSJgoiTk9USUZJQ0FUSU9OX1RZUEVfQlVER0VUX0VYSEFVU1RFRBAKEiIKHk5PVElGSUNBVElPTl9UWVBFX0RBSUxZX0RJR0VTVBALMq8FChROb3RpZmljYXRpb25zU2VydmljZRJmChFMaXN0Tm90aWZpY2F0aW9ucxInLnNob2d1bi5hcGkudjEuTGlzdE5vdGlmaWNhdGlvbnNSZXF1ZXN0Giguc2hvZ3VuLmFwaS52MS5MaXN0Tm90aWZpY2F0aW9uc1Jlc3BvbnNlEnIKFU1hcmtOb3RpZmljYXRpb25zUmVhZBIrLnNob2d1bi5hcGkudjEuTWFya05vdGlmaWNhdGlvbnNSZWFkUmVxdWVzdBosLnNob2d1bi5hcGkudjEuTWFya05vdGlmaWNhdGlvbnNSZWFkUmVzcG9uc2USewoYTWFya0FsbE5vdGlmaWNhdGlvbnNSZWFkEi4uc2hvZ3VuLmFwaS52MS5NYXJrQWxsTm90aWZpY2F0aW9uc1JlYWRSZXF1ZXN0Gi8uc2hvZ3VuLmFwaS52MS5NYXJrQWxsTm90aWZpY2F0aW9uc1JlYWRSZXNwb25zZRJHCgZTdHJlYW0SHC5zaG9ndW4uYXBpLnYxLlN0cmVhbVJlcXVlc3QaHS5zaG9ndW4uYXBpLnYxLlN0cmVhbVJlc3BvbnNlMAESeAoXR2V0Tm90aWZpY2F0aW9uU2V0dGluZ3MSLS5zaG9ndW4uYXBpLnYxLkdldE5vdGlmaWNhdGlvblNldHRpbmdzUmVxdWVzdBouLnNob2d1bi5hcGkudjEuR2V0Tm90aWZpY2F0aW9uU2V0dGluZ3NSZXNwb25zZRJ7ChhTYXZlTm90aWZpY2F0aW9uU2V0dGluZ3MSLi5zaG9ndW4uYXBpLnYxLlNhdmVOb3RpZmljYXRpb25TZXR0aW5nc1JlcXVlc3QaLy5zaG9ndW4uYXBpLnYxLlNhdmVOb3RpZmljYXRpb25TZXR0aW5nc1Jlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message shogun.api.v1.Notification
@@ -215,6 +215,127 @@ export const StreamResponseSchema: GenMessage<StreamResponse> = /*@__PURE__*/
   messageDesc(file_shogun_api_v1_notifications, 8);
 
 /**
+ * QuietHours is a window of the day in which the daily digest is held back, in
+ * minutes after midnight in the owner's zone. It may wrap past midnight (from
+ * 22:00 to 08:00). The two ends must differ.
+ *
+ * @generated from message shogun.api.v1.QuietHours
+ */
+export type QuietHours = Message<"shogun.api.v1.QuietHours"> & {
+  /**
+   * @generated from field: int32 from_minute = 1;
+   */
+  fromMinute: number;
+
+  /**
+   * @generated from field: int32 to_minute = 2;
+   */
+  toMinute: number;
+};
+
+/**
+ * Describes the message shogun.api.v1.QuietHours.
+ * Use `create(QuietHoursSchema)` to create a new message.
+ */
+export const QuietHoursSchema: GenMessage<QuietHours> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_notifications, 9);
+
+/**
+ * @generated from message shogun.api.v1.NotificationSettings
+ */
+export type NotificationSettings = Message<"shogun.api.v1.NotificationSettings"> & {
+  /**
+   * @generated from field: bool in_app_enabled = 1;
+   */
+  inAppEnabled: boolean;
+
+  /**
+   * quiet is unset when there are no quiet hours.
+   *
+   * @generated from field: shogun.api.v1.QuietHours quiet = 2;
+   */
+  quiet?: QuietHours | undefined;
+
+  /**
+   * version is the token to send back when saving; 0 until first saved.
+   *
+   * @generated from field: int64 version = 3;
+   */
+  version: bigint;
+};
+
+/**
+ * Describes the message shogun.api.v1.NotificationSettings.
+ * Use `create(NotificationSettingsSchema)` to create a new message.
+ */
+export const NotificationSettingsSchema: GenMessage<NotificationSettings> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_notifications, 10);
+
+/**
+ * @generated from message shogun.api.v1.GetNotificationSettingsRequest
+ */
+export type GetNotificationSettingsRequest = Message<"shogun.api.v1.GetNotificationSettingsRequest"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.GetNotificationSettingsRequest.
+ * Use `create(GetNotificationSettingsRequestSchema)` to create a new message.
+ */
+export const GetNotificationSettingsRequestSchema: GenMessage<GetNotificationSettingsRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_notifications, 11);
+
+/**
+ * @generated from message shogun.api.v1.GetNotificationSettingsResponse
+ */
+export type GetNotificationSettingsResponse = Message<"shogun.api.v1.GetNotificationSettingsResponse"> & {
+  /**
+   * @generated from field: shogun.api.v1.NotificationSettings settings = 1;
+   */
+  settings?: NotificationSettings | undefined;
+};
+
+/**
+ * Describes the message shogun.api.v1.GetNotificationSettingsResponse.
+ * Use `create(GetNotificationSettingsResponseSchema)` to create a new message.
+ */
+export const GetNotificationSettingsResponseSchema: GenMessage<GetNotificationSettingsResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_notifications, 12);
+
+/**
+ * @generated from message shogun.api.v1.SaveNotificationSettingsRequest
+ */
+export type SaveNotificationSettingsRequest = Message<"shogun.api.v1.SaveNotificationSettingsRequest"> & {
+  /**
+   * @generated from field: shogun.api.v1.NotificationSettings settings = 1;
+   */
+  settings?: NotificationSettings | undefined;
+};
+
+/**
+ * Describes the message shogun.api.v1.SaveNotificationSettingsRequest.
+ * Use `create(SaveNotificationSettingsRequestSchema)` to create a new message.
+ */
+export const SaveNotificationSettingsRequestSchema: GenMessage<SaveNotificationSettingsRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_notifications, 13);
+
+/**
+ * @generated from message shogun.api.v1.SaveNotificationSettingsResponse
+ */
+export type SaveNotificationSettingsResponse = Message<"shogun.api.v1.SaveNotificationSettingsResponse"> & {
+  /**
+   * @generated from field: shogun.api.v1.NotificationSettings settings = 1;
+   */
+  settings?: NotificationSettings | undefined;
+};
+
+/**
+ * Describes the message shogun.api.v1.SaveNotificationSettingsResponse.
+ * Use `create(SaveNotificationSettingsResponseSchema)` to create a new message.
+ */
+export const SaveNotificationSettingsResponseSchema: GenMessage<SaveNotificationSettingsResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_notifications, 14);
+
+/**
  * @generated from enum shogun.api.v1.NotificationType
  */
 export enum NotificationType {
@@ -337,6 +458,28 @@ export const NotificationsService: GenService<{
     methodKind: "server_streaming";
     input: typeof StreamRequestSchema;
     output: typeof StreamResponseSchema;
+  },
+  /**
+   * GetNotificationSettings returns how the owner is reached. An owner who
+   * never saved any gets the defaults (in-app on, no quiet hours) at version 0.
+   *
+   * @generated from rpc shogun.api.v1.NotificationsService.GetNotificationSettings
+   */
+  getNotificationSettings: {
+    methodKind: "unary";
+    input: typeof GetNotificationSettingsRequestSchema;
+    output: typeof GetNotificationSettingsResponseSchema;
+  },
+  /**
+   * SaveNotificationSettings replaces the settings. The version must be the one
+   * last read (0 when none was); a stale one fails with reason VERSION_CONFLICT.
+   *
+   * @generated from rpc shogun.api.v1.NotificationsService.SaveNotificationSettings
+   */
+  saveNotificationSettings: {
+    methodKind: "unary";
+    input: typeof SaveNotificationSettingsRequestSchema;
+    output: typeof SaveNotificationSettingsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_shogun_api_v1_notifications, 0);
