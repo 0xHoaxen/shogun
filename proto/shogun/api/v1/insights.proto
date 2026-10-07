@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+// InsightsService is the insights screen: how the job search is going. Torii
+// maps it onto sensei. Days are Asia/Kolkata dates written YYYY-MM-DD, both
+// ends included, and today's events show up after the nightly rollup.
+service InsightsService {
+  // GetInsightsFunnel counts jobs at each stage and the rates between them.
+  rpc GetInsightsFunnel(GetInsightsFunnelRequest) returns (GetInsightsFunnelResponse);
+  // GetInsightsOutreach counts outreach sent and replies to it.
+  rpc GetInsightsOutreach(GetInsightsOutreachRequest) returns (GetInsightsOutreachResponse);
+}
+
+enum InsightsFunnelGroup {
+  INSIGHTS_FUNNEL_GROUP_UNSPECIFIED = 0;
+  INSIGHTS_FUNNEL_GROUP_SOURCE = 1;
+  INSIGHTS_FUNNEL_GROUP_MONTH = 2;
+}
+
+enum InsightsOutreachGroup {
+  INSIGHTS_OUTREACH_GROUP_UNSPECIFIED = 0;
+  INSIGHTS_OUTREACH_GROUP_CHANNEL = 1;
+  INSIGHTS_OUTREACH_GROUP_STATUS = 2;
+}
+
+message GetInsightsFunnelRequest {
+  // from and to default to the last 30 days; at most a year.
+  string from = 1;
+  string to = 2;
+  InsightsFunnelGroup group_by = 3;
+}
+
+message InsightsFunnelRow {
+  string key = 1;
+  int64 jobs_added = 2;
+  int64 applications = 3;
+  int64 shortlisted = 4;
+  int64 interviews = 5;
+  int64 offers = 6;
+  int64 rejections = 7;
+  // interview_rate and offer_rate are fractions from 0 to 1 of applications.
+  double interview_rate = 8;
+  double offer_rate = 9;
+}
+
+message GetInsightsFunnelResponse {
+  string from = 1;
+  string to = 2;
+  repeated InsightsFunnelRow rows = 3;
+  InsightsFunnelRow total = 4;
+}
+
+message GetInsightsOutreachRequest {
+  string from = 1;
+  string to = 2;
+  InsightsOutreachGroup group_by = 3;
+}
+
+message InsightsOutreachRow {
+  string key = 1;
+  int64 sent = 2;
+  int64 replied = 3;
+  // reply_rate is replied over sent, from 0 to 1.
+  double reply_rate = 4;
+  // moved_in counts moves into the status, when grouping by status.
+  int64 moved_in = 5;
+}
+
+message GetInsightsOutreachResponse {
+  string from = 1;
+  string to = 2;
+  repeated InsightsOutreachRow rows = 3;
+  InsightsOutreachRow total = 4;
+}

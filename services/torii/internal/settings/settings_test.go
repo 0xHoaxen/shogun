@@ -29,6 +29,7 @@ func validEnv() map[string]string {
 		"DOJO_ADDR":            "dojo:9090",
 		"KATANA_ADDR":          "katana:9090",
 		"SHINOBI_ADDR":         "shinobi:9090",
+		"SENSEI_ADDR":          "sensei:9090",
 	}
 }
 
@@ -87,6 +88,7 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 		{"missing dojo address", func(e map[string]string) { delete(e, "DOJO_ADDR") }, "DOJO_ADDR"},
 		{"missing katana address", func(e map[string]string) { delete(e, "KATANA_ADDR") }, "KATANA_ADDR"},
 		{"missing shinobi address", func(e map[string]string) { delete(e, "SHINOBI_ADDR") }, "SHINOBI_ADDR"},
+		{"missing sensei address", func(e map[string]string) { delete(e, "SENSEI_ADDR") }, "SENSEI_ADDR"},
 		{"blank allowlist", func(e map[string]string) { e["TORII_ALLOWED_EMAILS"] = " , " }, "no addresses"},
 		{"public url not http", func(e map[string]string) { e["TORII_PUBLIC_URL"] = "ftp://x" }, "TORII_PUBLIC_URL"},
 		{"zero ttl", func(e map[string]string) { e["SESSION_TTL"] = "0s" }, "SESSION_TTL"},
