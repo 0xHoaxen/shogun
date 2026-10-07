@@ -420,9 +420,10 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: `cd services/torii && go test -race ./...` passes with stream tests: no cookie, unknown token and expired session are Unauthenticated and never reach the handler; an authenticated stream runs as the owner; a renewed session sets the cookie.
   Status: a stream is authenticated once when it opens and not rechecked while it runs, so it can outlive its session; P8.2a ends streams after a bounded time. Verified by making the stream wrapper a pass-through (three stream tests then fail).
 
-- [ ] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P8.2a0
-  Do: `proto/shogun/api/v1/notifications.proto` (`List`, `MarkRead`, `MarkAllRead`, `Stream` with last-seen-id); Connect handlers bridging `taiko.Subscribe`; `TAIKO_ADDR` config. Check the stream through the real proxy chain early, since it is the first server stream.
+- [x] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P8.2a0
+  Do: `proto/shogun/api/v1/notifications.proto` (`ListNotifications`, `MarkNotificationsRead`, `MarkAllNotificationsRead`, `Stream` with `last_seen_id`); Connect handlers bridging `taiko.Subscribe`; `TAIKO_ADDR` config. Check the stream through the real proxy chain early, since it is the first server stream.
   Done when: torii handler tests including a stream bridge with a fake taiko client.
+  Status: `Stream` ends cleanly after 10 minutes (the session is only checked when a stream opens) and with `Unavailable` when taiko resets it; the browser reconnects with its last seen id either way. Connect sends response headers with the first message, so a client call resolves only when the first notification arrives or the stream ends; the bell must not wait on it. Torii's `http.Server` has no `WriteTimeout`, and the rate-limit middleware passes the writer through, so streams are not cut. Not yet checked: a real browser or reverse proxy in front of torii (P8.2b's Playwright run covers the local stack).
 
 - [ ] **P8.2b Notification bell** (M) Needs: P8.2a
   Do: bell with unread count and list, mark read and mark all read, `Stream` subscription that reconnects from the last seen id.

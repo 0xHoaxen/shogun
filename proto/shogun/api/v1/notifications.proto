@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// NotificationsService is the screen-shaped API for the notification bell.
+// Torii maps it onto taiko.
+service NotificationsService {
+  // ListNotifications returns one page of notifications, newest first, and the
+  // total unread count.
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  // MarkNotificationsRead marks the listed notifications read. Ids that are
+  // unknown or already read are ignored.
+  rpc MarkNotificationsRead(MarkNotificationsReadRequest) returns (MarkNotificationsReadResponse);
+  // MarkAllNotificationsRead marks every unread notification read.
+  rpc MarkAllNotificationsRead(MarkAllNotificationsReadRequest) returns (MarkAllNotificationsReadResponse);
+  // Stream sends each new notification as it is created. With last_seen_id it
+  // first sends what was created after that notification, so a client that
+  // reconnects misses nothing. The server ends the stream now and then, and
+  // with Unavailable when the client fell behind; the client reconnects with
+  // the last id it saw.
+  rpc Stream(StreamRequest) returns (stream StreamResponse);
+}
+
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  NOTIFICATION_TYPE_DRAFT_READY = 1;
+  NOTIFICATION_TYPE_DRAFT_FAILED = 2;
+  NOTIFICATION_TYPE_DRAFT_SEND_FAILED = 3;
+  NOTIFICATION_TYPE_INTERVIEW_INVITE = 4;
+  NOTIFICATION_TYPE_OFFER = 5;
+  NOTIFICATION_TYPE_REJECTION = 6;
+  NOTIFICATION_TYPE_REPLY_DETECTED = 7;
+  NOTIFICATION_TYPE_FOLLOW_UP_DUE = 8;
+  NOTIFICATION_TYPE_BUDGET_THRESHOLD = 9;
+  NOTIFICATION_TYPE_BUDGET_EXHAUSTED = 10;
+  NOTIFICATION_TYPE_DAILY_DIGEST = 11;
+}
+
+message Notification {
+  string id = 1;
+  NotificationType type = 2;
+  string title = 3;
+  string body = 4;
+  // link is an in-app route such as /drafts/<id>; empty when there is none.
+  string link = 5;
+  google.protobuf.Timestamp created_at = 6;
+  // read_at is unset while the notification is unread.
+  google.protobuf.Timestamp read_at = 7;
+}
+
+message ListNotificationsRequest {
+  bool unread_only = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListNotificationsResponse {
+  repeated Notification notifications = 1;
+  string next_page_token = 2;
+  // unread_count covers every page.
+  int32 unread_count = 3;
+}
+
+message MarkNotificationsReadRequest {
+  repeated string ids = 1;
+}
+
+message MarkNotificationsReadResponse {}
+
+message MarkAllNotificationsReadRequest {}
+
+message MarkAllNotificationsReadResponse {}
+
+message StreamRequest {
+  // last_seen_id is the id of the last notification the client saw; empty
+  // streams only new ones.
+  string last_seen_id = 1;
+}
+
+message StreamResponse {
+  Notification notification = 1;
+}

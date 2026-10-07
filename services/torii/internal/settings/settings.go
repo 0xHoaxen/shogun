@@ -41,6 +41,8 @@ type Settings struct {
 	FudeAddr string
 	// TsubameAddr is the gRPC address of tsubame, which owns mail accounts.
 	TsubameAddr string
+	// TaikoAddr is the gRPC address of taiko, which owns notifications.
+	TaikoAddr string
 	// SorobanAddr is the gRPC address of soroban, which meters Claude spend.
 	SorobanAddr string
 	SessionTTL  time.Duration
@@ -81,6 +83,8 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	tsubameAddr, err := config.Required(lookup, "TSUBAME_ADDR")
 	collect(err)
+	taikoAddr, err := config.Required(lookup, "TAIKO_ADDR")
+	collect(err)
 	ttl, err := config.Duration(lookup, "SESSION_TTL", defaultSessionTTL)
 	collect(err)
 	rateLimit, err := config.Int(lookup, "TORII_RATE_LIMIT", defaultRateLimit)
@@ -100,6 +104,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		KagamiAddr:         kagamiAddr,
 		FudeAddr:           fudeAddr,
 		TsubameAddr:        tsubameAddr,
+		TaikoAddr:          taikoAddr,
 		SorobanAddr:        sorobanAddr,
 		SessionTTL:         ttl,
 		RateLimit:          rateLimit,
