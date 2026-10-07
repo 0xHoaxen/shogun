@@ -26,6 +26,9 @@ type Service struct {
 	// Set by WithScoring.
 	queue Queue
 	llm   Completer
+
+	// Set by WithTracker.
+	tracker Tracker
 }
 
 // NewService returns a Service on pool that reads sources through fetcher. now

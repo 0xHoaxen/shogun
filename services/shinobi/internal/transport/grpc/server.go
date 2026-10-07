@@ -120,3 +120,16 @@ func optionalID(field, raw string) (*uuid.UUID, error) {
 	}
 	return &id, nil
 }
+
+// SaveToTracker implements shinobi.v1.ShinobiService.
+func (s *Server) SaveToTracker(ctx context.Context, req *shinobiv1.SaveToTrackerRequest) (*shinobiv1.SaveToTrackerResponse, error) {
+	id, err := parseID("posting_id", req.GetPostingId())
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	jobID, err := s.svc.SaveToTracker(ctx, id)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &shinobiv1.SaveToTrackerResponse{JobId: jobID.String()}, nil
+}
