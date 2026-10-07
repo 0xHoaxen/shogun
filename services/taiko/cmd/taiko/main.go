@@ -14,18 +14,24 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	taikov1 "github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/logger"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/app"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/events"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/jobs"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/live"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/transport/downstream"
 	taikogrpc "github.com/0xHoaxen/shogun/services/taiko/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/taiko/migrations"
 )
@@ -124,7 +130,13 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 	defer stopLive()
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	scheduled, closeDownstream, err := digestSetup(ctx, svc, lookup, authority, log)
+	if err != nil {
+		return err
+	}
+	defer closeDownstream()
+
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err
 	}
@@ -139,6 +151,56 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		taikov1.RegisterTaikoServiceServer(s, taikogrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
+}
+
+// digestSetup dials the services the daily digest reads from and returns its
+// scheduled job, with a function that closes the connections.
+func digestSetup(
+	ctx context.Context, svc *app.Service, lookup config.LookupFunc, signer grpcclient.Signer, log *slog.Logger,
+) (jobs.Setup, func(), error) {
+	loc, err := jobs.Location()
+	if err != nil {
+		return jobs.Setup{}, nil, err
+	}
+	var conns []*grpc.ClientConn
+	closeAll := func() {
+		for _, conn := range conns {
+			if err := conn.Close(); err != nil {
+				log.Warn("close connection", slog.Any("error", err))
+			}
+		}
+	}
+	dial := func(env string) (*grpc.ClientConn, error) {
+		addr, err := config.Required(lookup, env)
+		if err != nil {
+			return nil, err
+		}
+		conn, err := grpcclient.Dial(ctx, addr, grpcclient.WithSigner(signer))
+		if err != nil {
+			return nil, fmt.Errorf("dial %s: %w", env, err)
+		}
+		conns = append(conns, conn)
+		return conn, nil
+	}
+	kagami, err := dial("KAGAMI_ADDR")
+	if err != nil {
+		closeAll()
+		return jobs.Setup{}, nil, err
+	}
+	fude, err := dial("FUDE_ADDR")
+	if err != nil {
+		closeAll()
+		return jobs.Setup{}, nil, err
+	}
+	soroban, err := dial("SOROBAN_ADDR")
+	if err != nil {
+		closeAll()
+		return jobs.Setup{}, nil, err
+	}
+	sources := downstream.New(
+		kagamiv1.NewKagamiServiceClient(kagami), fudev1.NewFudeServiceClient(fude), sorobanv1.NewSorobanServiceClient(soroban))
+	digester := app.NewDigester(svc, sources, loc, time.Now, log)
+	return jobs.NewSetup(digester, loc, time.Now, log), closeAll, nil
 }
 
 // migrate applies the service's own migrations, then the relay's River tables.

@@ -10,3 +10,9 @@ ON CONFLICT (owner_id, channel) DO UPDATE SET
     quiet_from = EXCLUDED.quiet_from,
     quiet_to = EXCLUDED.quiet_to
 RETURNING *;
+
+-- name: ListOwners :many
+-- Every owner taiko has heard of: one with a notification or a setting.
+SELECT owner_id FROM notifications
+UNION
+SELECT owner_id FROM channel_settings;

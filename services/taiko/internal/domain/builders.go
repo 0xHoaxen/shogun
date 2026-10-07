@@ -20,6 +20,9 @@ const (
 	TargetContact = "contact"
 )
 
+// ErrEmptyDigest is returned when a digest has nothing to say.
+var ErrEmptyDigest = errors.New("domain: digest is empty")
+
 // ErrInvalidTarget is returned for a follow-up target that is neither a job nor
 // a contact.
 var ErrInvalidTarget = errors.New("domain: unknown follow-up target")

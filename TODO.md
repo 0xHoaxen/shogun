@@ -430,9 +430,18 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: Playwright: adding a job leads to a "cover letter ready" notification appearing without reload.
   Status: the bell sits in the utility footer and links to `/notifications` (Today and Earlier, as on the design board), and it owns the stream, so the count follows new notifications on every page. Each stream message refetches the lists rather than patching the cache; the stream ends and reconnects from the last seen id every 10 minutes, on any error (backing off to 30 s), and stops on a refused session. Found on the real stack: Next gzips what it proxies and gzip held the stream back until it ended, so `compress: false` is set in `next.config.ts`; the compose spec failed before it and passes after. The board's settings form (digest time, quiet hours, toggles) needs channel-settings RPCs that do not exist; add a task when taiko gets them. `e2e/notifications.spec.ts` (browser mocks) and `e2e-compose/notifications.spec.ts` (real stack) both pass; the compose spec assumes a fresh stack like CI's. CI's e2e job now starts taiko and runs on taiko changes.
 
-- [ ] **P8.3 Daily digest** (M) Needs: P8.1c, P4.8
+- [x] **P8.3 Daily digest** (M) Needs: P8.1c, P4.8
   Do: `daily_digest` at 08:30 in the owner's timezone summarising due follow-ups, drafts waiting, spend; one `source_event_id` per date; skipped if empty; snoozed past quiet hours (including windows that wrap midnight); skipped when the in-app channel is disabled. In-app only: an emailed digest would be an external send without a Hanko approval, so `TODO(owner)`: decide whether to add `email_digest`.
   Done when: tests with fake clock and fake clients.
+  Status: the digest runs for every owner taiko knows (one with a notification or a channel setting), once per IST date, with an event id derived from owner and date, so retries, snoozes and a second job for the same date add nothing. An owner's failure does not stop the others and is returned so River retries. A digest for a day that is already over is dropped. Quiet hours snooze the whole job until the window ends. Taiko now requires `KAGAMI_ADDR`, `FUDE_ADDR` and `SOROBAN_ADDR` (already in the shared compose and helm env). Drafts are counted from the first 200 of the queue and shown as "200+" beyond it, because `ListQueue` has no total. Checked on the compose stack by inserting the River job by hand: one digest, a second job for the same date added none. `go mod tidy` promoted uuid, river, rivertype and genproto from indirect to direct; they were already imported.
+
+- [ ] **P8.3a Move the daily schedule to pkg** (S) Needs: P8.3
+  Do: `dailySchedule` is now copied in kagami and taiko (services cannot import each other); move it to a `pkg` package and use it in both.
+  Done when: `make test` and `make lint` pass; neither service defines its own.
+
+- [ ] **P8.4 Channel settings RPCs and the settings form** (M) Needs: P8.3, P8.2b
+  Do: taiko RPCs to read and save `channel_settings` (in-app enabled, quiet hours), the matching torii API, and the "How Shogun reaches you" form from the Notifications design board. The digest time and per-type toggles on the board have no storage yet: decide with the owner whether they are wanted before adding tables.
+  Done when: a saved quiet window holds the next digest back (E2E), and handler tests cover each RPC.
 
 ---
 

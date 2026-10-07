@@ -26,3 +26,9 @@ func (r *Repo) SaveChannelSetting(ctx context.Context, p db.UpsertChannelSetting
 	row, err := r.q.UpsertChannelSetting(ctx, p)
 	return row, wrap("save channel setting", err)
 }
+
+// Owners returns every owner taiko holds a notification or a setting for.
+func (r *Repo) Owners(ctx context.Context) ([]uuid.UUID, error) {
+	owners, err := r.q.ListOwners(ctx)
+	return owners, wrap("list owners", err)
+}
