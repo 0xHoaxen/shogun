@@ -14,3 +14,8 @@ paths = [
   '''^\.env\.example$''',
   '''(^|/)main_test\.go(\.tmpl)?$''',
 ]
+
+[[allowlists]]
+description = "the proto package name, which looks like a key to the entropy check"
+targetRules = ["generic-api-key"]
+regexes = ['''^shogun\.api\.v1$''']
