@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/domain"
 )
@@ -241,5 +242,42 @@ func TestClassifyBands(t *testing.T) {
 		if got := p.Classify(tt.score); got != tt.want {
 			t.Errorf("Classify(%v) = %v, want %v", tt.score, got, tt.want)
 		}
+	}
+}
+
+func TestDue(t *testing.T) {
+	ist, err := time.LoadLocation("Asia/Kolkata")
+	if err != nil {
+		t.Fatal(err)
+	}
+	at := func(h, m int) time.Time { return time.Date(2026, 10, 7, h, m, 0, 0, ist) }
+	last := at(7, 0)
+	tests := []struct {
+		name     string
+		schedule string
+		lastRun  *time.Time
+		now      time.Time
+		wantDue  bool
+		wantSlot string
+	}{
+		{"never run", "0 7 * * *", nil, at(3, 0), true, domain.FirstRunSlot},
+		{"just ran", "0 7 * * *", &last, at(7, 1), false, ""},
+		{"not yet tomorrow", "0 7 * * *", &last, at(23, 59), false, ""},
+		{"due tomorrow at seven", "0 7 * * *", &last, time.Date(2026, 10, 8, 7, 0, 0, 0, ist), true, "2026-10-08T01:30:00Z"},
+		{"late for tomorrow", "0 7 * * *", &last, time.Date(2026, 10, 8, 12, 0, 0, 0, ist), true, "2026-10-08T01:30:00Z"},
+		{"hourly", "0 * * * *", &last, at(8, 0), true, "2026-10-07T02:30:00Z"},
+		{"weekdays only", "0 7 * * 1-5", &last, time.Date(2026, 10, 10, 8, 0, 0, 0, ist), true, "2026-10-08T01:30:00Z"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			slot, due, err := domain.Due(tt.schedule, tt.lastRun, tt.now, ist)
+
+			if err != nil || due != tt.wantDue || slot != tt.wantSlot {
+				t.Fatalf("slot %q due %v err %v; want %q %v", slot, due, err, tt.wantSlot, tt.wantDue)
+			}
+		})
+	}
+	if _, _, err := domain.Due("nonsense", nil, time.Now(), ist); !errors.Is(err, domain.ErrInvalid) {
+		t.Fatalf("bad schedule err = %v", err)
 	}
 }
