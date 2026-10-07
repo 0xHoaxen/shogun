@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ const (
 
 // Dimension keys facts carry.
 const (
+	DimJob            = "job_id"
 	DimSource         = "source"
 	DimFrom           = "from"
 	DimTo             = "to"
@@ -46,6 +48,12 @@ const (
 	maxDimensions     = 8
 	maxDimensionValue = 100
 )
+
+// ErrInvalidRange marks a stats query whose days make no sense. Transport maps
+// it to InvalidArgument.
+var ErrInvalidRange = errors.New("domain: invalid range")
+
+func invalidRange(msg string) error { return fmt.Errorf("%w: %s", ErrInvalidRange, msg) }
 
 // ErrInvalidFact marks a fact that can never be stored, however often it is
 // retried.

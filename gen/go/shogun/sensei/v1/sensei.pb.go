@@ -10,6 +10,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +21,656 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type FunnelGroupBy int32
+
+const (
+	FunnelGroupBy_FUNNEL_GROUP_BY_UNSPECIFIED FunnelGroupBy = 0
+	// FUNNEL_GROUP_BY_SOURCE groups by where the job was found.
+	FunnelGroupBy_FUNNEL_GROUP_BY_SOURCE FunnelGroupBy = 1
+	// FUNNEL_GROUP_BY_MONTH groups by calendar month, YYYY-MM.
+	FunnelGroupBy_FUNNEL_GROUP_BY_MONTH FunnelGroupBy = 2
+)
+
+// Enum value maps for FunnelGroupBy.
+var (
+	FunnelGroupBy_name = map[int32]string{
+		0: "FUNNEL_GROUP_BY_UNSPECIFIED",
+		1: "FUNNEL_GROUP_BY_SOURCE",
+		2: "FUNNEL_GROUP_BY_MONTH",
+	}
+	FunnelGroupBy_value = map[string]int32{
+		"FUNNEL_GROUP_BY_UNSPECIFIED": 0,
+		"FUNNEL_GROUP_BY_SOURCE":      1,
+		"FUNNEL_GROUP_BY_MONTH":       2,
+	}
+)
+
+func (x FunnelGroupBy) Enum() *FunnelGroupBy {
+	p := new(FunnelGroupBy)
+	*p = x
+	return p
+}
+
+func (x FunnelGroupBy) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (FunnelGroupBy) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_sensei_v1_sensei_proto_enumTypes[0].Descriptor()
+}
+
+func (FunnelGroupBy) Type() protoreflect.EnumType {
+	return &file_shogun_sensei_v1_sensei_proto_enumTypes[0]
+}
+
+func (x FunnelGroupBy) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use FunnelGroupBy.Descriptor instead.
+func (FunnelGroupBy) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{0}
+}
+
+type OutreachGroupBy int32
+
+const (
+	OutreachGroupBy_OUTREACH_GROUP_BY_UNSPECIFIED OutreachGroupBy = 0
+	// OUTREACH_GROUP_BY_CHANNEL groups by email, linkedin, x, phone or other.
+	OutreachGroupBy_OUTREACH_GROUP_BY_CHANNEL OutreachGroupBy = 1
+	// OUTREACH_GROUP_BY_STATUS groups by the contact status moved into.
+	OutreachGroupBy_OUTREACH_GROUP_BY_STATUS OutreachGroupBy = 2
+)
+
+// Enum value maps for OutreachGroupBy.
+var (
+	OutreachGroupBy_name = map[int32]string{
+		0: "OUTREACH_GROUP_BY_UNSPECIFIED",
+		1: "OUTREACH_GROUP_BY_CHANNEL",
+		2: "OUTREACH_GROUP_BY_STATUS",
+	}
+	OutreachGroupBy_value = map[string]int32{
+		"OUTREACH_GROUP_BY_UNSPECIFIED": 0,
+		"OUTREACH_GROUP_BY_CHANNEL":     1,
+		"OUTREACH_GROUP_BY_STATUS":      2,
+	}
+)
+
+func (x OutreachGroupBy) Enum() *OutreachGroupBy {
+	p := new(OutreachGroupBy)
+	*p = x
+	return p
+}
+
+func (x OutreachGroupBy) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (OutreachGroupBy) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_sensei_v1_sensei_proto_enumTypes[1].Descriptor()
+}
+
+func (OutreachGroupBy) Type() protoreflect.EnumType {
+	return &file_shogun_sensei_v1_sensei_proto_enumTypes[1]
+}
+
+func (x OutreachGroupBy) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use OutreachGroupBy.Descriptor instead.
+func (OutreachGroupBy) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{1}
+}
+
+type GetFunnelRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// from and to default to the last 30 days; the range may be at most a year.
+	From          string        `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	To            string        `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	GroupBy       FunnelGroupBy `protobuf:"varint,3,opt,name=group_by,json=groupBy,proto3,enum=shogun.sensei.v1.FunnelGroupBy" json:"group_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFunnelRequest) Reset() {
+	*x = GetFunnelRequest{}
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFunnelRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFunnelRequest) ProtoMessage() {}
+
+func (x *GetFunnelRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFunnelRequest.ProtoReflect.Descriptor instead.
+func (*GetFunnelRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *GetFunnelRequest) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *GetFunnelRequest) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *GetFunnelRequest) GetGroupBy() FunnelGroupBy {
+	if x != nil {
+		return x.GroupBy
+	}
+	return FunnelGroupBy_FUNNEL_GROUP_BY_UNSPECIFIED
+}
+
+type FunnelRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the source, or the month.
+	Key          string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	JobsAdded    int64  `protobuf:"varint,2,opt,name=jobs_added,json=jobsAdded,proto3" json:"jobs_added,omitempty"`
+	Applications int64  `protobuf:"varint,3,opt,name=applications,proto3" json:"applications,omitempty"`
+	Shortlisted  int64  `protobuf:"varint,4,opt,name=shortlisted,proto3" json:"shortlisted,omitempty"`
+	Interviews   int64  `protobuf:"varint,5,opt,name=interviews,proto3" json:"interviews,omitempty"`
+	Offers       int64  `protobuf:"varint,6,opt,name=offers,proto3" json:"offers,omitempty"`
+	Rejections   int64  `protobuf:"varint,7,opt,name=rejections,proto3" json:"rejections,omitempty"`
+	// The rates are fractions from 0 to 1 of applications; zero when there are
+	// none.
+	InterviewRate float64 `protobuf:"fixed64,8,opt,name=interview_rate,json=interviewRate,proto3" json:"interview_rate,omitempty"`
+	OfferRate     float64 `protobuf:"fixed64,9,opt,name=offer_rate,json=offerRate,proto3" json:"offer_rate,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FunnelRow) Reset() {
+	*x = FunnelRow{}
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FunnelRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FunnelRow) ProtoMessage() {}
+
+func (x *FunnelRow) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FunnelRow.ProtoReflect.Descriptor instead.
+func (*FunnelRow) Descriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *FunnelRow) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *FunnelRow) GetJobsAdded() int64 {
+	if x != nil {
+		return x.JobsAdded
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetApplications() int64 {
+	if x != nil {
+		return x.Applications
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetShortlisted() int64 {
+	if x != nil {
+		return x.Shortlisted
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetInterviews() int64 {
+	if x != nil {
+		return x.Interviews
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetOffers() int64 {
+	if x != nil {
+		return x.Offers
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetRejections() int64 {
+	if x != nil {
+		return x.Rejections
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetInterviewRate() float64 {
+	if x != nil {
+		return x.InterviewRate
+	}
+	return 0
+}
+
+func (x *FunnelRow) GetOfferRate() float64 {
+	if x != nil {
+		return x.OfferRate
+	}
+	return 0
+}
+
+type GetFunnelResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	From  string                 `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	To    string                 `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	Rows  []*FunnelRow           `protobuf:"bytes,3,rep,name=rows,proto3" json:"rows,omitempty"`
+	// total sums every row.
+	Total         *FunnelRow `protobuf:"bytes,4,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetFunnelResponse) Reset() {
+	*x = GetFunnelResponse{}
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetFunnelResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetFunnelResponse) ProtoMessage() {}
+
+func (x *GetFunnelResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetFunnelResponse.ProtoReflect.Descriptor instead.
+func (*GetFunnelResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetFunnelResponse) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *GetFunnelResponse) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *GetFunnelResponse) GetRows() []*FunnelRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+func (x *GetFunnelResponse) GetTotal() *FunnelRow {
+	if x != nil {
+		return x.Total
+	}
+	return nil
+}
+
+type GetOutreachStatsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	From          string                 `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	To            string                 `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	GroupBy       OutreachGroupBy        `protobuf:"varint,3,opt,name=group_by,json=groupBy,proto3,enum=shogun.sensei.v1.OutreachGroupBy" json:"group_by,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOutreachStatsRequest) Reset() {
+	*x = GetOutreachStatsRequest{}
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOutreachStatsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOutreachStatsRequest) ProtoMessage() {}
+
+func (x *GetOutreachStatsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOutreachStatsRequest.ProtoReflect.Descriptor instead.
+func (*GetOutreachStatsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetOutreachStatsRequest) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *GetOutreachStatsRequest) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *GetOutreachStatsRequest) GetGroupBy() OutreachGroupBy {
+	if x != nil {
+		return x.GroupBy
+	}
+	return OutreachGroupBy_OUTREACH_GROUP_BY_UNSPECIFIED
+}
+
+type OutreachRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the channel, or the contact status.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// sent counts first contacts made, replied the replies, both by channel;
+	// moved_in counts moves into the status, when grouping by status.
+	Sent    int64 `protobuf:"varint,2,opt,name=sent,proto3" json:"sent,omitempty"`
+	Replied int64 `protobuf:"varint,3,opt,name=replied,proto3" json:"replied,omitempty"`
+	// reply_rate is replied over sent, from 0 to 1; zero when nothing was sent.
+	ReplyRate     float64 `protobuf:"fixed64,4,opt,name=reply_rate,json=replyRate,proto3" json:"reply_rate,omitempty"`
+	MovedIn       int64   `protobuf:"varint,5,opt,name=moved_in,json=movedIn,proto3" json:"moved_in,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OutreachRow) Reset() {
+	*x = OutreachRow{}
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OutreachRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutreachRow) ProtoMessage() {}
+
+func (x *OutreachRow) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutreachRow.ProtoReflect.Descriptor instead.
+func (*OutreachRow) Descriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *OutreachRow) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *OutreachRow) GetSent() int64 {
+	if x != nil {
+		return x.Sent
+	}
+	return 0
+}
+
+func (x *OutreachRow) GetReplied() int64 {
+	if x != nil {
+		return x.Replied
+	}
+	return 0
+}
+
+func (x *OutreachRow) GetReplyRate() float64 {
+	if x != nil {
+		return x.ReplyRate
+	}
+	return 0
+}
+
+func (x *OutreachRow) GetMovedIn() int64 {
+	if x != nil {
+		return x.MovedIn
+	}
+	return 0
+}
+
+type GetOutreachStatsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	From          string                 `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
+	To            string                 `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
+	Rows          []*OutreachRow         `protobuf:"bytes,3,rep,name=rows,proto3" json:"rows,omitempty"`
+	Total         *OutreachRow           `protobuf:"bytes,4,opt,name=total,proto3" json:"total,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOutreachStatsResponse) Reset() {
+	*x = GetOutreachStatsResponse{}
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOutreachStatsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOutreachStatsResponse) ProtoMessage() {}
+
+func (x *GetOutreachStatsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_sensei_v1_sensei_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOutreachStatsResponse.ProtoReflect.Descriptor instead.
+func (*GetOutreachStatsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_sensei_v1_sensei_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetOutreachStatsResponse) GetFrom() string {
+	if x != nil {
+		return x.From
+	}
+	return ""
+}
+
+func (x *GetOutreachStatsResponse) GetTo() string {
+	if x != nil {
+		return x.To
+	}
+	return ""
+}
+
+func (x *GetOutreachStatsResponse) GetRows() []*OutreachRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+func (x *GetOutreachStatsResponse) GetTotal() *OutreachRow {
+	if x != nil {
+		return x.Total
+	}
+	return nil
+}
+
 var File_shogun_sensei_v1_sensei_proto protoreflect.FileDescriptor
 
 const file_shogun_sensei_v1_sensei_proto_rawDesc = "" +
 	"\n" +
-	"\x1dshogun/sensei/v1/sensei.proto\x12\x10shogun.sensei.v12\x0f\n" +
-	"\rSenseiServiceB\xc2\x01\n" +
+	"\x1dshogun/sensei/v1/sensei.proto\x12\x10shogun.sensei.v1\"r\n" +
+	"\x10GetFunnelRequest\x12\x12\n" +
+	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x02 \x01(\tR\x02to\x12:\n" +
+	"\bgroup_by\x18\x03 \x01(\x0e2\x1f.shogun.sensei.v1.FunnelGroupByR\agroupBy\"\xa0\x02\n" +
+	"\tFunnelRow\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x1d\n" +
+	"\n" +
+	"jobs_added\x18\x02 \x01(\x03R\tjobsAdded\x12\"\n" +
+	"\fapplications\x18\x03 \x01(\x03R\fapplications\x12 \n" +
+	"\vshortlisted\x18\x04 \x01(\x03R\vshortlisted\x12\x1e\n" +
+	"\n" +
+	"interviews\x18\x05 \x01(\x03R\n" +
+	"interviews\x12\x16\n" +
+	"\x06offers\x18\x06 \x01(\x03R\x06offers\x12\x1e\n" +
+	"\n" +
+	"rejections\x18\a \x01(\x03R\n" +
+	"rejections\x12%\n" +
+	"\x0einterview_rate\x18\b \x01(\x01R\rinterviewRate\x12\x1d\n" +
+	"\n" +
+	"offer_rate\x18\t \x01(\x01R\tofferRate\"\x9b\x01\n" +
+	"\x11GetFunnelResponse\x12\x12\n" +
+	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x02 \x01(\tR\x02to\x12/\n" +
+	"\x04rows\x18\x03 \x03(\v2\x1b.shogun.sensei.v1.FunnelRowR\x04rows\x121\n" +
+	"\x05total\x18\x04 \x01(\v2\x1b.shogun.sensei.v1.FunnelRowR\x05total\"{\n" +
+	"\x17GetOutreachStatsRequest\x12\x12\n" +
+	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x02 \x01(\tR\x02to\x12<\n" +
+	"\bgroup_by\x18\x03 \x01(\x0e2!.shogun.sensei.v1.OutreachGroupByR\agroupBy\"\x87\x01\n" +
+	"\vOutreachRow\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
+	"\x04sent\x18\x02 \x01(\x03R\x04sent\x12\x18\n" +
+	"\areplied\x18\x03 \x01(\x03R\areplied\x12\x1d\n" +
+	"\n" +
+	"reply_rate\x18\x04 \x01(\x01R\treplyRate\x12\x19\n" +
+	"\bmoved_in\x18\x05 \x01(\x03R\amovedIn\"\xa6\x01\n" +
+	"\x18GetOutreachStatsResponse\x12\x12\n" +
+	"\x04from\x18\x01 \x01(\tR\x04from\x12\x0e\n" +
+	"\x02to\x18\x02 \x01(\tR\x02to\x121\n" +
+	"\x04rows\x18\x03 \x03(\v2\x1d.shogun.sensei.v1.OutreachRowR\x04rows\x123\n" +
+	"\x05total\x18\x04 \x01(\v2\x1d.shogun.sensei.v1.OutreachRowR\x05total*g\n" +
+	"\rFunnelGroupBy\x12\x1f\n" +
+	"\x1bFUNNEL_GROUP_BY_UNSPECIFIED\x10\x00\x12\x1a\n" +
+	"\x16FUNNEL_GROUP_BY_SOURCE\x10\x01\x12\x19\n" +
+	"\x15FUNNEL_GROUP_BY_MONTH\x10\x02*q\n" +
+	"\x0fOutreachGroupBy\x12!\n" +
+	"\x1dOUTREACH_GROUP_BY_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19OUTREACH_GROUP_BY_CHANNEL\x10\x01\x12\x1c\n" +
+	"\x18OUTREACH_GROUP_BY_STATUS\x10\x022\xd0\x01\n" +
+	"\rSenseiService\x12T\n" +
+	"\tGetFunnel\x12\".shogun.sensei.v1.GetFunnelRequest\x1a#.shogun.sensei.v1.GetFunnelResponse\x12i\n" +
+	"\x10GetOutreachStats\x12).shogun.sensei.v1.GetOutreachStatsRequest\x1a*.shogun.sensei.v1.GetOutreachStatsResponseB\xc2\x01\n" +
 	"\x14com.shogun.sensei.v1B\vSenseiProtoP\x01Z;github.com/0xHoaxen/shogun/gen/go/shogun/sensei/v1;senseiv1\xa2\x02\x03SSX\xaa\x02\x10Shogun.Sensei.V1\xca\x02\x10Shogun\\Sensei\\V1\xe2\x02\x1cShogun\\Sensei\\V1\\GPBMetadata\xea\x02\x12Shogun::Sensei::V1b\x06proto3"
 
-var file_shogun_sensei_v1_sensei_proto_goTypes = []any{}
+var (
+	file_shogun_sensei_v1_sensei_proto_rawDescOnce sync.Once
+	file_shogun_sensei_v1_sensei_proto_rawDescData []byte
+)
+
+func file_shogun_sensei_v1_sensei_proto_rawDescGZIP() []byte {
+	file_shogun_sensei_v1_sensei_proto_rawDescOnce.Do(func() {
+		file_shogun_sensei_v1_sensei_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_sensei_v1_sensei_proto_rawDesc), len(file_shogun_sensei_v1_sensei_proto_rawDesc)))
+	})
+	return file_shogun_sensei_v1_sensei_proto_rawDescData
+}
+
+var file_shogun_sensei_v1_sensei_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_shogun_sensei_v1_sensei_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_shogun_sensei_v1_sensei_proto_goTypes = []any{
+	(FunnelGroupBy)(0),               // 0: shogun.sensei.v1.FunnelGroupBy
+	(OutreachGroupBy)(0),             // 1: shogun.sensei.v1.OutreachGroupBy
+	(*GetFunnelRequest)(nil),         // 2: shogun.sensei.v1.GetFunnelRequest
+	(*FunnelRow)(nil),                // 3: shogun.sensei.v1.FunnelRow
+	(*GetFunnelResponse)(nil),        // 4: shogun.sensei.v1.GetFunnelResponse
+	(*GetOutreachStatsRequest)(nil),  // 5: shogun.sensei.v1.GetOutreachStatsRequest
+	(*OutreachRow)(nil),              // 6: shogun.sensei.v1.OutreachRow
+	(*GetOutreachStatsResponse)(nil), // 7: shogun.sensei.v1.GetOutreachStatsResponse
+}
 var file_shogun_sensei_v1_sensei_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0, // 0: shogun.sensei.v1.GetFunnelRequest.group_by:type_name -> shogun.sensei.v1.FunnelGroupBy
+	3, // 1: shogun.sensei.v1.GetFunnelResponse.rows:type_name -> shogun.sensei.v1.FunnelRow
+	3, // 2: shogun.sensei.v1.GetFunnelResponse.total:type_name -> shogun.sensei.v1.FunnelRow
+	1, // 3: shogun.sensei.v1.GetOutreachStatsRequest.group_by:type_name -> shogun.sensei.v1.OutreachGroupBy
+	6, // 4: shogun.sensei.v1.GetOutreachStatsResponse.rows:type_name -> shogun.sensei.v1.OutreachRow
+	6, // 5: shogun.sensei.v1.GetOutreachStatsResponse.total:type_name -> shogun.sensei.v1.OutreachRow
+	2, // 6: shogun.sensei.v1.SenseiService.GetFunnel:input_type -> shogun.sensei.v1.GetFunnelRequest
+	5, // 7: shogun.sensei.v1.SenseiService.GetOutreachStats:input_type -> shogun.sensei.v1.GetOutreachStatsRequest
+	4, // 8: shogun.sensei.v1.SenseiService.GetFunnel:output_type -> shogun.sensei.v1.GetFunnelResponse
+	7, // 9: shogun.sensei.v1.SenseiService.GetOutreachStats:output_type -> shogun.sensei.v1.GetOutreachStatsResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_shogun_sensei_v1_sensei_proto_init() }
@@ -47,13 +683,15 @@ func file_shogun_sensei_v1_sensei_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_sensei_v1_sensei_proto_rawDesc), len(file_shogun_sensei_v1_sensei_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_sensei_v1_sensei_proto_goTypes,
 		DependencyIndexes: file_shogun_sensei_v1_sensei_proto_depIdxs,
+		EnumInfos:         file_shogun_sensei_v1_sensei_proto_enumTypes,
+		MessageInfos:      file_shogun_sensei_v1_sensei_proto_msgTypes,
 	}.Build()
 	File_shogun_sensei_v1_sensei_proto = out.File
 	file_shogun_sensei_v1_sensei_proto_goTypes = nil
