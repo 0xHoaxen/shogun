@@ -5,7 +5,9 @@ go 1.25.4
 require (
 	github.com/0xHoaxen/shogun/gen/go v0.0.0
 	github.com/0xHoaxen/shogun/pkg v0.0.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
+	github.com/robfig/cron/v3 v3.0.1
 	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -33,7 +35,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

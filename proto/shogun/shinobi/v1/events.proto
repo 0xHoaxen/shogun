@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package shogun.shinobi.v1;
+
+// Payloads of the events shinobi produces. Routes live in pkg/bus/routes.go.
+
+// DiscoveryMatchFound is the payload of discovery.match_found.
+message DiscoveryMatchFound {
+  string posting_id = 1;
+  float score = 2;
+  string title = 3;
+  string company = 4;
+  // owner_id lets consumers act for the owner without a caller identity.
+  string owner_id = 5;
+}

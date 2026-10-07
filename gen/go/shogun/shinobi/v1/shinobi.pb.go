@@ -9,7 +9,9 @@ package shinobiv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +22,1373 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SourceKind int32
+
+const (
+	SourceKind_SOURCE_KIND_UNSPECIFIED SourceKind = 0
+	// RSS is an RSS or Atom feed at an https address.
+	SourceKind_SOURCE_KIND_RSS SourceKind = 1
+	// API is a JSON endpoint at an https address, read through a field mapping.
+	SourceKind_SOURCE_KIND_API SourceKind = 2
+	// FILE is a JSON document the owner pasted in, read through a field mapping.
+	SourceKind_SOURCE_KIND_FILE SourceKind = 3
+)
+
+// Enum value maps for SourceKind.
+var (
+	SourceKind_name = map[int32]string{
+		0: "SOURCE_KIND_UNSPECIFIED",
+		1: "SOURCE_KIND_RSS",
+		2: "SOURCE_KIND_API",
+		3: "SOURCE_KIND_FILE",
+	}
+	SourceKind_value = map[string]int32{
+		"SOURCE_KIND_UNSPECIFIED": 0,
+		"SOURCE_KIND_RSS":         1,
+		"SOURCE_KIND_API":         2,
+		"SOURCE_KIND_FILE":        3,
+	}
+)
+
+func (x SourceKind) Enum() *SourceKind {
+	p := new(SourceKind)
+	*p = x
+	return p
+}
+
+func (x SourceKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SourceKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_shinobi_v1_shinobi_proto_enumTypes[0].Descriptor()
+}
+
+func (SourceKind) Type() protoreflect.EnumType {
+	return &file_shogun_shinobi_v1_shinobi_proto_enumTypes[0]
+}
+
+func (x SourceKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SourceKind.Descriptor instead.
+func (SourceKind) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{0}
+}
+
+// FieldMapping says where in a JSON item each posting field is. Paths are
+// dot-separated keys such as "company.name"; items_path locates the array of
+// items in the document and is empty when the document is the array.
+type FieldMapping struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ItemsPath     string                 `protobuf:"bytes,1,opt,name=items_path,json=itemsPath,proto3" json:"items_path,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Company       string                 `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
+	Url           string                 `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	Location      string                 `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`
+	PostedAt      string                 `protobuf:"bytes,7,opt,name=posted_at,json=postedAt,proto3" json:"posted_at,omitempty"`
+	Description   string                 `protobuf:"bytes,8,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FieldMapping) Reset() {
+	*x = FieldMapping{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FieldMapping) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FieldMapping) ProtoMessage() {}
+
+func (x *FieldMapping) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FieldMapping.ProtoReflect.Descriptor instead.
+func (*FieldMapping) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *FieldMapping) GetItemsPath() string {
+	if x != nil {
+		return x.ItemsPath
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetPostedAt() string {
+	if x != nil {
+		return x.PostedAt
+	}
+	return ""
+}
+
+func (x *FieldMapping) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type SourceConfig struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// url is the https address of an RSS or API source.
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	// document is the JSON of a FILE source.
+	Document      string        `protobuf:"bytes,2,opt,name=document,proto3" json:"document,omitempty"`
+	Mapping       *FieldMapping `protobuf:"bytes,3,opt,name=mapping,proto3" json:"mapping,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SourceConfig) Reset() {
+	*x = SourceConfig{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SourceConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SourceConfig) ProtoMessage() {}
+
+func (x *SourceConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SourceConfig.ProtoReflect.Descriptor instead.
+func (*SourceConfig) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SourceConfig) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *SourceConfig) GetDocument() string {
+	if x != nil {
+		return x.Document
+	}
+	return ""
+}
+
+func (x *SourceConfig) GetMapping() *FieldMapping {
+	if x != nil {
+		return x.Mapping
+	}
+	return nil
+}
+
+type Source struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Kind   SourceKind             `protobuf:"varint,3,opt,name=kind,proto3,enum=shogun.shinobi.v1.SourceKind" json:"kind,omitempty"`
+	Config *SourceConfig          `protobuf:"bytes,4,opt,name=config,proto3" json:"config,omitempty"`
+	// schedule is a five-field cron expression, in Asia/Kolkata time. Empty on
+	// create means 0 7 * * *.
+	Schedule  string                 `protobuf:"bytes,5,opt,name=schedule,proto3" json:"schedule,omitempty"`
+	Enabled   bool                   `protobuf:"varint,6,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	LastRunAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_run_at,json=lastRunAt,proto3" json:"last_run_at,omitempty"`
+	// last_error is a short code for why the last run failed, empty on success.
+	LastError     string `protobuf:"bytes,8,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Source) Reset() {
+	*x = Source{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Source) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Source) ProtoMessage() {}
+
+func (x *Source) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Source.ProtoReflect.Descriptor instead.
+func (*Source) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Source) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Source) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Source) GetKind() SourceKind {
+	if x != nil {
+		return x.Kind
+	}
+	return SourceKind_SOURCE_KIND_UNSPECIFIED
+}
+
+func (x *Source) GetConfig() *SourceConfig {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *Source) GetSchedule() string {
+	if x != nil {
+		return x.Schedule
+	}
+	return ""
+}
+
+func (x *Source) GetEnabled() bool {
+	if x != nil {
+		return x.Enabled
+	}
+	return false
+}
+
+func (x *Source) GetLastRunAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastRunAt
+	}
+	return nil
+}
+
+func (x *Source) GetLastError() string {
+	if x != nil {
+		return x.LastError
+	}
+	return ""
+}
+
+type UpsertSourceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Source        *Source                `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertSourceRequest) Reset() {
+	*x = UpsertSourceRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertSourceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertSourceRequest) ProtoMessage() {}
+
+func (x *UpsertSourceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertSourceRequest.ProtoReflect.Descriptor instead.
+func (*UpsertSourceRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UpsertSourceRequest) GetSource() *Source {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+type UpsertSourceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Source        *Source                `protobuf:"bytes,1,opt,name=source,proto3" json:"source,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertSourceResponse) Reset() {
+	*x = UpsertSourceResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertSourceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertSourceResponse) ProtoMessage() {}
+
+func (x *UpsertSourceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertSourceResponse.ProtoReflect.Descriptor instead.
+func (*UpsertSourceResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpsertSourceResponse) GetSource() *Source {
+	if x != nil {
+		return x.Source
+	}
+	return nil
+}
+
+type ListSourcesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSourcesRequest) Reset() {
+	*x = ListSourcesRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSourcesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSourcesRequest) ProtoMessage() {}
+
+func (x *ListSourcesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSourcesRequest.ProtoReflect.Descriptor instead.
+func (*ListSourcesRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{5}
+}
+
+type ListSourcesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Sources       []*Source              `protobuf:"bytes,1,rep,name=sources,proto3" json:"sources,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSourcesResponse) Reset() {
+	*x = ListSourcesResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSourcesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSourcesResponse) ProtoMessage() {}
+
+func (x *ListSourcesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSourcesResponse.ProtoReflect.Descriptor instead.
+func (*ListSourcesResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListSourcesResponse) GetSources() []*Source {
+	if x != nil {
+		return x.Sources
+	}
+	return nil
+}
+
+type RunSourceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunSourceRequest) Reset() {
+	*x = RunSourceRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunSourceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunSourceRequest) ProtoMessage() {}
+
+func (x *RunSourceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunSourceRequest.ProtoReflect.Descriptor instead.
+func (*RunSourceRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RunSourceRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type RunSourceResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// fetched is how many postings the source listed, added how many were new.
+	Fetched       int32 `protobuf:"varint,1,opt,name=fetched,proto3" json:"fetched,omitempty"`
+	Added         int32 `protobuf:"varint,2,opt,name=added,proto3" json:"added,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunSourceResponse) Reset() {
+	*x = RunSourceResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunSourceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunSourceResponse) ProtoMessage() {}
+
+func (x *RunSourceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunSourceResponse.ProtoReflect.Descriptor instead.
+func (*RunSourceResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RunSourceResponse) GetFetched() int32 {
+	if x != nil {
+		return x.Fetched
+	}
+	return 0
+}
+
+func (x *RunSourceResponse) GetAdded() int32 {
+	if x != nil {
+		return x.Added
+	}
+	return 0
+}
+
+type Preferences struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Roles      []string               `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
+	Locations  []string               `protobuf:"bytes,2,rep,name=locations,proto3" json:"locations,omitempty"`
+	MustHave   []string               `protobuf:"bytes,3,rep,name=must_have,json=mustHave,proto3" json:"must_have,omitempty"`
+	NiceToHave []string               `protobuf:"bytes,4,rep,name=nice_to_have,json=niceToHave,proto3" json:"nice_to_have,omitempty"`
+	Exclude    []string               `protobuf:"bytes,5,rep,name=exclude,proto3" json:"exclude,omitempty"`
+	// min_score is the score from 0 to 1 at which a posting counts as a match.
+	MinScore      float32 `protobuf:"fixed32,6,opt,name=min_score,json=minScore,proto3" json:"min_score,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Preferences) Reset() {
+	*x = Preferences{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Preferences) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Preferences) ProtoMessage() {}
+
+func (x *Preferences) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Preferences.ProtoReflect.Descriptor instead.
+func (*Preferences) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Preferences) GetRoles() []string {
+	if x != nil {
+		return x.Roles
+	}
+	return nil
+}
+
+func (x *Preferences) GetLocations() []string {
+	if x != nil {
+		return x.Locations
+	}
+	return nil
+}
+
+func (x *Preferences) GetMustHave() []string {
+	if x != nil {
+		return x.MustHave
+	}
+	return nil
+}
+
+func (x *Preferences) GetNiceToHave() []string {
+	if x != nil {
+		return x.NiceToHave
+	}
+	return nil
+}
+
+func (x *Preferences) GetExclude() []string {
+	if x != nil {
+		return x.Exclude
+	}
+	return nil
+}
+
+func (x *Preferences) GetMinScore() float32 {
+	if x != nil {
+		return x.MinScore
+	}
+	return 0
+}
+
+type GetPreferencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPreferencesRequest) Reset() {
+	*x = GetPreferencesRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPreferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPreferencesRequest) ProtoMessage() {}
+
+func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPreferencesRequest.ProtoReflect.Descriptor instead.
+func (*GetPreferencesRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{10}
+}
+
+type GetPreferencesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Preferences   *Preferences           `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetPreferencesResponse) Reset() {
+	*x = GetPreferencesResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetPreferencesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetPreferencesResponse) ProtoMessage() {}
+
+func (x *GetPreferencesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetPreferencesResponse.ProtoReflect.Descriptor instead.
+func (*GetPreferencesResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *GetPreferencesResponse) GetPreferences() *Preferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
+type SetPreferencesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Preferences   *Preferences           `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPreferencesRequest) Reset() {
+	*x = SetPreferencesRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPreferencesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPreferencesRequest) ProtoMessage() {}
+
+func (x *SetPreferencesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPreferencesRequest.ProtoReflect.Descriptor instead.
+func (*SetPreferencesRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *SetPreferencesRequest) GetPreferences() *Preferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
+type SetPreferencesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Preferences   *Preferences           `protobuf:"bytes,1,opt,name=preferences,proto3" json:"preferences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SetPreferencesResponse) Reset() {
+	*x = SetPreferencesResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SetPreferencesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SetPreferencesResponse) ProtoMessage() {}
+
+func (x *SetPreferencesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SetPreferencesResponse.ProtoReflect.Descriptor instead.
+func (*SetPreferencesResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SetPreferencesResponse) GetPreferences() *Preferences {
+	if x != nil {
+		return x.Preferences
+	}
+	return nil
+}
+
+type Posting struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	SourceId string                 `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	Title    string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Company  string                 `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
+	Url      string                 `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	Location string                 `protobuf:"bytes,6,opt,name=location,proto3" json:"location,omitempty"`
+	PostedAt *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=posted_at,json=postedAt,proto3" json:"posted_at,omitempty"`
+	// scored is false until the posting has a score; score is then meaningless.
+	Scored  bool     `protobuf:"varint,8,opt,name=scored,proto3" json:"scored,omitempty"`
+	Score   float32  `protobuf:"fixed32,9,opt,name=score,proto3" json:"score,omitempty"`
+	Reasons []string `protobuf:"bytes,10,rep,name=reasons,proto3" json:"reasons,omitempty"`
+	// scored_by is "rule" or "llm".
+	ScoredBy string `protobuf:"bytes,11,opt,name=scored_by,json=scoredBy,proto3" json:"scored_by,omitempty"`
+	// saved_job_id is the kagami job once the posting is saved to the tracker.
+	SavedJobId    string                 `protobuf:"bytes,12,opt,name=saved_job_id,json=savedJobId,proto3" json:"saved_job_id,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Posting) Reset() {
+	*x = Posting{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Posting) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Posting) ProtoMessage() {}
+
+func (x *Posting) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Posting.ProtoReflect.Descriptor instead.
+func (*Posting) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *Posting) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Posting) GetSourceId() string {
+	if x != nil {
+		return x.SourceId
+	}
+	return ""
+}
+
+func (x *Posting) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Posting) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *Posting) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *Posting) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *Posting) GetPostedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.PostedAt
+	}
+	return nil
+}
+
+func (x *Posting) GetScored() bool {
+	if x != nil {
+		return x.Scored
+	}
+	return false
+}
+
+func (x *Posting) GetScore() float32 {
+	if x != nil {
+		return x.Score
+	}
+	return 0
+}
+
+func (x *Posting) GetReasons() []string {
+	if x != nil {
+		return x.Reasons
+	}
+	return nil
+}
+
+func (x *Posting) GetScoredBy() string {
+	if x != nil {
+		return x.ScoredBy
+	}
+	return ""
+}
+
+func (x *Posting) GetSavedJobId() string {
+	if x != nil {
+		return x.SavedJobId
+	}
+	return ""
+}
+
+func (x *Posting) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type ListPostingsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// min_score keeps only scored postings at or above it; zero means all.
+	MinScore float32 `protobuf:"fixed32,1,opt,name=min_score,json=minScore,proto3" json:"min_score,omitempty"`
+	// source_id keeps only one source's postings; empty means all.
+	SourceId      string `protobuf:"bytes,2,opt,name=source_id,json=sourceId,proto3" json:"source_id,omitempty"`
+	PageSize      int32  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostingsRequest) Reset() {
+	*x = ListPostingsRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostingsRequest) ProtoMessage() {}
+
+func (x *ListPostingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostingsRequest.ProtoReflect.Descriptor instead.
+func (*ListPostingsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListPostingsRequest) GetMinScore() float32 {
+	if x != nil {
+		return x.MinScore
+	}
+	return 0
+}
+
+func (x *ListPostingsRequest) GetSourceId() string {
+	if x != nil {
+		return x.SourceId
+	}
+	return ""
+}
+
+func (x *ListPostingsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListPostingsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListPostingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Postings      []*Posting             `protobuf:"bytes,1,rep,name=postings,proto3" json:"postings,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListPostingsResponse) Reset() {
+	*x = ListPostingsResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListPostingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListPostingsResponse) ProtoMessage() {}
+
+func (x *ListPostingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListPostingsResponse.ProtoReflect.Descriptor instead.
+func (*ListPostingsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListPostingsResponse) GetPostings() []*Posting {
+	if x != nil {
+		return x.Postings
+	}
+	return nil
+}
+
+func (x *ListPostingsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type SaveToTrackerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PostingId     string                 `protobuf:"bytes,1,opt,name=posting_id,json=postingId,proto3" json:"posting_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveToTrackerRequest) Reset() {
+	*x = SaveToTrackerRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveToTrackerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveToTrackerRequest) ProtoMessage() {}
+
+func (x *SaveToTrackerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveToTrackerRequest.ProtoReflect.Descriptor instead.
+func (*SaveToTrackerRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *SaveToTrackerRequest) GetPostingId() string {
+	if x != nil {
+		return x.PostingId
+	}
+	return ""
+}
+
+type SaveToTrackerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	JobId         string                 `protobuf:"bytes,1,opt,name=job_id,json=jobId,proto3" json:"job_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveToTrackerResponse) Reset() {
+	*x = SaveToTrackerResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveToTrackerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveToTrackerResponse) ProtoMessage() {}
+
+func (x *SaveToTrackerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveToTrackerResponse.ProtoReflect.Descriptor instead.
+func (*SaveToTrackerResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *SaveToTrackerResponse) GetJobId() string {
+	if x != nil {
+		return x.JobId
+	}
+	return ""
+}
+
 var File_shogun_shinobi_v1_shinobi_proto protoreflect.FileDescriptor
 
 const file_shogun_shinobi_v1_shinobi_proto_rawDesc = "" +
 	"\n" +
-	"\x1fshogun/shinobi/v1/shinobi.proto\x12\x11shogun.shinobi.v12\x10\n" +
-	"\x0eShinobiServiceB\xca\x01\n" +
+	"\x1fshogun/shinobi/v1/shinobi.proto\x12\x11shogun.shinobi.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xda\x01\n" +
+	"\fFieldMapping\x12\x1d\n" +
+	"\n" +
+	"items_path\x18\x01 \x01(\tR\titemsPath\x12\x0e\n" +
+	"\x02id\x18\x02 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x18\n" +
+	"\acompany\x18\x04 \x01(\tR\acompany\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12\x1a\n" +
+	"\blocation\x18\x06 \x01(\tR\blocation\x12\x1b\n" +
+	"\tposted_at\x18\a \x01(\tR\bpostedAt\x12 \n" +
+	"\vdescription\x18\b \x01(\tR\vdescription\"w\n" +
+	"\fSourceConfig\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\x12\x1a\n" +
+	"\bdocument\x18\x02 \x01(\tR\bdocument\x129\n" +
+	"\amapping\x18\x03 \x01(\v2\x1f.shogun.shinobi.v1.FieldMappingR\amapping\"\xa9\x02\n" +
+	"\x06Source\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x121\n" +
+	"\x04kind\x18\x03 \x01(\x0e2\x1d.shogun.shinobi.v1.SourceKindR\x04kind\x127\n" +
+	"\x06config\x18\x04 \x01(\v2\x1f.shogun.shinobi.v1.SourceConfigR\x06config\x12\x1a\n" +
+	"\bschedule\x18\x05 \x01(\tR\bschedule\x12\x18\n" +
+	"\aenabled\x18\x06 \x01(\bR\aenabled\x12:\n" +
+	"\vlast_run_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tlastRunAt\x12\x1d\n" +
+	"\n" +
+	"last_error\x18\b \x01(\tR\tlastError\"H\n" +
+	"\x13UpsertSourceRequest\x121\n" +
+	"\x06source\x18\x01 \x01(\v2\x19.shogun.shinobi.v1.SourceR\x06source\"I\n" +
+	"\x14UpsertSourceResponse\x121\n" +
+	"\x06source\x18\x01 \x01(\v2\x19.shogun.shinobi.v1.SourceR\x06source\"\x14\n" +
+	"\x12ListSourcesRequest\"J\n" +
+	"\x13ListSourcesResponse\x123\n" +
+	"\asources\x18\x01 \x03(\v2\x19.shogun.shinobi.v1.SourceR\asources\"\"\n" +
+	"\x10RunSourceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"C\n" +
+	"\x11RunSourceResponse\x12\x18\n" +
+	"\afetched\x18\x01 \x01(\x05R\afetched\x12\x14\n" +
+	"\x05added\x18\x02 \x01(\x05R\x05added\"\xb7\x01\n" +
+	"\vPreferences\x12\x14\n" +
+	"\x05roles\x18\x01 \x03(\tR\x05roles\x12\x1c\n" +
+	"\tlocations\x18\x02 \x03(\tR\tlocations\x12\x1b\n" +
+	"\tmust_have\x18\x03 \x03(\tR\bmustHave\x12 \n" +
+	"\fnice_to_have\x18\x04 \x03(\tR\n" +
+	"niceToHave\x12\x18\n" +
+	"\aexclude\x18\x05 \x03(\tR\aexclude\x12\x1b\n" +
+	"\tmin_score\x18\x06 \x01(\x02R\bminScore\"\x17\n" +
+	"\x15GetPreferencesRequest\"Z\n" +
+	"\x16GetPreferencesResponse\x12@\n" +
+	"\vpreferences\x18\x01 \x01(\v2\x1e.shogun.shinobi.v1.PreferencesR\vpreferences\"Y\n" +
+	"\x15SetPreferencesRequest\x12@\n" +
+	"\vpreferences\x18\x01 \x01(\v2\x1e.shogun.shinobi.v1.PreferencesR\vpreferences\"Z\n" +
+	"\x16SetPreferencesResponse\x12@\n" +
+	"\vpreferences\x18\x01 \x01(\v2\x1e.shogun.shinobi.v1.PreferencesR\vpreferences\"\x8f\x03\n" +
+	"\aPosting\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x18\n" +
+	"\acompany\x18\x04 \x01(\tR\acompany\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12\x1a\n" +
+	"\blocation\x18\x06 \x01(\tR\blocation\x127\n" +
+	"\tposted_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\bpostedAt\x12\x16\n" +
+	"\x06scored\x18\b \x01(\bR\x06scored\x12\x14\n" +
+	"\x05score\x18\t \x01(\x02R\x05score\x12\x18\n" +
+	"\areasons\x18\n" +
+	" \x03(\tR\areasons\x12\x1b\n" +
+	"\tscored_by\x18\v \x01(\tR\bscoredBy\x12 \n" +
+	"\fsaved_job_id\x18\f \x01(\tR\n" +
+	"savedJobId\x129\n" +
+	"\n" +
+	"created_at\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x8b\x01\n" +
+	"\x13ListPostingsRequest\x12\x1b\n" +
+	"\tmin_score\x18\x01 \x01(\x02R\bminScore\x12\x1b\n" +
+	"\tsource_id\x18\x02 \x01(\tR\bsourceId\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"v\n" +
+	"\x14ListPostingsResponse\x126\n" +
+	"\bpostings\x18\x01 \x03(\v2\x1a.shogun.shinobi.v1.PostingR\bpostings\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"5\n" +
+	"\x14SaveToTrackerRequest\x12\x1d\n" +
+	"\n" +
+	"posting_id\x18\x01 \x01(\tR\tpostingId\".\n" +
+	"\x15SaveToTrackerResponse\x12\x15\n" +
+	"\x06job_id\x18\x01 \x01(\tR\x05jobId*i\n" +
+	"\n" +
+	"SourceKind\x12\x1b\n" +
+	"\x17SOURCE_KIND_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fSOURCE_KIND_RSS\x10\x01\x12\x13\n" +
+	"\x0fSOURCE_KIND_API\x10\x02\x12\x14\n" +
+	"\x10SOURCE_KIND_FILE\x10\x032\xba\x05\n" +
+	"\x0eShinobiService\x12_\n" +
+	"\fUpsertSource\x12&.shogun.shinobi.v1.UpsertSourceRequest\x1a'.shogun.shinobi.v1.UpsertSourceResponse\x12\\\n" +
+	"\vListSources\x12%.shogun.shinobi.v1.ListSourcesRequest\x1a&.shogun.shinobi.v1.ListSourcesResponse\x12V\n" +
+	"\tRunSource\x12#.shogun.shinobi.v1.RunSourceRequest\x1a$.shogun.shinobi.v1.RunSourceResponse\x12e\n" +
+	"\x0eGetPreferences\x12(.shogun.shinobi.v1.GetPreferencesRequest\x1a).shogun.shinobi.v1.GetPreferencesResponse\x12e\n" +
+	"\x0eSetPreferences\x12(.shogun.shinobi.v1.SetPreferencesRequest\x1a).shogun.shinobi.v1.SetPreferencesResponse\x12_\n" +
+	"\fListPostings\x12&.shogun.shinobi.v1.ListPostingsRequest\x1a'.shogun.shinobi.v1.ListPostingsResponse\x12b\n" +
+	"\rSaveToTracker\x12'.shogun.shinobi.v1.SaveToTrackerRequest\x1a(.shogun.shinobi.v1.SaveToTrackerResponseB\xca\x01\n" +
 	"\x15com.shogun.shinobi.v1B\fShinobiProtoP\x01Z=github.com/0xHoaxen/shogun/gen/go/shogun/shinobi/v1;shinobiv1\xa2\x02\x03SSX\xaa\x02\x11Shogun.Shinobi.V1\xca\x02\x11Shogun\\Shinobi\\V1\xe2\x02\x1dShogun\\Shinobi\\V1\\GPBMetadata\xea\x02\x13Shogun::Shinobi::V1b\x06proto3"
 
-var file_shogun_shinobi_v1_shinobi_proto_goTypes = []any{}
+var (
+	file_shogun_shinobi_v1_shinobi_proto_rawDescOnce sync.Once
+	file_shogun_shinobi_v1_shinobi_proto_rawDescData []byte
+)
+
+func file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP() []byte {
+	file_shogun_shinobi_v1_shinobi_proto_rawDescOnce.Do(func() {
+		file_shogun_shinobi_v1_shinobi_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_shinobi_v1_shinobi_proto_rawDesc), len(file_shogun_shinobi_v1_shinobi_proto_rawDesc)))
+	})
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescData
+}
+
+var file_shogun_shinobi_v1_shinobi_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_shogun_shinobi_v1_shinobi_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_shogun_shinobi_v1_shinobi_proto_goTypes = []any{
+	(SourceKind)(0),                // 0: shogun.shinobi.v1.SourceKind
+	(*FieldMapping)(nil),           // 1: shogun.shinobi.v1.FieldMapping
+	(*SourceConfig)(nil),           // 2: shogun.shinobi.v1.SourceConfig
+	(*Source)(nil),                 // 3: shogun.shinobi.v1.Source
+	(*UpsertSourceRequest)(nil),    // 4: shogun.shinobi.v1.UpsertSourceRequest
+	(*UpsertSourceResponse)(nil),   // 5: shogun.shinobi.v1.UpsertSourceResponse
+	(*ListSourcesRequest)(nil),     // 6: shogun.shinobi.v1.ListSourcesRequest
+	(*ListSourcesResponse)(nil),    // 7: shogun.shinobi.v1.ListSourcesResponse
+	(*RunSourceRequest)(nil),       // 8: shogun.shinobi.v1.RunSourceRequest
+	(*RunSourceResponse)(nil),      // 9: shogun.shinobi.v1.RunSourceResponse
+	(*Preferences)(nil),            // 10: shogun.shinobi.v1.Preferences
+	(*GetPreferencesRequest)(nil),  // 11: shogun.shinobi.v1.GetPreferencesRequest
+	(*GetPreferencesResponse)(nil), // 12: shogun.shinobi.v1.GetPreferencesResponse
+	(*SetPreferencesRequest)(nil),  // 13: shogun.shinobi.v1.SetPreferencesRequest
+	(*SetPreferencesResponse)(nil), // 14: shogun.shinobi.v1.SetPreferencesResponse
+	(*Posting)(nil),                // 15: shogun.shinobi.v1.Posting
+	(*ListPostingsRequest)(nil),    // 16: shogun.shinobi.v1.ListPostingsRequest
+	(*ListPostingsResponse)(nil),   // 17: shogun.shinobi.v1.ListPostingsResponse
+	(*SaveToTrackerRequest)(nil),   // 18: shogun.shinobi.v1.SaveToTrackerRequest
+	(*SaveToTrackerResponse)(nil),  // 19: shogun.shinobi.v1.SaveToTrackerResponse
+	(*timestamppb.Timestamp)(nil),  // 20: google.protobuf.Timestamp
+}
 var file_shogun_shinobi_v1_shinobi_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1,  // 0: shogun.shinobi.v1.SourceConfig.mapping:type_name -> shogun.shinobi.v1.FieldMapping
+	0,  // 1: shogun.shinobi.v1.Source.kind:type_name -> shogun.shinobi.v1.SourceKind
+	2,  // 2: shogun.shinobi.v1.Source.config:type_name -> shogun.shinobi.v1.SourceConfig
+	20, // 3: shogun.shinobi.v1.Source.last_run_at:type_name -> google.protobuf.Timestamp
+	3,  // 4: shogun.shinobi.v1.UpsertSourceRequest.source:type_name -> shogun.shinobi.v1.Source
+	3,  // 5: shogun.shinobi.v1.UpsertSourceResponse.source:type_name -> shogun.shinobi.v1.Source
+	3,  // 6: shogun.shinobi.v1.ListSourcesResponse.sources:type_name -> shogun.shinobi.v1.Source
+	10, // 7: shogun.shinobi.v1.GetPreferencesResponse.preferences:type_name -> shogun.shinobi.v1.Preferences
+	10, // 8: shogun.shinobi.v1.SetPreferencesRequest.preferences:type_name -> shogun.shinobi.v1.Preferences
+	10, // 9: shogun.shinobi.v1.SetPreferencesResponse.preferences:type_name -> shogun.shinobi.v1.Preferences
+	20, // 10: shogun.shinobi.v1.Posting.posted_at:type_name -> google.protobuf.Timestamp
+	20, // 11: shogun.shinobi.v1.Posting.created_at:type_name -> google.protobuf.Timestamp
+	15, // 12: shogun.shinobi.v1.ListPostingsResponse.postings:type_name -> shogun.shinobi.v1.Posting
+	4,  // 13: shogun.shinobi.v1.ShinobiService.UpsertSource:input_type -> shogun.shinobi.v1.UpsertSourceRequest
+	6,  // 14: shogun.shinobi.v1.ShinobiService.ListSources:input_type -> shogun.shinobi.v1.ListSourcesRequest
+	8,  // 15: shogun.shinobi.v1.ShinobiService.RunSource:input_type -> shogun.shinobi.v1.RunSourceRequest
+	11, // 16: shogun.shinobi.v1.ShinobiService.GetPreferences:input_type -> shogun.shinobi.v1.GetPreferencesRequest
+	13, // 17: shogun.shinobi.v1.ShinobiService.SetPreferences:input_type -> shogun.shinobi.v1.SetPreferencesRequest
+	16, // 18: shogun.shinobi.v1.ShinobiService.ListPostings:input_type -> shogun.shinobi.v1.ListPostingsRequest
+	18, // 19: shogun.shinobi.v1.ShinobiService.SaveToTracker:input_type -> shogun.shinobi.v1.SaveToTrackerRequest
+	5,  // 20: shogun.shinobi.v1.ShinobiService.UpsertSource:output_type -> shogun.shinobi.v1.UpsertSourceResponse
+	7,  // 21: shogun.shinobi.v1.ShinobiService.ListSources:output_type -> shogun.shinobi.v1.ListSourcesResponse
+	9,  // 22: shogun.shinobi.v1.ShinobiService.RunSource:output_type -> shogun.shinobi.v1.RunSourceResponse
+	12, // 23: shogun.shinobi.v1.ShinobiService.GetPreferences:output_type -> shogun.shinobi.v1.GetPreferencesResponse
+	14, // 24: shogun.shinobi.v1.ShinobiService.SetPreferences:output_type -> shogun.shinobi.v1.SetPreferencesResponse
+	17, // 25: shogun.shinobi.v1.ShinobiService.ListPostings:output_type -> shogun.shinobi.v1.ListPostingsResponse
+	19, // 26: shogun.shinobi.v1.ShinobiService.SaveToTracker:output_type -> shogun.shinobi.v1.SaveToTrackerResponse
+	20, // [20:27] is the sub-list for method output_type
+	13, // [13:20] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_shogun_shinobi_v1_shinobi_proto_init() }
@@ -47,13 +1401,15 @@ func file_shogun_shinobi_v1_shinobi_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_shinobi_v1_shinobi_proto_rawDesc), len(file_shogun_shinobi_v1_shinobi_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      1,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_shinobi_v1_shinobi_proto_goTypes,
 		DependencyIndexes: file_shogun_shinobi_v1_shinobi_proto_depIdxs,
+		EnumInfos:         file_shogun_shinobi_v1_shinobi_proto_enumTypes,
+		MessageInfos:      file_shogun_shinobi_v1_shinobi_proto_msgTypes,
 	}.Build()
 	File_shogun_shinobi_v1_shinobi_proto = out.File
 	file_shogun_shinobi_v1_shinobi_proto_goTypes = nil
