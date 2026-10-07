@@ -26,6 +26,7 @@ func validEnv() map[string]string {
 		"FUDE_ADDR":            "fude:9090",
 		"TSUBAME_ADDR":         "tsubame:9090",
 		"TAIKO_ADDR":           "taiko:9090",
+		"DOJO_ADDR":            "dojo:9090",
 	}
 }
 
@@ -81,6 +82,7 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 		{"missing fude address", func(e map[string]string) { delete(e, "FUDE_ADDR") }, "FUDE_ADDR"},
 		{"missing tsubame address", func(e map[string]string) { delete(e, "TSUBAME_ADDR") }, "TSUBAME_ADDR"},
 		{"missing taiko address", func(e map[string]string) { delete(e, "TAIKO_ADDR") }, "TAIKO_ADDR"},
+		{"missing dojo address", func(e map[string]string) { delete(e, "DOJO_ADDR") }, "DOJO_ADDR"},
 		{"blank allowlist", func(e map[string]string) { e["TORII_ALLOWED_EMAILS"] = " , " }, "no addresses"},
 		{"public url not http", func(e map[string]string) { e["TORII_PUBLIC_URL"] = "ftp://x" }, "TORII_PUBLIC_URL"},
 		{"zero ttl", func(e map[string]string) { e["SESSION_TTL"] = "0s" }, "SESSION_TTL"},
