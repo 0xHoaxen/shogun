@@ -483,9 +483,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `make proto` passes; `cd services/katana && go test -race ./...` passes with domain and store tests.
   Status: `AcceptSuggestion` and `DismissSuggestion` have their own request and response messages (buf lint requires one pair per RPC). Deciding is a single conditional `UPDATE ... WHERE state = 'open'`, so a suggestion is decided once even under concurrent calls; the second try is `ErrNotOpen`, which transport maps to `SUGGESTION_ALREADY_DECIDED`. Handlers come in P9.2d, `SyncGitHub` in P9.2b.
 
-- [ ] **P9.2b katana GitHub sync** (M) Needs: P9.2a
+- [x] **P9.2b katana GitHub sync** (M) Needs: P9.2a
   Do: GitHub REST client over `net/http` (base URL injectable, `If-None-Match` ETag, a 304 stores no snapshot); `github_sync` River job daily 02:00 IST; SyncGitHub RPC; `KATANA_GITHUB_TOKEN` and `KATANA_GITHUB_USER`. `TODO(owner)`: the token and the GitHub user.
   Done when: httptest tests cover 200, 304, rate limit and auth errors, and no token appears in log output.
+  Status: the repository list is read with `If-None-Match`; a 304 stops the sync before the pull request search, so the ETag covers repos only (a push changes `pushed_at`, which changes the list). Forks and archived repos are left out. The daily `github_sync` job (02:00 IST, unique per date, 3 tries, snoozes until a rate limit lifts) covers every owner that already has a snapshot, because katana has no owner list: the owner's first `SyncGitHub` call starts it. With no user or token the service still starts (required in production only) and syncing is `FAILED_PRECONDITION` / `GITHUB_NOT_CONFIGURED`. `KATANA_GITHUB_API_BASE` is a test-only override. `TODO(owner)`: set `KATANA_GITHUB_USER` and `KATANA_GITHUB_TOKEN` as secrets in the staging and production helm values.
 
 - [ ] **P9.2c katana suggest job** (M) Needs: P9.2b, P9.1b
   Do: `suggest` job diffing the latest two snapshots plus `learning.item_completed` (consumer and route), `pkg/llm` feature `katana.suggest` (config plus a default budget row in soroban's seed migration), stored with evidence links; emits `profile.suggestion_ready`.

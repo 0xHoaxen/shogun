@@ -87,3 +87,28 @@ func (q *Queries) ListLatestSnapshots(ctx context.Context, arg ListLatestSnapsho
 	}
 	return items, nil
 }
+
+const listSnapshotOwners = `-- name: ListSnapshotOwners :many
+SELECT DISTINCT owner_id FROM github_snapshots ORDER BY owner_id
+`
+
+// Owners who have synced at least once; the daily sync covers them.
+func (q *Queries) ListSnapshotOwners(ctx context.Context) ([]uuid.UUID, error) {
+	rows, err := q.db.Query(ctx, listSnapshotOwners)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []uuid.UUID{}
+	for rows.Next() {
+		var owner_id uuid.UUID
+		if err := rows.Scan(&owner_id); err != nil {
+			return nil, err
+		}
+		items = append(items, owner_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

@@ -42,3 +42,9 @@ func textPtr(s string) *string {
 	}
 	return &s
 }
+
+// SnapshotOwners returns every owner with at least one snapshot.
+func (r *Repo) SnapshotOwners(ctx context.Context) ([]uuid.UUID, error) {
+	ids, err := r.q.ListSnapshotOwners(ctx)
+	return ids, wrap("list snapshot owners", err)
+}

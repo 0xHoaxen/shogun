@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -22,6 +23,10 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/katana/internal/app"
+	"github.com/0xHoaxen/shogun/services/katana/internal/github"
+	"github.com/0xHoaxen/shogun/services/katana/internal/jobs"
+	katanagrpc "github.com/0xHoaxen/shogun/services/katana/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/katana/migrations"
 )
 
@@ -30,6 +35,10 @@ const (
 	migrateOnStartEnv  = "MIGRATE_ON_START"
 	migrateOnStartDflt = "true"
 	migrateCommand     = "migrate"
+
+	githubUserEnv    = "KATANA_GITHUB_USER"
+	githubTokenEnv   = "KATANA_GITHUB_TOKEN"
+	githubAPIBaseEnv = "KATANA_GITHUB_API_BASE"
 )
 
 func main() {
@@ -112,7 +121,18 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	gh, err := newGitHub(lookup, cfg, log)
+	if err != nil {
+		return err
+	}
+	svc := app.NewService(pool, gh, nil)
+	loc, err := jobs.Location()
+	if err != nil {
+		return err
+	}
+	scheduled := jobs.NewSetup(svc, loc, time.Now, log)
+
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err
 	}
@@ -124,6 +144,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		katanav1.RegisterKatanaServiceServer(s, katanagrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }
@@ -142,4 +163,27 @@ func flushTelemetry(log *slog.Logger, timeout time.Duration, shutdown func(conte
 	if err := shutdown(ctx); err != nil {
 		log.Error("telemetry shutdown", slog.Any("error", err))
 	}
+}
+
+// errNoGitHub means production has no GitHub user or token.
+var errNoGitHub = fmt.Errorf("%s and %s are required in production", githubUserEnv, githubTokenEnv)
+
+// newGitHub builds the GitHub client from the environment. Both the user and
+// the token are required in production; elsewhere a missing one is logged, the
+// service still starts, and syncing says GitHub is not configured. A nil
+// client is returned for that case, which app.NewService accepts.
+//
+// TODO(owner): set KATANA_GITHUB_USER and KATANA_GITHUB_TOKEN (a token that can
+// read your repositories) as secrets in the staging and production helm values.
+func newGitHub(lookup config.LookupFunc, cfg config.Base, log *slog.Logger) (app.GitHub, error) {
+	user := config.String(lookup, githubUserEnv, "")
+	token := config.String(lookup, githubTokenEnv, "")
+	if user == "" || token == "" {
+		if cfg.IsProduction() {
+			return nil, errNoGitHub
+		}
+		log.Warn("github sync is off: no github user or token configured")
+		return nil, nil //nolint:nilnil // no client is how an unconfigured GitHub is passed on
+	}
+	return github.New(config.String(lookup, githubAPIBaseEnv, ""), user, token, nil), nil
 }
