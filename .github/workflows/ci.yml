@@ -62,7 +62,7 @@ jobs:
               touches() { grep -qE "$1" <<<"$changed" && echo true || echo false; }
               self='^\.github/workflows/ci\.yml$|^\.tool-versions$'
               web=$(touches "$self|^(web|proto)/")
-              e2e=$(touches "$self|^(web|proto|pkg|gen|deploy/compose|deploy/docker)/|^services/(kagami|torii|soroban|fude|tsubame|taiko)/|^go\.work|^\.env\.example$")
+              e2e=$(touches "$self|^(web|proto|pkg|gen|deploy/compose|deploy/docker)/|^services/(kagami|torii|soroban|fude|tsubame|taiko|dojo)/|^go\.work|^\.env\.example$")
               lint_config=$(touches "$self|^\.golangci\.yml$|^go\.work$")
             fi
           fi
@@ -229,7 +229,7 @@ jobs:
       # Only what the flows need: other services are not called, and the event
       # relay to them just retries. mock-apis stands in for Anthropic and Gmail.
       - name: Start the stack with stub identity, Claude and Gmail
-        run: $COMPOSE up -d --build --wait postgres kagami torii web mock-oauth2 soroban fude tsubame taiko mock-apis
+        run: $COMPOSE up -d --build --wait postgres kagami torii web mock-oauth2 soroban fude tsubame taiko dojo mock-apis
       - name: Install web dependencies and the browser
         working-directory: web
         run: |
