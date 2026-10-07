@@ -452,21 +452,79 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 9: dojo, katana, shinobi, sensei
 
-- [ ] **P9.1 dojo** (M) Needs: P2.3
-  Do: tables, RPCs (items, activities, GeneratePost), events `learning.activity_added`, `learning.item_completed`; torii endpoints; Learning screen. Also add fude's `learning.activity_added` handler (post draft) and its route, deferred from P7.2c.
-  Done when: logging an activity leads to a pending post draft in the queue (E2E with fake LLM).
+Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
 
-- [ ] **P9.2 katana** (L, split) Needs: P6.3
-  Do: GitHub sync with ETags into `github_snapshots`; `suggest` job diffing snapshots plus `learning.item_completed`, feature `katana.suggest`; accept and dismiss RPCs (and the `profile.suggestion_ready` taiko route and handler); Profile suggestions screen.
-  Done when: fixture snapshots produce suggestions with evidence links; accepting changes state only.
+- [ ] **P9.1a dojo tables, proto, domain, store** (M) Needs: P2.3
+  Do: migration `00002_learning.sql` (`items`, `activities` per the DDL); `dojo.proto` RPCs AddItem, UpdateItem (FieldMask and `version`), ListItems, GetItem, LogActivity, ListActivities, GetActivity, GeneratePost; `dojo/v1/events.proto` `LearningActivityAdded` and `LearningItemCompleted` (each with `owner_id`); `domain.Item` status machine planned, in_progress, done (sets `started_on` and `completed_on`); sqlc store with keyset pagination. `GetItem` and `GetActivity` are added to the LLD table for fude's post prompt.
+  Done when: `make proto` and `bin/buf lint` pass; `cd services/dojo && go test -race ./...` passes with domain table tests and store integration tests.
 
-- [ ] **P9.3 shinobi** (L, split) Needs: P6.3, P4.6
-  Do: sources of kind api, rss, file with schedule; upsert postings by `(source_id, external_id)`; rule score then LLM score for borderline (feature `shinobi.score`); `discovery.match_found` (and its taiko route and handler); `SaveToTracker` calling `kagami.AddJob`; Discovery screen. `TODO(owner)`: provide the first real data source.
-  Done when: fixture RSS and file sources work; score at or above `min_score` emits the event once.
+- [ ] **P9.1b dojo use cases and handlers** (M) Needs: P9.1a
+  Do: use cases writing `learning.activity_added` (LogActivity) and `learning.item_completed` (the move to done) through `outbox.Write`; GeneratePost calls `fude.GenerateDraft` (kind post, target learning_activity, the chosen activities as `extra_context`) through `pkg/grpcclient` (`FUDE_ADDR`); gRPC handlers with authz and stable reasons such as `ITEM_STATUS_INVALID_TRANSITION`.
+  Done when: `cd services/dojo && go test -race ./...` passes: a handler test per RPC, exactly one outbox row per mutating call, GeneratePost against a fake fude.
 
-- [ ] **P9.4 sensei** (M) Needs: P7.7
-  Do: consume `job.*`, `contact.*`, `mail.*`, `draft.sent`, `cost.*` into `facts`; nightly `rollup`; `GetFunnel`, `GetOutreachStats`; Insights screen.
+- [ ] **P9.1c fude consumes learning events** (M) Needs: P9.1b
+  Do: fude inbox handlers for `learning.activity_added` and `learning.item_completed` (post draft, event id as idempotency key); a dojo-backed `ContextSource` for `learning_activity` targets (`DOJO_ADDR`); routes in `pkg/bus/routes.go`. `TODO(owner)`: the default post channel (LinkedIn assumed) and whether every activity should draft a post.
+  Done when: `cd services/fude && go test -race ./...` passes with consumer tests including a duplicate delivery and a payload without an owner.
+
+- [ ] **P9.1d torii LearningService** (M) Needs: P9.1b
+  Do: `proto/shogun/api/v1/learning.proto` and Connect handlers over dojo (`DOJO_ADDR`) with the same error mapping as jobs and drafts.
+  Done when: `cd services/torii && go test -race ./...` passes with a handler test per RPC.
+
+- [ ] **P9.1e Learning screen and compose E2E** (M) Needs: P9.1c, P9.1d
+  Do: `/learning` page (items, log activity, generate post), nav entry, mocked-API Playwright tests; add dojo to `compose.e2e.yaml` and the CI `e2e-compose` job, with a compose spec.
+  Done when: logging an activity leads to a pending post draft in the queue (compose E2E with the fake LLM); `cd web && npm run test:e2e` passes.
+
+- [ ] **P9.2a katana tables, proto, domain, store** (M) Needs: P6.3
+  Do: migration for `github_snapshots` and `suggestions`; RPCs SyncGitHub, ListSuggestions, AcceptSuggestion, DismissSuggestion; `katana/v1/events.proto` `ProfileSuggestionReady` (with `owner_id`); suggestion state open to accepted or dismissed only.
+  Done when: `make proto` passes; `cd services/katana && go test -race ./...` passes with domain and store tests.
+
+- [ ] **P9.2b katana GitHub sync** (M) Needs: P9.2a
+  Do: GitHub REST client over `net/http` (base URL injectable, `If-None-Match` ETag, a 304 stores no snapshot); `github_sync` River job daily 02:00 IST; SyncGitHub RPC; `KATANA_GITHUB_TOKEN` and `KATANA_GITHUB_USER`. `TODO(owner)`: the token and the GitHub user.
+  Done when: httptest tests cover 200, 304, rate limit and auth errors, and no token appears in log output.
+
+- [ ] **P9.2c katana suggest job** (M) Needs: P9.2b, P9.1b
+  Do: `suggest` job diffing the latest two snapshots plus `learning.item_completed` (consumer and route), `pkg/llm` feature `katana.suggest` (config plus a default budget row in soroban's seed migration), stored with evidence links; emits `profile.suggestion_ready`.
+  Done when: fixture snapshots produce suggestions with evidence links using a fake LLM.
+
+- [ ] **P9.2d katana accept and dismiss, taiko notice** (M) Needs: P9.2c
+  Do: List, Accept and Dismiss use cases and handlers (accepting changes state only); taiko handler, title and link builder and route for `profile.suggestion_ready`.
+  Done when: handler tests in katana; a taiko handler test and an idempotency test.
+
+- [ ] **P9.2e torii ProfileService and Profile screen** (M) Needs: P9.2d
+  Do: `api/v1/profile.proto`, handlers, `/profile` page with accept and dismiss, nav entry.
+  Done when: torii handler tests and mocked-API Playwright tests pass.
+
+- [ ] **P9.3a shinobi tables, proto, domain, store** (M) Needs: P6.3
+  Do: migration for `sources postings preferences scores`; RPCs UpsertSource, ListSources, RunSource, GetPreferences, SetPreferences, ListPostings, SaveToTracker; `shinobi/v1/events.proto` `DiscoveryMatchFound` (with `owner_id`); pure rule scorer in `domain`; upsert postings by `(source_id, external_id)`.
+  Done when: `make proto` passes; `cd services/shinobi && go test -race ./...` passes with scorer tests and store tests.
+
+- [ ] **P9.3b shinobi sources and run_source** (M) Needs: P9.3a
+  Do: fetchers for rss, file and api sources; `run_source` River job per source schedule; `last_run_at` and `last_error`; robots.txt and per-source rate limit; https only, private address ranges refused. `TODO(owner)`: provide the first real data source.
+  Done when: fixture RSS and file sources upsert without duplicates on a second run.
+
+- [ ] **P9.3c shinobi scoring and match event** (M) Needs: P9.3b
+  Do: `score_posting` job: rule score, then `pkg/llm` feature `shinobi.score` only for borderline scores (default budget row in soroban's seed migration); emit `discovery.match_found` once at or above `min_score`; taiko handler and route.
+  Done when: the event is emitted once, the LLM is not called outside the borderline band, and a repeated run adds nothing.
+
+- [ ] **P9.3d shinobi SaveToTracker** (S) Needs: P9.3a, P4.5
+  Do: `SaveToTracker` calls `kagami.AddJob` through `pkg/grpcclient` (`KAGAMI_ADDR`) with the posting id as idempotency key, then stores `saved_job_id`.
+  Done when: handler tests with a fake kagami including a repeated save.
+
+- [ ] **P9.3e torii DiscoveryService and Discovery screen** (M) Needs: P9.3c, P9.3d
+  Do: `api/v1/discovery.proto`, handlers, `/discovery` page (postings by score, save to tracker, sources, preferences).
+  Done when: torii handler tests and mocked-API Playwright tests pass.
+
+- [ ] **P9.4a sensei facts** (M) Needs: P7.7
+  Do: migration for `facts` and `daily_rollups`; inbox handlers for `job.*`, `contact.*`, `mail.*`, `draft.approved`, `draft.sent` and `cost.threshold_reached`, one fact per event id; routes to sensei.
+  Done when: consumer tests including a duplicate delivery.
+
+- [ ] **P9.4b sensei rollup and read RPCs** (M) Needs: P9.4a
+  Do: nightly `rollup` at 01:00 IST rebuilding days from `facts` in one transaction; GetFunnel and GetOutreachStats.
   Done when: replaying the same events twice leaves rollups unchanged.
+
+- [ ] **P9.4c torii InsightsService and Insights screen** (M) Needs: P9.4b
+  Do: `api/v1/insights.proto`, handlers, `/insights` page.
+  Done when: torii handler tests and mocked-API Playwright tests pass.
 
 ---
 
