@@ -528,9 +528,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: torii handler tests and mocked-API Playwright tests pass.
   Status: `DiscoveryService` (postings, save to tracker, sources with run-now, preferences) over shinobi; torii now requires `SHINOBI_ADDR` (compose already sets it; `TODO(owner)`: add it to the helm values). `/discovery` has three views: Postings (best score first, minimum-score filter, reasons, "Save to tracker" then a link to the board), Sources (add, edit, turn on or off, read now, last failure in plain words; kind is locked when editing) and What you want (comma-separated lists and the match threshold as a percentage; saving scores postings again). Posting links are shown only if http or https. 11 mocked-API Playwright tests; no compose spec, as the stack has no job source to read.
 
-- [ ] **P9.4a sensei facts** (M) Needs: P7.7
+- [x] **P9.4a sensei facts** (M) Needs: P7.7
   Do: migration for `facts` and `daily_rollups`; inbox handlers for `job.*`, `contact.*`, `mail.*`, `draft.approved`, `draft.sent` and `cost.threshold_reached`, one fact per event id; routes to sensei.
   Done when: consumer tests including a duplicate delivery.
+  Status: eleven event types become facts (the `job.*`, `contact.*` and `mail.*` events the LLD lists, `draft.approved`, `draft.sent` and `cost.threshold_reached`; `cost.budget_exhausted` is not one of them). A fact keeps only ids and short lower-case labels (source, from and to statuses, channel, classification, whether mail was linked, scope and percent), never titles, names, addresses or message text. `ContactAdded` and `DraftApproved` gained `owner_id` (kagami and fude fill it; producer tests assert it), since a fact needs its owner. `draft.sent` is recorded as channel email, because only tsubame sends, and it sends email. A redelivered event stores nothing (primary key on `event_id`), and an event with no readable owner is acknowledged and logged without a fact. Routes for all eleven go to sensei, so every producer's relay now also delivers to `SENSEI_ADDR` (set in compose; `TODO(owner)`: it must be in every service's helm values too).
 
 - [ ] **P9.4b sensei rollup and read RPCs** (M) Needs: P9.4a
   Do: nightly `rollup` at 01:00 IST rebuilding days from `facts` in one transaction; GetFunnel and GetOutreachStats.

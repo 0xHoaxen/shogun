@@ -7,17 +7,20 @@ import "slices"
 // names (for example "taiko"). Entries are added together with the producer
 // and consumer of each event, as listed in the Shogun LLD event catalog.
 var routes = map[string][]string{
-	"job.added":              {"fude"},
-	"job.follow_up_due":      {"taiko"},
-	"contact.status_changed": {"fude"},
-	"contact.follow_up_due":  {"taiko"},
+	"job.added":              {"fude", "sensei"},
+	"job.status_changed":     {"sensei"},
+	"job.follow_up_due":      {"taiko", "sensei"},
+	"contact.added":          {"sensei"},
+	"contact.status_changed": {"fude", "sensei"},
+	"contact.follow_up_due":  {"taiko", "sensei"},
 	"draft.ready":            {"taiko"},
 	"draft.failed":           {"taiko"},
-	"draft.sent":             {"fude", "kagami"},
+	"draft.approved":         {"sensei"},
+	"draft.sent":             {"fude", "kagami", "sensei"},
 	"draft.send_failed":      {"fude", "taiko"},
-	"mail.classified":        {"kagami", "taiko"},
-	"mail.reply_detected":    {"kagami", "taiko"},
-	"cost.threshold_reached": {"taiko"},
+	"mail.classified":        {"kagami", "taiko", "sensei"},
+	"mail.reply_detected":    {"kagami", "taiko", "sensei"},
+	"cost.threshold_reached": {"taiko", "sensei"},
 	"cost.budget_exhausted":  {"taiko"},
 
 	"profile.suggestion_ready": {"taiko"},

@@ -9,6 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"google.golang.org/protobuf/proto"
+
+	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/hanko"
@@ -104,6 +108,15 @@ func TestApproveStampsATokenForExactlyThatVersionTextAndRecipient(t *testing.T) 
 	}
 	if n := a.env.count(t, `SELECT count(*) FROM outbox WHERE type = 'draft.approved'`); n != 1 {
 		t.Fatalf("got %d draft.approved rows, want 1", n)
+	}
+	var raw []byte
+	if err := a.env.pool.QueryRow(context.Background(), `SELECT payload FROM outbox WHERE type = 'draft.approved'`).Scan(&raw); err != nil {
+		t.Fatalf("read event: %v", err)
+	}
+	var env eventsv1.Envelope
+	var approved fudev1.DraftApproved
+	if err := proto.Unmarshal(raw, &env); err != nil || env.GetPayload().UnmarshalTo(&approved) != nil || approved.GetOwnerId() != a.env.owner.String() {
+		t.Fatalf("draft.approved owner = %q, err %v; want %s", approved.GetOwnerId(), err, a.env.owner)
 	}
 }
 

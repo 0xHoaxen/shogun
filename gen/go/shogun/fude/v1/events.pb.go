@@ -173,6 +173,7 @@ type DraftApproved struct {
 	DraftId       string                 `protobuf:"bytes,1,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	Version       int32                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
 	Channel       Channel                `protobuf:"varint,3,opt,name=channel,proto3,enum=shogun.fude.v1.Channel" json:"channel,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,4,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -228,6 +229,13 @@ func (x *DraftApproved) GetChannel() Channel {
 	return Channel_CHANNEL_UNSPECIFIED
 }
 
+func (x *DraftApproved) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 var File_shogun_fude_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_fude_v1_events_proto_rawDesc = "" +
@@ -245,11 +253,12 @@ const file_shogun_fude_v1_events_proto_rawDesc = "" +
 	"\vDraftFailed\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x16\n" +
 	"\x06reason\x18\x02 \x01(\tR\x06reason\x12\x19\n" +
-	"\bowner_id\x18\x03 \x01(\tR\aownerId\"w\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\"\x92\x01\n" +
 	"\rDraftApproved\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\x121\n" +
-	"\achannel\x18\x03 \x01(\x0e2\x17.shogun.fude.v1.ChannelR\achannelB\xb4\x01\n" +
+	"\achannel\x18\x03 \x01(\x0e2\x17.shogun.fude.v1.ChannelR\achannel\x12\x19\n" +
+	"\bowner_id\x18\x04 \x01(\tR\aownerIdB\xb4\x01\n" +
 	"\x12com.shogun.fude.v1B\vEventsProtoP\x01Z7github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1;fudev1\xa2\x02\x03SFX\xaa\x02\x0eShogun.Fude.V1\xca\x02\x0eShogun\\Fude\\V1\xe2\x02\x1aShogun\\Fude\\V1\\GPBMetadata\xea\x02\x10Shogun::Fude::V1b\x06proto3"
 
 var (

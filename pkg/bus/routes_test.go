@@ -46,6 +46,17 @@ func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
 	}
 }
 
+func TestConsumersRoutesWhatSenseiProjectsToSensei(t *testing.T) {
+	for _, eventType := range []string{
+		"job.added", "job.status_changed", "job.follow_up_due", "contact.added", "contact.status_changed", "contact.follow_up_due",
+		"mail.classified", "mail.reply_detected", "draft.approved", "draft.sent", "cost.threshold_reached",
+	} {
+		if got := Consumers(eventType); !slices.Contains(got, "sensei") {
+			t.Errorf("Consumers(%q) = %v, want sensei among them", eventType, got)
+		}
+	}
+}
+
 func TestConsumersRoutesFinishedItemsToKatana(t *testing.T) {
 	if got := Consumers("learning.item_completed"); !slices.Contains(got, "katana") {
 		t.Errorf("Consumers(learning.item_completed) = %v, want katana among them", got)

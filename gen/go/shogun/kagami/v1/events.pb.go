@@ -252,6 +252,7 @@ type ContactAdded struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ContactId     string                 `protobuf:"bytes,1,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
 	Status        ContactStatus          `protobuf:"varint,2,opt,name=status,proto3,enum=shogun.kagami.v1.ContactStatus" json:"status,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -298,6 +299,13 @@ func (x *ContactAdded) GetStatus() ContactStatus {
 		return x.Status
 	}
 	return ContactStatus_CONTACT_STATUS_UNSPECIFIED
+}
+
+func (x *ContactAdded) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
 }
 
 // ContactStatusChanged is the payload of contact.status_changed.
@@ -461,11 +469,12 @@ const file_shogun_kagami_v1_events_proto_rawDesc = "" +
 	"\x0eJobFollowUpDue\x12\x15\n" +
 	"\x06job_id\x18\x01 \x01(\tR\x05jobId\x12\x15\n" +
 	"\x06due_on\x18\x02 \x01(\tR\x05dueOn\x12\x19\n" +
-	"\bowner_id\x18\x03 \x01(\tR\aownerId\"f\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\"\x81\x01\n" +
 	"\fContactAdded\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x127\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x06status\"\xd0\x01\n" +
+	"\x06status\x18\x02 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x06status\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\"\xd0\x01\n" +
 	"\x14ContactStatusChanged\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x123\n" +
