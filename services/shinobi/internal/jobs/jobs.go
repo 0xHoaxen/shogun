@@ -1,5 +1,5 @@
 // Package jobs holds shinobi's River workers: the minutely check for sources
-// that are due, and the run of one source.
+// that are due, the run of one source and the scoring of one posting.
 //
 // The workers share the outbox relay's River client (see relay.Config), so they
 // are handed over as a Setup rather than started here.
@@ -164,11 +164,12 @@ func dueArgs(now func() time.Time) func() (river.JobArgs, *river.InsertOpts) {
 }
 
 // NewSetup builds the jobs. now is the clock, injected for tests.
-func NewSetup(scheduler Scheduler, runner Runner, enqueuer Enqueuer, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
+func NewSetup(scheduler Scheduler, runner Runner, scorer Scorer, enqueuer Enqueuer, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
 	return Setup{
 		Workers: func(ws *river.Workers) {
 			river.AddWorker(ws, &dueWorker{scheduler: scheduler, enqueuer: enqueuer, loc: loc, now: now, log: log})
 			river.AddWorker(ws, &runWorker{runner: runner, log: log})
+			river.AddWorker(ws, &scoreWorker{scorer: scorer, now: now, log: log})
 		},
 		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: queueWorkers}},
 		PeriodicJobs: []*river.PeriodicJob{

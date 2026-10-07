@@ -52,3 +52,10 @@ ON CONFLICT (posting_id) DO UPDATE SET
 
 -- name: GetScore :one
 SELECT * FROM scores WHERE posting_id = @posting_id;
+
+-- name: MarkMatched :one
+-- Sets matched_at once. It returns a row only the first time, so the caller
+-- emits the match event exactly then.
+UPDATE scores SET matched_at = @matched_at
+WHERE posting_id = @posting_id AND matched_at IS NULL
+RETURNING posting_id;

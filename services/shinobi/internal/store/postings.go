@@ -49,6 +49,9 @@ func (r *Repo) GetPostingByID(ctx context.Context, id uuid.UUID) (db.Posting, er
 	return row, wrap("get posting", err)
 }
 
+// PostingRow is a posting with its score, when it has one.
+type PostingRow = db.ListPostingsRow
+
 // PostingFilter narrows a list; a nil field matches any.
 type PostingFilter struct {
 	// MinScore keeps only scored postings at or above it.
@@ -117,6 +120,16 @@ func (r *Repo) SaveScore(ctx context.Context, posting uuid.UUID, s domain.Score,
 	return wrap("save score", r.q.UpsertScore(ctx, db.UpsertScoreParams{
 		PostingID: posting, Score: s.Value, Reasons: reasons, ScoredBy: scoredBy, CreatedAt: at,
 	}))
+}
+
+// MarkMatched records that a posting has reached the owner's minimum. It
+// reports true only the first time, which is when the match is announced.
+func (r *Repo) MarkMatched(ctx context.Context, posting uuid.UUID, at time.Time) (bool, error) {
+	_, err := r.q.MarkMatched(ctx, db.MarkMatchedParams{PostingID: posting, MatchedAt: &at})
+	if errors.Is(mapErr(err), ErrNotFound) {
+		return false, nil
+	}
+	return err == nil, wrap("mark matched", err)
 }
 
 // GetScore returns a posting's score, or ErrNotFound when it has none.

@@ -67,7 +67,7 @@ func (q *Queries) GetPostingByID(ctx context.Context, id uuid.UUID) (Posting, er
 }
 
 const getScore = `-- name: GetScore :one
-SELECT posting_id, score, reasons, scored_by, created_at FROM scores WHERE posting_id = $1
+SELECT posting_id, score, reasons, scored_by, created_at, matched_at FROM scores WHERE posting_id = $1
 `
 
 func (q *Queries) GetScore(ctx context.Context, postingID uuid.UUID) (Score, error) {
@@ -79,6 +79,7 @@ func (q *Queries) GetScore(ctx context.Context, postingID uuid.UUID) (Score, err
 		&i.Reasons,
 		&i.ScoredBy,
 		&i.CreatedAt,
+		&i.MatchedAt,
 	)
 	return i, err
 }
@@ -194,6 +195,26 @@ func (q *Queries) ListUnscoredPostingIDs(ctx context.Context, sourceID uuid.UUID
 		return nil, err
 	}
 	return items, nil
+}
+
+const markMatched = `-- name: MarkMatched :one
+UPDATE scores SET matched_at = $1
+WHERE posting_id = $2 AND matched_at IS NULL
+RETURNING posting_id
+`
+
+type MarkMatchedParams struct {
+	MatchedAt *time.Time
+	PostingID uuid.UUID
+}
+
+// Sets matched_at once. It returns a row only the first time, so the caller
+// emits the match event exactly then.
+func (q *Queries) MarkMatched(ctx context.Context, arg MarkMatchedParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, markMatched, arg.MatchedAt, arg.PostingID)
+	var posting_id uuid.UUID
+	err := row.Scan(&posting_id)
+	return posting_id, err
 }
 
 const setSavedJob = `-- name: SetSavedJob :one

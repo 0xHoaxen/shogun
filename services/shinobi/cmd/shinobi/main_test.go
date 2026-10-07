@@ -23,6 +23,8 @@ import (
 
 const (
 	testIdentityKey = "0123456789abcdef0123456789abcdef"
+	// testSorobanAddr is never dialled: the connection is lazy and no test calls soroban.
+	testSorobanAddr = "127.0.0.1:1"
 	testConsumer    = "consumer"
 	testEventType   = "test.happened"
 	startupTimeout  = 30 * time.Second
@@ -39,6 +41,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 		"ENVIRONMENT":          "test",
 		"DATABASE_URL":         postgrestest.NewDatabase(t),
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
+		"SOROBAN_ADDR":         testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -95,6 +98,7 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 		"ENVIRONMENT":          "test",
 		"DATABASE_URL":         dbURL,
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
+		"SOROBAN_ADDR":         testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

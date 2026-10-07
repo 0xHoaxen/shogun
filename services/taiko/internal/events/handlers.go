@@ -15,6 +15,7 @@ import (
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
+	shinobiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/shinobi/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/bus"
@@ -34,6 +35,7 @@ const (
 	TypeCostThresholdReached = "cost.threshold_reached"
 	TypeCostBudgetExhausted  = "cost.budget_exhausted"
 	TypeProfileSuggestion    = "profile.suggestion_ready"
+	TypeDiscoveryMatch       = "discovery.match_found"
 )
 
 // Recorder stores the notification an event caused.
@@ -55,6 +57,7 @@ func Handlers(rec Recorder, log *slog.Logger) map[string]bus.Handler {
 		TypeCostThresholdReached: h.costThresholdReached,
 		TypeCostBudgetExhausted:  h.costBudgetExhausted,
 		TypeProfileSuggestion:    h.profileSuggestion,
+		TypeDiscoveryMatch:       h.discoveryMatch,
 	}
 }
 
@@ -129,6 +132,16 @@ func (h *handlers) draftFailed(ctx context.Context, tx pgx.Tx, env *eventsv1.Env
 	}
 	return h.record(ctx, tx, env, p.GetOwnerId(), func() (domain.Notice, error) {
 		return domain.DraftFailed(p.GetDraftId(), p.GetReason())
+	})
+}
+
+func (h *handlers) discoveryMatch(ctx context.Context, tx pgx.Tx, env *eventsv1.Envelope) error {
+	var p shinobiv1.DiscoveryMatchFound
+	if !h.payload(env, &p) {
+		return nil
+	}
+	return h.record(ctx, tx, env, p.GetOwnerId(), func() (domain.Notice, error) {
+		return domain.DiscoveryMatch(p.GetTitle(), p.GetCompany(), p.GetScore())
 	})
 }
 

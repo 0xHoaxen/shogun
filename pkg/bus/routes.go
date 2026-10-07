@@ -21,6 +21,7 @@ var routes = map[string][]string{
 	"cost.budget_exhausted":  {"taiko"},
 
 	"profile.suggestion_ready": {"taiko"},
+	"discovery.match_found":    {"taiko"},
 
 	"learning.activity_added": {"fude"},
 	"learning.item_completed": {"fude", "katana"},

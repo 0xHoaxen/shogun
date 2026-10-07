@@ -24,6 +24,7 @@ var typeToProto = map[domain.Type]taikov1.NotificationType{
 	domain.TypeBudgetExhausted:   taikov1.NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED,
 	domain.TypeDailyDigest:       taikov1.NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST,
 	domain.TypeProfileSuggestion: taikov1.NotificationType_NOTIFICATION_TYPE_PROFILE_SUGGESTION,
+	domain.TypeDiscoveryMatch:    taikov1.NotificationType_NOTIFICATION_TYPE_DISCOVERY_MATCH,
 }
 
 func notificationToProto(n db.Notification) *taikov1.Notification {

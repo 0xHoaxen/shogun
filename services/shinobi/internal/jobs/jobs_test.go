@@ -78,7 +78,7 @@ func clock() time.Time { return jobNow }
 func TestSetupSchedulesTheMinutelyCheckAndSizesItsQueue(t *testing.T) {
 	loc, _ := jobs.Location()
 
-	got := jobs.NewSetup(&fakeScheduler{}, &fakeRunner{}, &fakeEnqueuer{}, loc, func() time.Time { return jobNow }, slog.New(slog.DiscardHandler))
+	got := jobs.NewSetup(&fakeScheduler{}, &fakeRunner{}, &fakeScorer{}, &fakeEnqueuer{}, loc, func() time.Time { return jobNow }, slog.New(slog.DiscardHandler))
 
 	if len(got.PeriodicJobs) != 1 || got.Queues[jobs.Queue].MaxWorkers < 1 || loc.String() != "Asia/Kolkata" {
 		t.Fatalf("setup = %+v, location %s", got, loc)

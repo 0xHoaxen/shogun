@@ -13,6 +13,7 @@ const TYPE_LABELS: Partial<Record<NotificationType, string>> = {
   [NotificationType.BUDGET_EXHAUSTED]: "Spend",
   [NotificationType.DAILY_DIGEST]: "Digest",
   [NotificationType.PROFILE_SUGGESTION]: "Profile",
+  [NotificationType.DISCOVERY_MATCH]: "Discovery",
 };
 
 // notificationTag is the short area name shown beside a notification.

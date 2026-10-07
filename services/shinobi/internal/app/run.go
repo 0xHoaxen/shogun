@@ -94,13 +94,20 @@ func (s *Service) read(ctx context.Context, owner uuid.UUID, src db.Source) (Run
 				continue
 			}
 			row, err := repo.UpsertPosting(ctx, store.NewPosting{
-				ID: store.NewID(), OwnerID: owner, SourceID: src.ID, Candidate: candidate, Raw: item.Raw, CreatedAt: s.now().UTC(),
+				ID: store.NewID(), OwnerID: owner, SourceID: src.ID, Candidate: candidate,
+				Raw: rawOf(candidate.Description, item.Raw), CreatedAt: s.now().UTC(),
 			})
 			if err != nil {
 				return err
 			}
-			if row.Inserted {
-				res.Added++
+			if !row.Inserted {
+				continue
+			}
+			res.Added++
+			if s.queue != nil {
+				if err := s.queue.EnqueueScore(ctx, tx, ScoreInput{OwnerID: owner, PostingID: row.ID}); err != nil {
+					return err
+				}
 			}
 		}
 		return nil

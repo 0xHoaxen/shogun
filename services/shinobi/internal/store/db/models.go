@@ -58,6 +58,7 @@ type Score struct {
 	Reasons   []byte
 	ScoredBy  string
 	CreatedAt time.Time
+	MatchedAt *time.Time
 }
 
 type Source struct {

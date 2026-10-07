@@ -285,6 +285,24 @@ func TestSaveScoreReplacesTheRuleScoreWithTheModels(t *testing.T) {
 	}
 }
 
+func TestMarkMatchedSucceedsOnlyOnceAndSurvivesARescore(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	owner := uuid.New()
+	id := addPosting(t, repo, owner, addSource(t, repo, owner, "feed"), "1", "x")
+	_ = repo.SaveScore(ctx, id, score(0.9), "rule", base)
+
+	first, firstErr := repo.MarkMatched(ctx, id, base)
+	again, againErr := repo.MarkMatched(ctx, id, base.Add(time.Hour))
+	_ = repo.SaveScore(ctx, id, score(0.4), "llm", base.Add(2*time.Hour)) // a later score does not reset it
+	afterRescore, rescoreErr := repo.MarkMatched(ctx, id, base.Add(3*time.Hour))
+	noScore, noScoreErr := repo.MarkMatched(ctx, uuid.New(), base)
+
+	if !first || firstErr != nil || again || againErr != nil || afterRescore || rescoreErr != nil || noScore || noScoreErr != nil {
+		t.Fatalf("first %v %v, again %v %v, after a rescore %v %v, no score %v %v", first, firstErr, again, againErr, afterRescore, rescoreErr, noScore, noScoreErr)
+	}
+}
+
 func TestUnscoredPostingIDsListsOnlyThoseWithoutAScore(t *testing.T) {
 	repo, _ := newRepo(t)
 	ctx := context.Background()

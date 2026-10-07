@@ -38,6 +38,7 @@ const (
 	NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED   NotificationType = 10
 	NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST       NotificationType = 11
 	NotificationType_NOTIFICATION_TYPE_PROFILE_SUGGESTION NotificationType = 12
+	NotificationType_NOTIFICATION_TYPE_DISCOVERY_MATCH    NotificationType = 13
 )
 
 // Enum value maps for NotificationType.
@@ -56,6 +57,7 @@ var (
 		10: "NOTIFICATION_TYPE_BUDGET_EXHAUSTED",
 		11: "NOTIFICATION_TYPE_DAILY_DIGEST",
 		12: "NOTIFICATION_TYPE_PROFILE_SUGGESTION",
+		13: "NOTIFICATION_TYPE_DISCOVERY_MATCH",
 	}
 	NotificationType_value = map[string]int32{
 		"NOTIFICATION_TYPE_UNSPECIFIED":        0,
@@ -71,6 +73,7 @@ var (
 		"NOTIFICATION_TYPE_BUDGET_EXHAUSTED":   10,
 		"NOTIFICATION_TYPE_DAILY_DIGEST":       11,
 		"NOTIFICATION_TYPE_PROFILE_SUGGESTION": 12,
+		"NOTIFICATION_TYPE_DISCOVERY_MATCH":    13,
 	}
 )
 
@@ -892,7 +895,7 @@ const file_shogun_api_v1_notifications_proto_rawDesc = "" +
 	"\x1fSaveNotificationSettingsRequest\x12?\n" +
 	"\bsettings\x18\x01 \x01(\v2#.shogun.api.v1.NotificationSettingsR\bsettings\"c\n" +
 	" SaveNotificationSettingsResponse\x12?\n" +
-	"\bsettings\x18\x01 \x01(\v2#.shogun.api.v1.NotificationSettingsR\bsettings*\xf4\x03\n" +
+	"\bsettings\x18\x01 \x01(\v2#.shogun.api.v1.NotificationSettingsR\bsettings*\x9b\x04\n" +
 	"\x10NotificationType\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_DRAFT_READY\x10\x01\x12\"\n" +
@@ -907,7 +910,8 @@ const file_shogun_api_v1_notifications_proto_rawDesc = "" +
 	"\"NOTIFICATION_TYPE_BUDGET_EXHAUSTED\x10\n" +
 	"\x12\"\n" +
 	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v\x12(\n" +
-	"$NOTIFICATION_TYPE_PROFILE_SUGGESTION\x10\f2\xaf\x05\n" +
+	"$NOTIFICATION_TYPE_PROFILE_SUGGESTION\x10\f\x12%\n" +
+	"!NOTIFICATION_TYPE_DISCOVERY_MATCH\x10\r2\xaf\x05\n" +
 	"\x14NotificationsService\x12f\n" +
 	"\x11ListNotifications\x12'.shogun.api.v1.ListNotificationsRequest\x1a(.shogun.api.v1.ListNotificationsResponse\x12r\n" +
 	"\x15MarkNotificationsRead\x12+.shogun.api.v1.MarkNotificationsReadRequest\x1a,.shogun.api.v1.MarkNotificationsReadResponse\x12{\n" +
