@@ -28,6 +28,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/drafts", label: "Drafts", section: "S4 / Drafts", railLabel: "APPROVAL QUEUE" },
   { href: "/settings/mail", label: "Mail", section: "S9 / Settings", railLabel: "MAIL ACCOUNT" },
   { href: "/settings/spend", label: "Spend", section: "S9 / Settings", railLabel: "SPEND LEDGER" },
+  { href: "/settings/notifications", label: "Alerts", section: "S9 / Settings", railLabel: "NOTIFICATION SETTINGS" },
 ];
 
 // The bell is not a tab, but its page still names itself in the strip and rail.

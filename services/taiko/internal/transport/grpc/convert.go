@@ -1,9 +1,12 @@
 package grpc
 
 import (
+	"time"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	taikov1 "github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/app"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/domain"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/store/db"
 )
@@ -42,4 +45,26 @@ func deref(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+func settingsToProto(v app.SettingsView) *taikov1.ChannelSettings {
+	out := &taikov1.ChannelSettings{InAppEnabled: v.InAppEnabled, Version: v.Version}
+	if v.Quiet != nil {
+		out.Quiet = &taikov1.QuietHours{
+			FromMinute: int32(v.Quiet.From / time.Minute),
+			ToMinute:   int32(v.Quiet.To / time.Minute),
+		}
+	}
+	return out
+}
+
+func settingsFromProto(in *taikov1.ChannelSettings) domain.ChannelSettings {
+	out := domain.ChannelSettings{InAppEnabled: in.GetInAppEnabled()}
+	if q := in.GetQuiet(); q != nil {
+		out.Quiet = &domain.QuietHours{
+			From: time.Duration(q.GetFromMinute()) * time.Minute,
+			To:   time.Duration(q.GetToMinute()) * time.Minute,
+		}
+	}
+	return out
 }

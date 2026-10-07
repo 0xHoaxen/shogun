@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/riverqueue/river"
+
+	"github.com/0xHoaxen/shogun/pkg/schedule"
 )
 
 const (
@@ -124,8 +126,8 @@ func NewSetup(scanner Scanner, now func() time.Time, log *slog.Logger) (Setup, e
 	if err != nil {
 		return Setup{}, fmt.Errorf("load %s: %w", scanLocation, err)
 	}
-	staleScanAt := dailySchedule{hour: staleScanHour, minute: staleScanMinute, loc: loc}
-	followUpScanAt := dailySchedule{hour: followUpScanHour, minute: followUpScanMinute, loc: loc}
+	staleScanAt := schedule.Daily{Hour: staleScanHour, Minute: staleScanMinute, Loc: loc}
+	followUpScanAt := schedule.Daily{Hour: followUpScanHour, Minute: followUpScanMinute, Loc: loc}
 	today := func() string { return scanDate(now(), loc) }
 
 	return Setup{

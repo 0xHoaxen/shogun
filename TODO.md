@@ -435,13 +435,18 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: tests with fake clock and fake clients.
   Status: the digest runs for every owner taiko knows (one with a notification or a channel setting), once per IST date, with an event id derived from owner and date, so retries, snoozes and a second job for the same date add nothing. An owner's failure does not stop the others and is returned so River retries. A digest for a day that is already over is dropped. Quiet hours snooze the whole job until the window ends. Taiko now requires `KAGAMI_ADDR`, `FUDE_ADDR` and `SOROBAN_ADDR` (already in the shared compose and helm env). Drafts are counted from the first 200 of the queue and shown as "200+" beyond it, because `ListQueue` has no total. Checked on the compose stack by inserting the River job by hand: one digest, a second job for the same date added none. `go mod tidy` promoted uuid, river, rivertype and genproto from indirect to direct; they were already imported.
 
-- [ ] **P8.3a Move the daily schedule to pkg** (S) Needs: P8.3
+- [x] **P8.3a Move the daily schedule to pkg** (S) Needs: P8.3
   Do: `dailySchedule` is now copied in kagami and taiko (services cannot import each other); move it to a `pkg` package and use it in both.
   Done when: `make test` and `make lint` pass; neither service defines its own.
 
-- [ ] **P8.4 Channel settings RPCs and the settings form** (M) Needs: P8.3, P8.2b
+- [x] **P8.4 Channel settings RPCs and the settings form** (M) Needs: P8.3, P8.2b
   Do: taiko RPCs to read and save `channel_settings` (in-app enabled, quiet hours), the matching torii API, and the "How Shogun reaches you" form from the Notifications design board. The digest time and per-type toggles on the board have no storage yet: decide with the owner whether they are wanted before adding tables.
   Done when: a saved quiet window holds the next digest back (E2E), and handler tests cover each RPC.
+  Status: `GetChannelSettings` and `SaveChannelSettings` on taiko, `GetNotificationSettings` and `SaveNotificationSettings` on torii, and a Settings > Alerts page (`/settings/notifications`) with the in-app toggle and a quiet window in IST. Migration `00003` adds `version` and `updated_at` to `channel_settings`; a save carries the version it read (0 when none), and a stale one is `Aborted` with `VERSION_CONFLICT`, as soroban's SetBudget does. A window must be two different whole minutes within a day, and may wrap past midnight. `store.SaveChannelSetting` now takes a `ChannelSettingInput` and no longer upserts. The proof that a saved window holds the digest back is `TestASavedQuietWindowHoldsTheNextDigestBack` (real Postgres, saved through the use case); the browser cannot trigger the digest, so the Playwright spec (mocked API) covers the form only, and no compose spec was added.
+
+- [ ] **P8.5 Digest time and per-type notification toggles** (M) Needs: P8.4
+  Do: the board also shows a digest time and a toggle per notification type. Neither has storage: the digest runs at a fixed 08:30 IST and every consumed event notifies. `TODO(owner)`: say whether you want them. If so, add columns or a table in taiko, make the `daily_digest` schedule read the time, make the `internal/events` handlers check the toggles, and extend the form.
+  Done when: a changed digest time moves the next digest and a switched-off type stops its notifications (tests).
 
 ---
 

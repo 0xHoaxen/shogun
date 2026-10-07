@@ -21,6 +21,12 @@ service NotificationsService {
   // with Unavailable when the client fell behind; the client reconnects with
   // the last id it saw.
   rpc Stream(StreamRequest) returns (stream StreamResponse);
+  // GetNotificationSettings returns how the owner is reached. An owner who
+  // never saved any gets the defaults (in-app on, no quiet hours) at version 0.
+  rpc GetNotificationSettings(GetNotificationSettingsRequest) returns (GetNotificationSettingsResponse);
+  // SaveNotificationSettings replaces the settings. The version must be the one
+  // last read (0 when none was); a stale one fails with reason VERSION_CONFLICT.
+  rpc SaveNotificationSettings(SaveNotificationSettingsRequest) returns (SaveNotificationSettingsResponse);
 }
 
 enum NotificationType {
@@ -81,4 +87,34 @@ message StreamRequest {
 
 message StreamResponse {
   Notification notification = 1;
+}
+
+// QuietHours is a window of the day in which the daily digest is held back, in
+// minutes after midnight in the owner's zone. It may wrap past midnight (from
+// 22:00 to 08:00). The two ends must differ.
+message QuietHours {
+  int32 from_minute = 1;
+  int32 to_minute = 2;
+}
+
+message NotificationSettings {
+  bool in_app_enabled = 1;
+  // quiet is unset when there are no quiet hours.
+  QuietHours quiet = 2;
+  // version is the token to send back when saving; 0 until first saved.
+  int64 version = 3;
+}
+
+message GetNotificationSettingsRequest {}
+
+message GetNotificationSettingsResponse {
+  NotificationSettings settings = 1;
+}
+
+message SaveNotificationSettingsRequest {
+  NotificationSettings settings = 1;
+}
+
+message SaveNotificationSettingsResponse {
+  NotificationSettings settings = 1;
 }

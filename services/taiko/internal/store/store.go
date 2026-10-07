@@ -14,6 +14,7 @@ import (
 var (
 	ErrNotFound         = errors.New("store: not found")
 	ErrInvalidPageToken = errors.New("store: invalid page token")
+	ErrVersionConflict  = errors.New("store: version is stale")
 )
 
 // DBTX is a pool or a transaction. Build a Repo on a pgx.Tx to insert a

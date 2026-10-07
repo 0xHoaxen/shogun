@@ -45,6 +45,12 @@ const (
 	// NotificationsServiceStreamProcedure is the fully-qualified name of the NotificationsService's
 	// Stream RPC.
 	NotificationsServiceStreamProcedure = "/shogun.api.v1.NotificationsService/Stream"
+	// NotificationsServiceGetNotificationSettingsProcedure is the fully-qualified name of the
+	// NotificationsService's GetNotificationSettings RPC.
+	NotificationsServiceGetNotificationSettingsProcedure = "/shogun.api.v1.NotificationsService/GetNotificationSettings"
+	// NotificationsServiceSaveNotificationSettingsProcedure is the fully-qualified name of the
+	// NotificationsService's SaveNotificationSettings RPC.
+	NotificationsServiceSaveNotificationSettingsProcedure = "/shogun.api.v1.NotificationsService/SaveNotificationSettings"
 )
 
 // NotificationsServiceClient is a client for the shogun.api.v1.NotificationsService service.
@@ -63,6 +69,12 @@ type NotificationsServiceClient interface {
 	// with Unavailable when the client fell behind; the client reconnects with
 	// the last id it saw.
 	Stream(context.Context, *connect.Request[v1.StreamRequest]) (*connect.ServerStreamForClient[v1.StreamResponse], error)
+	// GetNotificationSettings returns how the owner is reached. An owner who
+	// never saved any gets the defaults (in-app on, no quiet hours) at version 0.
+	GetNotificationSettings(context.Context, *connect.Request[v1.GetNotificationSettingsRequest]) (*connect.Response[v1.GetNotificationSettingsResponse], error)
+	// SaveNotificationSettings replaces the settings. The version must be the one
+	// last read (0 when none was); a stale one fails with reason VERSION_CONFLICT.
+	SaveNotificationSettings(context.Context, *connect.Request[v1.SaveNotificationSettingsRequest]) (*connect.Response[v1.SaveNotificationSettingsResponse], error)
 }
 
 // NewNotificationsServiceClient constructs a client for the shogun.api.v1.NotificationsService
@@ -100,6 +112,18 @@ func NewNotificationsServiceClient(httpClient connect.HTTPClient, baseURL string
 			connect.WithSchema(notificationsServiceMethods.ByName("Stream")),
 			connect.WithClientOptions(opts...),
 		),
+		getNotificationSettings: connect.NewClient[v1.GetNotificationSettingsRequest, v1.GetNotificationSettingsResponse](
+			httpClient,
+			baseURL+NotificationsServiceGetNotificationSettingsProcedure,
+			connect.WithSchema(notificationsServiceMethods.ByName("GetNotificationSettings")),
+			connect.WithClientOptions(opts...),
+		),
+		saveNotificationSettings: connect.NewClient[v1.SaveNotificationSettingsRequest, v1.SaveNotificationSettingsResponse](
+			httpClient,
+			baseURL+NotificationsServiceSaveNotificationSettingsProcedure,
+			connect.WithSchema(notificationsServiceMethods.ByName("SaveNotificationSettings")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -109,6 +133,8 @@ type notificationsServiceClient struct {
 	markNotificationsRead    *connect.Client[v1.MarkNotificationsReadRequest, v1.MarkNotificationsReadResponse]
 	markAllNotificationsRead *connect.Client[v1.MarkAllNotificationsReadRequest, v1.MarkAllNotificationsReadResponse]
 	stream                   *connect.Client[v1.StreamRequest, v1.StreamResponse]
+	getNotificationSettings  *connect.Client[v1.GetNotificationSettingsRequest, v1.GetNotificationSettingsResponse]
+	saveNotificationSettings *connect.Client[v1.SaveNotificationSettingsRequest, v1.SaveNotificationSettingsResponse]
 }
 
 // ListNotifications calls shogun.api.v1.NotificationsService.ListNotifications.
@@ -131,6 +157,16 @@ func (c *notificationsServiceClient) Stream(ctx context.Context, req *connect.Re
 	return c.stream.CallServerStream(ctx, req)
 }
 
+// GetNotificationSettings calls shogun.api.v1.NotificationsService.GetNotificationSettings.
+func (c *notificationsServiceClient) GetNotificationSettings(ctx context.Context, req *connect.Request[v1.GetNotificationSettingsRequest]) (*connect.Response[v1.GetNotificationSettingsResponse], error) {
+	return c.getNotificationSettings.CallUnary(ctx, req)
+}
+
+// SaveNotificationSettings calls shogun.api.v1.NotificationsService.SaveNotificationSettings.
+func (c *notificationsServiceClient) SaveNotificationSettings(ctx context.Context, req *connect.Request[v1.SaveNotificationSettingsRequest]) (*connect.Response[v1.SaveNotificationSettingsResponse], error) {
+	return c.saveNotificationSettings.CallUnary(ctx, req)
+}
+
 // NotificationsServiceHandler is an implementation of the shogun.api.v1.NotificationsService
 // service.
 type NotificationsServiceHandler interface {
@@ -148,6 +184,12 @@ type NotificationsServiceHandler interface {
 	// with Unavailable when the client fell behind; the client reconnects with
 	// the last id it saw.
 	Stream(context.Context, *connect.Request[v1.StreamRequest], *connect.ServerStream[v1.StreamResponse]) error
+	// GetNotificationSettings returns how the owner is reached. An owner who
+	// never saved any gets the defaults (in-app on, no quiet hours) at version 0.
+	GetNotificationSettings(context.Context, *connect.Request[v1.GetNotificationSettingsRequest]) (*connect.Response[v1.GetNotificationSettingsResponse], error)
+	// SaveNotificationSettings replaces the settings. The version must be the one
+	// last read (0 when none was); a stale one fails with reason VERSION_CONFLICT.
+	SaveNotificationSettings(context.Context, *connect.Request[v1.SaveNotificationSettingsRequest]) (*connect.Response[v1.SaveNotificationSettingsResponse], error)
 }
 
 // NewNotificationsServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -181,6 +223,18 @@ func NewNotificationsServiceHandler(svc NotificationsServiceHandler, opts ...con
 		connect.WithSchema(notificationsServiceMethods.ByName("Stream")),
 		connect.WithHandlerOptions(opts...),
 	)
+	notificationsServiceGetNotificationSettingsHandler := connect.NewUnaryHandler(
+		NotificationsServiceGetNotificationSettingsProcedure,
+		svc.GetNotificationSettings,
+		connect.WithSchema(notificationsServiceMethods.ByName("GetNotificationSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	notificationsServiceSaveNotificationSettingsHandler := connect.NewUnaryHandler(
+		NotificationsServiceSaveNotificationSettingsProcedure,
+		svc.SaveNotificationSettings,
+		connect.WithSchema(notificationsServiceMethods.ByName("SaveNotificationSettings")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/shogun.api.v1.NotificationsService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case NotificationsServiceListNotificationsProcedure:
@@ -191,6 +245,10 @@ func NewNotificationsServiceHandler(svc NotificationsServiceHandler, opts ...con
 			notificationsServiceMarkAllNotificationsReadHandler.ServeHTTP(w, r)
 		case NotificationsServiceStreamProcedure:
 			notificationsServiceStreamHandler.ServeHTTP(w, r)
+		case NotificationsServiceGetNotificationSettingsProcedure:
+			notificationsServiceGetNotificationSettingsHandler.ServeHTTP(w, r)
+		case NotificationsServiceSaveNotificationSettingsProcedure:
+			notificationsServiceSaveNotificationSettingsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -214,4 +272,12 @@ func (UnimplementedNotificationsServiceHandler) MarkAllNotificationsRead(context
 
 func (UnimplementedNotificationsServiceHandler) Stream(context.Context, *connect.Request[v1.StreamRequest], *connect.ServerStream[v1.StreamResponse]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.NotificationsService.Stream is not implemented"))
+}
+
+func (UnimplementedNotificationsServiceHandler) GetNotificationSettings(context.Context, *connect.Request[v1.GetNotificationSettingsRequest]) (*connect.Response[v1.GetNotificationSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.NotificationsService.GetNotificationSettings is not implemented"))
+}
+
+func (UnimplementedNotificationsServiceHandler) SaveNotificationSettings(context.Context, *connect.Request[v1.SaveNotificationSettingsRequest]) (*connect.Response[v1.SaveNotificationSettingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.NotificationsService.SaveNotificationSettings is not implemented"))
 }

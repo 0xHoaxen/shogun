@@ -20,3 +20,19 @@ func notificationToAPI(n *taikov1.Notification) *apiv1.Notification {
 		Link: n.GetLink(), CreatedAt: n.GetCreatedAt(), ReadAt: n.GetReadAt(),
 	}
 }
+
+func settingsToAPI(s *taikov1.ChannelSettings) *apiv1.NotificationSettings {
+	out := &apiv1.NotificationSettings{InAppEnabled: s.GetInAppEnabled(), Version: s.GetVersion()}
+	if q := s.GetQuiet(); q != nil {
+		out.Quiet = &apiv1.QuietHours{FromMinute: q.GetFromMinute(), ToMinute: q.GetToMinute()}
+	}
+	return out
+}
+
+func settingsFromAPI(s *apiv1.NotificationSettings) *taikov1.ChannelSettings {
+	out := &taikov1.ChannelSettings{InAppEnabled: s.GetInAppEnabled(), Version: s.GetVersion()}
+	if q := s.GetQuiet(); q != nil {
+		out.Quiet = &taikov1.QuietHours{FromMinute: q.GetFromMinute(), ToMinute: q.GetToMinute()}
+	}
+	return out
+}

@@ -17,6 +17,13 @@ service TaikoService {
   // the notifications created after that id, so a client can reconnect without
   // missing any.
   rpc Subscribe(SubscribeRequest) returns (stream SubscribeResponse);
+  // GetChannelSettings returns how the owner is reached. An owner who never
+  // saved any gets the defaults (in-app on, no quiet hours) at version 0.
+  rpc GetChannelSettings(GetChannelSettingsRequest) returns (GetChannelSettingsResponse);
+  // SaveChannelSettings replaces the owner's settings. The version must be the
+  // one last read (0 when none was); a stale one is Aborted with reason
+  // VERSION_CONFLICT.
+  rpc SaveChannelSettings(SaveChannelSettingsRequest) returns (SaveChannelSettingsResponse);
 }
 
 // NotificationType says what happened. The set is closed by a CHECK in the
@@ -79,4 +86,35 @@ message SubscribeRequest {
 
 message SubscribeResponse {
   Notification notification = 1;
+}
+
+// QuietHours is a window of the day in which the daily digest is held back,
+// in minutes after midnight in the owner's zone. It may wrap past midnight
+// (from 22:00 to 08:00). The two ends must differ.
+message QuietHours {
+  int32 from_minute = 1;
+  int32 to_minute = 2;
+}
+
+// ChannelSettings is how the owner is reached on the in-app channel.
+message ChannelSettings {
+  bool in_app_enabled = 1;
+  // quiet is unset when there are no quiet hours.
+  QuietHours quiet = 2;
+  // version is the optimistic concurrency token; 0 until first saved.
+  int64 version = 3;
+}
+
+message GetChannelSettingsRequest {}
+
+message GetChannelSettingsResponse {
+  ChannelSettings settings = 1;
+}
+
+message SaveChannelSettingsRequest {
+  ChannelSettings settings = 1;
+}
+
+message SaveChannelSettingsResponse {
+  ChannelSettings settings = 1;
 }

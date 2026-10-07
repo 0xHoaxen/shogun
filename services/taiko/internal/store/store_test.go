@@ -248,11 +248,11 @@ func TestChannelSettingDefaultsToNotFoundThenSaves(t *testing.T) {
 	owner := store.NewID()
 
 	_, errBefore := repo.ChannelSetting(ctx, owner, store.ChannelInApp)
-	saved, err := repo.SaveChannelSetting(ctx, db.UpsertChannelSettingParams{
+	saved, err := repo.SaveChannelSetting(ctx, store.ChannelSettingInput{
 		OwnerID: owner, Channel: store.ChannelInApp, Enabled: false,
 	})
-	replaced, err2 := repo.SaveChannelSetting(ctx, db.UpsertChannelSettingParams{
-		OwnerID: owner, Channel: store.ChannelInApp, Enabled: true,
+	replaced, err2 := repo.SaveChannelSetting(ctx, store.ChannelSettingInput{
+		OwnerID: owner, Channel: store.ChannelInApp, Enabled: true, Version: saved.Version,
 	})
 	got, err3 := repo.ChannelSetting(ctx, owner, store.ChannelInApp)
 
@@ -261,6 +261,33 @@ func TestChannelSettingDefaultsToNotFoundThenSaves(t *testing.T) {
 	}
 	if err != nil || err2 != nil || err3 != nil || saved.Enabled || !replaced.Enabled || !got.Enabled {
 		t.Fatalf("saved %+v (%v), replaced %+v (%v), got %+v (%v)", saved, err, replaced, err2, got, err3)
+	}
+	if saved.Version != 1 || replaced.Version != 2 {
+		t.Fatalf("versions %d then %d, want 1 then 2", saved.Version, replaced.Version)
+	}
+}
+
+func TestChannelSettingRefusesAStaleVersionAndASecondCreate(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	owner := store.NewID()
+	first, err := repo.SaveChannelSetting(ctx, store.ChannelSettingInput{OwnerID: owner, Channel: store.ChannelInApp, Enabled: true})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	_, errCreateAgain := repo.SaveChannelSetting(ctx, store.ChannelSettingInput{OwnerID: owner, Channel: store.ChannelInApp})
+	_, errStale := repo.SaveChannelSetting(ctx, store.ChannelSettingInput{OwnerID: owner, Channel: store.ChannelInApp, Version: first.Version + 5})
+	_, errNoRow := repo.SaveChannelSetting(ctx, store.ChannelSettingInput{OwnerID: store.NewID(), Channel: store.ChannelInApp, Version: 1})
+	got, _ := repo.ChannelSetting(ctx, owner, store.ChannelInApp)
+
+	for name, err := range map[string]error{"second create": errCreateAgain, "stale version": errStale, "update of nothing": errNoRow} {
+		if !errors.Is(err, store.ErrVersionConflict) {
+			t.Fatalf("%s: want ErrVersionConflict, got %v", name, err)
+		}
+	}
+	if !got.Enabled || got.Version != first.Version {
+		t.Fatalf("a refused save changed the row: %+v", got)
 	}
 }
 

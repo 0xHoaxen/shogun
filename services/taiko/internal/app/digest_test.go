@@ -87,24 +87,34 @@ func newDigestEnv(t *testing.T, at time.Time) *digestEnv {
 func (e *digestEnv) owner(t *testing.T) uuid.UUID {
 	t.Helper()
 	owner := uuid.New()
-	if _, err := e.repo.SaveChannelSetting(context.Background(), db.UpsertChannelSettingParams{
-		OwnerID: owner, Channel: store.ChannelEmailDigest, Enabled: true,
-	}); err != nil {
-		t.Fatalf("seed owner: %v", err)
-	}
+	e.save(t, store.ChannelSettingInput{OwnerID: owner, Channel: store.ChannelEmailDigest, Enabled: true})
 	return owner
+}
+
+// save writes a setting over whatever version is stored, as a test setup step.
+func (e *digestEnv) save(t *testing.T, in store.ChannelSettingInput) {
+	t.Helper()
+	ctx := context.Background()
+	current, err := e.repo.ChannelSetting(ctx, in.OwnerID, in.Channel)
+	switch {
+	case err == nil:
+		in.Version = current.Version
+	case !errors.Is(err, store.ErrNotFound):
+		t.Fatalf("read setting: %v", err)
+	}
+	if _, err := e.repo.SaveChannelSetting(ctx, in); err != nil {
+		t.Fatalf("save setting: %v", err)
+	}
 }
 
 func (e *digestEnv) setInApp(t *testing.T, owner uuid.UUID, enabled bool, from, to time.Duration) {
 	t.Helper()
-	p := db.UpsertChannelSettingParams{OwnerID: owner, Channel: store.ChannelInApp, Enabled: enabled}
+	p := store.ChannelSettingInput{OwnerID: owner, Channel: store.ChannelInApp, Enabled: enabled}
 	if from != to {
 		p.QuietFrom = pgtype.Time{Microseconds: from.Microseconds(), Valid: true}
 		p.QuietTo = pgtype.Time{Microseconds: to.Microseconds(), Valid: true}
 	}
-	if _, err := e.repo.SaveChannelSetting(context.Background(), p); err != nil {
-		t.Fatalf("save setting: %v", err)
-	}
+	e.save(t, p)
 }
 
 func (e *digestEnv) digests(t *testing.T, owner uuid.UUID) []db.Notification {
