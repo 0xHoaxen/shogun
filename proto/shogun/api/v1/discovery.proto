@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// DiscoveryService is the job discovery screen. Torii maps it onto shinobi,
+// which reads only the sources the owner adds.
+service DiscoveryService {
+  rpc ListDiscoveryPostings(ListDiscoveryPostingsRequest) returns (ListDiscoveryPostingsResponse);
+  // SaveDiscoveryPosting adds a posting to the job tracker as a saved job.
+  // Saving twice returns the same job.
+  rpc SaveDiscoveryPosting(SaveDiscoveryPostingRequest) returns (SaveDiscoveryPostingResponse);
+  rpc ListDiscoverySources(ListDiscoverySourcesRequest) returns (ListDiscoverySourcesResponse);
+  // SaveDiscoverySource creates a source, or updates the one named by
+  // source.id. A source's kind cannot change.
+  rpc SaveDiscoverySource(SaveDiscoverySourceRequest) returns (SaveDiscoverySourceResponse);
+  // RunDiscoverySource reads a source now. A source that cannot be read is
+  // FailedPrecondition with a reason such as SOURCE_ROBOTS_DISALLOWED.
+  rpc RunDiscoverySource(RunDiscoverySourceRequest) returns (RunDiscoverySourceResponse);
+  rpc GetDiscoveryPreferences(GetDiscoveryPreferencesRequest) returns (GetDiscoveryPreferencesResponse);
+  rpc SetDiscoveryPreferences(SetDiscoveryPreferencesRequest) returns (SetDiscoveryPreferencesResponse);
+}
+
+enum DiscoverySourceKind {
+  DISCOVERY_SOURCE_KIND_UNSPECIFIED = 0;
+  DISCOVERY_SOURCE_KIND_RSS = 1;
+  DISCOVERY_SOURCE_KIND_API = 2;
+  DISCOVERY_SOURCE_KIND_FILE = 3;
+}
+
+// DiscoveryFieldMapping says where in a JSON item each posting field is, as
+// dot-separated keys such as "company.name".
+message DiscoveryFieldMapping {
+  string items_path = 1;
+  string id = 2;
+  string title = 3;
+  string company = 4;
+  string url = 5;
+  string location = 6;
+  string posted_at = 7;
+  string description = 8;
+}
+
+message DiscoverySourceConfig {
+  string url = 1;
+  string document = 2;
+  DiscoveryFieldMapping mapping = 3;
+}
+
+message DiscoverySource {
+  string id = 1;
+  string name = 2;
+  DiscoverySourceKind kind = 3;
+  DiscoverySourceConfig config = 4;
+  // schedule is a five-field cron expression in Asia/Kolkata time; empty on
+  // create means every day at 07:00.
+  string schedule = 5;
+  bool enabled = 6;
+  google.protobuf.Timestamp last_run_at = 7;
+  // last_error is a short code for why the last run failed, empty on success.
+  string last_error = 8;
+}
+
+message DiscoveryPreferences {
+  repeated string roles = 1;
+  repeated string locations = 2;
+  repeated string must_have = 3;
+  repeated string nice_to_have = 4;
+  repeated string exclude = 5;
+  // min_score is the score from 0 to 1 at which a posting counts as a match.
+  float min_score = 6;
+}
+
+message DiscoveryPosting {
+  string id = 1;
+  string source_id = 2;
+  string title = 3;
+  string company = 4;
+  string url = 5;
+  string location = 6;
+  google.protobuf.Timestamp posted_at = 7;
+  // scored is false until the posting has a score.
+  bool scored = 8;
+  float score = 9;
+  repeated string reasons = 10;
+  // scored_by is "rule" or "llm".
+  string scored_by = 11;
+  // saved_job_id is the tracker job once the posting is saved.
+  string saved_job_id = 12;
+  google.protobuf.Timestamp created_at = 13;
+}
+
+message ListDiscoveryPostingsRequest {
+  // min_score keeps only scored postings at or above it; zero means all.
+  float min_score = 1;
+  string source_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListDiscoveryPostingsResponse {
+  repeated DiscoveryPosting postings = 1;
+  string next_page_token = 2;
+}
+
+message SaveDiscoveryPostingRequest {
+  string posting_id = 1;
+}
+
+message SaveDiscoveryPostingResponse {
+  string job_id = 1;
+}
+
+message ListDiscoverySourcesRequest {}
+
+message ListDiscoverySourcesResponse {
+  repeated DiscoverySource sources = 1;
+}
+
+message SaveDiscoverySourceRequest {
+  DiscoverySource source = 1;
+}
+
+message SaveDiscoverySourceResponse {
+  DiscoverySource source = 1;
+}
+
+message RunDiscoverySourceRequest {
+  string id = 1;
+}
+
+message RunDiscoverySourceResponse {
+  // fetched is how many postings the source listed, added how many were new.
+  int32 fetched = 1;
+  int32 added = 2;
+}
+
+message GetDiscoveryPreferencesRequest {}
+
+message GetDiscoveryPreferencesResponse {
+  DiscoveryPreferences preferences = 1;
+}
+
+message SetDiscoveryPreferencesRequest {
+  DiscoveryPreferences preferences = 1;
+}
+
+message SetDiscoveryPreferencesResponse {
+  DiscoveryPreferences preferences = 1;
+}

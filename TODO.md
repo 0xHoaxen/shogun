@@ -523,9 +523,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: handler tests with a fake kagami including a repeated save.
   Status: kagami is asked with the posting's id as `idempotency_key`, so a call that failed after the job was made still gets the original job back, and the first job recorded on the posting stands if two calls race. A posting with no company is saved under the host of its link, or "Unknown company", since kagami requires a company name. A job refused by kagami is `FAILED_PRECONDITION` / `POSTING_NOT_SAVABLE`; kagami being down is `UNAVAILABLE` / `TRACKER_UNAVAILABLE`. shinobi now requires `KAGAMI_ADDR` (compose already sets it; `TODO(owner)`: add it to the helm values). The saved job's status is `saved`, not `applied`.
 
-- [ ] **P9.3e torii DiscoveryService and Discovery screen** (M) Needs: P9.3c, P9.3d
+- [x] **P9.3e torii DiscoveryService and Discovery screen** (M) Needs: P9.3c, P9.3d
   Do: `api/v1/discovery.proto`, handlers, `/discovery` page (postings by score, save to tracker, sources, preferences).
   Done when: torii handler tests and mocked-API Playwright tests pass.
+  Status: `DiscoveryService` (postings, save to tracker, sources with run-now, preferences) over shinobi; torii now requires `SHINOBI_ADDR` (compose already sets it; `TODO(owner)`: add it to the helm values). `/discovery` has three views: Postings (best score first, minimum-score filter, reasons, "Save to tracker" then a link to the board), Sources (add, edit, turn on or off, read now, last failure in plain words; kind is locked when editing) and What you want (comma-separated lists and the match threshold as a percentage; saving scores postings again). Posting links are shown only if http or https. 11 mocked-API Playwright tests; no compose spec, as the stack has no job source to read.
 
 - [ ] **P9.4a sensei facts** (M) Needs: P7.7
   Do: migration for `facts` and `daily_rollups`; inbox handlers for `job.*`, `contact.*`, `mail.*`, `draft.approved`, `draft.sent` and `cost.threshold_reached`, one fact per event id; routes to sensei.
