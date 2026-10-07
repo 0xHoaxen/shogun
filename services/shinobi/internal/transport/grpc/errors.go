@@ -24,6 +24,9 @@ const (
 	reasonInvalidToken    = "INVALID_PAGE_TOKEN"
 	reasonSourceNotFound  = "SOURCE_NOT_FOUND"
 	reasonKindFixed       = "SOURCE_KIND_FIXED"
+	reasonPostingNotFound = "POSTING_NOT_FOUND"
+	reasonPostingRefused  = "POSTING_NOT_SAVABLE"
+	reasonTrackerDown     = "TRACKER_UNAVAILABLE"
 	reasonTooManySources  = "TOO_MANY_SOURCES"
 	reasonInternal        = "INTERNAL"
 
@@ -62,6 +65,12 @@ func toStatus(err error) error {
 		return withReason(codes.InvalidArgument, reasonInvalidArgument, err.Error())
 	case errors.Is(err, app.ErrSourceNotFound):
 		return withReason(codes.NotFound, reasonSourceNotFound, "source not found")
+	case errors.Is(err, app.ErrPostingNotFound):
+		return withReason(codes.NotFound, reasonPostingNotFound, "posting not found")
+	case errors.Is(err, app.ErrPostingRefused):
+		return withReason(codes.FailedPrecondition, reasonPostingRefused, "the tracker cannot take this posting as a job")
+	case errors.Is(err, app.ErrTrackerUnavailable):
+		return withReason(codes.Unavailable, reasonTrackerDown, "the tracker is unavailable; try again later")
 	case errors.Is(err, app.ErrKindFixed):
 		return withReason(codes.FailedPrecondition, reasonKindFixed, "a source's kind cannot change; add a new source instead")
 	case errors.Is(err, app.ErrTooManySources):

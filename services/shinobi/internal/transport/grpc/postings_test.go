@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	shinobiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/shinobi/v1"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/domain"
@@ -121,4 +122,40 @@ func TestListPostingsFiltersByMinimumScoreAndPages(t *testing.T) {
 	}
 	requireStatus(t, tokenErr, codes.InvalidArgument, "INVALID_PAGE_TOKEN")
 	requireStatus(t, idErr, codes.InvalidArgument, "INVALID_ID")
+}
+
+func TestSaveToTrackerReturnsTheJobAndTheListShowsIt(t *testing.T) {
+	h := newHarness(t)
+	id := h.posting(t, h.owner, "Backend Engineer", 0.9)
+
+	first, err := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: id})
+	again, _ := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: id})
+	listed, _ := h.client.ListPostings(h.ctx(t), &shinobiv1.ListPostingsRequest{})
+
+	if err != nil || first.GetJobId() != h.tracker.jobID || again.GetJobId() != first.GetJobId() || len(h.tracker.keys) != 1 || h.tracker.keys[0] != id {
+		t.Fatalf("first %v (%v), again %v, kagami keys %v; want one call keyed by the posting", first, err, again, h.tracker.keys)
+	}
+	if listed.GetPostings()[0].GetSavedJobId() != first.GetJobId() {
+		t.Fatalf("listed saved job = %q, want %q", listed.GetPostings()[0].GetSavedJobId(), first.GetJobId())
+	}
+}
+
+func TestSaveToTrackerFailuresHaveStableReasons(t *testing.T) {
+	h := newHarness(t)
+	id := h.posting(t, h.owner, "Backend Engineer", 0.9)
+	foreign := h.posting(t, uuid.NewString(), "theirs", 0.9)
+
+	_, missing := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: uuid.NewString()})
+	_, notMine := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: foreign})
+	_, bad := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: "nope"})
+	h.tracker.err = status.Error(codes.InvalidArgument, "no")
+	_, refused := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: id})
+	h.tracker.err = status.Error(codes.Unavailable, "down")
+	_, down := h.client.SaveToTracker(h.ctx(t), &shinobiv1.SaveToTrackerRequest{PostingId: id})
+
+	requireStatus(t, missing, codes.NotFound, "POSTING_NOT_FOUND")
+	requireStatus(t, notMine, codes.NotFound, "POSTING_NOT_FOUND")
+	requireStatus(t, bad, codes.InvalidArgument, "INVALID_ID")
+	requireStatus(t, refused, codes.FailedPrecondition, "POSTING_NOT_SAVABLE")
+	requireStatus(t, down, codes.Unavailable, "TRACKER_UNAVAILABLE")
 }

@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	shinobiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/shinobi/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
@@ -43,7 +44,23 @@ type fakeFetcher struct {
 
 func (f *fakeFetcher) Get(context.Context, string) ([]byte, error) { return []byte(f.doc), f.err }
 
+// fakeTracker answers AddJob with a fixed job id, or err, and records the keys.
+type fakeTracker struct {
+	jobID string
+	err   error
+	keys  []string
+}
+
+func (f *fakeTracker) AddJob(_ context.Context, in *kagamiv1.AddJobRequest, _ ...grpc.CallOption) (*kagamiv1.AddJobResponse, error) {
+	f.keys = append(f.keys, in.GetIdempotencyKey())
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &kagamiv1.AddJobResponse{Job: &kagamiv1.Job{Id: f.jobID}}, nil
+}
+
 type harness struct {
+	tracker   *fakeTracker
 	client    shinobiv1.ShinobiServiceClient
 	pool      *pgxpool.Pool
 	authority *authz.Authority
@@ -67,8 +84,9 @@ func newHarness(t *testing.T) *harness {
 		t.Fatalf("authority: %v", err)
 	}
 	fetcher := &fakeFetcher{doc: feedXML}
+	tracker := &fakeTracker{jobID: uuid.NewString()}
 	srv := grpc.NewServer(grpc.UnaryInterceptor(authority.UnaryServerInterceptor()))
-	shinobiv1.RegisterShinobiServiceServer(srv, shinobigrpc.New(app.NewService(pool, fetcher, nil, nil)))
+	shinobiv1.RegisterShinobiServiceServer(srv, shinobigrpc.New(app.NewService(pool, fetcher, nil, nil, app.WithTracker(tracker))))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
@@ -79,7 +97,7 @@ func newHarness(t *testing.T) *harness {
 		t.Fatalf("dial: %v", err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
-	return &harness{client: shinobiv1.NewShinobiServiceClient(conn), pool: pool, authority: authority, fetcher: fetcher, owner: uuid.NewString()}
+	return &harness{tracker: tracker, client: shinobiv1.NewShinobiServiceClient(conn), pool: pool, authority: authority, fetcher: fetcher, owner: uuid.NewString()}
 }
 
 func (h *harness) ctxFor(t *testing.T, owner string) context.Context {

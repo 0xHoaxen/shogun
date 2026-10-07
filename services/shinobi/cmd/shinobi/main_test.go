@@ -42,6 +42,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 		"DATABASE_URL":         postgrestest.NewDatabase(t),
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
 		"SOROBAN_ADDR":         testSorobanAddr,
+		"KAGAMI_ADDR":          testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -99,6 +100,7 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 		"DATABASE_URL":         dbURL,
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
 		"SOROBAN_ADDR":         testSorobanAddr,
+		"KAGAMI_ADDR":          testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

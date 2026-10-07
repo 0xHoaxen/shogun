@@ -14,11 +14,13 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	shinobiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/shinobi/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/logger"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
@@ -35,6 +37,7 @@ const (
 	migrateOnStartEnv  = "MIGRATE_ON_START"
 	migrateOnStartDflt = "true"
 	migrateCommand     = "migrate"
+	kagamiAddrEnv      = "KAGAMI_ADDR"
 )
 
 func main() {
@@ -126,7 +129,21 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 	defer model.close()
-	svc := app.NewService(pool, fetch.New(), nil, log, app.WithScoring(queue, model.completer))
+	kagamiAddr, err := config.Required(lookup, kagamiAddrEnv)
+	if err != nil {
+		return err
+	}
+	kagamiConn, err := grpcclient.Dial(ctx, kagamiAddr, grpcclient.WithSigner(authority))
+	if err != nil {
+		return fmt.Errorf("dial %s: %w", kagamiAddrEnv, err)
+	}
+	defer func() {
+		if err := kagamiConn.Close(); err != nil {
+			log.Warn("close kagami connection", slog.Any("error", err))
+		}
+	}()
+	svc := app.NewService(pool, fetch.New(), nil, log,
+		app.WithScoring(queue, model.completer), app.WithTracker(kagamiv1.NewKagamiServiceClient(kagamiConn)))
 	loc, err := jobs.Location()
 	if err != nil {
 		return err
