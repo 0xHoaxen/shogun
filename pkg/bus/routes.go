@@ -19,6 +19,9 @@ var routes = map[string][]string{
 	"mail.reply_detected":    {"kagami", "taiko"},
 	"cost.threshold_reached": {"taiko"},
 	"cost.budget_exhausted":  {"taiko"},
+
+	"learning.activity_added": {"fude"},
+	"learning.item_completed": {"fude"},
 }
 
 // Consumers returns the services subscribed to eventType, or nil when there

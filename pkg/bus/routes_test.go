@@ -33,7 +33,10 @@ func TestConsumersRoutesMailEventsToKagami(t *testing.T) {
 }
 
 func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
-	for _, eventType := range []string{"job.added", "contact.status_changed", "draft.sent", "draft.send_failed"} {
+	for _, eventType := range []string{
+		"job.added", "contact.status_changed", "draft.sent", "draft.send_failed",
+		"learning.activity_added", "learning.item_completed",
+	} {
 		if got := Consumers(eventType); !slices.Contains(got, "fude") {
 			t.Errorf("Consumers(%q) = %v, want fude among them", eventType, got)
 		}
