@@ -241,6 +241,8 @@ jobs:
           cache-dependency-path: web/package-lock.json
       # Only what the flows need: other services are not called, and the event
       # relay to them just retries. mock-apis stands in for Anthropic and Gmail.
+      - name: Test the log check itself
+        run: scripts/check-logs-clean_test.sh
       - name: Start the stack with stub identity, Claude and Gmail
         run: $COMPOSE up -d --build --wait postgres kagami torii web mock-oauth2 soroban fude tsubame taiko dojo mock-apis
       - name: Install web dependencies and the browser
@@ -251,6 +253,15 @@ jobs:
       - name: Log in, add a job, move it; connect mail, send a draft; get notified
         working-directory: web
         run: npm run test:e2e:compose
+      # What the flows sent through the services (a recipient, the approved
+      # text, Gmail tokens, the OAuth secret and code) must not be in any of
+      # their logs. The stubs log what they receive, so they are left out.
+      - name: Check the service logs hold no message text or tokens
+        run: |
+          $COMPOSE logs --no-color kagami torii web soroban fude tsubame taiko dojo \
+            | scripts/check-logs-clean.sh \
+              "jobs@lumen.example" "this is the text the owner approved" \
+              "stub-access" "stub-refresh" "e2e-secret" "e2e-code"
       - name: Show container logs
         if: failure()
         run: $COMPOSE logs --no-color --tail=200
