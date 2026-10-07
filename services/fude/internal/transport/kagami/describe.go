@@ -28,8 +28,9 @@ type Source struct {
 // New returns a Source that calls kagami through client.
 func New(client kagamiv1.KagamiServiceClient) *Source { return &Source{client: client} }
 
-// Describe implements app.ContextSource. Learning activities are not readable
-// until dojo exists, so they describe as nothing.
+// Describe implements app.ContextSource for jobs and contacts. Learning
+// activities come from dojo (see the dojo package), so here they describe as
+// nothing.
 func (s *Source) Describe(ctx context.Context, _ uuid.UUID, target domain.TargetType, id uuid.UUID) (app.TargetContext, error) {
 	switch target {
 	case domain.TargetJob:

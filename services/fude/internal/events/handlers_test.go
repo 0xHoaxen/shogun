@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
@@ -177,6 +178,11 @@ func TestEventsThatCannotBeHandledAreAcknowledgedWithoutADraft(t *testing.T) {
 		{"job.added with a bad job id", "job.added", &kagamiv1.JobAdded{OwnerId: uuid.NewString(), JobId: "nope"}},
 		{"contact event without an owner", "contact.status_changed", &kagamiv1.ContactStatusChanged{ContactId: uuid.NewString()}},
 		{"payload of another type", "job.added", wrapperspb.String("x")},
+		{"activity without an owner", "learning.activity_added", &dojov1.LearningActivityAdded{ActivityId: uuid.NewString()}},
+		{"activity with a bad id", "learning.activity_added", &dojov1.LearningActivityAdded{OwnerId: uuid.NewString(), ActivityId: "nope"}},
+		{"item without an owner", "learning.item_completed", &dojov1.LearningItemCompleted{ItemId: uuid.NewString()}},
+		{"item with a bad id", "learning.item_completed", &dojov1.LearningItemCompleted{OwnerId: uuid.NewString(), ItemId: "nope"}},
+		{"learning payload of another type", "learning.activity_added", wrapperspb.String("x")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -325,5 +331,49 @@ func TestOutcomesForAnotherOwnerOrAMissingDraftOrBadIDsAreAcknowledgedQuietly(t 
 	}
 	if got := c.stateOf(t, id); got != "approved" {
 		t.Fatalf("state %q: none of those events concerned this draft", got)
+	}
+}
+
+func TestLearningEventsQueueALinkedInPostAboutTheirTarget(t *testing.T) {
+	owner, target := uuid.New(), uuid.New()
+	tests := []struct {
+		name    string
+		typ     string
+		payload proto.Message
+	}{
+		{"activity added", "learning.activity_added", &dojov1.LearningActivityAdded{OwnerId: owner.String(), ActivityId: target.String(), Summary: "built a pool"}},
+		{"item completed", "learning.item_completed", &dojov1.LearningItemCompleted{OwnerId: owner.String(), ItemId: target.String(), Title: "Go course"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := newConsumer(t)
+
+			err := c.deliver(t, uuid.NewString(), tt.typ, tt.payload)
+
+			got := c.drafts(t)
+			if err != nil || len(got) != 1 || got[0] != (draftRow{"post", "learning_activity", "linkedin", "generating"}) {
+				t.Fatalf("err %v, drafts %+v", err, got)
+			}
+			if len(c.queue.jobs) != 1 || c.queue.jobs[0].OwnerID != owner || c.queue.jobs[0].Version != 1 {
+				t.Fatalf("got jobs %+v", c.queue.jobs)
+			}
+			var stored uuid.UUID
+			if err := c.pool.QueryRow(context.Background(), `SELECT target_id FROM drafts`).Scan(&stored); err != nil || stored != target {
+				t.Fatalf("target %s, err %v; want %s", stored, err, target)
+			}
+		})
+	}
+}
+
+func TestADuplicateLearningDeliveryCreatesOnePost(t *testing.T) {
+	c := newConsumer(t)
+	payload := &dojov1.LearningActivityAdded{OwnerId: uuid.NewString(), ActivityId: uuid.NewString()}
+	id := uuid.NewString()
+
+	first := c.deliver(t, id, "learning.activity_added", payload)
+	again := c.deliver(t, id, "learning.activity_added", payload)
+
+	if first != nil || again != nil || len(c.drafts(t)) != 1 || len(c.queue.jobs) != 1 {
+		t.Fatalf("errs %v %v, drafts %d, jobs %d; want one of each", first, again, len(c.drafts(t)), len(c.queue.jobs))
 	}
 }

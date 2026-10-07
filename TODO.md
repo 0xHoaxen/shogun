@@ -463,9 +463,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `cd services/dojo && go test -race ./...` passes: a handler test per RPC, exactly one outbox row per mutating call, GeneratePost against a fake fude.
   Status: `UpdateItem` and `ChangeItemStatus` write no event unless the item reaches done (one `learning.item_completed`); `LogActivity` writes one `learning.activity_added`; `AddItem` writes none, since nothing consumes it. `GeneratePost` is for LinkedIn or X, takes up to 10 activities, targets the first activity by id and carries the rest (with the item's takeaway) as `extra_context`; a fude failure is `Unavailable` / `DRAFTS_UNAVAILABLE` without the cause. It sends no idempotency key, so a retried call makes a second draft. dojo now requires `FUDE_ADDR` (compose already sets it). `TODO(owner)`: add `FUDE_ADDR` to `deploy/helm/values/staging/dojo.yaml`, as for the other services.
 
-- [ ] **P9.1c fude consumes learning events** (M) Needs: P9.1b
+- [x] **P9.1c fude consumes learning events** (M) Needs: P9.1b
   Do: fude inbox handlers for `learning.activity_added` and `learning.item_completed` (post draft, event id as idempotency key); a dojo-backed `ContextSource` for `learning_activity` targets (`DOJO_ADDR`); routes in `pkg/bus/routes.go`. `TODO(owner)`: the default post channel (LinkedIn assumed) and whether every activity should draft a post.
   Done when: `cd services/fude && go test -race ./...` passes with consumer tests including a duplicate delivery and a payload without an owner.
+  Status: both events draft a LinkedIn post (`postChannel` in `internal/events`). A finished item has no draft target type of its own (the `drafts.target_type` CHECK has none), so `learning.item_completed` targets the item's id as a `learning_activity`, and the dojo context source tries `GetActivity` first and falls back to `GetItem` when the id is not an activity. fude now requires `DOJO_ADDR` (compose already sets it); `TODO(owner)`: add it to the staging and production helm values. Each event costs one `fude.post` generation, so the soft $1 per day feature budget is what limits a busy day.
 
 - [ ] **P9.1d torii LearningService** (M) Needs: P9.1b
   Do: `proto/shogun/api/v1/learning.proto` and Connect handlers over dojo (`DOJO_ADDR`) with the same error mapping as jobs and drafts.

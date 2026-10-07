@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
@@ -23,7 +24,14 @@ const (
 	TypeContactStatusChanged = "contact.status_changed"
 	TypeDraftSent            = "draft.sent"
 	TypeDraftSendFailed      = "draft.send_failed"
+	TypeActivityAdded        = "learning.activity_added"
+	TypeItemCompleted        = "learning.item_completed"
 )
+
+// postChannel is where a post about something learned is meant to go.
+// TODO(owner): LinkedIn is assumed; say if posts should default to X, and
+// whether every logged activity should draft a post or only finished items.
+const postChannel = domain.ChannelLinkedIn
 
 // Drafts is what the handlers need from the use cases.
 type Drafts interface {
@@ -40,6 +48,8 @@ func Handlers(drafts Drafts, log *slog.Logger) map[string]bus.Handler {
 		TypeContactStatusChanged: h.contactStatusChanged,
 		TypeDraftSent:            h.draftSent,
 		TypeDraftSendFailed:      h.draftSendFailed,
+		TypeActivityAdded:        h.activityAdded,
+		TypeItemCompleted:        h.itemCompleted,
 	}
 }
 
@@ -70,6 +80,30 @@ func (h *handlers) contactStatusChanged(ctx context.Context, tx pgx.Tx, env *eve
 	return h.create(ctx, tx, env, p.GetOwnerId(), p.GetContactId(), app.EventDraftInput{
 		Kind: domain.KindOutreach, TargetType: domain.TargetContact, Channel: channelFor(p.GetChannel()),
 	})
+}
+
+// activityAdded queues a post about a newly logged learning activity.
+func (h *handlers) activityAdded(ctx context.Context, tx pgx.Tx, env *eventsv1.Envelope) error {
+	var p dojov1.LearningActivityAdded
+	if err := env.GetPayload().UnmarshalTo(&p); err != nil {
+		return h.drop(env, fmt.Errorf("decode payload: %w", err))
+	}
+	return h.create(ctx, tx, env, p.GetOwnerId(), p.GetActivityId(), postDraft())
+}
+
+// itemCompleted queues a post about a finished course, book, project or skill.
+// The draft's target is the item's id, which dojo's context source reads when
+// no activity has that id.
+func (h *handlers) itemCompleted(ctx context.Context, tx pgx.Tx, env *eventsv1.Envelope) error {
+	var p dojov1.LearningItemCompleted
+	if err := env.GetPayload().UnmarshalTo(&p); err != nil {
+		return h.drop(env, fmt.Errorf("decode payload: %w", err))
+	}
+	return h.create(ctx, tx, env, p.GetOwnerId(), p.GetItemId(), postDraft())
+}
+
+func postDraft() app.EventDraftInput {
+	return app.EventDraftInput{Kind: domain.KindPost, TargetType: domain.TargetLearningActivity, Channel: postChannel}
 }
 
 func (h *handlers) create(ctx context.Context, tx pgx.Tx, env *eventsv1.Envelope, ownerID, targetID string, in app.EventDraftInput) error {
