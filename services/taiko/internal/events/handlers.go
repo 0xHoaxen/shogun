@@ -14,6 +14,7 @@ import (
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/bus"
@@ -32,6 +33,7 @@ const (
 	TypeDraftSendFailed      = "draft.send_failed"
 	TypeCostThresholdReached = "cost.threshold_reached"
 	TypeCostBudgetExhausted  = "cost.budget_exhausted"
+	TypeProfileSuggestion    = "profile.suggestion_ready"
 )
 
 // Recorder stores the notification an event caused.
@@ -52,6 +54,7 @@ func Handlers(rec Recorder, log *slog.Logger) map[string]bus.Handler {
 		TypeDraftSendFailed:      h.draftSendFailed,
 		TypeCostThresholdReached: h.costThresholdReached,
 		TypeCostBudgetExhausted:  h.costBudgetExhausted,
+		TypeProfileSuggestion:    h.profileSuggestion,
 	}
 }
 
@@ -127,6 +130,29 @@ func (h *handlers) draftFailed(ctx context.Context, tx pgx.Tx, env *eventsv1.Env
 	return h.record(ctx, tx, env, p.GetOwnerId(), func() (domain.Notice, error) {
 		return domain.DraftFailed(p.GetDraftId(), p.GetReason())
 	})
+}
+
+func (h *handlers) profileSuggestion(ctx context.Context, tx pgx.Tx, env *eventsv1.Envelope) error {
+	var p katanav1.ProfileSuggestionReady
+	if !h.payload(env, &p) {
+		return nil
+	}
+	return h.record(ctx, tx, env, p.GetOwnerId(), func() (domain.Notice, error) {
+		return domain.ProfileSuggestion(suggestionTarget(p.GetTarget()))
+	})
+}
+
+// suggestionTarget names katana's target the way the builder expects, or ""
+// for one it does not know.
+func suggestionTarget(t katanav1.SuggestionTarget) string {
+	switch t {
+	case katanav1.SuggestionTarget_SUGGESTION_TARGET_RESUME:
+		return domain.SuggestionResume
+	case katanav1.SuggestionTarget_SUGGESTION_TARGET_LINKEDIN:
+		return domain.SuggestionLinkedIn
+	default:
+		return ""
+	}
 }
 
 func (h *handlers) draftSendFailed(ctx context.Context, tx pgx.Tx, env *eventsv1.Envelope) error {

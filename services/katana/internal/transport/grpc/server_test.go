@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -36,6 +37,7 @@ type fakeGitHub struct {
 func (f *fakeGitHub) Fetch(context.Context, string) (domain.Snapshot, error) { return f.snap, f.err }
 
 type harness struct {
+	pool      *pgxpool.Pool
 	client    katanav1.KatanaServiceClient
 	authority *authz.Authority
 	gh        *fakeGitHub
@@ -74,7 +76,7 @@ func newHarness(t *testing.T, configured bool) *harness {
 		t.Fatalf("dial: %v", err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
-	return &harness{client: katanav1.NewKatanaServiceClient(conn), authority: authority, gh: gh, owner: uuid.NewString()}
+	return &harness{pool: pool, client: katanav1.NewKatanaServiceClient(conn), authority: authority, gh: gh, owner: uuid.NewString()}
 }
 
 func (h *harness) ctx(t *testing.T) context.Context {

@@ -12,6 +12,7 @@ const (
 	jobsRoute     = "/jobs"
 	contactsRoute = "/contacts"
 	spendRoute    = "/settings/spend"
+	profileRoute  = "/profile"
 )
 
 // Follow-up targets.
@@ -108,4 +109,24 @@ func BudgetExhausted(scope, period string, resetsAt time.Time) (Notice, error) {
 	body := fmt.Sprintf("The %s budget for %s is used up. Calls resume %s.",
 		period, scope, resetsAt.UTC().Format("2006-01-02 15:04 UTC"))
 	return NewNotice(TypeBudgetExhausted, "Claude budget used up", body, spendRoute)
+}
+
+// Suggestion targets, as katana names them.
+const (
+	SuggestionResume   = "resume"
+	SuggestionLinkedIn = "linkedin"
+)
+
+// ProfileSuggestion announces a suggested edit to the owner's resume or
+// LinkedIn profile. target is SuggestionResume or SuggestionLinkedIn; anything
+// else is announced without naming the document.
+func ProfileSuggestion(target string) (Notice, error) {
+	title := "New profile suggestion"
+	switch target {
+	case SuggestionResume:
+		title = "New resume suggestion"
+	case SuggestionLinkedIn:
+		title = "New LinkedIn suggestion"
+	}
+	return NewNotice(TypeProfileSuggestion, title, "Review it and accept or dismiss it.", profileRoute)
 }

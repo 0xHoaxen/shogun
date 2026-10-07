@@ -28,6 +28,9 @@ func TestBuildersProduceValidNotices(t *testing.T) {
 		{"contact follow-up", func() (Notice, error) { return FollowUpDue(TargetContact, "2026-10-03") }, TypeFollowUpDue, "Contact follow-up due", "/contacts"},
 		{"threshold", func() (Notice, error) { return BudgetThreshold("overall", "daily", 80) }, TypeBudgetThreshold, "Claude spend at 80% of the daily budget", "/settings/spend"},
 		{"exhausted", func() (Notice, error) { return BudgetExhausted("overall", "daily", resets) }, TypeBudgetExhausted, "Claude budget used up", "/settings/spend"},
+		{"resume suggestion", func() (Notice, error) { return ProfileSuggestion(SuggestionResume) }, TypeProfileSuggestion, "New resume suggestion", "/profile"},
+		{"linkedin suggestion", func() (Notice, error) { return ProfileSuggestion(SuggestionLinkedIn) }, TypeProfileSuggestion, "New LinkedIn suggestion", "/profile"},
+		{"unnamed suggestion", func() (Notice, error) { return ProfileSuggestion("") }, TypeProfileSuggestion, "New profile suggestion", "/profile"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

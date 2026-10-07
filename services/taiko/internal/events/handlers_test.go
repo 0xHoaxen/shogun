@@ -17,6 +17,7 @@ import (
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/bus"
@@ -145,6 +146,16 @@ func TestEachEventTypeCreatesItsNotificationForTheOwner(t *testing.T) {
 			},
 			"budget_exhausted", "Claude budget used up", "/settings/spend",
 		},
+		{
+			"resume suggestion", "profile.suggestion_ready",
+			&katanav1.ProfileSuggestionReady{OwnerId: owner, SuggestionId: uuid.NewString(), Target: katanav1.SuggestionTarget_SUGGESTION_TARGET_RESUME},
+			"profile_suggestion", "New resume suggestion", "/profile",
+		},
+		{
+			"linkedin suggestion", "profile.suggestion_ready",
+			&katanav1.ProfileSuggestionReady{OwnerId: owner, SuggestionId: uuid.NewString(), Target: katanav1.SuggestionTarget_SUGGESTION_TARGET_LINKEDIN},
+			"profile_suggestion", "New LinkedIn suggestion", "/profile",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -193,6 +204,19 @@ func TestADuplicateDeliveryCreatesOneNotification(t *testing.T) {
 	}
 }
 
+func TestADuplicateSuggestionEventCreatesOneNotification(t *testing.T) {
+	c := newConsumer(t)
+	payload := &katanav1.ProfileSuggestionReady{OwnerId: uuid.NewString(), SuggestionId: uuid.NewString()}
+	id := uuid.NewString()
+
+	first := c.deliver(t, id, "profile.suggestion_ready", payload)
+	again := c.deliver(t, id, "profile.suggestion_ready", payload)
+
+	if first != nil || again != nil || len(c.rows(t)) != 1 {
+		t.Fatalf("errs %v %v, rows %d; want one row", first, again, len(c.rows(t)))
+	}
+}
+
 func TestADifferentEventAboutTheSameDraftCreatesAnotherNotification(t *testing.T) {
 	c := newConsumer(t)
 	payload := &fudev1.DraftReady{OwnerId: uuid.NewString(), DraftId: uuid.NewString(), Kind: fudev1.DraftKind_DRAFT_KIND_OUTREACH}
@@ -217,6 +241,7 @@ func TestEventsThatCannotBeHandledAreAcknowledgedWithoutANotification(t *testing
 		{"draft id could break the link", "draft.failed", &fudev1.DraftFailed{OwnerId: uuid.NewString(), DraftId: "x/../y"}},
 		{"send failed without a draft id", "draft.send_failed", &tsubamev1.DraftSendFailed{OwnerId: uuid.NewString()}},
 		{"payload of another type", "job.follow_up_due", wrapperspb.String("not a follow-up")},
+		{"suggestion without an owner", "profile.suggestion_ready", &katanav1.ProfileSuggestionReady{SuggestionId: uuid.NewString()}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

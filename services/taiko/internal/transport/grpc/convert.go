@@ -12,17 +12,18 @@ import (
 )
 
 var typeToProto = map[domain.Type]taikov1.NotificationType{
-	domain.TypeDraftReady:      taikov1.NotificationType_NOTIFICATION_TYPE_DRAFT_READY,
-	domain.TypeDraftFailed:     taikov1.NotificationType_NOTIFICATION_TYPE_DRAFT_FAILED,
-	domain.TypeDraftSendFailed: taikov1.NotificationType_NOTIFICATION_TYPE_DRAFT_SEND_FAILED,
-	domain.TypeInterviewInvite: taikov1.NotificationType_NOTIFICATION_TYPE_INTERVIEW_INVITE,
-	domain.TypeOffer:           taikov1.NotificationType_NOTIFICATION_TYPE_OFFER,
-	domain.TypeRejection:       taikov1.NotificationType_NOTIFICATION_TYPE_REJECTION,
-	domain.TypeReplyDetected:   taikov1.NotificationType_NOTIFICATION_TYPE_REPLY_DETECTED,
-	domain.TypeFollowUpDue:     taikov1.NotificationType_NOTIFICATION_TYPE_FOLLOW_UP_DUE,
-	domain.TypeBudgetThreshold: taikov1.NotificationType_NOTIFICATION_TYPE_BUDGET_THRESHOLD,
-	domain.TypeBudgetExhausted: taikov1.NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED,
-	domain.TypeDailyDigest:     taikov1.NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST,
+	domain.TypeDraftReady:        taikov1.NotificationType_NOTIFICATION_TYPE_DRAFT_READY,
+	domain.TypeDraftFailed:       taikov1.NotificationType_NOTIFICATION_TYPE_DRAFT_FAILED,
+	domain.TypeDraftSendFailed:   taikov1.NotificationType_NOTIFICATION_TYPE_DRAFT_SEND_FAILED,
+	domain.TypeInterviewInvite:   taikov1.NotificationType_NOTIFICATION_TYPE_INTERVIEW_INVITE,
+	domain.TypeOffer:             taikov1.NotificationType_NOTIFICATION_TYPE_OFFER,
+	domain.TypeRejection:         taikov1.NotificationType_NOTIFICATION_TYPE_REJECTION,
+	domain.TypeReplyDetected:     taikov1.NotificationType_NOTIFICATION_TYPE_REPLY_DETECTED,
+	domain.TypeFollowUpDue:       taikov1.NotificationType_NOTIFICATION_TYPE_FOLLOW_UP_DUE,
+	domain.TypeBudgetThreshold:   taikov1.NotificationType_NOTIFICATION_TYPE_BUDGET_THRESHOLD,
+	domain.TypeBudgetExhausted:   taikov1.NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED,
+	domain.TypeDailyDigest:       taikov1.NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST,
+	domain.TypeProfileSuggestion: taikov1.NotificationType_NOTIFICATION_TYPE_PROFILE_SUGGESTION,
 }
 
 func notificationToProto(n db.Notification) *taikov1.Notification {
