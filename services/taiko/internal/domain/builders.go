@@ -13,6 +13,7 @@ const (
 	contactsRoute = "/contacts"
 	spendRoute    = "/settings/spend"
 	profileRoute  = "/profile"
+	discoverRoute = "/discovery"
 )
 
 // Follow-up targets.
@@ -129,4 +130,28 @@ func ProfileSuggestion(target string) (Notice, error) {
 		title = "New LinkedIn suggestion"
 	}
 	return NewNotice(TypeProfileSuggestion, title, "Review it and accept or dismiss it.", profileRoute)
+}
+
+// maxMatchTitleLength keeps a long job title from overflowing the notice.
+const maxMatchTitleLength = 120
+
+// DiscoveryMatch announces a job posting that scored at or above the owner's
+// minimum. title and company come from a source the owner added, so they are
+// cut short and company may be empty. score is from 0 to 1.
+func DiscoveryMatch(title, company string, score float32) (Notice, error) {
+	what := clipRunes(title, maxMatchTitleLength)
+	if company != "" {
+		what += " at " + clipRunes(company, maxMatchTitleLength)
+	}
+	body := fmt.Sprintf("%s scored %d%%. Open Discovery to review it.", what, int(score*100+0.5))
+	return NewNotice(TypeDiscoveryMatch, "New job match", body, discoverRoute)
+}
+
+// clipRunes shortens s to at most n characters.
+func clipRunes(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n])
 }

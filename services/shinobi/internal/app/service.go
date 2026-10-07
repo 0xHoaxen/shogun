@@ -22,18 +22,26 @@ type Service struct {
 	fetcher Fetcher
 	now     func() time.Time
 	log     *slog.Logger
+
+	// Set by WithScoring.
+	queue Queue
+	llm   Completer
 }
 
 // NewService returns a Service on pool that reads sources through fetcher. now
 // is the clock; nil means time.Now.
-func NewService(pool *pgxpool.Pool, fetcher Fetcher, now func() time.Time, log *slog.Logger) *Service {
+func NewService(pool *pgxpool.Pool, fetcher Fetcher, now func() time.Time, log *slog.Logger, opts ...Option) *Service {
 	if now == nil {
 		now = time.Now
 	}
 	if log == nil {
 		log = slog.New(slog.DiscardHandler)
 	}
-	return &Service{pool: pool, fetcher: fetcher, now: now, log: log}
+	s := &Service{pool: pool, fetcher: fetcher, now: now, log: log}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // ownerFrom returns the owner the call acts for.

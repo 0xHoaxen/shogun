@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 )
@@ -30,6 +31,8 @@ func TestBuildersProduceValidNotices(t *testing.T) {
 		{"exhausted", func() (Notice, error) { return BudgetExhausted("overall", "daily", resets) }, TypeBudgetExhausted, "Claude budget used up", "/settings/spend"},
 		{"resume suggestion", func() (Notice, error) { return ProfileSuggestion(SuggestionResume) }, TypeProfileSuggestion, "New resume suggestion", "/profile"},
 		{"linkedin suggestion", func() (Notice, error) { return ProfileSuggestion(SuggestionLinkedIn) }, TypeProfileSuggestion, "New LinkedIn suggestion", "/profile"},
+		{"match with company", func() (Notice, error) { return DiscoveryMatch("Backend Engineer", "Acme", 0.82) }, TypeDiscoveryMatch, "New job match", "/discovery"},
+		{"match without company", func() (Notice, error) { return DiscoveryMatch("Backend Engineer", "", 1) }, TypeDiscoveryMatch, "New job match", "/discovery"},
 		{"unnamed suggestion", func() (Notice, error) { return ProfileSuggestion("") }, TypeProfileSuggestion, "New profile suggestion", "/profile"},
 	}
 	for _, tt := range tests {
@@ -65,5 +68,17 @@ func TestMailRejectsTypesItDoesNotAnnounce(t *testing.T) {
 func TestFollowUpDueRejectsAnUnknownTarget(t *testing.T) {
 	if _, err := FollowUpDue("company", "2026-10-03"); !errors.Is(err, ErrInvalidTarget) {
 		t.Fatalf("want ErrInvalidTarget, got %v", err)
+	}
+}
+
+func TestDiscoveryMatchStatesTheScoreAndCutsLongText(t *testing.T) {
+	got, err := DiscoveryMatch("Backend Engineer", "Acme", 0.825)
+	long, longErr := DiscoveryMatch(strings.Repeat("é", 500), strings.Repeat("x", 500), 0.7)
+
+	if err != nil || got.Body != "Backend Engineer at Acme scored 83%. Open Discovery to review it." {
+		t.Fatalf("body = %q, %v", got.Body, err)
+	}
+	if longErr != nil || len([]rune(long.Body)) > MaxBodyLength {
+		t.Fatalf("long body is %d characters, %v; want it to fit", len([]rune(long.Body)), longErr)
 	}
 }

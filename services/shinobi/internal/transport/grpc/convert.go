@@ -84,3 +84,42 @@ func deref(s *string) string {
 	}
 	return *s
 }
+
+func preferencesToProto(p domain.Preferences) *shinobiv1.Preferences {
+	return &shinobiv1.Preferences{
+		Roles: nonNil(p.Roles), Locations: nonNil(p.Locations), MustHave: nonNil(p.MustHave),
+		NiceToHave: nonNil(p.NiceToHave), Exclude: nonNil(p.Exclude), MinScore: p.MinScore,
+	}
+}
+
+func preferencesFromProto(p *shinobiv1.Preferences) domain.Preferences {
+	return domain.Preferences{
+		Roles: p.GetRoles(), Locations: p.GetLocations(), MustHave: p.GetMustHave(), NiceToHave: p.GetNiceToHave(),
+		Exclude: p.GetExclude(), MinScore: p.GetMinScore(),
+	}
+}
+
+func nonNil(s []string) []string {
+	if s == nil {
+		return []string{}
+	}
+	return s
+}
+
+func postingToProto(p store.PostingRow) *shinobiv1.Posting {
+	out := &shinobiv1.Posting{
+		Id: p.ID.String(), SourceId: p.SourceID.String(), Title: p.Title, Company: deref(p.Company), Url: deref(p.Url),
+		Location: deref(p.Location), CreatedAt: timestamppb.New(p.CreatedAt),
+	}
+	if p.PostedAt != nil {
+		out.PostedAt = timestamppb.New(*p.PostedAt)
+	}
+	if p.SavedJobID != nil {
+		out.SavedJobId = p.SavedJobID.String()
+	}
+	if p.Score != nil {
+		out.Scored, out.Score, out.ScoredBy = true, *p.Score, deref(p.ScoredBy)
+		out.Reasons = store.ReasonsOf(p.Reasons)
+	}
+	return out
+}
