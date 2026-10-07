@@ -132,7 +132,7 @@ func (s *Service) ChangeItemStatus(ctx context.Context, id uuid.UUID, next domai
 			return nil
 		}
 		_, err = outbox.Write(ctx, tx, eventSource, eventItemCompleted, out.ID.String(), &dojov1.LearningItemCompleted{
-			ItemId: out.ID.String(), Title: out.Title, Kind: wire.KindToProto(domain.ItemKind(out.Kind)), OwnerId: owner.String(),
+			ItemId: out.ID.String(), Title: out.Title, Kind: wire.KindToProto(domain.ItemKind(out.Kind)), OwnerId: owner.String(), Url: deref(out.Url),
 		})
 		return wrapOp("write "+eventItemCompleted+" event", err)
 	})

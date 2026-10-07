@@ -93,11 +93,13 @@ func (x *LearningActivityAdded) GetOwnerId() string {
 
 // LearningItemCompleted is the payload of learning.item_completed.
 type LearningItemCompleted struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ItemId        string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Kind          ItemKind               `protobuf:"varint,3,opt,name=kind,proto3,enum=shogun.dojo.v1.ItemKind" json:"kind,omitempty"`
-	OwnerId       string                 `protobuf:"bytes,4,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	ItemId  string                 `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	Title   string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Kind    ItemKind               `protobuf:"varint,3,opt,name=kind,proto3,enum=shogun.dojo.v1.ItemKind" json:"kind,omitempty"`
+	OwnerId string                 `protobuf:"bytes,4,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	// url is the item's link, when it has one; consumers cite it as evidence.
+	Url           string `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -160,6 +162,13 @@ func (x *LearningItemCompleted) GetOwnerId() string {
 	return ""
 }
 
+func (x *LearningItemCompleted) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
 var File_shogun_dojo_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_dojo_v1_events_proto_rawDesc = "" +
@@ -170,12 +179,13 @@ const file_shogun_dojo_v1_events_proto_rawDesc = "" +
 	"activityId\x12\x17\n" +
 	"\aitem_id\x18\x02 \x01(\tR\x06itemId\x12\x18\n" +
 	"\asummary\x18\x03 \x01(\tR\asummary\x12\x19\n" +
-	"\bowner_id\x18\x04 \x01(\tR\aownerId\"\x8f\x01\n" +
+	"\bowner_id\x18\x04 \x01(\tR\aownerId\"\xa1\x01\n" +
 	"\x15LearningItemCompleted\x12\x17\n" +
 	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12,\n" +
 	"\x04kind\x18\x03 \x01(\x0e2\x18.shogun.dojo.v1.ItemKindR\x04kind\x12\x19\n" +
-	"\bowner_id\x18\x04 \x01(\tR\aownerIdB\xb4\x01\n" +
+	"\bowner_id\x18\x04 \x01(\tR\aownerId\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03urlB\xb4\x01\n" +
 	"\x12com.shogun.dojo.v1B\vEventsProtoP\x01Z7github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1;dojov1\xa2\x02\x03SDX\xaa\x02\x0eShogun.Dojo.V1\xca\x02\x0eShogun\\Dojo\\V1\xe2\x02\x1aShogun\\Dojo\\V1\\GPBMetadata\xea\x02\x10Shogun::Dojo::V1b\x06proto3"
 
 var (

@@ -84,7 +84,7 @@ func TestSetupSchedulesTheSyncAtTwoInTheNightInIST(t *testing.T) {
 	}
 	now := time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC) // 17:30 IST
 
-	setup := NewSetup(&fakeSyncer{}, loc, func() time.Time { return now }, slog.New(slog.DiscardHandler))
+	setup := NewSetup(&fakeSyncer{}, nil, loc, func() time.Time { return now }, slog.New(slog.DiscardHandler))
 
 	if len(setup.PeriodicJobs) != 1 || setup.Queues[Queue].MaxWorkers != 1 {
 		t.Fatalf("setup = %+v", setup)

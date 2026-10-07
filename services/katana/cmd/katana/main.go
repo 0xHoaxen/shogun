@@ -24,6 +24,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
+	"github.com/0xHoaxen/shogun/services/katana/internal/events"
 	"github.com/0xHoaxen/shogun/services/katana/internal/github"
 	"github.com/0xHoaxen/shogun/services/katana/internal/jobs"
 	katanagrpc "github.com/0xHoaxen/shogun/services/katana/internal/transport/grpc"
@@ -116,21 +117,26 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
-	if err != nil {
-		return err
-	}
-
 	gh, err := newGitHub(lookup, cfg, log)
 	if err != nil {
 		return err
 	}
-	svc := app.NewService(pool, gh, nil)
+	suggest, err := newSuggestions(ctx, lookup, cfg, pool, authority, log)
+	if err != nil {
+		return err
+	}
+	defer suggest.close()
+	svc := app.NewService(pool, gh, nil, suggest.option)
 	loc, err := jobs.Location()
 	if err != nil {
 		return err
 	}
-	scheduled := jobs.NewSetup(svc, loc, time.Now, log)
+	scheduled := jobs.NewSetup(svc, svc, loc, time.Now, log)
+
+	sink, err := bus.NewSinkServer(pool, events.Handlers(svc, log), log)
+	if err != nil {
+		return err
+	}
 
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {

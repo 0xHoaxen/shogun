@@ -46,6 +46,12 @@ func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
 	}
 }
 
+func TestConsumersRoutesFinishedItemsToKatana(t *testing.T) {
+	if got := Consumers("learning.item_completed"); !slices.Contains(got, "katana") {
+		t.Errorf("Consumers(learning.item_completed) = %v, want katana among them", got)
+	}
+}
+
 func TestConsumersRoutesNotificationEventsToTaiko(t *testing.T) {
 	for _, eventType := range []string{
 		"job.follow_up_due", "contact.follow_up_due", "mail.classified", "mail.reply_detected",

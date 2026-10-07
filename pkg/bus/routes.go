@@ -21,7 +21,7 @@ var routes = map[string][]string{
 	"cost.budget_exhausted":  {"taiko"},
 
 	"learning.activity_added": {"fude"},
-	"learning.item_completed": {"fude"},
+	"learning.item_completed": {"fude", "katana"},
 }
 
 // Consumers returns the services subscribed to eventType, or nil when there

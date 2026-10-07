@@ -8,6 +8,9 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+
+	"github.com/0xHoaxen/shogun/pkg/postgres"
 
 	"github.com/0xHoaxen/shogun/services/katana/internal/store"
 )
@@ -79,11 +82,23 @@ func (s *Service) syncOwner(ctx context.Context, owner uuid.UUID) (SyncResult, e
 	if err != nil {
 		return SyncResult{}, fmt.Errorf("marshal contributions: %w", err)
 	}
-	row, err := repo.InsertSnapshot(ctx, store.NewSnapshot{
-		ID: store.NewID(), OwnerID: owner, TakenAt: s.now().UTC(), Repos: repos, Contributions: contributions, ETag: snap.ETag,
+	var res SyncResult
+	err = postgres.InTx(ctx, s.pool, func(tx pgx.Tx) error {
+		row, err := store.New(tx).InsertSnapshot(ctx, store.NewSnapshot{
+			ID: store.NewID(), OwnerID: owner, TakenAt: s.now().UTC(), Repos: repos, Contributions: contributions, ETag: snap.ETag,
+		})
+		if err != nil {
+			return err
+		}
+		res = SyncResult{Changed: true, SnapshotID: row.ID}
+		if s.queue == nil {
+			return nil
+		}
+		// The snapshot and the run it calls for succeed or fail together.
+		return s.queue.EnqueueSuggest(ctx, tx, SuggestInput{OwnerID: owner, SnapshotID: &row.ID})
 	})
 	if err != nil {
 		return SyncResult{}, err
 	}
-	return SyncResult{Changed: true, SnapshotID: row.ID}, nil
+	return res, nil
 }

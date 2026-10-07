@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,16 +28,25 @@ type Service struct {
 	pool   *pgxpool.Pool
 	github GitHub
 	now    func() time.Time
+
+	// Set by WithSuggestions.
+	queue Queue
+	llm   Completer
+	log   *slog.Logger
 }
 
 // NewService returns a Service on pool. github may be nil when no GitHub user
 // and token are configured; syncing then fails with domain.ErrNotConfigured.
 // now is the clock; nil means time.Now.
-func NewService(pool *pgxpool.Pool, github GitHub, now func() time.Time) *Service {
+func NewService(pool *pgxpool.Pool, github GitHub, now func() time.Time, opts ...Option) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{pool: pool, github: github, now: now}
+	s := &Service{pool: pool, github: github, now: now}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // ownerFrom returns the owner the call acts for.

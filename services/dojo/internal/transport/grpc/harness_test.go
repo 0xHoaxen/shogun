@@ -155,7 +155,7 @@ func (h *harness) payloadOf(t *testing.T, eventType string, into proto.Message) 
 func (h *harness) addItem(t *testing.T, title string) *dojov1.Item {
 	t.Helper()
 	res, err := h.client.AddItem(h.ctx(t), &dojov1.AddItemRequest{
-		Title: title, Kind: dojov1.ItemKind_ITEM_KIND_COURSE, Insight: "worth it",
+		Title: title, Kind: dojov1.ItemKind_ITEM_KIND_COURSE, Insight: "worth it", Url: "https://example.com/go",
 	})
 	if err != nil {
 		t.Fatalf("add item %q: %v", title, err)
