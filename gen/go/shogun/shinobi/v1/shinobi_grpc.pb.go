@@ -7,7 +7,10 @@
 package shinobiv1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,36 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	ShinobiService_UpsertSource_FullMethodName   = "/shogun.shinobi.v1.ShinobiService/UpsertSource"
+	ShinobiService_ListSources_FullMethodName    = "/shogun.shinobi.v1.ShinobiService/ListSources"
+	ShinobiService_RunSource_FullMethodName      = "/shogun.shinobi.v1.ShinobiService/RunSource"
+	ShinobiService_GetPreferences_FullMethodName = "/shogun.shinobi.v1.ShinobiService/GetPreferences"
+	ShinobiService_SetPreferences_FullMethodName = "/shogun.shinobi.v1.ShinobiService/SetPreferences"
+	ShinobiService_ListPostings_FullMethodName   = "/shogun.shinobi.v1.ShinobiService/ListPostings"
+	ShinobiService_SaveToTracker_FullMethodName  = "/shogun.shinobi.v1.ShinobiService/SaveToTracker"
+)
+
 // ShinobiServiceClient is the client API for ShinobiService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of shinobi are added with its first feature task.
+// ShinobiService finds job postings from sources the owner provides, scores
+// them against the owner's preferences and saves the good ones to the tracker.
+// Shinobi reads only the sources the owner adds; it never searches the web.
 type ShinobiServiceClient interface {
+	// UpsertSource creates a source, or updates the one named by source.id.
+	UpsertSource(ctx context.Context, in *UpsertSourceRequest, opts ...grpc.CallOption) (*UpsertSourceResponse, error)
+	ListSources(ctx context.Context, in *ListSourcesRequest, opts ...grpc.CallOption) (*ListSourcesResponse, error)
+	// RunSource reads a source now, outside its schedule.
+	RunSource(ctx context.Context, in *RunSourceRequest, opts ...grpc.CallOption) (*RunSourceResponse, error)
+	GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*GetPreferencesResponse, error)
+	SetPreferences(ctx context.Context, in *SetPreferencesRequest, opts ...grpc.CallOption) (*SetPreferencesResponse, error)
+	// ListPostings returns postings best score first; unscored ones come last.
+	ListPostings(ctx context.Context, in *ListPostingsRequest, opts ...grpc.CallOption) (*ListPostingsResponse, error)
+	// SaveToTracker adds a posting to kagami as a saved job. Saving twice
+	// returns the same job.
+	SaveToTracker(ctx context.Context, in *SaveToTrackerRequest, opts ...grpc.CallOption) (*SaveToTrackerResponse, error)
 }
 
 type shinobiServiceClient struct {
@@ -31,12 +58,96 @@ func NewShinobiServiceClient(cc grpc.ClientConnInterface) ShinobiServiceClient {
 	return &shinobiServiceClient{cc}
 }
 
+func (c *shinobiServiceClient) UpsertSource(ctx context.Context, in *UpsertSourceRequest, opts ...grpc.CallOption) (*UpsertSourceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpsertSourceResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_UpsertSource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) ListSources(ctx context.Context, in *ListSourcesRequest, opts ...grpc.CallOption) (*ListSourcesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSourcesResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_ListSources_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) RunSource(ctx context.Context, in *RunSourceRequest, opts ...grpc.CallOption) (*RunSourceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RunSourceResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_RunSource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*GetPreferencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPreferencesResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_GetPreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) SetPreferences(ctx context.Context, in *SetPreferencesRequest, opts ...grpc.CallOption) (*SetPreferencesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetPreferencesResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_SetPreferences_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) ListPostings(ctx context.Context, in *ListPostingsRequest, opts ...grpc.CallOption) (*ListPostingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListPostingsResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_ListPostings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) SaveToTracker(ctx context.Context, in *SaveToTrackerRequest, opts ...grpc.CallOption) (*SaveToTrackerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveToTrackerResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_SaveToTracker_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ShinobiServiceServer is the server API for ShinobiService service.
 // All implementations must embed UnimplementedShinobiServiceServer
 // for forward compatibility.
 //
-// The RPCs of shinobi are added with its first feature task.
+// ShinobiService finds job postings from sources the owner provides, scores
+// them against the owner's preferences and saves the good ones to the tracker.
+// Shinobi reads only the sources the owner adds; it never searches the web.
 type ShinobiServiceServer interface {
+	// UpsertSource creates a source, or updates the one named by source.id.
+	UpsertSource(context.Context, *UpsertSourceRequest) (*UpsertSourceResponse, error)
+	ListSources(context.Context, *ListSourcesRequest) (*ListSourcesResponse, error)
+	// RunSource reads a source now, outside its schedule.
+	RunSource(context.Context, *RunSourceRequest) (*RunSourceResponse, error)
+	GetPreferences(context.Context, *GetPreferencesRequest) (*GetPreferencesResponse, error)
+	SetPreferences(context.Context, *SetPreferencesRequest) (*SetPreferencesResponse, error)
+	// ListPostings returns postings best score first; unscored ones come last.
+	ListPostings(context.Context, *ListPostingsRequest) (*ListPostingsResponse, error)
+	// SaveToTracker adds a posting to kagami as a saved job. Saving twice
+	// returns the same job.
+	SaveToTracker(context.Context, *SaveToTrackerRequest) (*SaveToTrackerResponse, error)
 	mustEmbedUnimplementedShinobiServiceServer()
 }
 
@@ -47,6 +158,27 @@ type ShinobiServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedShinobiServiceServer struct{}
 
+func (UnimplementedShinobiServiceServer) UpsertSource(context.Context, *UpsertSourceRequest) (*UpsertSourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertSource not implemented")
+}
+func (UnimplementedShinobiServiceServer) ListSources(context.Context, *ListSourcesRequest) (*ListSourcesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSources not implemented")
+}
+func (UnimplementedShinobiServiceServer) RunSource(context.Context, *RunSourceRequest) (*RunSourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RunSource not implemented")
+}
+func (UnimplementedShinobiServiceServer) GetPreferences(context.Context, *GetPreferencesRequest) (*GetPreferencesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPreferences not implemented")
+}
+func (UnimplementedShinobiServiceServer) SetPreferences(context.Context, *SetPreferencesRequest) (*SetPreferencesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetPreferences not implemented")
+}
+func (UnimplementedShinobiServiceServer) ListPostings(context.Context, *ListPostingsRequest) (*ListPostingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListPostings not implemented")
+}
+func (UnimplementedShinobiServiceServer) SaveToTracker(context.Context, *SaveToTrackerRequest) (*SaveToTrackerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveToTracker not implemented")
+}
 func (UnimplementedShinobiServiceServer) mustEmbedUnimplementedShinobiServiceServer() {}
 func (UnimplementedShinobiServiceServer) testEmbeddedByValue()                        {}
 
@@ -68,13 +200,168 @@ func RegisterShinobiServiceServer(s grpc.ServiceRegistrar, srv ShinobiServiceSer
 	s.RegisterService(&ShinobiService_ServiceDesc, srv)
 }
 
+func _ShinobiService_UpsertSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).UpsertSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_UpsertSource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).UpsertSource(ctx, req.(*UpsertSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_ListSources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSourcesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).ListSources(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_ListSources_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).ListSources(ctx, req.(*ListSourcesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_RunSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RunSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).RunSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_RunSource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).RunSource(ctx, req.(*RunSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_GetPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).GetPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_GetPreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).GetPreferences(ctx, req.(*GetPreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_SetPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetPreferencesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).SetPreferences(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_SetPreferences_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).SetPreferences(ctx, req.(*SetPreferencesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_ListPostings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListPostingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).ListPostings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_ListPostings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).ListPostings(ctx, req.(*ListPostingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_SaveToTracker_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveToTrackerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).SaveToTracker(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_SaveToTracker_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).SaveToTracker(ctx, req.(*SaveToTrackerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ShinobiService_ServiceDesc is the grpc.ServiceDesc for ShinobiService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ShinobiService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.shinobi.v1.ShinobiService",
 	HandlerType: (*ShinobiServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/shinobi/v1/shinobi.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "UpsertSource",
+			Handler:    _ShinobiService_UpsertSource_Handler,
+		},
+		{
+			MethodName: "ListSources",
+			Handler:    _ShinobiService_ListSources_Handler,
+		},
+		{
+			MethodName: "RunSource",
+			Handler:    _ShinobiService_RunSource_Handler,
+		},
+		{
+			MethodName: "GetPreferences",
+			Handler:    _ShinobiService_GetPreferences_Handler,
+		},
+		{
+			MethodName: "SetPreferences",
+			Handler:    _ShinobiService_SetPreferences_Handler,
+		},
+		{
+			MethodName: "ListPostings",
+			Handler:    _ShinobiService_ListPostings_Handler,
+		},
+		{
+			MethodName: "SaveToTracker",
+			Handler:    _ShinobiService_SaveToTracker_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/shinobi/v1/shinobi.proto",
 }
