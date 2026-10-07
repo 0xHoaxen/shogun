@@ -2,5 +2,87 @@ syntax = "proto3";
 
 package shogun.katana.v1;
 
-// The RPCs of katana are added with its first feature task.
-service KatanaService {}
+import "google/protobuf/timestamp.proto";
+
+// KatanaService syncs the owner's GitHub activity and suggests resume and
+// LinkedIn changes from it. A suggestion is advice: accepting one only records
+// the decision.
+service KatanaService {
+  // SyncGitHub reads GitHub now. A snapshot is stored only when something
+  // changed since the last one. Callers: torii, the daily schedule.
+  rpc SyncGitHub(SyncGitHubRequest) returns (SyncGitHubResponse);
+  rpc ListSuggestions(ListSuggestionsRequest) returns (ListSuggestionsResponse);
+  // AcceptSuggestion and DismissSuggestion decide an open suggestion. Deciding
+  // twice is FailedPrecondition with reason SUGGESTION_ALREADY_DECIDED.
+  rpc AcceptSuggestion(AcceptSuggestionRequest) returns (AcceptSuggestionResponse);
+  rpc DismissSuggestion(DismissSuggestionRequest) returns (DismissSuggestionResponse);
+}
+
+enum SuggestionTarget {
+  SUGGESTION_TARGET_UNSPECIFIED = 0;
+  SUGGESTION_TARGET_RESUME = 1;
+  SUGGESTION_TARGET_LINKEDIN = 2;
+}
+
+enum SuggestionState {
+  SUGGESTION_STATE_UNSPECIFIED = 0;
+  SUGGESTION_STATE_OPEN = 1;
+  SUGGESTION_STATE_ACCEPTED = 2;
+  SUGGESTION_STATE_DISMISSED = 3;
+}
+
+message Evidence {
+  string label = 1;
+  string url = 2;
+}
+
+message Suggestion {
+  string id = 1;
+  SuggestionTarget target = 2;
+  // section is headline, about, experience, skills or projects.
+  string section = 3;
+  string before = 4;
+  string after = 5;
+  string reason = 6;
+  repeated Evidence evidence = 7;
+  SuggestionState state = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp decided_at = 10;
+}
+
+message SyncGitHubRequest {}
+
+message SyncGitHubResponse {
+  // changed is false when GitHub had nothing new, so no snapshot was stored.
+  bool changed = 1;
+  string snapshot_id = 2;
+}
+
+message ListSuggestionsRequest {
+  // state filters the list; unspecified means every state.
+  SuggestionState state = 1;
+  SuggestionTarget target = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListSuggestionsResponse {
+  repeated Suggestion suggestions = 1;
+  string next_page_token = 2;
+}
+
+message AcceptSuggestionRequest {
+  string id = 1;
+}
+
+message AcceptSuggestionResponse {
+  Suggestion suggestion = 1;
+}
+
+message DismissSuggestionRequest {
+  string id = 1;
+}
+
+message DismissSuggestionResponse {
+  Suggestion suggestion = 1;
+}

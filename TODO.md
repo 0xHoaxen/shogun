@@ -478,9 +478,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: logging an activity leads to a pending post draft in the queue (compose E2E with the fake LLM); `cd web && npm run test:e2e` passes.
   Status: `/learning` lists items (status filter, Start, Finish, Back to planned, Reopen) and activities (choose up to 10, then "Write a post" for LinkedIn or X, which opens the new draft). Moves are not optimistic: dojo's state machine is the authority, so a refusal is explained and the list reloaded. `e2e/learning.spec.ts` (mocked API, 10 tests) and `e2e-compose/learning.spec.ts` (3 tests) pass, and the full compose run passes on a fresh stack (6 of 6); each compose test waits for the drafts it causes, so none leaks a `draft.ready` notification into the next spec. The compose specs assume a fresh stack, as before (a reused one fails the Gmail and unread-count specs). The CI `e2e-compose` job now starts dojo and runs on dojo changes; its first run in Actions is still to confirm, after merge.
 
-- [ ] **P9.2a katana tables, proto, domain, store** (M) Needs: P6.3
+- [x] **P9.2a katana tables, proto, domain, store** (M) Needs: P6.3
   Do: migration for `github_snapshots` and `suggestions`; RPCs SyncGitHub, ListSuggestions, AcceptSuggestion, DismissSuggestion; `katana/v1/events.proto` `ProfileSuggestionReady` (with `owner_id`); suggestion state open to accepted or dismissed only.
   Done when: `make proto` passes; `cd services/katana && go test -race ./...` passes with domain and store tests.
+  Status: `AcceptSuggestion` and `DismissSuggestion` have their own request and response messages (buf lint requires one pair per RPC). Deciding is a single conditional `UPDATE ... WHERE state = 'open'`, so a suggestion is decided once even under concurrent calls; the second try is `ErrNotOpen`, which transport maps to `SUGGESTION_ALREADY_DECIDED`. Handlers come in P9.2d, `SyncGitHub` in P9.2b.
 
 - [ ] **P9.2b katana GitHub sync** (M) Needs: P9.2a
   Do: GitHub REST client over `net/http` (base URL injectable, `If-None-Match` ETag, a 304 stores no snapshot); `github_sync` River job daily 02:00 IST; SyncGitHub RPC; `KATANA_GITHUB_TOKEN` and `KATANA_GITHUB_USER`. `TODO(owner)`: the token and the GitHub user.
