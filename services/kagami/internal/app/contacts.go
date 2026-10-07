@@ -169,7 +169,7 @@ func (s *Service) createContact(ctx context.Context, tx pgx.Tx, repo *store.Repo
 		return db.Contact{}, err
 	}
 	_, err = outbox.Write(ctx, tx, eventSource, eventContactAdded, contact.ID.String(), &kagamiv1.ContactAdded{
-		ContactId: contact.ID.String(), Status: wire.ContactStatusToProto(row.status),
+		ContactId: contact.ID.String(), Status: wire.ContactStatusToProto(row.status), OwnerId: owner.String(),
 	})
 	if err != nil {
 		return db.Contact{}, fmt.Errorf("write %s event: %w", eventContactAdded, err)

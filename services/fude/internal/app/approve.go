@@ -174,6 +174,7 @@ func (a *Approver) approve(ctx context.Context, tx pgx.Tx, owner, id uuid.UUID, 
 	}
 	if _, err := outbox.Write(ctx, tx, eventSource, eventDraftApproved, id.String(), &fudev1.DraftApproved{
 		DraftId: id.String(), Version: in.Version, Channel: wire.ChannelToProto(domain.Channel(saved.Channel)),
+		OwnerId: owner.String(),
 	}); err != nil {
 		return ApproveResult{}, fmt.Errorf("write %s event: %w", eventDraftApproved, err)
 	}

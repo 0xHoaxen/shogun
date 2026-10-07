@@ -39,6 +39,7 @@ message JobFollowUpDue {
 message ContactAdded {
   string contact_id = 1;
   ContactStatus status = 2;
+  string owner_id = 3;
 }
 
 // ContactStatusChanged is the payload of contact.status_changed.
