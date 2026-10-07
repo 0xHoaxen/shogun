@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/gen/go/shogun/api/v1/apiv1connect"
+	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
@@ -110,6 +111,16 @@ func newPublicServer(
 		return nil, nil, fmt.Errorf("dial taiko: %w", err)
 	}
 	taiko := taikov1.NewTaikoServiceClient(taikoConn)
+	dojoConn, err := grpcclient.Dial(ctx, s.DojoAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = kagamiConn.Close()
+		_ = sorobanConn.Close()
+		_ = fudeConn.Close()
+		_ = tsubameConn.Close()
+		_ = taikoConn.Close()
+		return nil, nil, fmt.Errorf("dial dojo: %w", err)
+	}
+	dojo := dojov1.NewDojoServiceClient(dojoConn)
 
 	interceptor := connectapi.NewSessionInterceptor(connectapi.InterceptorConfig{
 		Auth:          auth,
@@ -130,6 +141,7 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewDraftsServiceHandler(connectapi.NewDraftsServer(fude, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewMailServiceHandler(connectapi.NewMailServer(tsubame, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewNotificationsServiceHandler(connectapi.NewNotificationsServer(taiko, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewLearningServiceHandler(connectapi.NewLearningServer(dojo, log), handlerOpts...))
 
 	srv := &http.Server{
 		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
@@ -139,6 +151,7 @@ func newPublicServer(
 	closeBackends := func() {
 		for name, conn := range map[string]interface{ Close() error }{
 			"kagami": kagamiConn, "soroban": sorobanConn, "fude": fudeConn, "tsubame": tsubameConn, "taiko": taikoConn,
+			"dojo": dojoConn,
 		} {
 			if err := conn.Close(); err != nil {
 				log.Warn("close backend connection", slog.String("backend", name), slog.Any("error", err))

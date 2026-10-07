@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "shogun/api/v1/drafts.proto";
+
+// LearningService is the learning log screen. Torii maps it onto dojo. Dates
+// without a time are YYYY-MM-DD strings.
+service LearningService {
+  rpc ListLearningItems(ListLearningItemsRequest) returns (ListLearningItemsResponse);
+  rpc AddLearningItem(AddLearningItemRequest) returns (AddLearningItemResponse);
+  // UpdateLearningItem applies update_mask (title, kind, url, insight) of item
+  // if its version matches; a stale one is Aborted with reason
+  // VERSION_CONFLICT.
+  rpc UpdateLearningItem(UpdateLearningItemRequest) returns (UpdateLearningItemResponse);
+  // ChangeLearningItemStatus moves an item along planned, in progress and
+  // done; an invalid move is FailedPrecondition with reason
+  // ITEM_STATUS_INVALID_TRANSITION.
+  rpc ChangeLearningItemStatus(ChangeLearningItemStatusRequest) returns (ChangeLearningItemStatusResponse);
+  rpc ListLearningActivities(ListLearningActivitiesRequest) returns (ListLearningActivitiesResponse);
+  rpc LogLearningActivity(LogLearningActivityRequest) returns (LogLearningActivityResponse);
+  // GenerateLearningPost asks for a LinkedIn or X draft about activities. The
+  // draft appears in the drafts queue.
+  rpc GenerateLearningPost(GenerateLearningPostRequest) returns (GenerateLearningPostResponse);
+}
+
+enum ItemKind {
+  ITEM_KIND_UNSPECIFIED = 0;
+  ITEM_KIND_COURSE = 1;
+  ITEM_KIND_BOOK = 2;
+  ITEM_KIND_PROJECT = 3;
+  ITEM_KIND_SKILL = 4;
+}
+
+enum ItemStatus {
+  ITEM_STATUS_UNSPECIFIED = 0;
+  ITEM_STATUS_PLANNED = 1;
+  ITEM_STATUS_IN_PROGRESS = 2;
+  ITEM_STATUS_DONE = 3;
+}
+
+message LearningItem {
+  string id = 1;
+  string title = 2;
+  ItemKind kind = 3;
+  string url = 4;
+  ItemStatus status = 5;
+  string started_on = 6;
+  string completed_on = 7;
+  // insight is what the owner took away; posts are drafted from it.
+  string insight = 8;
+  int32 version = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message LearningActivity {
+  string id = 1;
+  string item_id = 2;
+  string summary = 3;
+  int32 minutes = 4;
+  string occurred_on = 5;
+  repeated string tags = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message ListLearningItemsRequest {
+  // status filters the list; unspecified means every status.
+  ItemStatus status = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListLearningItemsResponse {
+  repeated LearningItem items = 1;
+  string next_page_token = 2;
+}
+
+message AddLearningItemRequest {
+  string title = 1;
+  ItemKind kind = 2;
+  string url = 3;
+  string insight = 4;
+}
+
+message AddLearningItemResponse {
+  LearningItem item = 1;
+}
+
+message UpdateLearningItemRequest {
+  // item carries the id, the new values and the version the caller read.
+  LearningItem item = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateLearningItemResponse {
+  LearningItem item = 1;
+}
+
+message ChangeLearningItemStatusRequest {
+  string id = 1;
+  ItemStatus to_status = 2;
+  int32 version = 3;
+}
+
+message ChangeLearningItemStatusResponse {
+  LearningItem item = 1;
+}
+
+message ListLearningActivitiesRequest {
+  // item_id filters the list; empty means every activity.
+  string item_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListLearningActivitiesResponse {
+  repeated LearningActivity activities = 1;
+  string next_page_token = 2;
+}
+
+message LogLearningActivityRequest {
+  // item_id is optional: an activity need not belong to an item.
+  string item_id = 1;
+  string summary = 2;
+  int32 minutes = 3;
+  // occurred_on defaults to today when empty.
+  string occurred_on = 4;
+  repeated string tags = 5;
+}
+
+message LogLearningActivityResponse {
+  LearningActivity activity = 1;
+}
+
+message GenerateLearningPostRequest {
+  repeated string activity_ids = 1;
+  // channel is DRAFT_CHANNEL_LINKEDIN or DRAFT_CHANNEL_X.
+  DraftChannel channel = 2;
+}
+
+message GenerateLearningPostResponse {
+  string draft_id = 1;
+}

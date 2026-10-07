@@ -468,9 +468,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `cd services/fude && go test -race ./...` passes with consumer tests including a duplicate delivery and a payload without an owner.
   Status: both events draft a LinkedIn post (`postChannel` in `internal/events`). A finished item has no draft target type of its own (the `drafts.target_type` CHECK has none), so `learning.item_completed` targets the item's id as a `learning_activity`, and the dojo context source tries `GetActivity` first and falls back to `GetItem` when the id is not an activity. fude now requires `DOJO_ADDR` (compose already sets it); `TODO(owner)`: add it to the staging and production helm values. Each event costs one `fude.post` generation, so the soft $1 per day feature budget is what limits a busy day.
 
-- [ ] **P9.1d torii LearningService** (M) Needs: P9.1b
+- [x] **P9.1d torii LearningService** (M) Needs: P9.1b
   Do: `proto/shogun/api/v1/learning.proto` and Connect handlers over dojo (`DOJO_ADDR`) with the same error mapping as jobs and drafts.
   Done when: `cd services/torii && go test -race ./...` passes with a handler test per RPC.
+  Status: `LearningService` has `ListLearningItems`, `AddLearningItem`, `UpdateLearningItem`, `ChangeLearningItemStatus`, `ListLearningActivities`, `LogLearningActivity` and `GenerateLearningPost` (the names are prefixed so they cannot clash inside `shogun.api.v1`). Enums convert by name, and `GenerateLearningPost` takes the existing `DraftChannel`. torii now requires `DOJO_ADDR` (compose already sets it); `TODO(owner)`: add it to the staging and production helm values.
 
 - [ ] **P9.1e Learning screen and compose E2E** (M) Needs: P9.1c, P9.1d
   Do: `/learning` page (items, log activity, generate post), nav entry, mocked-API Playwright tests; add dojo to `compose.e2e.yaml` and the CI `e2e-compose` job, with a compose spec.
