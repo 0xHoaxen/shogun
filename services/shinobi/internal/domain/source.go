@@ -4,6 +4,7 @@ import (
 	"net/netip"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/robfig/cron/v3"
 )
@@ -183,4 +184,25 @@ func IsPublicIP(addr netip.Addr) bool {
 	addr = addr.Unmap()
 	return addr.IsValid() && !addr.IsPrivate() && !addr.IsLoopback() && !addr.IsLinkLocalUnicast() &&
 		!addr.IsLinkLocalMulticast() && !addr.IsMulticast() && !addr.IsUnspecified() && !cgnat.Contains(addr)
+}
+
+// FirstRunSlot names the run of a source that has never run.
+const FirstRunSlot = "first"
+
+// Due says whether a source with this schedule is due at now, given when it last
+// ran, and names the slot that makes it due so one slot is run once. A source
+// that has never run is due at once. The schedule is read in loc.
+func Due(expr string, lastRun *time.Time, now time.Time, loc *time.Location) (slot string, due bool, err error) {
+	sched, err := ParseSchedule(expr)
+	if err != nil {
+		return "", false, err
+	}
+	if lastRun == nil {
+		return FirstRunSlot, true, nil
+	}
+	next := sched.Next(lastRun.In(loc))
+	if next.After(now) {
+		return "", false, nil
+	}
+	return next.UTC().Format(time.RFC3339), true, nil
 }
