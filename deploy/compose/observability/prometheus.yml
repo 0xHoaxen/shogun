@@ -1,0 +1,44 @@
+# Scrapes every service's /metrics (HTTP port 8080 on the compose network).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: torii
+    static_configs:
+      - targets: ['torii:8080']
+  - job_name: kagami
+    static_configs:
+      - targets: ['kagami:8080']
+  - job_name: tsubame
+    static_configs:
+      - targets: ['tsubame:8080']
+  - job_name: fude
+    static_configs:
+      - targets: ['fude:8080']
+  - job_name: taiko
+    static_configs:
+      - targets: ['taiko:8080']
+  - job_name: dojo
+    static_configs:
+      - targets: ['dojo:8080']
+  - job_name: katana
+    static_configs:
+      - targets: ['katana:8080']
+  - job_name: shinobi
+    static_configs:
+      - targets: ['shinobi:8080']
+  - job_name: sensei
+    static_configs:
+      - targets: ['sensei:8080']
+  - job_name: soroban
+    static_configs:
+      - targets: ['soroban:8080']

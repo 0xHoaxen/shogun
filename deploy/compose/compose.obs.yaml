@@ -1,6 +1,9 @@
-# Observability add-on: a Jaeger all-in-one that receives OTLP traces.
+# Observability add-on: traces, metrics, alerts and a dashboard.
 #   make up-observability
-# Dashboards and alerts arrive with P10.2.
+# Jaeger receives OTLP traces; Prometheus scrapes every service's /metrics and
+# evaluates the alert rules; Alertmanager groups them; Grafana shows one
+# dashboard. UIs bind to localhost: Jaeger 16686, Prometheus 9190,
+# Alertmanager 9191, Grafana 3001.
 services:
   jaeger:
     image: jaegertracing/all-in-one:1.76.0
@@ -9,3 +12,33 @@ services:
       COLLECTOR_OTLP_ENABLED: "true"
     ports:
       - "127.0.0.1:16686:16686"
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    restart: unless-stopped
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "127.0.0.1:9190:9090"
+
+  alertmanager:
+    image: prom/alertmanager:v0.28.1
+    restart: unless-stopped
+    volumes:
+      - ./observability/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "127.0.0.1:9191:9093"
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3001:3000"

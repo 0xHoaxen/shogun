@@ -1,0 +1,9 @@
+# TODO(owner): send alerts to email. Add an email_configs entry to the receiver
+# with the address and SMTP settings (smtp_smarthost, smtp_from, auth in a
+# secret, never in this file). Until then alerts are visible in the Alertmanager
+# and Prometheus UIs only.
+route:
+  receiver: nobody
+  group_by: [alertname, job]
+receivers:
+  - name: nobody
