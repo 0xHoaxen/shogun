@@ -73,6 +73,24 @@ services:
       timeout: 3s
       retries: 20
 
+  # Daily pg_dump of the database into the backups volume, at 02:30 India time
+  # (after sensei's 01:00 rollup). Restore steps: docs/backup-restore.md.
+  backup:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    entrypoint: ["/opt/shogun/backup.sh"]
+    command: ["loop"]
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?copy .env.example to .env}
+      # TODO(owner): how many days of backups to keep.
+      RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - backups:/backups
+      - ./backup/backup.sh:/opt/shogun/backup.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # services begin
   torii:
     <<: *service
@@ -267,3 +285,4 @@ services:
 
 volumes:
   pgdata:
+  backups:
