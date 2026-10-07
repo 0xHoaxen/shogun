@@ -9,6 +9,8 @@ import (
 
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/rivertype"
+
+	"github.com/0xHoaxen/shogun/pkg/schedule"
 )
 
 type fakeDigester struct {
@@ -41,7 +43,7 @@ func work(t *testing.T, d Digester, date string) error {
 
 func TestDigestFiresAt0830IndianTime(t *testing.T) {
 	loc := location(t)
-	at := dailySchedule{hour: digestHour, minute: digestMinute, loc: loc}
+	at := schedule.Daily{Hour: digestHour, Minute: digestMinute, Loc: loc}
 	tests := []struct {
 		name  string
 		after time.Time

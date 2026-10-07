@@ -10,10 +10,9 @@ import (
 	"log/slog"
 	"time"
 
-	// The service image has no tz database; the digest needs the owner's zone.
-	_ "time/tzdata"
-
 	"github.com/riverqueue/river"
+
+	"github.com/0xHoaxen/shogun/pkg/schedule"
 )
 
 const (
@@ -102,7 +101,7 @@ func digestArgs(now func() time.Time, loc *time.Location) func() (river.JobArgs,
 
 // NewSetup builds the scheduled jobs. now is the clock, injected for tests.
 func NewSetup(digester Digester, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
-	at := dailySchedule{hour: digestHour, minute: digestMinute, loc: loc}
+	at := schedule.Daily{Hour: digestHour, Minute: digestMinute, Loc: loc}
 	return Setup{
 		Workers: func(ws *river.Workers) {
 			river.AddWorker(ws, &digestWorker{digester: digester, loc: loc, log: log})

@@ -435,7 +435,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: tests with fake clock and fake clients.
   Status: the digest runs for every owner taiko knows (one with a notification or a channel setting), once per IST date, with an event id derived from owner and date, so retries, snoozes and a second job for the same date add nothing. An owner's failure does not stop the others and is returned so River retries. A digest for a day that is already over is dropped. Quiet hours snooze the whole job until the window ends. Taiko now requires `KAGAMI_ADDR`, `FUDE_ADDR` and `SOROBAN_ADDR` (already in the shared compose and helm env). Drafts are counted from the first 200 of the queue and shown as "200+" beyond it, because `ListQueue` has no total. Checked on the compose stack by inserting the River job by hand: one digest, a second job for the same date added none. `go mod tidy` promoted uuid, river, rivertype and genproto from indirect to direct; they were already imported.
 
-- [ ] **P8.3a Move the daily schedule to pkg** (S) Needs: P8.3
+- [x] **P8.3a Move the daily schedule to pkg** (S) Needs: P8.3
   Do: `dailySchedule` is now copied in kagami and taiko (services cannot import each other); move it to a `pkg` package and use it in both.
   Done when: `make test` and `make lint` pass; neither service defines its own.
 
