@@ -557,6 +557,292 @@ func (x *SubscribeResponse) GetNotification() *Notification {
 	return nil
 }
 
+// QuietHours is a window of the day in which the daily digest is held back,
+// in minutes after midnight in the owner's zone. It may wrap past midnight
+// (from 22:00 to 08:00). The two ends must differ.
+type QuietHours struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromMinute    int32                  `protobuf:"varint,1,opt,name=from_minute,json=fromMinute,proto3" json:"from_minute,omitempty"`
+	ToMinute      int32                  `protobuf:"varint,2,opt,name=to_minute,json=toMinute,proto3" json:"to_minute,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *QuietHours) Reset() {
+	*x = QuietHours{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *QuietHours) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*QuietHours) ProtoMessage() {}
+
+func (x *QuietHours) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use QuietHours.ProtoReflect.Descriptor instead.
+func (*QuietHours) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *QuietHours) GetFromMinute() int32 {
+	if x != nil {
+		return x.FromMinute
+	}
+	return 0
+}
+
+func (x *QuietHours) GetToMinute() int32 {
+	if x != nil {
+		return x.ToMinute
+	}
+	return 0
+}
+
+// ChannelSettings is how the owner is reached on the in-app channel.
+type ChannelSettings struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	InAppEnabled bool                   `protobuf:"varint,1,opt,name=in_app_enabled,json=inAppEnabled,proto3" json:"in_app_enabled,omitempty"`
+	// quiet is unset when there are no quiet hours.
+	Quiet *QuietHours `protobuf:"bytes,2,opt,name=quiet,proto3" json:"quiet,omitempty"`
+	// version is the optimistic concurrency token; 0 until first saved.
+	Version       int64 `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChannelSettings) Reset() {
+	*x = ChannelSettings{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChannelSettings) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChannelSettings) ProtoMessage() {}
+
+func (x *ChannelSettings) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChannelSettings.ProtoReflect.Descriptor instead.
+func (*ChannelSettings) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ChannelSettings) GetInAppEnabled() bool {
+	if x != nil {
+		return x.InAppEnabled
+	}
+	return false
+}
+
+func (x *ChannelSettings) GetQuiet() *QuietHours {
+	if x != nil {
+		return x.Quiet
+	}
+	return nil
+}
+
+func (x *ChannelSettings) GetVersion() int64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type GetChannelSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetChannelSettingsRequest) Reset() {
+	*x = GetChannelSettingsRequest{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetChannelSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetChannelSettingsRequest) ProtoMessage() {}
+
+func (x *GetChannelSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetChannelSettingsRequest.ProtoReflect.Descriptor instead.
+func (*GetChannelSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{11}
+}
+
+type GetChannelSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *ChannelSettings       `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetChannelSettingsResponse) Reset() {
+	*x = GetChannelSettingsResponse{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetChannelSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetChannelSettingsResponse) ProtoMessage() {}
+
+func (x *GetChannelSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetChannelSettingsResponse.ProtoReflect.Descriptor instead.
+func (*GetChannelSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *GetChannelSettingsResponse) GetSettings() *ChannelSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type SaveChannelSettingsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *ChannelSettings       `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveChannelSettingsRequest) Reset() {
+	*x = SaveChannelSettingsRequest{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveChannelSettingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveChannelSettingsRequest) ProtoMessage() {}
+
+func (x *SaveChannelSettingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveChannelSettingsRequest.ProtoReflect.Descriptor instead.
+func (*SaveChannelSettingsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *SaveChannelSettingsRequest) GetSettings() *ChannelSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
+type SaveChannelSettingsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Settings      *ChannelSettings       `protobuf:"bytes,1,opt,name=settings,proto3" json:"settings,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SaveChannelSettingsResponse) Reset() {
+	*x = SaveChannelSettingsResponse{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SaveChannelSettingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SaveChannelSettingsResponse) ProtoMessage() {}
+
+func (x *SaveChannelSettingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SaveChannelSettingsResponse.ProtoReflect.Descriptor instead.
+func (*SaveChannelSettingsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *SaveChannelSettingsResponse) GetSettings() *ChannelSettings {
+	if x != nil {
+		return x.Settings
+	}
+	return nil
+}
+
 var File_shogun_taiko_v1_taiko_proto protoreflect.FileDescriptor
 
 const file_shogun_taiko_v1_taiko_proto_rawDesc = "" +
@@ -589,7 +875,23 @@ const file_shogun_taiko_v1_taiko_proto_rawDesc = "" +
 	"\x10SubscribeRequest\x12\x19\n" +
 	"\bafter_id\x18\x01 \x01(\tR\aafterId\"V\n" +
 	"\x11SubscribeResponse\x12A\n" +
-	"\fnotification\x18\x01 \x01(\v2\x1d.shogun.taiko.v1.NotificationR\fnotification*\xca\x03\n" +
+	"\fnotification\x18\x01 \x01(\v2\x1d.shogun.taiko.v1.NotificationR\fnotification\"J\n" +
+	"\n" +
+	"QuietHours\x12\x1f\n" +
+	"\vfrom_minute\x18\x01 \x01(\x05R\n" +
+	"fromMinute\x12\x1b\n" +
+	"\tto_minute\x18\x02 \x01(\x05R\btoMinute\"\x84\x01\n" +
+	"\x0fChannelSettings\x12$\n" +
+	"\x0ein_app_enabled\x18\x01 \x01(\bR\finAppEnabled\x121\n" +
+	"\x05quiet\x18\x02 \x01(\v2\x1b.shogun.taiko.v1.QuietHoursR\x05quiet\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x03R\aversion\"\x1b\n" +
+	"\x19GetChannelSettingsRequest\"Z\n" +
+	"\x1aGetChannelSettingsResponse\x12<\n" +
+	"\bsettings\x18\x01 \x01(\v2 .shogun.taiko.v1.ChannelSettingsR\bsettings\"Z\n" +
+	"\x1aSaveChannelSettingsRequest\x12<\n" +
+	"\bsettings\x18\x01 \x01(\v2 .shogun.taiko.v1.ChannelSettingsR\bsettings\"[\n" +
+	"\x1bSaveChannelSettingsResponse\x12<\n" +
+	"\bsettings\x18\x01 \x01(\v2 .shogun.taiko.v1.ChannelSettingsR\bsettings*\xca\x03\n" +
 	"\x10NotificationType\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_DRAFT_READY\x10\x01\x12\"\n" +
@@ -603,12 +905,14 @@ const file_shogun_taiko_v1_taiko_proto_rawDesc = "" +
 	"\"NOTIFICATION_TYPE_BUDGET_THRESHOLD\x10\t\x12&\n" +
 	"\"NOTIFICATION_TYPE_BUDGET_EXHAUSTED\x10\n" +
 	"\x12\"\n" +
-	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v2\xd4\x02\n" +
+	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v2\xb5\x04\n" +
 	"\fTaikoService\x12C\n" +
 	"\x04List\x12\x1c.shogun.taiko.v1.ListRequest\x1a\x1d.shogun.taiko.v1.ListResponse\x12O\n" +
 	"\bMarkRead\x12 .shogun.taiko.v1.MarkReadRequest\x1a!.shogun.taiko.v1.MarkReadResponse\x12X\n" +
 	"\vMarkAllRead\x12#.shogun.taiko.v1.MarkAllReadRequest\x1a$.shogun.taiko.v1.MarkAllReadResponse\x12T\n" +
-	"\tSubscribe\x12!.shogun.taiko.v1.SubscribeRequest\x1a\".shogun.taiko.v1.SubscribeResponse0\x01B\xba\x01\n" +
+	"\tSubscribe\x12!.shogun.taiko.v1.SubscribeRequest\x1a\".shogun.taiko.v1.SubscribeResponse0\x01\x12m\n" +
+	"\x12GetChannelSettings\x12*.shogun.taiko.v1.GetChannelSettingsRequest\x1a+.shogun.taiko.v1.GetChannelSettingsResponse\x12p\n" +
+	"\x13SaveChannelSettings\x12+.shogun.taiko.v1.SaveChannelSettingsRequest\x1a,.shogun.taiko.v1.SaveChannelSettingsResponseB\xba\x01\n" +
 	"\x13com.shogun.taiko.v1B\n" +
 	"TaikoProtoP\x01Z9github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1;taikov1\xa2\x02\x03STX\xaa\x02\x0fShogun.Taiko.V1\xca\x02\x0fShogun\\Taiko\\V1\xe2\x02\x1bShogun\\Taiko\\V1\\GPBMetadata\xea\x02\x11Shogun::Taiko::V1b\x06proto3"
 
@@ -625,39 +929,53 @@ func file_shogun_taiko_v1_taiko_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_taiko_v1_taiko_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_taiko_v1_taiko_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_shogun_taiko_v1_taiko_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_shogun_taiko_v1_taiko_proto_goTypes = []any{
-	(NotificationType)(0),         // 0: shogun.taiko.v1.NotificationType
-	(*Notification)(nil),          // 1: shogun.taiko.v1.Notification
-	(*ListRequest)(nil),           // 2: shogun.taiko.v1.ListRequest
-	(*ListResponse)(nil),          // 3: shogun.taiko.v1.ListResponse
-	(*MarkReadRequest)(nil),       // 4: shogun.taiko.v1.MarkReadRequest
-	(*MarkReadResponse)(nil),      // 5: shogun.taiko.v1.MarkReadResponse
-	(*MarkAllReadRequest)(nil),    // 6: shogun.taiko.v1.MarkAllReadRequest
-	(*MarkAllReadResponse)(nil),   // 7: shogun.taiko.v1.MarkAllReadResponse
-	(*SubscribeRequest)(nil),      // 8: shogun.taiko.v1.SubscribeRequest
-	(*SubscribeResponse)(nil),     // 9: shogun.taiko.v1.SubscribeResponse
-	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+	(NotificationType)(0),               // 0: shogun.taiko.v1.NotificationType
+	(*Notification)(nil),                // 1: shogun.taiko.v1.Notification
+	(*ListRequest)(nil),                 // 2: shogun.taiko.v1.ListRequest
+	(*ListResponse)(nil),                // 3: shogun.taiko.v1.ListResponse
+	(*MarkReadRequest)(nil),             // 4: shogun.taiko.v1.MarkReadRequest
+	(*MarkReadResponse)(nil),            // 5: shogun.taiko.v1.MarkReadResponse
+	(*MarkAllReadRequest)(nil),          // 6: shogun.taiko.v1.MarkAllReadRequest
+	(*MarkAllReadResponse)(nil),         // 7: shogun.taiko.v1.MarkAllReadResponse
+	(*SubscribeRequest)(nil),            // 8: shogun.taiko.v1.SubscribeRequest
+	(*SubscribeResponse)(nil),           // 9: shogun.taiko.v1.SubscribeResponse
+	(*QuietHours)(nil),                  // 10: shogun.taiko.v1.QuietHours
+	(*ChannelSettings)(nil),             // 11: shogun.taiko.v1.ChannelSettings
+	(*GetChannelSettingsRequest)(nil),   // 12: shogun.taiko.v1.GetChannelSettingsRequest
+	(*GetChannelSettingsResponse)(nil),  // 13: shogun.taiko.v1.GetChannelSettingsResponse
+	(*SaveChannelSettingsRequest)(nil),  // 14: shogun.taiko.v1.SaveChannelSettingsRequest
+	(*SaveChannelSettingsResponse)(nil), // 15: shogun.taiko.v1.SaveChannelSettingsResponse
+	(*timestamppb.Timestamp)(nil),       // 16: google.protobuf.Timestamp
 }
 var file_shogun_taiko_v1_taiko_proto_depIdxs = []int32{
 	0,  // 0: shogun.taiko.v1.Notification.type:type_name -> shogun.taiko.v1.NotificationType
-	10, // 1: shogun.taiko.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
-	10, // 2: shogun.taiko.v1.Notification.read_at:type_name -> google.protobuf.Timestamp
+	16, // 1: shogun.taiko.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	16, // 2: shogun.taiko.v1.Notification.read_at:type_name -> google.protobuf.Timestamp
 	1,  // 3: shogun.taiko.v1.ListResponse.notifications:type_name -> shogun.taiko.v1.Notification
 	1,  // 4: shogun.taiko.v1.SubscribeResponse.notification:type_name -> shogun.taiko.v1.Notification
-	2,  // 5: shogun.taiko.v1.TaikoService.List:input_type -> shogun.taiko.v1.ListRequest
-	4,  // 6: shogun.taiko.v1.TaikoService.MarkRead:input_type -> shogun.taiko.v1.MarkReadRequest
-	6,  // 7: shogun.taiko.v1.TaikoService.MarkAllRead:input_type -> shogun.taiko.v1.MarkAllReadRequest
-	8,  // 8: shogun.taiko.v1.TaikoService.Subscribe:input_type -> shogun.taiko.v1.SubscribeRequest
-	3,  // 9: shogun.taiko.v1.TaikoService.List:output_type -> shogun.taiko.v1.ListResponse
-	5,  // 10: shogun.taiko.v1.TaikoService.MarkRead:output_type -> shogun.taiko.v1.MarkReadResponse
-	7,  // 11: shogun.taiko.v1.TaikoService.MarkAllRead:output_type -> shogun.taiko.v1.MarkAllReadResponse
-	9,  // 12: shogun.taiko.v1.TaikoService.Subscribe:output_type -> shogun.taiko.v1.SubscribeResponse
-	9,  // [9:13] is the sub-list for method output_type
-	5,  // [5:9] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	10, // 5: shogun.taiko.v1.ChannelSettings.quiet:type_name -> shogun.taiko.v1.QuietHours
+	11, // 6: shogun.taiko.v1.GetChannelSettingsResponse.settings:type_name -> shogun.taiko.v1.ChannelSettings
+	11, // 7: shogun.taiko.v1.SaveChannelSettingsRequest.settings:type_name -> shogun.taiko.v1.ChannelSettings
+	11, // 8: shogun.taiko.v1.SaveChannelSettingsResponse.settings:type_name -> shogun.taiko.v1.ChannelSettings
+	2,  // 9: shogun.taiko.v1.TaikoService.List:input_type -> shogun.taiko.v1.ListRequest
+	4,  // 10: shogun.taiko.v1.TaikoService.MarkRead:input_type -> shogun.taiko.v1.MarkReadRequest
+	6,  // 11: shogun.taiko.v1.TaikoService.MarkAllRead:input_type -> shogun.taiko.v1.MarkAllReadRequest
+	8,  // 12: shogun.taiko.v1.TaikoService.Subscribe:input_type -> shogun.taiko.v1.SubscribeRequest
+	12, // 13: shogun.taiko.v1.TaikoService.GetChannelSettings:input_type -> shogun.taiko.v1.GetChannelSettingsRequest
+	14, // 14: shogun.taiko.v1.TaikoService.SaveChannelSettings:input_type -> shogun.taiko.v1.SaveChannelSettingsRequest
+	3,  // 15: shogun.taiko.v1.TaikoService.List:output_type -> shogun.taiko.v1.ListResponse
+	5,  // 16: shogun.taiko.v1.TaikoService.MarkRead:output_type -> shogun.taiko.v1.MarkReadResponse
+	7,  // 17: shogun.taiko.v1.TaikoService.MarkAllRead:output_type -> shogun.taiko.v1.MarkAllReadResponse
+	9,  // 18: shogun.taiko.v1.TaikoService.Subscribe:output_type -> shogun.taiko.v1.SubscribeResponse
+	13, // 19: shogun.taiko.v1.TaikoService.GetChannelSettings:output_type -> shogun.taiko.v1.GetChannelSettingsResponse
+	15, // 20: shogun.taiko.v1.TaikoService.SaveChannelSettings:output_type -> shogun.taiko.v1.SaveChannelSettingsResponse
+	15, // [15:21] is the sub-list for method output_type
+	9,  // [9:15] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_shogun_taiko_v1_taiko_proto_init() }
@@ -671,7 +989,7 @@ func file_shogun_taiko_v1_taiko_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_taiko_v1_taiko_proto_rawDesc), len(file_shogun_taiko_v1_taiko_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

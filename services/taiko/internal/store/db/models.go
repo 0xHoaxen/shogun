@@ -17,6 +17,8 @@ type ChannelSetting struct {
 	Enabled   bool
 	QuietFrom pgtype.Time
 	QuietTo   pgtype.Time
+	Version   int64
+	UpdatedAt time.Time
 }
 
 type Inbox struct {

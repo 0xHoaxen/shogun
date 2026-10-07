@@ -16,10 +16,11 @@ const errorDomain = "taiko.shogun"
 
 // Reasons for errors that have no code of their own in app.
 const (
-	reasonInvalidToken  = "INVALID_PAGE_TOKEN"
-	reasonOwnerRequired = "OWNER_REQUIRED"
-	reasonStreamReset   = "STREAM_RESET"
-	reasonInternal      = "INTERNAL"
+	reasonInvalidToken    = "INVALID_PAGE_TOKEN"
+	reasonOwnerRequired   = "OWNER_REQUIRED"
+	reasonStreamReset     = "STREAM_RESET"
+	reasonInternal        = "INTERNAL"
+	reasonVersionConflict = "VERSION_CONFLICT"
 )
 
 // toStatus maps a use case error to a gRPC status carrying an ErrorInfo reason.
@@ -37,6 +38,8 @@ func toStatus(err error) error {
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner")
 	case errors.Is(err, app.ErrStreamReset):
 		return withReason(codes.Unavailable, reasonStreamReset, "stream was reset; reconnect with the last seen id")
+	case errors.Is(err, store.ErrVersionConflict):
+		return withReason(codes.Aborted, reasonVersionConflict, "settings changed elsewhere; read the latest and retry")
 	case errors.Is(err, store.ErrInvalidPageToken):
 		return withReason(codes.InvalidArgument, reasonInvalidToken, "page token is not valid")
 	default:

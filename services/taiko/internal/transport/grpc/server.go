@@ -61,3 +61,22 @@ func (s *Server) Subscribe(req *taikov1.SubscribeRequest, stream taikov1.TaikoSe
 		})
 	return toStatus(err)
 }
+
+// GetChannelSettings implements taiko.v1.TaikoService.
+func (s *Server) GetChannelSettings(ctx context.Context, _ *taikov1.GetChannelSettingsRequest) (*taikov1.GetChannelSettingsResponse, error) {
+	view, err := s.svc.ChannelSettings(ctx)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &taikov1.GetChannelSettingsResponse{Settings: settingsToProto(view)}, nil
+}
+
+// SaveChannelSettings implements taiko.v1.TaikoService.
+func (s *Server) SaveChannelSettings(ctx context.Context, req *taikov1.SaveChannelSettingsRequest) (*taikov1.SaveChannelSettingsResponse, error) {
+	in := req.GetSettings()
+	view, err := s.svc.SaveChannelSettings(ctx, settingsFromProto(in), in.GetVersion())
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &taikov1.SaveChannelSettingsResponse{Settings: settingsToProto(view)}, nil
+}

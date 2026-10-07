@@ -13,7 +13,7 @@ import (
 )
 
 const getChannelSetting = `-- name: GetChannelSetting :one
-SELECT owner_id, channel, enabled, quiet_from, quiet_to FROM channel_settings
+SELECT owner_id, channel, enabled, quiet_from, quiet_to, version, updated_at FROM channel_settings
 WHERE owner_id = $1 AND channel = $2
 `
 
@@ -31,6 +31,45 @@ func (q *Queries) GetChannelSetting(ctx context.Context, arg GetChannelSettingPa
 		&i.Enabled,
 		&i.QuietFrom,
 		&i.QuietTo,
+		&i.Version,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const insertChannelSetting = `-- name: InsertChannelSetting :one
+INSERT INTO channel_settings (owner_id, channel, enabled, quiet_from, quiet_to)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (owner_id, channel) DO NOTHING
+RETURNING owner_id, channel, enabled, quiet_from, quiet_to, version, updated_at
+`
+
+type InsertChannelSettingParams struct {
+	OwnerID   uuid.UUID
+	Channel   string
+	Enabled   bool
+	QuietFrom pgtype.Time
+	QuietTo   pgtype.Time
+}
+
+// Returns no row when the owner already has a setting for the channel.
+func (q *Queries) InsertChannelSetting(ctx context.Context, arg InsertChannelSettingParams) (ChannelSetting, error) {
+	row := q.db.QueryRow(ctx, insertChannelSetting,
+		arg.OwnerID,
+		arg.Channel,
+		arg.Enabled,
+		arg.QuietFrom,
+		arg.QuietTo,
+	)
+	var i ChannelSetting
+	err := row.Scan(
+		&i.OwnerID,
+		&i.Channel,
+		&i.Enabled,
+		&i.QuietFrom,
+		&i.QuietTo,
+		&i.Version,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -62,31 +101,35 @@ func (q *Queries) ListOwners(ctx context.Context) ([]uuid.UUID, error) {
 	return items, nil
 }
 
-const upsertChannelSetting = `-- name: UpsertChannelSetting :one
-INSERT INTO channel_settings (owner_id, channel, enabled, quiet_from, quiet_to)
-VALUES ($1, $2, $3, $4, $5)
-ON CONFLICT (owner_id, channel) DO UPDATE SET
-    enabled = EXCLUDED.enabled,
-    quiet_from = EXCLUDED.quiet_from,
-    quiet_to = EXCLUDED.quiet_to
-RETURNING owner_id, channel, enabled, quiet_from, quiet_to
+const updateChannelSetting = `-- name: UpdateChannelSetting :one
+UPDATE channel_settings SET
+    enabled = $1,
+    quiet_from = $2,
+    quiet_to = $3,
+    version = version + 1,
+    updated_at = now()
+WHERE owner_id = $4 AND channel = $5 AND version = $6
+RETURNING owner_id, channel, enabled, quiet_from, quiet_to, version, updated_at
 `
 
-type UpsertChannelSettingParams struct {
-	OwnerID   uuid.UUID
-	Channel   string
+type UpdateChannelSettingParams struct {
 	Enabled   bool
 	QuietFrom pgtype.Time
 	QuietTo   pgtype.Time
+	OwnerID   uuid.UUID
+	Channel   string
+	Version   int64
 }
 
-func (q *Queries) UpsertChannelSetting(ctx context.Context, arg UpsertChannelSettingParams) (ChannelSetting, error) {
-	row := q.db.QueryRow(ctx, upsertChannelSetting,
-		arg.OwnerID,
-		arg.Channel,
+// Returns no row when the stored version is not @version.
+func (q *Queries) UpdateChannelSetting(ctx context.Context, arg UpdateChannelSettingParams) (ChannelSetting, error) {
+	row := q.db.QueryRow(ctx, updateChannelSetting,
 		arg.Enabled,
 		arg.QuietFrom,
 		arg.QuietTo,
+		arg.OwnerID,
+		arg.Channel,
+		arg.Version,
 	)
 	var i ChannelSetting
 	err := row.Scan(
@@ -95,6 +138,8 @@ func (q *Queries) UpsertChannelSetting(ctx context.Context, arg UpsertChannelSet
 		&i.Enabled,
 		&i.QuietFrom,
 		&i.QuietTo,
+		&i.Version,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

@@ -23,6 +23,8 @@ const (
 	NotificationsService_MarkNotificationsRead_FullMethodName    = "/shogun.api.v1.NotificationsService/MarkNotificationsRead"
 	NotificationsService_MarkAllNotificationsRead_FullMethodName = "/shogun.api.v1.NotificationsService/MarkAllNotificationsRead"
 	NotificationsService_Stream_FullMethodName                   = "/shogun.api.v1.NotificationsService/Stream"
+	NotificationsService_GetNotificationSettings_FullMethodName  = "/shogun.api.v1.NotificationsService/GetNotificationSettings"
+	NotificationsService_SaveNotificationSettings_FullMethodName = "/shogun.api.v1.NotificationsService/SaveNotificationSettings"
 )
 
 // NotificationsServiceClient is the client API for NotificationsService service.
@@ -46,6 +48,12 @@ type NotificationsServiceClient interface {
 	// with Unavailable when the client fell behind; the client reconnects with
 	// the last id it saw.
 	Stream(ctx context.Context, in *StreamRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[StreamResponse], error)
+	// GetNotificationSettings returns how the owner is reached. An owner who
+	// never saved any gets the defaults (in-app on, no quiet hours) at version 0.
+	GetNotificationSettings(ctx context.Context, in *GetNotificationSettingsRequest, opts ...grpc.CallOption) (*GetNotificationSettingsResponse, error)
+	// SaveNotificationSettings replaces the settings. The version must be the one
+	// last read (0 when none was); a stale one fails with reason VERSION_CONFLICT.
+	SaveNotificationSettings(ctx context.Context, in *SaveNotificationSettingsRequest, opts ...grpc.CallOption) (*SaveNotificationSettingsResponse, error)
 }
 
 type notificationsServiceClient struct {
@@ -105,6 +113,26 @@ func (c *notificationsServiceClient) Stream(ctx context.Context, in *StreamReque
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type NotificationsService_StreamClient = grpc.ServerStreamingClient[StreamResponse]
 
+func (c *notificationsServiceClient) GetNotificationSettings(ctx context.Context, in *GetNotificationSettingsRequest, opts ...grpc.CallOption) (*GetNotificationSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetNotificationSettingsResponse)
+	err := c.cc.Invoke(ctx, NotificationsService_GetNotificationSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *notificationsServiceClient) SaveNotificationSettings(ctx context.Context, in *SaveNotificationSettingsRequest, opts ...grpc.CallOption) (*SaveNotificationSettingsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SaveNotificationSettingsResponse)
+	err := c.cc.Invoke(ctx, NotificationsService_SaveNotificationSettings_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NotificationsServiceServer is the server API for NotificationsService service.
 // All implementations must embed UnimplementedNotificationsServiceServer
 // for forward compatibility.
@@ -126,6 +154,12 @@ type NotificationsServiceServer interface {
 	// with Unavailable when the client fell behind; the client reconnects with
 	// the last id it saw.
 	Stream(*StreamRequest, grpc.ServerStreamingServer[StreamResponse]) error
+	// GetNotificationSettings returns how the owner is reached. An owner who
+	// never saved any gets the defaults (in-app on, no quiet hours) at version 0.
+	GetNotificationSettings(context.Context, *GetNotificationSettingsRequest) (*GetNotificationSettingsResponse, error)
+	// SaveNotificationSettings replaces the settings. The version must be the one
+	// last read (0 when none was); a stale one fails with reason VERSION_CONFLICT.
+	SaveNotificationSettings(context.Context, *SaveNotificationSettingsRequest) (*SaveNotificationSettingsResponse, error)
 	mustEmbedUnimplementedNotificationsServiceServer()
 }
 
@@ -147,6 +181,12 @@ func (UnimplementedNotificationsServiceServer) MarkAllNotificationsRead(context.
 }
 func (UnimplementedNotificationsServiceServer) Stream(*StreamRequest, grpc.ServerStreamingServer[StreamResponse]) error {
 	return status.Errorf(codes.Unimplemented, "method Stream not implemented")
+}
+func (UnimplementedNotificationsServiceServer) GetNotificationSettings(context.Context, *GetNotificationSettingsRequest) (*GetNotificationSettingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNotificationSettings not implemented")
+}
+func (UnimplementedNotificationsServiceServer) SaveNotificationSettings(context.Context, *SaveNotificationSettingsRequest) (*SaveNotificationSettingsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SaveNotificationSettings not implemented")
 }
 func (UnimplementedNotificationsServiceServer) mustEmbedUnimplementedNotificationsServiceServer() {}
 func (UnimplementedNotificationsServiceServer) testEmbeddedByValue()                              {}
@@ -234,6 +274,42 @@ func _NotificationsService_Stream_Handler(srv interface{}, stream grpc.ServerStr
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type NotificationsService_StreamServer = grpc.ServerStreamingServer[StreamResponse]
 
+func _NotificationsService_GetNotificationSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNotificationSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationsServiceServer).GetNotificationSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationsService_GetNotificationSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationsServiceServer).GetNotificationSettings(ctx, req.(*GetNotificationSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _NotificationsService_SaveNotificationSettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SaveNotificationSettingsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NotificationsServiceServer).SaveNotificationSettings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NotificationsService_SaveNotificationSettings_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NotificationsServiceServer).SaveNotificationSettings(ctx, req.(*SaveNotificationSettingsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NotificationsService_ServiceDesc is the grpc.ServiceDesc for NotificationsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -252,6 +328,14 @@ var NotificationsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "MarkAllNotificationsRead",
 			Handler:    _NotificationsService_MarkAllNotificationsRead_Handler,
+		},
+		{
+			MethodName: "GetNotificationSettings",
+			Handler:    _NotificationsService_GetNotificationSettings_Handler,
+		},
+		{
+			MethodName: "SaveNotificationSettings",
+			Handler:    _NotificationsService_SaveNotificationSettings_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
