@@ -9,7 +9,9 @@ package katanav1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +22,781 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type SuggestionTarget int32
+
+const (
+	SuggestionTarget_SUGGESTION_TARGET_UNSPECIFIED SuggestionTarget = 0
+	SuggestionTarget_SUGGESTION_TARGET_RESUME      SuggestionTarget = 1
+	SuggestionTarget_SUGGESTION_TARGET_LINKEDIN    SuggestionTarget = 2
+)
+
+// Enum value maps for SuggestionTarget.
+var (
+	SuggestionTarget_name = map[int32]string{
+		0: "SUGGESTION_TARGET_UNSPECIFIED",
+		1: "SUGGESTION_TARGET_RESUME",
+		2: "SUGGESTION_TARGET_LINKEDIN",
+	}
+	SuggestionTarget_value = map[string]int32{
+		"SUGGESTION_TARGET_UNSPECIFIED": 0,
+		"SUGGESTION_TARGET_RESUME":      1,
+		"SUGGESTION_TARGET_LINKEDIN":    2,
+	}
+)
+
+func (x SuggestionTarget) Enum() *SuggestionTarget {
+	p := new(SuggestionTarget)
+	*p = x
+	return p
+}
+
+func (x SuggestionTarget) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SuggestionTarget) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_katana_v1_katana_proto_enumTypes[0].Descriptor()
+}
+
+func (SuggestionTarget) Type() protoreflect.EnumType {
+	return &file_shogun_katana_v1_katana_proto_enumTypes[0]
+}
+
+func (x SuggestionTarget) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SuggestionTarget.Descriptor instead.
+func (SuggestionTarget) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{0}
+}
+
+type SuggestionState int32
+
+const (
+	SuggestionState_SUGGESTION_STATE_UNSPECIFIED SuggestionState = 0
+	SuggestionState_SUGGESTION_STATE_OPEN        SuggestionState = 1
+	SuggestionState_SUGGESTION_STATE_ACCEPTED    SuggestionState = 2
+	SuggestionState_SUGGESTION_STATE_DISMISSED   SuggestionState = 3
+)
+
+// Enum value maps for SuggestionState.
+var (
+	SuggestionState_name = map[int32]string{
+		0: "SUGGESTION_STATE_UNSPECIFIED",
+		1: "SUGGESTION_STATE_OPEN",
+		2: "SUGGESTION_STATE_ACCEPTED",
+		3: "SUGGESTION_STATE_DISMISSED",
+	}
+	SuggestionState_value = map[string]int32{
+		"SUGGESTION_STATE_UNSPECIFIED": 0,
+		"SUGGESTION_STATE_OPEN":        1,
+		"SUGGESTION_STATE_ACCEPTED":    2,
+		"SUGGESTION_STATE_DISMISSED":   3,
+	}
+)
+
+func (x SuggestionState) Enum() *SuggestionState {
+	p := new(SuggestionState)
+	*p = x
+	return p
+}
+
+func (x SuggestionState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SuggestionState) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_katana_v1_katana_proto_enumTypes[1].Descriptor()
+}
+
+func (SuggestionState) Type() protoreflect.EnumType {
+	return &file_shogun_katana_v1_katana_proto_enumTypes[1]
+}
+
+func (x SuggestionState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SuggestionState.Descriptor instead.
+func (SuggestionState) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{1}
+}
+
+type Evidence struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
+	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Evidence) Reset() {
+	*x = Evidence{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Evidence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Evidence) ProtoMessage() {}
+
+func (x *Evidence) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Evidence.ProtoReflect.Descriptor instead.
+func (*Evidence) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Evidence) GetLabel() string {
+	if x != nil {
+		return x.Label
+	}
+	return ""
+}
+
+func (x *Evidence) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type Suggestion struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Id     string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Target SuggestionTarget       `protobuf:"varint,2,opt,name=target,proto3,enum=shogun.katana.v1.SuggestionTarget" json:"target,omitempty"`
+	// section is headline, about, experience, skills or projects.
+	Section       string                 `protobuf:"bytes,3,opt,name=section,proto3" json:"section,omitempty"`
+	Before        string                 `protobuf:"bytes,4,opt,name=before,proto3" json:"before,omitempty"`
+	After         string                 `protobuf:"bytes,5,opt,name=after,proto3" json:"after,omitempty"`
+	Reason        string                 `protobuf:"bytes,6,opt,name=reason,proto3" json:"reason,omitempty"`
+	Evidence      []*Evidence            `protobuf:"bytes,7,rep,name=evidence,proto3" json:"evidence,omitempty"`
+	State         SuggestionState        `protobuf:"varint,8,opt,name=state,proto3,enum=shogun.katana.v1.SuggestionState" json:"state,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	DecidedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=decided_at,json=decidedAt,proto3" json:"decided_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Suggestion) Reset() {
+	*x = Suggestion{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Suggestion) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Suggestion) ProtoMessage() {}
+
+func (x *Suggestion) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Suggestion.ProtoReflect.Descriptor instead.
+func (*Suggestion) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Suggestion) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Suggestion) GetTarget() SuggestionTarget {
+	if x != nil {
+		return x.Target
+	}
+	return SuggestionTarget_SUGGESTION_TARGET_UNSPECIFIED
+}
+
+func (x *Suggestion) GetSection() string {
+	if x != nil {
+		return x.Section
+	}
+	return ""
+}
+
+func (x *Suggestion) GetBefore() string {
+	if x != nil {
+		return x.Before
+	}
+	return ""
+}
+
+func (x *Suggestion) GetAfter() string {
+	if x != nil {
+		return x.After
+	}
+	return ""
+}
+
+func (x *Suggestion) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *Suggestion) GetEvidence() []*Evidence {
+	if x != nil {
+		return x.Evidence
+	}
+	return nil
+}
+
+func (x *Suggestion) GetState() SuggestionState {
+	if x != nil {
+		return x.State
+	}
+	return SuggestionState_SUGGESTION_STATE_UNSPECIFIED
+}
+
+func (x *Suggestion) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Suggestion) GetDecidedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DecidedAt
+	}
+	return nil
+}
+
+type SyncGitHubRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncGitHubRequest) Reset() {
+	*x = SyncGitHubRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncGitHubRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncGitHubRequest) ProtoMessage() {}
+
+func (x *SyncGitHubRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncGitHubRequest.ProtoReflect.Descriptor instead.
+func (*SyncGitHubRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{2}
+}
+
+type SyncGitHubResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// changed is false when GitHub had nothing new, so no snapshot was stored.
+	Changed       bool   `protobuf:"varint,1,opt,name=changed,proto3" json:"changed,omitempty"`
+	SnapshotId    string `protobuf:"bytes,2,opt,name=snapshot_id,json=snapshotId,proto3" json:"snapshot_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SyncGitHubResponse) Reset() {
+	*x = SyncGitHubResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SyncGitHubResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SyncGitHubResponse) ProtoMessage() {}
+
+func (x *SyncGitHubResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SyncGitHubResponse.ProtoReflect.Descriptor instead.
+func (*SyncGitHubResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SyncGitHubResponse) GetChanged() bool {
+	if x != nil {
+		return x.Changed
+	}
+	return false
+}
+
+func (x *SyncGitHubResponse) GetSnapshotId() string {
+	if x != nil {
+		return x.SnapshotId
+	}
+	return ""
+}
+
+type ListSuggestionsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// state filters the list; unspecified means every state.
+	State         SuggestionState  `protobuf:"varint,1,opt,name=state,proto3,enum=shogun.katana.v1.SuggestionState" json:"state,omitempty"`
+	Target        SuggestionTarget `protobuf:"varint,2,opt,name=target,proto3,enum=shogun.katana.v1.SuggestionTarget" json:"target,omitempty"`
+	PageSize      int32            `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string           `protobuf:"bytes,4,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuggestionsRequest) Reset() {
+	*x = ListSuggestionsRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuggestionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuggestionsRequest) ProtoMessage() {}
+
+func (x *ListSuggestionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuggestionsRequest.ProtoReflect.Descriptor instead.
+func (*ListSuggestionsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ListSuggestionsRequest) GetState() SuggestionState {
+	if x != nil {
+		return x.State
+	}
+	return SuggestionState_SUGGESTION_STATE_UNSPECIFIED
+}
+
+func (x *ListSuggestionsRequest) GetTarget() SuggestionTarget {
+	if x != nil {
+		return x.Target
+	}
+	return SuggestionTarget_SUGGESTION_TARGET_UNSPECIFIED
+}
+
+func (x *ListSuggestionsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListSuggestionsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListSuggestionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Suggestions   []*Suggestion          `protobuf:"bytes,1,rep,name=suggestions,proto3" json:"suggestions,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListSuggestionsResponse) Reset() {
+	*x = ListSuggestionsResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListSuggestionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListSuggestionsResponse) ProtoMessage() {}
+
+func (x *ListSuggestionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListSuggestionsResponse.ProtoReflect.Descriptor instead.
+func (*ListSuggestionsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListSuggestionsResponse) GetSuggestions() []*Suggestion {
+	if x != nil {
+		return x.Suggestions
+	}
+	return nil
+}
+
+func (x *ListSuggestionsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type AcceptSuggestionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptSuggestionRequest) Reset() {
+	*x = AcceptSuggestionRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptSuggestionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptSuggestionRequest) ProtoMessage() {}
+
+func (x *AcceptSuggestionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptSuggestionRequest.ProtoReflect.Descriptor instead.
+func (*AcceptSuggestionRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AcceptSuggestionRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type AcceptSuggestionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Suggestion    *Suggestion            `protobuf:"bytes,1,opt,name=suggestion,proto3" json:"suggestion,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptSuggestionResponse) Reset() {
+	*x = AcceptSuggestionResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptSuggestionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptSuggestionResponse) ProtoMessage() {}
+
+func (x *AcceptSuggestionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptSuggestionResponse.ProtoReflect.Descriptor instead.
+func (*AcceptSuggestionResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *AcceptSuggestionResponse) GetSuggestion() *Suggestion {
+	if x != nil {
+		return x.Suggestion
+	}
+	return nil
+}
+
+type DismissSuggestionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DismissSuggestionRequest) Reset() {
+	*x = DismissSuggestionRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DismissSuggestionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DismissSuggestionRequest) ProtoMessage() {}
+
+func (x *DismissSuggestionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DismissSuggestionRequest.ProtoReflect.Descriptor instead.
+func (*DismissSuggestionRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DismissSuggestionRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DismissSuggestionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Suggestion    *Suggestion            `protobuf:"bytes,1,opt,name=suggestion,proto3" json:"suggestion,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DismissSuggestionResponse) Reset() {
+	*x = DismissSuggestionResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DismissSuggestionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DismissSuggestionResponse) ProtoMessage() {}
+
+func (x *DismissSuggestionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DismissSuggestionResponse.ProtoReflect.Descriptor instead.
+func (*DismissSuggestionResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DismissSuggestionResponse) GetSuggestion() *Suggestion {
+	if x != nil {
+		return x.Suggestion
+	}
+	return nil
+}
+
 var File_shogun_katana_v1_katana_proto protoreflect.FileDescriptor
 
 const file_shogun_katana_v1_katana_proto_rawDesc = "" +
 	"\n" +
-	"\x1dshogun/katana/v1/katana.proto\x12\x10shogun.katana.v12\x0f\n" +
-	"\rKatanaServiceB\xc2\x01\n" +
+	"\x1dshogun/katana/v1/katana.proto\x12\x10shogun.katana.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"2\n" +
+	"\bEvidence\x12\x14\n" +
+	"\x05label\x18\x01 \x01(\tR\x05label\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\"\x9f\x03\n" +
+	"\n" +
+	"Suggestion\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12:\n" +
+	"\x06target\x18\x02 \x01(\x0e2\".shogun.katana.v1.SuggestionTargetR\x06target\x12\x18\n" +
+	"\asection\x18\x03 \x01(\tR\asection\x12\x16\n" +
+	"\x06before\x18\x04 \x01(\tR\x06before\x12\x14\n" +
+	"\x05after\x18\x05 \x01(\tR\x05after\x12\x16\n" +
+	"\x06reason\x18\x06 \x01(\tR\x06reason\x126\n" +
+	"\bevidence\x18\a \x03(\v2\x1a.shogun.katana.v1.EvidenceR\bevidence\x127\n" +
+	"\x05state\x18\b \x01(\x0e2!.shogun.katana.v1.SuggestionStateR\x05state\x129\n" +
+	"\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"decided_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tdecidedAt\"\x13\n" +
+	"\x11SyncGitHubRequest\"O\n" +
+	"\x12SyncGitHubResponse\x12\x18\n" +
+	"\achanged\x18\x01 \x01(\bR\achanged\x12\x1f\n" +
+	"\vsnapshot_id\x18\x02 \x01(\tR\n" +
+	"snapshotId\"\xc9\x01\n" +
+	"\x16ListSuggestionsRequest\x127\n" +
+	"\x05state\x18\x01 \x01(\x0e2!.shogun.katana.v1.SuggestionStateR\x05state\x12:\n" +
+	"\x06target\x18\x02 \x01(\x0e2\".shogun.katana.v1.SuggestionTargetR\x06target\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x04 \x01(\tR\tpageToken\"\x81\x01\n" +
+	"\x17ListSuggestionsResponse\x12>\n" +
+	"\vsuggestions\x18\x01 \x03(\v2\x1c.shogun.katana.v1.SuggestionR\vsuggestions\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\")\n" +
+	"\x17AcceptSuggestionRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"X\n" +
+	"\x18AcceptSuggestionResponse\x12<\n" +
+	"\n" +
+	"suggestion\x18\x01 \x01(\v2\x1c.shogun.katana.v1.SuggestionR\n" +
+	"suggestion\"*\n" +
+	"\x18DismissSuggestionRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"Y\n" +
+	"\x19DismissSuggestionResponse\x12<\n" +
+	"\n" +
+	"suggestion\x18\x01 \x01(\v2\x1c.shogun.katana.v1.SuggestionR\n" +
+	"suggestion*s\n" +
+	"\x10SuggestionTarget\x12!\n" +
+	"\x1dSUGGESTION_TARGET_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18SUGGESTION_TARGET_RESUME\x10\x01\x12\x1e\n" +
+	"\x1aSUGGESTION_TARGET_LINKEDIN\x10\x02*\x8d\x01\n" +
+	"\x0fSuggestionState\x12 \n" +
+	"\x1cSUGGESTION_STATE_UNSPECIFIED\x10\x00\x12\x19\n" +
+	"\x15SUGGESTION_STATE_OPEN\x10\x01\x12\x1d\n" +
+	"\x19SUGGESTION_STATE_ACCEPTED\x10\x02\x12\x1e\n" +
+	"\x1aSUGGESTION_STATE_DISMISSED\x10\x032\xa9\x03\n" +
+	"\rKatanaService\x12W\n" +
+	"\n" +
+	"SyncGitHub\x12#.shogun.katana.v1.SyncGitHubRequest\x1a$.shogun.katana.v1.SyncGitHubResponse\x12f\n" +
+	"\x0fListSuggestions\x12(.shogun.katana.v1.ListSuggestionsRequest\x1a).shogun.katana.v1.ListSuggestionsResponse\x12i\n" +
+	"\x10AcceptSuggestion\x12).shogun.katana.v1.AcceptSuggestionRequest\x1a*.shogun.katana.v1.AcceptSuggestionResponse\x12l\n" +
+	"\x11DismissSuggestion\x12*.shogun.katana.v1.DismissSuggestionRequest\x1a+.shogun.katana.v1.DismissSuggestionResponseB\xc2\x01\n" +
 	"\x14com.shogun.katana.v1B\vKatanaProtoP\x01Z;github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1;katanav1\xa2\x02\x03SKX\xaa\x02\x10Shogun.Katana.V1\xca\x02\x10Shogun\\Katana\\V1\xe2\x02\x1cShogun\\Katana\\V1\\GPBMetadata\xea\x02\x12Shogun::Katana::V1b\x06proto3"
 
-var file_shogun_katana_v1_katana_proto_goTypes = []any{}
+var (
+	file_shogun_katana_v1_katana_proto_rawDescOnce sync.Once
+	file_shogun_katana_v1_katana_proto_rawDescData []byte
+)
+
+func file_shogun_katana_v1_katana_proto_rawDescGZIP() []byte {
+	file_shogun_katana_v1_katana_proto_rawDescOnce.Do(func() {
+		file_shogun_katana_v1_katana_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_katana_v1_katana_proto_rawDesc), len(file_shogun_katana_v1_katana_proto_rawDesc)))
+	})
+	return file_shogun_katana_v1_katana_proto_rawDescData
+}
+
+var file_shogun_katana_v1_katana_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_shogun_katana_v1_katana_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_shogun_katana_v1_katana_proto_goTypes = []any{
+	(SuggestionTarget)(0),             // 0: shogun.katana.v1.SuggestionTarget
+	(SuggestionState)(0),              // 1: shogun.katana.v1.SuggestionState
+	(*Evidence)(nil),                  // 2: shogun.katana.v1.Evidence
+	(*Suggestion)(nil),                // 3: shogun.katana.v1.Suggestion
+	(*SyncGitHubRequest)(nil),         // 4: shogun.katana.v1.SyncGitHubRequest
+	(*SyncGitHubResponse)(nil),        // 5: shogun.katana.v1.SyncGitHubResponse
+	(*ListSuggestionsRequest)(nil),    // 6: shogun.katana.v1.ListSuggestionsRequest
+	(*ListSuggestionsResponse)(nil),   // 7: shogun.katana.v1.ListSuggestionsResponse
+	(*AcceptSuggestionRequest)(nil),   // 8: shogun.katana.v1.AcceptSuggestionRequest
+	(*AcceptSuggestionResponse)(nil),  // 9: shogun.katana.v1.AcceptSuggestionResponse
+	(*DismissSuggestionRequest)(nil),  // 10: shogun.katana.v1.DismissSuggestionRequest
+	(*DismissSuggestionResponse)(nil), // 11: shogun.katana.v1.DismissSuggestionResponse
+	(*timestamppb.Timestamp)(nil),     // 12: google.protobuf.Timestamp
+}
 var file_shogun_katana_v1_katana_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: shogun.katana.v1.Suggestion.target:type_name -> shogun.katana.v1.SuggestionTarget
+	2,  // 1: shogun.katana.v1.Suggestion.evidence:type_name -> shogun.katana.v1.Evidence
+	1,  // 2: shogun.katana.v1.Suggestion.state:type_name -> shogun.katana.v1.SuggestionState
+	12, // 3: shogun.katana.v1.Suggestion.created_at:type_name -> google.protobuf.Timestamp
+	12, // 4: shogun.katana.v1.Suggestion.decided_at:type_name -> google.protobuf.Timestamp
+	1,  // 5: shogun.katana.v1.ListSuggestionsRequest.state:type_name -> shogun.katana.v1.SuggestionState
+	0,  // 6: shogun.katana.v1.ListSuggestionsRequest.target:type_name -> shogun.katana.v1.SuggestionTarget
+	3,  // 7: shogun.katana.v1.ListSuggestionsResponse.suggestions:type_name -> shogun.katana.v1.Suggestion
+	3,  // 8: shogun.katana.v1.AcceptSuggestionResponse.suggestion:type_name -> shogun.katana.v1.Suggestion
+	3,  // 9: shogun.katana.v1.DismissSuggestionResponse.suggestion:type_name -> shogun.katana.v1.Suggestion
+	4,  // 10: shogun.katana.v1.KatanaService.SyncGitHub:input_type -> shogun.katana.v1.SyncGitHubRequest
+	6,  // 11: shogun.katana.v1.KatanaService.ListSuggestions:input_type -> shogun.katana.v1.ListSuggestionsRequest
+	8,  // 12: shogun.katana.v1.KatanaService.AcceptSuggestion:input_type -> shogun.katana.v1.AcceptSuggestionRequest
+	10, // 13: shogun.katana.v1.KatanaService.DismissSuggestion:input_type -> shogun.katana.v1.DismissSuggestionRequest
+	5,  // 14: shogun.katana.v1.KatanaService.SyncGitHub:output_type -> shogun.katana.v1.SyncGitHubResponse
+	7,  // 15: shogun.katana.v1.KatanaService.ListSuggestions:output_type -> shogun.katana.v1.ListSuggestionsResponse
+	9,  // 16: shogun.katana.v1.KatanaService.AcceptSuggestion:output_type -> shogun.katana.v1.AcceptSuggestionResponse
+	11, // 17: shogun.katana.v1.KatanaService.DismissSuggestion:output_type -> shogun.katana.v1.DismissSuggestionResponse
+	14, // [14:18] is the sub-list for method output_type
+	10, // [10:14] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_shogun_katana_v1_katana_proto_init() }
@@ -47,13 +809,15 @@ func file_shogun_katana_v1_katana_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_katana_v1_katana_proto_rawDesc), len(file_shogun_katana_v1_katana_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      2,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_katana_v1_katana_proto_goTypes,
 		DependencyIndexes: file_shogun_katana_v1_katana_proto_depIdxs,
+		EnumInfos:         file_shogun_katana_v1_katana_proto_enumTypes,
+		MessageInfos:      file_shogun_katana_v1_katana_proto_msgTypes,
 	}.Build()
 	File_shogun_katana_v1_katana_proto = out.File
 	file_shogun_katana_v1_katana_proto_goTypes = nil
