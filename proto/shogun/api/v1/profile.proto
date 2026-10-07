@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ProfileService is the profile suggestions screen. Torii maps it onto katana.
+// A suggestion is advice from Shogun: accepting one only records the decision,
+// and the owner edits the resume or LinkedIn profile themselves.
+service ProfileService {
+  // SyncGitHub reads GitHub now and lets katana suggest from what is new. It
+  // can fail with FailedPrecondition and reason GITHUB_NOT_CONFIGURED or
+  // GITHUB_UNAUTHORIZED, or ResourceExhausted with GITHUB_RATE_LIMITED.
+  rpc SyncGitHub(SyncGitHubRequest) returns (SyncGitHubResponse);
+  rpc ListProfileSuggestions(ListProfileSuggestionsRequest) returns (ListProfileSuggestionsResponse);
+  // AcceptProfileSuggestion and DismissProfileSuggestion decide an open
+  // suggestion once; deciding again is FailedPrecondition with reason
+  // SUGGESTION_ALREADY_DECIDED.
+  rpc AcceptProfileSuggestion(AcceptProfileSuggestionRequest) returns (AcceptProfileSuggestionResponse);
+  rpc DismissProfileSuggestion(DismissProfileSuggestionRequest) returns (DismissProfileSuggestionResponse);
+}
+
+enum SuggestionTarget {
+  SUGGESTION_TARGET_UNSPECIFIED = 0;
+  SUGGESTION_TARGET_RESUME = 1;
+  SUGGESTION_TARGET_LINKEDIN = 2;
+}
+
+enum SuggestionState {
+  SUGGESTION_STATE_UNSPECIFIED = 0;
+  SUGGESTION_STATE_OPEN = 1;
+  SUGGESTION_STATE_ACCEPTED = 2;
+  SUGGESTION_STATE_DISMISSED = 3;
+}
+
+message SuggestionEvidence {
+  string label = 1;
+  string url = 2;
+}
+
+message ProfileSuggestion {
+  string id = 1;
+  SuggestionTarget target = 2;
+  // section is headline, about, experience, skills or projects.
+  string section = 3;
+  string before = 4;
+  string after = 5;
+  string reason = 6;
+  repeated SuggestionEvidence evidence = 7;
+  SuggestionState state = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp decided_at = 10;
+}
+
+message SyncGitHubRequest {}
+
+message SyncGitHubResponse {
+  // changed is false when GitHub had nothing new.
+  bool changed = 1;
+}
+
+message ListProfileSuggestionsRequest {
+  // state filters the list; unspecified means every state.
+  SuggestionState state = 1;
+  SuggestionTarget target = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListProfileSuggestionsResponse {
+  repeated ProfileSuggestion suggestions = 1;
+  string next_page_token = 2;
+}
+
+message AcceptProfileSuggestionRequest {
+  string id = 1;
+}
+
+message AcceptProfileSuggestionResponse {
+  ProfileSuggestion suggestion = 1;
+}
+
+message DismissProfileSuggestionRequest {
+  string id = 1;
+}
+
+message DismissProfileSuggestionResponse {
+  ProfileSuggestion suggestion = 1;
+}

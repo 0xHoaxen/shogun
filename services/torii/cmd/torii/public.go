@@ -16,6 +16,7 @@ import (
 	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	taikov1 "github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
@@ -121,6 +122,17 @@ func newPublicServer(
 		return nil, nil, fmt.Errorf("dial dojo: %w", err)
 	}
 	dojo := dojov1.NewDojoServiceClient(dojoConn)
+	katanaConn, err := grpcclient.Dial(ctx, s.KatanaAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = kagamiConn.Close()
+		_ = sorobanConn.Close()
+		_ = fudeConn.Close()
+		_ = tsubameConn.Close()
+		_ = taikoConn.Close()
+		_ = dojoConn.Close()
+		return nil, nil, fmt.Errorf("dial katana: %w", err)
+	}
+	katana := katanav1.NewKatanaServiceClient(katanaConn)
 
 	interceptor := connectapi.NewSessionInterceptor(connectapi.InterceptorConfig{
 		Auth:          auth,
@@ -142,6 +154,7 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewMailServiceHandler(connectapi.NewMailServer(tsubame, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewNotificationsServiceHandler(connectapi.NewNotificationsServer(taiko, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewLearningServiceHandler(connectapi.NewLearningServer(dojo, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewProfileServiceHandler(connectapi.NewProfileServer(katana, log), handlerOpts...))
 
 	srv := &http.Server{
 		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
@@ -151,7 +164,7 @@ func newPublicServer(
 	closeBackends := func() {
 		for name, conn := range map[string]interface{ Close() error }{
 			"kagami": kagamiConn, "soroban": sorobanConn, "fude": fudeConn, "tsubame": tsubameConn, "taiko": taikoConn,
-			"dojo": dojoConn,
+			"dojo": dojoConn, "katana": katanaConn,
 		} {
 			if err := conn.Close(); err != nil {
 				log.Warn("close backend connection", slog.String("backend", name), slog.Any("error", err))

@@ -498,9 +498,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: handler tests in katana; a taiko handler test and an idempotency test.
   Status: `ListSuggestions` (filter by state and target, keyset paging), `AcceptSuggestion` and `DismissSuggestion` in katana; accepting records the decision and nothing else, and emits no event. A suggestion is decided once, atomically (a second try, by either RPC, is `FAILED_PRECONDITION` / `SUGGESTION_ALREADY_DECIDED`). taiko consumes `profile.suggestion_ready` (route added) as a new notification type `profile_suggestion`, which needed a migration widening the `notifications.type` CHECK (`00004`), the enum value in the taiko and api protos, and a web label; it links to `/profile`, which P9.2e builds.
 
-- [ ] **P9.2e torii ProfileService and Profile screen** (M) Needs: P9.2d
+- [x] **P9.2e torii ProfileService and Profile screen** (M) Needs: P9.2d
   Do: `api/v1/profile.proto`, handlers, `/profile` page with accept and dismiss, nav entry.
   Done when: torii handler tests and mocked-API Playwright tests pass.
+  Status: `ProfileService` has `SyncGitHub`, `ListProfileSuggestions`, `AcceptProfileSuggestion` and `DismissProfileSuggestion`; torii now requires `KATANA_ADDR` (compose already sets it; `TODO(owner)`: add it to the helm values). `/profile` lists suggestions by state (open first) with the proposed text, reason and evidence links (only http and https links are shown), accepts and dismisses without an optimistic update, and has a "Sync GitHub" button whose failures say what to fix. 9 mocked-API Playwright tests; no compose spec, since the stack has no GitHub or model stub for katana.
 
 - [ ] **P9.3a shinobi tables, proto, domain, store** (M) Needs: P6.3
   Do: migration for `sources postings preferences scores`; RPCs UpsertSource, ListSources, RunSource, GetPreferences, SetPreferences, ListPostings, SaveToTracker; `shinobi/v1/events.proto` `DiscoveryMatchFound` (with `owner_id`); pure rule scorer in `domain`; upsert postings by `(source_id, external_id)`.

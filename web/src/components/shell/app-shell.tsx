@@ -27,6 +27,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/contacts", label: "Contacts", section: "S3 / Network", railLabel: "CONTACT BOOK" },
   { href: "/drafts", label: "Drafts", section: "S4 / Drafts", railLabel: "APPROVAL QUEUE" },
   { href: "/learning", label: "Learning", section: "S5 / Learning", railLabel: "LEARNING LOG" },
+  { href: "/profile", label: "Profile", section: "S6 / Profile", railLabel: "PROFILE EDITS" },
   { href: "/settings/mail", label: "Mail", section: "S9 / Settings", railLabel: "MAIL ACCOUNT" },
   { href: "/settings/spend", label: "Spend", section: "S9 / Settings", railLabel: "SPEND LEDGER" },
   { href: "/settings/notifications", label: "Alerts", section: "S9 / Settings", railLabel: "NOTIFICATION SETTINGS" },
