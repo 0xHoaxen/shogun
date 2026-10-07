@@ -87,3 +87,17 @@ stateDiagram-v2
 | approved | pending | edited after approval, or the send failed |
 
 Only a pending draft's newest version can be approved, and approving stamps a Hanko for that version's hash. An edit after approval, or a failed send, puts the draft back to pending, so a fresh approval is always needed before anything leaves.
+
+## Learning item (dojo)
+
+```mermaid
+stateDiagram-v2
+    [*] --> planned
+    planned --> in_progress: start
+    planned --> done: finished without a start
+    in_progress --> planned: back to the list
+    in_progress --> done: finish
+    done --> in_progress: reopen
+```
+
+Starting stamps `started_on` once; finishing stamps `completed_on` and emits `learning.item_completed`; moving back to `planned` clears both dates and reopening clears `completed_on`. Any other move is `FailedPrecondition` with reason `ITEM_STATUS_INVALID_TRANSITION`.

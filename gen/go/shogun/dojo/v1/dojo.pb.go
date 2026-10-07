@@ -7,9 +7,13 @@
 package dojov1
 
 import (
+	v1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,21 +24,1473 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type ItemKind int32
+
+const (
+	ItemKind_ITEM_KIND_UNSPECIFIED ItemKind = 0
+	ItemKind_ITEM_KIND_COURSE      ItemKind = 1
+	ItemKind_ITEM_KIND_BOOK        ItemKind = 2
+	ItemKind_ITEM_KIND_PROJECT     ItemKind = 3
+	ItemKind_ITEM_KIND_SKILL       ItemKind = 4
+)
+
+// Enum value maps for ItemKind.
+var (
+	ItemKind_name = map[int32]string{
+		0: "ITEM_KIND_UNSPECIFIED",
+		1: "ITEM_KIND_COURSE",
+		2: "ITEM_KIND_BOOK",
+		3: "ITEM_KIND_PROJECT",
+		4: "ITEM_KIND_SKILL",
+	}
+	ItemKind_value = map[string]int32{
+		"ITEM_KIND_UNSPECIFIED": 0,
+		"ITEM_KIND_COURSE":      1,
+		"ITEM_KIND_BOOK":        2,
+		"ITEM_KIND_PROJECT":     3,
+		"ITEM_KIND_SKILL":       4,
+	}
+)
+
+func (x ItemKind) Enum() *ItemKind {
+	p := new(ItemKind)
+	*p = x
+	return p
+}
+
+func (x ItemKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ItemKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_dojo_v1_dojo_proto_enumTypes[0].Descriptor()
+}
+
+func (ItemKind) Type() protoreflect.EnumType {
+	return &file_shogun_dojo_v1_dojo_proto_enumTypes[0]
+}
+
+func (x ItemKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ItemKind.Descriptor instead.
+func (ItemKind) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{0}
+}
+
+type ItemStatus int32
+
+const (
+	ItemStatus_ITEM_STATUS_UNSPECIFIED ItemStatus = 0
+	ItemStatus_ITEM_STATUS_PLANNED     ItemStatus = 1
+	ItemStatus_ITEM_STATUS_IN_PROGRESS ItemStatus = 2
+	ItemStatus_ITEM_STATUS_DONE        ItemStatus = 3
+)
+
+// Enum value maps for ItemStatus.
+var (
+	ItemStatus_name = map[int32]string{
+		0: "ITEM_STATUS_UNSPECIFIED",
+		1: "ITEM_STATUS_PLANNED",
+		2: "ITEM_STATUS_IN_PROGRESS",
+		3: "ITEM_STATUS_DONE",
+	}
+	ItemStatus_value = map[string]int32{
+		"ITEM_STATUS_UNSPECIFIED": 0,
+		"ITEM_STATUS_PLANNED":     1,
+		"ITEM_STATUS_IN_PROGRESS": 2,
+		"ITEM_STATUS_DONE":        3,
+	}
+)
+
+func (x ItemStatus) Enum() *ItemStatus {
+	p := new(ItemStatus)
+	*p = x
+	return p
+}
+
+func (x ItemStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ItemStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_dojo_v1_dojo_proto_enumTypes[1].Descriptor()
+}
+
+func (ItemStatus) Type() protoreflect.EnumType {
+	return &file_shogun_dojo_v1_dojo_proto_enumTypes[1]
+}
+
+func (x ItemStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ItemStatus.Descriptor instead.
+func (ItemStatus) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{1}
+}
+
+type Item struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title       string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Kind        ItemKind               `protobuf:"varint,3,opt,name=kind,proto3,enum=shogun.dojo.v1.ItemKind" json:"kind,omitempty"`
+	Url         string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Status      ItemStatus             `protobuf:"varint,5,opt,name=status,proto3,enum=shogun.dojo.v1.ItemStatus" json:"status,omitempty"`
+	StartedOn   string                 `protobuf:"bytes,6,opt,name=started_on,json=startedOn,proto3" json:"started_on,omitempty"`
+	CompletedOn string                 `protobuf:"bytes,7,opt,name=completed_on,json=completedOn,proto3" json:"completed_on,omitempty"`
+	// insight is what the owner took away; posts are drafted from it.
+	Insight       string                 `protobuf:"bytes,8,opt,name=insight,proto3" json:"insight,omitempty"`
+	Version       int32                  `protobuf:"varint,9,opt,name=version,proto3" json:"version,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Item) Reset() {
+	*x = Item{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Item) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Item) ProtoMessage() {}
+
+func (x *Item) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Item.ProtoReflect.Descriptor instead.
+func (*Item) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Item) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Item) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Item) GetKind() ItemKind {
+	if x != nil {
+		return x.Kind
+	}
+	return ItemKind_ITEM_KIND_UNSPECIFIED
+}
+
+func (x *Item) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *Item) GetStatus() ItemStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ItemStatus_ITEM_STATUS_UNSPECIFIED
+}
+
+func (x *Item) GetStartedOn() string {
+	if x != nil {
+		return x.StartedOn
+	}
+	return ""
+}
+
+func (x *Item) GetCompletedOn() string {
+	if x != nil {
+		return x.CompletedOn
+	}
+	return ""
+}
+
+func (x *Item) GetInsight() string {
+	if x != nil {
+		return x.Insight
+	}
+	return ""
+}
+
+func (x *Item) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *Item) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Item) GetUpdatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return nil
+}
+
+type Activity struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ItemId        string                 `protobuf:"bytes,2,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	Summary       string                 `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
+	Minutes       int32                  `protobuf:"varint,4,opt,name=minutes,proto3" json:"minutes,omitempty"`
+	OccurredOn    string                 `protobuf:"bytes,5,opt,name=occurred_on,json=occurredOn,proto3" json:"occurred_on,omitempty"`
+	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Activity) Reset() {
+	*x = Activity{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Activity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Activity) ProtoMessage() {}
+
+func (x *Activity) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Activity.ProtoReflect.Descriptor instead.
+func (*Activity) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Activity) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Activity) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *Activity) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *Activity) GetMinutes() int32 {
+	if x != nil {
+		return x.Minutes
+	}
+	return 0
+}
+
+func (x *Activity) GetOccurredOn() string {
+	if x != nil {
+		return x.OccurredOn
+	}
+	return ""
+}
+
+func (x *Activity) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+func (x *Activity) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type AddItemRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Kind          ItemKind               `protobuf:"varint,2,opt,name=kind,proto3,enum=shogun.dojo.v1.ItemKind" json:"kind,omitempty"`
+	Url           string                 `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	Insight       string                 `protobuf:"bytes,4,opt,name=insight,proto3" json:"insight,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddItemRequest) Reset() {
+	*x = AddItemRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddItemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddItemRequest) ProtoMessage() {}
+
+func (x *AddItemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddItemRequest.ProtoReflect.Descriptor instead.
+func (*AddItemRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AddItemRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *AddItemRequest) GetKind() ItemKind {
+	if x != nil {
+		return x.Kind
+	}
+	return ItemKind_ITEM_KIND_UNSPECIFIED
+}
+
+func (x *AddItemRequest) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *AddItemRequest) GetInsight() string {
+	if x != nil {
+		return x.Insight
+	}
+	return ""
+}
+
+type AddItemResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Item          *Item                  `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddItemResponse) Reset() {
+	*x = AddItemResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddItemResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddItemResponse) ProtoMessage() {}
+
+func (x *AddItemResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddItemResponse.ProtoReflect.Descriptor instead.
+func (*AddItemResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AddItemResponse) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+type GetItemRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetItemRequest) Reset() {
+	*x = GetItemRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetItemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetItemRequest) ProtoMessage() {}
+
+func (x *GetItemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetItemRequest.ProtoReflect.Descriptor instead.
+func (*GetItemRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetItemRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetItemResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Item          *Item                  `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetItemResponse) Reset() {
+	*x = GetItemResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetItemResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetItemResponse) ProtoMessage() {}
+
+func (x *GetItemResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetItemResponse.ProtoReflect.Descriptor instead.
+func (*GetItemResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetItemResponse) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+type ListItemsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// status filters the list; unspecified means every status.
+	Status        ItemStatus `protobuf:"varint,1,opt,name=status,proto3,enum=shogun.dojo.v1.ItemStatus" json:"status,omitempty"`
+	PageSize      int32      `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string     `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListItemsRequest) Reset() {
+	*x = ListItemsRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListItemsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListItemsRequest) ProtoMessage() {}
+
+func (x *ListItemsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListItemsRequest.ProtoReflect.Descriptor instead.
+func (*ListItemsRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListItemsRequest) GetStatus() ItemStatus {
+	if x != nil {
+		return x.Status
+	}
+	return ItemStatus_ITEM_STATUS_UNSPECIFIED
+}
+
+func (x *ListItemsRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListItemsRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListItemsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*Item                `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListItemsResponse) Reset() {
+	*x = ListItemsResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListItemsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListItemsResponse) ProtoMessage() {}
+
+func (x *ListItemsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListItemsResponse.ProtoReflect.Descriptor instead.
+func (*ListItemsResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ListItemsResponse) GetItems() []*Item {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListItemsResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type UpdateItemRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// item carries the id, the new values and the version the caller read.
+	Item          *Item                  `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateItemRequest) Reset() {
+	*x = UpdateItemRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateItemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateItemRequest) ProtoMessage() {}
+
+func (x *UpdateItemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateItemRequest.ProtoReflect.Descriptor instead.
+func (*UpdateItemRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UpdateItemRequest) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+func (x *UpdateItemRequest) GetUpdateMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.UpdateMask
+	}
+	return nil
+}
+
+type UpdateItemResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Item          *Item                  `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateItemResponse) Reset() {
+	*x = UpdateItemResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateItemResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateItemResponse) ProtoMessage() {}
+
+func (x *UpdateItemResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateItemResponse.ProtoReflect.Descriptor instead.
+func (*UpdateItemResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UpdateItemResponse) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+type ChangeItemStatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ToStatus      ItemStatus             `protobuf:"varint,2,opt,name=to_status,json=toStatus,proto3,enum=shogun.dojo.v1.ItemStatus" json:"to_status,omitempty"`
+	Version       int32                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeItemStatusRequest) Reset() {
+	*x = ChangeItemStatusRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeItemStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeItemStatusRequest) ProtoMessage() {}
+
+func (x *ChangeItemStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeItemStatusRequest.ProtoReflect.Descriptor instead.
+func (*ChangeItemStatusRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ChangeItemStatusRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ChangeItemStatusRequest) GetToStatus() ItemStatus {
+	if x != nil {
+		return x.ToStatus
+	}
+	return ItemStatus_ITEM_STATUS_UNSPECIFIED
+}
+
+func (x *ChangeItemStatusRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+type ChangeItemStatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Item          *Item                  `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangeItemStatusResponse) Reset() {
+	*x = ChangeItemStatusResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangeItemStatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeItemStatusResponse) ProtoMessage() {}
+
+func (x *ChangeItemStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeItemStatusResponse.ProtoReflect.Descriptor instead.
+func (*ChangeItemStatusResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ChangeItemStatusResponse) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+type LogActivityRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// item_id is optional: an activity need not belong to an item.
+	ItemId  string `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	Summary string `protobuf:"bytes,2,opt,name=summary,proto3" json:"summary,omitempty"`
+	Minutes int32  `protobuf:"varint,3,opt,name=minutes,proto3" json:"minutes,omitempty"`
+	// occurred_on defaults to today when empty.
+	OccurredOn    string   `protobuf:"bytes,4,opt,name=occurred_on,json=occurredOn,proto3" json:"occurred_on,omitempty"`
+	Tags          []string `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogActivityRequest) Reset() {
+	*x = LogActivityRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogActivityRequest) ProtoMessage() {}
+
+func (x *LogActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogActivityRequest.ProtoReflect.Descriptor instead.
+func (*LogActivityRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *LogActivityRequest) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *LogActivityRequest) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *LogActivityRequest) GetMinutes() int32 {
+	if x != nil {
+		return x.Minutes
+	}
+	return 0
+}
+
+func (x *LogActivityRequest) GetOccurredOn() string {
+	if x != nil {
+		return x.OccurredOn
+	}
+	return ""
+}
+
+func (x *LogActivityRequest) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+type LogActivityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Activity      *Activity              `protobuf:"bytes,1,opt,name=activity,proto3" json:"activity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LogActivityResponse) Reset() {
+	*x = LogActivityResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LogActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LogActivityResponse) ProtoMessage() {}
+
+func (x *LogActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LogActivityResponse.ProtoReflect.Descriptor instead.
+func (*LogActivityResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *LogActivityResponse) GetActivity() *Activity {
+	if x != nil {
+		return x.Activity
+	}
+	return nil
+}
+
+type GetActivityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetActivityRequest) Reset() {
+	*x = GetActivityRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetActivityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetActivityRequest) ProtoMessage() {}
+
+func (x *GetActivityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetActivityRequest.ProtoReflect.Descriptor instead.
+func (*GetActivityRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetActivityRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetActivityResponse struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Activity *Activity              `protobuf:"bytes,1,opt,name=activity,proto3" json:"activity,omitempty"`
+	// item is the activity's item, when it has one.
+	Item          *Item `protobuf:"bytes,2,opt,name=item,proto3" json:"item,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetActivityResponse) Reset() {
+	*x = GetActivityResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetActivityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetActivityResponse) ProtoMessage() {}
+
+func (x *GetActivityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetActivityResponse.ProtoReflect.Descriptor instead.
+func (*GetActivityResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetActivityResponse) GetActivity() *Activity {
+	if x != nil {
+		return x.Activity
+	}
+	return nil
+}
+
+func (x *GetActivityResponse) GetItem() *Item {
+	if x != nil {
+		return x.Item
+	}
+	return nil
+}
+
+type ListActivitiesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// item_id filters the list; empty means every activity.
+	ItemId        string `protobuf:"bytes,1,opt,name=item_id,json=itemId,proto3" json:"item_id,omitempty"`
+	PageSize      int32  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListActivitiesRequest) Reset() {
+	*x = ListActivitiesRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListActivitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListActivitiesRequest) ProtoMessage() {}
+
+func (x *ListActivitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListActivitiesRequest.ProtoReflect.Descriptor instead.
+func (*ListActivitiesRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListActivitiesRequest) GetItemId() string {
+	if x != nil {
+		return x.ItemId
+	}
+	return ""
+}
+
+func (x *ListActivitiesRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListActivitiesRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListActivitiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Activities    []*Activity            `protobuf:"bytes,1,rep,name=activities,proto3" json:"activities,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListActivitiesResponse) Reset() {
+	*x = ListActivitiesResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListActivitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListActivitiesResponse) ProtoMessage() {}
+
+func (x *ListActivitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListActivitiesResponse.ProtoReflect.Descriptor instead.
+func (*ListActivitiesResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListActivitiesResponse) GetActivities() []*Activity {
+	if x != nil {
+		return x.Activities
+	}
+	return nil
+}
+
+func (x *ListActivitiesResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+type GeneratePostRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ActivityIds   []string               `protobuf:"bytes,1,rep,name=activity_ids,json=activityIds,proto3" json:"activity_ids,omitempty"`
+	Channel       v1.Channel             `protobuf:"varint,2,opt,name=channel,proto3,enum=shogun.fude.v1.Channel" json:"channel,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GeneratePostRequest) Reset() {
+	*x = GeneratePostRequest{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GeneratePostRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GeneratePostRequest) ProtoMessage() {}
+
+func (x *GeneratePostRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GeneratePostRequest.ProtoReflect.Descriptor instead.
+func (*GeneratePostRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *GeneratePostRequest) GetActivityIds() []string {
+	if x != nil {
+		return x.ActivityIds
+	}
+	return nil
+}
+
+func (x *GeneratePostRequest) GetChannel() v1.Channel {
+	if x != nil {
+		return x.Channel
+	}
+	return v1.Channel(0)
+}
+
+type GeneratePostResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DraftId       string                 `protobuf:"bytes,1,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GeneratePostResponse) Reset() {
+	*x = GeneratePostResponse{}
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GeneratePostResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GeneratePostResponse) ProtoMessage() {}
+
+func (x *GeneratePostResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_dojo_v1_dojo_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GeneratePostResponse.ProtoReflect.Descriptor instead.
+func (*GeneratePostResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_dojo_v1_dojo_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GeneratePostResponse) GetDraftId() string {
+	if x != nil {
+		return x.DraftId
+	}
+	return ""
+}
+
 var File_shogun_dojo_v1_dojo_proto protoreflect.FileDescriptor
 
 const file_shogun_dojo_v1_dojo_proto_rawDesc = "" +
 	"\n" +
-	"\x19shogun/dojo/v1/dojo.proto\x12\x0eshogun.dojo.v12\r\n" +
-	"\vDojoServiceB\xb2\x01\n" +
+	"\x19shogun/dojo/v1/dojo.proto\x12\x0eshogun.dojo.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x19shogun/fude/v1/fude.proto\"\x8c\x03\n" +
+	"\x04Item\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12,\n" +
+	"\x04kind\x18\x03 \x01(\x0e2\x18.shogun.dojo.v1.ItemKindR\x04kind\x12\x10\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\x122\n" +
+	"\x06status\x18\x05 \x01(\x0e2\x1a.shogun.dojo.v1.ItemStatusR\x06status\x12\x1d\n" +
+	"\n" +
+	"started_on\x18\x06 \x01(\tR\tstartedOn\x12!\n" +
+	"\fcompleted_on\x18\a \x01(\tR\vcompletedOn\x12\x18\n" +
+	"\ainsight\x18\b \x01(\tR\ainsight\x12\x18\n" +
+	"\aversion\x18\t \x01(\x05R\aversion\x129\n" +
+	"\n" +
+	"created_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"\n" +
+	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\xd7\x01\n" +
+	"\bActivity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
+	"\aitem_id\x18\x02 \x01(\tR\x06itemId\x12\x18\n" +
+	"\asummary\x18\x03 \x01(\tR\asummary\x12\x18\n" +
+	"\aminutes\x18\x04 \x01(\x05R\aminutes\x12\x1f\n" +
+	"\voccurred_on\x18\x05 \x01(\tR\n" +
+	"occurredOn\x12\x12\n" +
+	"\x04tags\x18\x06 \x03(\tR\x04tags\x129\n" +
+	"\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x80\x01\n" +
+	"\x0eAddItemRequest\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12,\n" +
+	"\x04kind\x18\x02 \x01(\x0e2\x18.shogun.dojo.v1.ItemKindR\x04kind\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\x12\x18\n" +
+	"\ainsight\x18\x04 \x01(\tR\ainsight\";\n" +
+	"\x0fAddItemResponse\x12(\n" +
+	"\x04item\x18\x01 \x01(\v2\x14.shogun.dojo.v1.ItemR\x04item\" \n" +
+	"\x0eGetItemRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\";\n" +
+	"\x0fGetItemResponse\x12(\n" +
+	"\x04item\x18\x01 \x01(\v2\x14.shogun.dojo.v1.ItemR\x04item\"\x82\x01\n" +
+	"\x10ListItemsRequest\x122\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x1a.shogun.dojo.v1.ItemStatusR\x06status\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"g\n" +
+	"\x11ListItemsResponse\x12*\n" +
+	"\x05items\x18\x01 \x03(\v2\x14.shogun.dojo.v1.ItemR\x05items\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"z\n" +
+	"\x11UpdateItemRequest\x12(\n" +
+	"\x04item\x18\x01 \x01(\v2\x14.shogun.dojo.v1.ItemR\x04item\x12;\n" +
+	"\vupdate_mask\x18\x02 \x01(\v2\x1a.google.protobuf.FieldMaskR\n" +
+	"updateMask\">\n" +
+	"\x12UpdateItemResponse\x12(\n" +
+	"\x04item\x18\x01 \x01(\v2\x14.shogun.dojo.v1.ItemR\x04item\"|\n" +
+	"\x17ChangeItemStatusRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x127\n" +
+	"\tto_status\x18\x02 \x01(\x0e2\x1a.shogun.dojo.v1.ItemStatusR\btoStatus\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x05R\aversion\"D\n" +
+	"\x18ChangeItemStatusResponse\x12(\n" +
+	"\x04item\x18\x01 \x01(\v2\x14.shogun.dojo.v1.ItemR\x04item\"\x96\x01\n" +
+	"\x12LogActivityRequest\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x18\n" +
+	"\asummary\x18\x02 \x01(\tR\asummary\x12\x18\n" +
+	"\aminutes\x18\x03 \x01(\x05R\aminutes\x12\x1f\n" +
+	"\voccurred_on\x18\x04 \x01(\tR\n" +
+	"occurredOn\x12\x12\n" +
+	"\x04tags\x18\x05 \x03(\tR\x04tags\"K\n" +
+	"\x13LogActivityResponse\x124\n" +
+	"\bactivity\x18\x01 \x01(\v2\x18.shogun.dojo.v1.ActivityR\bactivity\"$\n" +
+	"\x12GetActivityRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"u\n" +
+	"\x13GetActivityResponse\x124\n" +
+	"\bactivity\x18\x01 \x01(\v2\x18.shogun.dojo.v1.ActivityR\bactivity\x12(\n" +
+	"\x04item\x18\x02 \x01(\v2\x14.shogun.dojo.v1.ItemR\x04item\"l\n" +
+	"\x15ListActivitiesRequest\x12\x17\n" +
+	"\aitem_id\x18\x01 \x01(\tR\x06itemId\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"z\n" +
+	"\x16ListActivitiesResponse\x128\n" +
+	"\n" +
+	"activities\x18\x01 \x03(\v2\x18.shogun.dojo.v1.ActivityR\n" +
+	"activities\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"k\n" +
+	"\x13GeneratePostRequest\x12!\n" +
+	"\factivity_ids\x18\x01 \x03(\tR\vactivityIds\x121\n" +
+	"\achannel\x18\x02 \x01(\x0e2\x17.shogun.fude.v1.ChannelR\achannel\"1\n" +
+	"\x14GeneratePostResponse\x12\x19\n" +
+	"\bdraft_id\x18\x01 \x01(\tR\adraftId*{\n" +
+	"\bItemKind\x12\x19\n" +
+	"\x15ITEM_KIND_UNSPECIFIED\x10\x00\x12\x14\n" +
+	"\x10ITEM_KIND_COURSE\x10\x01\x12\x12\n" +
+	"\x0eITEM_KIND_BOOK\x10\x02\x12\x15\n" +
+	"\x11ITEM_KIND_PROJECT\x10\x03\x12\x13\n" +
+	"\x0fITEM_KIND_SKILL\x10\x04*u\n" +
+	"\n" +
+	"ItemStatus\x12\x1b\n" +
+	"\x17ITEM_STATUS_UNSPECIFIED\x10\x00\x12\x17\n" +
+	"\x13ITEM_STATUS_PLANNED\x10\x01\x12\x1b\n" +
+	"\x17ITEM_STATUS_IN_PROGRESS\x10\x02\x12\x14\n" +
+	"\x10ITEM_STATUS_DONE\x10\x032\x9f\x06\n" +
+	"\vDojoService\x12J\n" +
+	"\aAddItem\x12\x1e.shogun.dojo.v1.AddItemRequest\x1a\x1f.shogun.dojo.v1.AddItemResponse\x12J\n" +
+	"\aGetItem\x12\x1e.shogun.dojo.v1.GetItemRequest\x1a\x1f.shogun.dojo.v1.GetItemResponse\x12P\n" +
+	"\tListItems\x12 .shogun.dojo.v1.ListItemsRequest\x1a!.shogun.dojo.v1.ListItemsResponse\x12S\n" +
+	"\n" +
+	"UpdateItem\x12!.shogun.dojo.v1.UpdateItemRequest\x1a\".shogun.dojo.v1.UpdateItemResponse\x12e\n" +
+	"\x10ChangeItemStatus\x12'.shogun.dojo.v1.ChangeItemStatusRequest\x1a(.shogun.dojo.v1.ChangeItemStatusResponse\x12V\n" +
+	"\vLogActivity\x12\".shogun.dojo.v1.LogActivityRequest\x1a#.shogun.dojo.v1.LogActivityResponse\x12V\n" +
+	"\vGetActivity\x12\".shogun.dojo.v1.GetActivityRequest\x1a#.shogun.dojo.v1.GetActivityResponse\x12_\n" +
+	"\x0eListActivities\x12%.shogun.dojo.v1.ListActivitiesRequest\x1a&.shogun.dojo.v1.ListActivitiesResponse\x12Y\n" +
+	"\fGeneratePost\x12#.shogun.dojo.v1.GeneratePostRequest\x1a$.shogun.dojo.v1.GeneratePostResponseB\xb2\x01\n" +
 	"\x12com.shogun.dojo.v1B\tDojoProtoP\x01Z7github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1;dojov1\xa2\x02\x03SDX\xaa\x02\x0eShogun.Dojo.V1\xca\x02\x0eShogun\\Dojo\\V1\xe2\x02\x1aShogun\\Dojo\\V1\\GPBMetadata\xea\x02\x10Shogun::Dojo::V1b\x06proto3"
 
-var file_shogun_dojo_v1_dojo_proto_goTypes = []any{}
+var (
+	file_shogun_dojo_v1_dojo_proto_rawDescOnce sync.Once
+	file_shogun_dojo_v1_dojo_proto_rawDescData []byte
+)
+
+func file_shogun_dojo_v1_dojo_proto_rawDescGZIP() []byte {
+	file_shogun_dojo_v1_dojo_proto_rawDescOnce.Do(func() {
+		file_shogun_dojo_v1_dojo_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_dojo_v1_dojo_proto_rawDesc), len(file_shogun_dojo_v1_dojo_proto_rawDesc)))
+	})
+	return file_shogun_dojo_v1_dojo_proto_rawDescData
+}
+
+var file_shogun_dojo_v1_dojo_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
+var file_shogun_dojo_v1_dojo_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_shogun_dojo_v1_dojo_proto_goTypes = []any{
+	(ItemKind)(0),                    // 0: shogun.dojo.v1.ItemKind
+	(ItemStatus)(0),                  // 1: shogun.dojo.v1.ItemStatus
+	(*Item)(nil),                     // 2: shogun.dojo.v1.Item
+	(*Activity)(nil),                 // 3: shogun.dojo.v1.Activity
+	(*AddItemRequest)(nil),           // 4: shogun.dojo.v1.AddItemRequest
+	(*AddItemResponse)(nil),          // 5: shogun.dojo.v1.AddItemResponse
+	(*GetItemRequest)(nil),           // 6: shogun.dojo.v1.GetItemRequest
+	(*GetItemResponse)(nil),          // 7: shogun.dojo.v1.GetItemResponse
+	(*ListItemsRequest)(nil),         // 8: shogun.dojo.v1.ListItemsRequest
+	(*ListItemsResponse)(nil),        // 9: shogun.dojo.v1.ListItemsResponse
+	(*UpdateItemRequest)(nil),        // 10: shogun.dojo.v1.UpdateItemRequest
+	(*UpdateItemResponse)(nil),       // 11: shogun.dojo.v1.UpdateItemResponse
+	(*ChangeItemStatusRequest)(nil),  // 12: shogun.dojo.v1.ChangeItemStatusRequest
+	(*ChangeItemStatusResponse)(nil), // 13: shogun.dojo.v1.ChangeItemStatusResponse
+	(*LogActivityRequest)(nil),       // 14: shogun.dojo.v1.LogActivityRequest
+	(*LogActivityResponse)(nil),      // 15: shogun.dojo.v1.LogActivityResponse
+	(*GetActivityRequest)(nil),       // 16: shogun.dojo.v1.GetActivityRequest
+	(*GetActivityResponse)(nil),      // 17: shogun.dojo.v1.GetActivityResponse
+	(*ListActivitiesRequest)(nil),    // 18: shogun.dojo.v1.ListActivitiesRequest
+	(*ListActivitiesResponse)(nil),   // 19: shogun.dojo.v1.ListActivitiesResponse
+	(*GeneratePostRequest)(nil),      // 20: shogun.dojo.v1.GeneratePostRequest
+	(*GeneratePostResponse)(nil),     // 21: shogun.dojo.v1.GeneratePostResponse
+	(*timestamppb.Timestamp)(nil),    // 22: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),    // 23: google.protobuf.FieldMask
+	(v1.Channel)(0),                  // 24: shogun.fude.v1.Channel
+}
 var file_shogun_dojo_v1_dojo_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: shogun.dojo.v1.Item.kind:type_name -> shogun.dojo.v1.ItemKind
+	1,  // 1: shogun.dojo.v1.Item.status:type_name -> shogun.dojo.v1.ItemStatus
+	22, // 2: shogun.dojo.v1.Item.created_at:type_name -> google.protobuf.Timestamp
+	22, // 3: shogun.dojo.v1.Item.updated_at:type_name -> google.protobuf.Timestamp
+	22, // 4: shogun.dojo.v1.Activity.created_at:type_name -> google.protobuf.Timestamp
+	0,  // 5: shogun.dojo.v1.AddItemRequest.kind:type_name -> shogun.dojo.v1.ItemKind
+	2,  // 6: shogun.dojo.v1.AddItemResponse.item:type_name -> shogun.dojo.v1.Item
+	2,  // 7: shogun.dojo.v1.GetItemResponse.item:type_name -> shogun.dojo.v1.Item
+	1,  // 8: shogun.dojo.v1.ListItemsRequest.status:type_name -> shogun.dojo.v1.ItemStatus
+	2,  // 9: shogun.dojo.v1.ListItemsResponse.items:type_name -> shogun.dojo.v1.Item
+	2,  // 10: shogun.dojo.v1.UpdateItemRequest.item:type_name -> shogun.dojo.v1.Item
+	23, // 11: shogun.dojo.v1.UpdateItemRequest.update_mask:type_name -> google.protobuf.FieldMask
+	2,  // 12: shogun.dojo.v1.UpdateItemResponse.item:type_name -> shogun.dojo.v1.Item
+	1,  // 13: shogun.dojo.v1.ChangeItemStatusRequest.to_status:type_name -> shogun.dojo.v1.ItemStatus
+	2,  // 14: shogun.dojo.v1.ChangeItemStatusResponse.item:type_name -> shogun.dojo.v1.Item
+	3,  // 15: shogun.dojo.v1.LogActivityResponse.activity:type_name -> shogun.dojo.v1.Activity
+	3,  // 16: shogun.dojo.v1.GetActivityResponse.activity:type_name -> shogun.dojo.v1.Activity
+	2,  // 17: shogun.dojo.v1.GetActivityResponse.item:type_name -> shogun.dojo.v1.Item
+	3,  // 18: shogun.dojo.v1.ListActivitiesResponse.activities:type_name -> shogun.dojo.v1.Activity
+	24, // 19: shogun.dojo.v1.GeneratePostRequest.channel:type_name -> shogun.fude.v1.Channel
+	4,  // 20: shogun.dojo.v1.DojoService.AddItem:input_type -> shogun.dojo.v1.AddItemRequest
+	6,  // 21: shogun.dojo.v1.DojoService.GetItem:input_type -> shogun.dojo.v1.GetItemRequest
+	8,  // 22: shogun.dojo.v1.DojoService.ListItems:input_type -> shogun.dojo.v1.ListItemsRequest
+	10, // 23: shogun.dojo.v1.DojoService.UpdateItem:input_type -> shogun.dojo.v1.UpdateItemRequest
+	12, // 24: shogun.dojo.v1.DojoService.ChangeItemStatus:input_type -> shogun.dojo.v1.ChangeItemStatusRequest
+	14, // 25: shogun.dojo.v1.DojoService.LogActivity:input_type -> shogun.dojo.v1.LogActivityRequest
+	16, // 26: shogun.dojo.v1.DojoService.GetActivity:input_type -> shogun.dojo.v1.GetActivityRequest
+	18, // 27: shogun.dojo.v1.DojoService.ListActivities:input_type -> shogun.dojo.v1.ListActivitiesRequest
+	20, // 28: shogun.dojo.v1.DojoService.GeneratePost:input_type -> shogun.dojo.v1.GeneratePostRequest
+	5,  // 29: shogun.dojo.v1.DojoService.AddItem:output_type -> shogun.dojo.v1.AddItemResponse
+	7,  // 30: shogun.dojo.v1.DojoService.GetItem:output_type -> shogun.dojo.v1.GetItemResponse
+	9,  // 31: shogun.dojo.v1.DojoService.ListItems:output_type -> shogun.dojo.v1.ListItemsResponse
+	11, // 32: shogun.dojo.v1.DojoService.UpdateItem:output_type -> shogun.dojo.v1.UpdateItemResponse
+	13, // 33: shogun.dojo.v1.DojoService.ChangeItemStatus:output_type -> shogun.dojo.v1.ChangeItemStatusResponse
+	15, // 34: shogun.dojo.v1.DojoService.LogActivity:output_type -> shogun.dojo.v1.LogActivityResponse
+	17, // 35: shogun.dojo.v1.DojoService.GetActivity:output_type -> shogun.dojo.v1.GetActivityResponse
+	19, // 36: shogun.dojo.v1.DojoService.ListActivities:output_type -> shogun.dojo.v1.ListActivitiesResponse
+	21, // 37: shogun.dojo.v1.DojoService.GeneratePost:output_type -> shogun.dojo.v1.GeneratePostResponse
+	29, // [29:38] is the sub-list for method output_type
+	20, // [20:29] is the sub-list for method input_type
+	20, // [20:20] is the sub-list for extension type_name
+	20, // [20:20] is the sub-list for extension extendee
+	0,  // [0:20] is the sub-list for field type_name
 }
 
 func init() { file_shogun_dojo_v1_dojo_proto_init() }
@@ -47,13 +1503,15 @@ func file_shogun_dojo_v1_dojo_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_dojo_v1_dojo_proto_rawDesc), len(file_shogun_dojo_v1_dojo_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      2,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_dojo_v1_dojo_proto_goTypes,
 		DependencyIndexes: file_shogun_dojo_v1_dojo_proto_depIdxs,
+		EnumInfos:         file_shogun_dojo_v1_dojo_proto_enumTypes,
+		MessageInfos:      file_shogun_dojo_v1_dojo_proto_msgTypes,
 	}.Build()
 	File_shogun_dojo_v1_dojo_proto = out.File
 	file_shogun_dojo_v1_dojo_proto_goTypes = nil
