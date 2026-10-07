@@ -142,6 +142,19 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: go test -race -count=1 ./...
 
+  drills:
+    name: failure drills
+    needs: modules
+    if: needs.modules.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .tool-versions
+      - name: Kill, time out, exhaust and fail things; nothing may be lost or done twice
+        run: make drills
+
   isolated-build:
     name: build (${{ matrix.dir }}, GOWORK=off)
     needs: modules
@@ -256,7 +269,7 @@ jobs:
   ci-ok:
     name: ci ok
     if: always()
-    needs: [modules, lint, lint-config, hanko-boundary, test, isolated-build, build, docker-build, web, e2e-compose]
+    needs: [modules, lint, lint-config, hanko-boundary, test, drills, isolated-build, build, docker-build, web, e2e-compose]
     runs-on: ubuntu-latest
     steps:
       # Matrix jobs are skipped when nothing they cover changed, so a skipped

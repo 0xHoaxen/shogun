@@ -547,9 +547,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
 
 ## Phase 10: Hardening and operations
 
-- [ ] **P10.1 Failure drills** (M) Needs: P7.8
+- [x] **P10.1 Failure drills** (M) Needs: P7.8
   Do: integration tests that kill a consumer mid-delivery, make Claude time out, exhaust a budget, return a Gmail error after Hanko use; assert nothing is lost or double-sent per the System Design failure table.
   Done when: all drills pass in CI.
+  Status: five `TestDrill…` tests, each in the module that owns the failure (Go `internal` packages cannot be shared), run by `make drills` and the new `failure drills` CI job (part of `ci ok`). `pkg/bus/relay`: a consumer that is down while events are relayed gets every event once when it returns, and a delivery whose answer is lost is deduplicated by the inbox. `pkg/llm`: the real Anthropic adapter against a model that never answers gives up at the request timeout, releases the hold and commits nothing. `soroban`: a budget filled with holds refuses with one `cost.budget_exhausted` for the period, and a commit for less than held or a release makes room again, never past the limit. `tsubame`: Gmail takes the mail but the record fails (a database trigger) sends once even on retry with a new approval, and the reconciler then records it once with one `draft.sent`; a Gmail error after the token is used announces one `draft.send_failed` and the token is never reusable. No fude drill: its duplicate and late `draft.send_failed`/`draft.sent` handling already has tests in `services/fude/internal/events`. The System Design doc is not in the repo, so the failure table is read from the LLD (outbox delivery, Hanko verify and reconciler, soroban fail-closed).
 
 - [ ] **P10.2 Observability** (M) Needs: P3.3
   Do: dashboards and alerts for outbox lag, discarded jobs, error rate, Gmail sync failing, budget thresholds; `make up-observability` profile works.
