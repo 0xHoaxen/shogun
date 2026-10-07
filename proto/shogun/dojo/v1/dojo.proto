@@ -2,5 +2,163 @@ syntax = "proto3";
 
 package shogun.dojo.v1;
 
-// The RPCs of dojo are added with its first feature task.
-service DojoService {}
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+import "shogun/fude/v1/fude.proto";
+
+// DojoService holds the learning log: items being learned and the activities
+// logged against them. Dates without a time are YYYY-MM-DD strings.
+service DojoService {
+  rpc AddItem(AddItemRequest) returns (AddItemResponse);
+  rpc GetItem(GetItemRequest) returns (GetItemResponse);
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
+  // UpdateItem applies update_mask of item if version matches. Status is not
+  // editable here; use ChangeItemStatus.
+  rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse);
+  // ChangeItemStatus moves an item along planned, in_progress and done. An
+  // invalid move is FailedPrecondition with reason
+  // ITEM_STATUS_INVALID_TRANSITION. Moving to done emits learning.item_completed.
+  rpc ChangeItemStatus(ChangeItemStatusRequest) returns (ChangeItemStatusResponse);
+  // LogActivity records what was learned and emits learning.activity_added.
+  rpc LogActivity(LogActivityRequest) returns (LogActivityResponse);
+  rpc GetActivity(GetActivityRequest) returns (GetActivityResponse);
+  rpc ListActivities(ListActivitiesRequest) returns (ListActivitiesResponse);
+  // GeneratePost asks fude for a post draft about the chosen activities.
+  rpc GeneratePost(GeneratePostRequest) returns (GeneratePostResponse);
+}
+
+enum ItemKind {
+  ITEM_KIND_UNSPECIFIED = 0;
+  ITEM_KIND_COURSE = 1;
+  ITEM_KIND_BOOK = 2;
+  ITEM_KIND_PROJECT = 3;
+  ITEM_KIND_SKILL = 4;
+}
+
+enum ItemStatus {
+  ITEM_STATUS_UNSPECIFIED = 0;
+  ITEM_STATUS_PLANNED = 1;
+  ITEM_STATUS_IN_PROGRESS = 2;
+  ITEM_STATUS_DONE = 3;
+}
+
+message Item {
+  string id = 1;
+  string title = 2;
+  ItemKind kind = 3;
+  string url = 4;
+  ItemStatus status = 5;
+  string started_on = 6;
+  string completed_on = 7;
+  // insight is what the owner took away; posts are drafted from it.
+  string insight = 8;
+  int32 version = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp updated_at = 11;
+}
+
+message Activity {
+  string id = 1;
+  string item_id = 2;
+  string summary = 3;
+  int32 minutes = 4;
+  string occurred_on = 5;
+  repeated string tags = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message AddItemRequest {
+  string title = 1;
+  ItemKind kind = 2;
+  string url = 3;
+  string insight = 4;
+}
+
+message AddItemResponse {
+  Item item = 1;
+}
+
+message GetItemRequest {
+  string id = 1;
+}
+
+message GetItemResponse {
+  Item item = 1;
+}
+
+message ListItemsRequest {
+  // status filters the list; unspecified means every status.
+  ItemStatus status = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListItemsResponse {
+  repeated Item items = 1;
+  string next_page_token = 2;
+}
+
+message UpdateItemRequest {
+  // item carries the id, the new values and the version the caller read.
+  Item item = 1;
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateItemResponse {
+  Item item = 1;
+}
+
+message ChangeItemStatusRequest {
+  string id = 1;
+  ItemStatus to_status = 2;
+  int32 version = 3;
+}
+
+message ChangeItemStatusResponse {
+  Item item = 1;
+}
+
+message LogActivityRequest {
+  // item_id is optional: an activity need not belong to an item.
+  string item_id = 1;
+  string summary = 2;
+  int32 minutes = 3;
+  // occurred_on defaults to today when empty.
+  string occurred_on = 4;
+  repeated string tags = 5;
+}
+
+message LogActivityResponse {
+  Activity activity = 1;
+}
+
+message GetActivityRequest {
+  string id = 1;
+}
+
+message GetActivityResponse {
+  Activity activity = 1;
+  // item is the activity's item, when it has one.
+  Item item = 2;
+}
+
+message ListActivitiesRequest {
+  // item_id filters the list; empty means every activity.
+  string item_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListActivitiesResponse {
+  repeated Activity activities = 1;
+  string next_page_token = 2;
+}
+
+message GeneratePostRequest {
+  repeated string activity_ids = 1;
+  shogun.fude.v1.Channel channel = 2;
+}
+
+message GeneratePostResponse {
+  string draft_id = 1;
+}

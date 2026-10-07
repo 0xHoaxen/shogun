@@ -202,7 +202,9 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | taiko | `List` / `MarkRead` / `MarkAllRead` | unread\_only / ids | Notifications | torii |
 | taiko | `Subscribe` | none (server stream) | stream of Notification | torii |
 | dojo | `AddItem` / `UpdateItem` / `ListItems` | item fields | Item(s) | torii |
+| dojo | `GetItem` / `ChangeItemStatus` | id / id, to\_status, version | Item | torii, fude (`GetItem`) |
 | dojo | `LogActivity` / `ListActivities` | item\_id, summary, minutes, occurred\_on | Activity | torii |
+| dojo | `GetActivity` | id | Activity with its item | torii, fude |
 | dojo | `GeneratePost` | activity\_ids, channel | Draft id | torii |
 | katana | `SyncGitHub` | none | Snapshot | torii, scheduler |
 | katana | `ListSuggestions` / `AcceptSuggestion` / `DismissSuggestion` | target, state / id | Suggestion(s) | torii |

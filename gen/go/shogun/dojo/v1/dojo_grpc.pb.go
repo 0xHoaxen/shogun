@@ -7,7 +7,10 @@
 package dojov1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,41 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	DojoService_AddItem_FullMethodName          = "/shogun.dojo.v1.DojoService/AddItem"
+	DojoService_GetItem_FullMethodName          = "/shogun.dojo.v1.DojoService/GetItem"
+	DojoService_ListItems_FullMethodName        = "/shogun.dojo.v1.DojoService/ListItems"
+	DojoService_UpdateItem_FullMethodName       = "/shogun.dojo.v1.DojoService/UpdateItem"
+	DojoService_ChangeItemStatus_FullMethodName = "/shogun.dojo.v1.DojoService/ChangeItemStatus"
+	DojoService_LogActivity_FullMethodName      = "/shogun.dojo.v1.DojoService/LogActivity"
+	DojoService_GetActivity_FullMethodName      = "/shogun.dojo.v1.DojoService/GetActivity"
+	DojoService_ListActivities_FullMethodName   = "/shogun.dojo.v1.DojoService/ListActivities"
+	DojoService_GeneratePost_FullMethodName     = "/shogun.dojo.v1.DojoService/GeneratePost"
+)
+
 // DojoServiceClient is the client API for DojoService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of dojo are added with its first feature task.
+// DojoService holds the learning log: items being learned and the activities
+// logged against them. Dates without a time are YYYY-MM-DD strings.
 type DojoServiceClient interface {
+	AddItem(ctx context.Context, in *AddItemRequest, opts ...grpc.CallOption) (*AddItemResponse, error)
+	GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*GetItemResponse, error)
+	ListItems(ctx context.Context, in *ListItemsRequest, opts ...grpc.CallOption) (*ListItemsResponse, error)
+	// UpdateItem applies update_mask of item if version matches. Status is not
+	// editable here; use ChangeItemStatus.
+	UpdateItem(ctx context.Context, in *UpdateItemRequest, opts ...grpc.CallOption) (*UpdateItemResponse, error)
+	// ChangeItemStatus moves an item along planned, in_progress and done. An
+	// invalid move is FailedPrecondition with reason
+	// ITEM_STATUS_INVALID_TRANSITION. Moving to done emits learning.item_completed.
+	ChangeItemStatus(ctx context.Context, in *ChangeItemStatusRequest, opts ...grpc.CallOption) (*ChangeItemStatusResponse, error)
+	// LogActivity records what was learned and emits learning.activity_added.
+	LogActivity(ctx context.Context, in *LogActivityRequest, opts ...grpc.CallOption) (*LogActivityResponse, error)
+	GetActivity(ctx context.Context, in *GetActivityRequest, opts ...grpc.CallOption) (*GetActivityResponse, error)
+	ListActivities(ctx context.Context, in *ListActivitiesRequest, opts ...grpc.CallOption) (*ListActivitiesResponse, error)
+	// GeneratePost asks fude for a post draft about the chosen activities.
+	GeneratePost(ctx context.Context, in *GeneratePostRequest, opts ...grpc.CallOption) (*GeneratePostResponse, error)
 }
 
 type dojoServiceClient struct {
@@ -31,12 +63,119 @@ func NewDojoServiceClient(cc grpc.ClientConnInterface) DojoServiceClient {
 	return &dojoServiceClient{cc}
 }
 
+func (c *dojoServiceClient) AddItem(ctx context.Context, in *AddItemRequest, opts ...grpc.CallOption) (*AddItemResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddItemResponse)
+	err := c.cc.Invoke(ctx, DojoService_AddItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) GetItem(ctx context.Context, in *GetItemRequest, opts ...grpc.CallOption) (*GetItemResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetItemResponse)
+	err := c.cc.Invoke(ctx, DojoService_GetItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) ListItems(ctx context.Context, in *ListItemsRequest, opts ...grpc.CallOption) (*ListItemsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListItemsResponse)
+	err := c.cc.Invoke(ctx, DojoService_ListItems_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) UpdateItem(ctx context.Context, in *UpdateItemRequest, opts ...grpc.CallOption) (*UpdateItemResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateItemResponse)
+	err := c.cc.Invoke(ctx, DojoService_UpdateItem_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) ChangeItemStatus(ctx context.Context, in *ChangeItemStatusRequest, opts ...grpc.CallOption) (*ChangeItemStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ChangeItemStatusResponse)
+	err := c.cc.Invoke(ctx, DojoService_ChangeItemStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) LogActivity(ctx context.Context, in *LogActivityRequest, opts ...grpc.CallOption) (*LogActivityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogActivityResponse)
+	err := c.cc.Invoke(ctx, DojoService_LogActivity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) GetActivity(ctx context.Context, in *GetActivityRequest, opts ...grpc.CallOption) (*GetActivityResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetActivityResponse)
+	err := c.cc.Invoke(ctx, DojoService_GetActivity_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) ListActivities(ctx context.Context, in *ListActivitiesRequest, opts ...grpc.CallOption) (*ListActivitiesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListActivitiesResponse)
+	err := c.cc.Invoke(ctx, DojoService_ListActivities_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *dojoServiceClient) GeneratePost(ctx context.Context, in *GeneratePostRequest, opts ...grpc.CallOption) (*GeneratePostResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GeneratePostResponse)
+	err := c.cc.Invoke(ctx, DojoService_GeneratePost_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DojoServiceServer is the server API for DojoService service.
 // All implementations must embed UnimplementedDojoServiceServer
 // for forward compatibility.
 //
-// The RPCs of dojo are added with its first feature task.
+// DojoService holds the learning log: items being learned and the activities
+// logged against them. Dates without a time are YYYY-MM-DD strings.
 type DojoServiceServer interface {
+	AddItem(context.Context, *AddItemRequest) (*AddItemResponse, error)
+	GetItem(context.Context, *GetItemRequest) (*GetItemResponse, error)
+	ListItems(context.Context, *ListItemsRequest) (*ListItemsResponse, error)
+	// UpdateItem applies update_mask of item if version matches. Status is not
+	// editable here; use ChangeItemStatus.
+	UpdateItem(context.Context, *UpdateItemRequest) (*UpdateItemResponse, error)
+	// ChangeItemStatus moves an item along planned, in_progress and done. An
+	// invalid move is FailedPrecondition with reason
+	// ITEM_STATUS_INVALID_TRANSITION. Moving to done emits learning.item_completed.
+	ChangeItemStatus(context.Context, *ChangeItemStatusRequest) (*ChangeItemStatusResponse, error)
+	// LogActivity records what was learned and emits learning.activity_added.
+	LogActivity(context.Context, *LogActivityRequest) (*LogActivityResponse, error)
+	GetActivity(context.Context, *GetActivityRequest) (*GetActivityResponse, error)
+	ListActivities(context.Context, *ListActivitiesRequest) (*ListActivitiesResponse, error)
+	// GeneratePost asks fude for a post draft about the chosen activities.
+	GeneratePost(context.Context, *GeneratePostRequest) (*GeneratePostResponse, error)
 	mustEmbedUnimplementedDojoServiceServer()
 }
 
@@ -47,6 +186,33 @@ type DojoServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedDojoServiceServer struct{}
 
+func (UnimplementedDojoServiceServer) AddItem(context.Context, *AddItemRequest) (*AddItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddItem not implemented")
+}
+func (UnimplementedDojoServiceServer) GetItem(context.Context, *GetItemRequest) (*GetItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetItem not implemented")
+}
+func (UnimplementedDojoServiceServer) ListItems(context.Context, *ListItemsRequest) (*ListItemsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListItems not implemented")
+}
+func (UnimplementedDojoServiceServer) UpdateItem(context.Context, *UpdateItemRequest) (*UpdateItemResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateItem not implemented")
+}
+func (UnimplementedDojoServiceServer) ChangeItemStatus(context.Context, *ChangeItemStatusRequest) (*ChangeItemStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ChangeItemStatus not implemented")
+}
+func (UnimplementedDojoServiceServer) LogActivity(context.Context, *LogActivityRequest) (*LogActivityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogActivity not implemented")
+}
+func (UnimplementedDojoServiceServer) GetActivity(context.Context, *GetActivityRequest) (*GetActivityResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetActivity not implemented")
+}
+func (UnimplementedDojoServiceServer) ListActivities(context.Context, *ListActivitiesRequest) (*ListActivitiesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListActivities not implemented")
+}
+func (UnimplementedDojoServiceServer) GeneratePost(context.Context, *GeneratePostRequest) (*GeneratePostResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GeneratePost not implemented")
+}
 func (UnimplementedDojoServiceServer) mustEmbedUnimplementedDojoServiceServer() {}
 func (UnimplementedDojoServiceServer) testEmbeddedByValue()                     {}
 
@@ -68,13 +234,212 @@ func RegisterDojoServiceServer(s grpc.ServiceRegistrar, srv DojoServiceServer) {
 	s.RegisterService(&DojoService_ServiceDesc, srv)
 }
 
+func _DojoService_AddItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddItemRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).AddItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_AddItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).AddItem(ctx, req.(*AddItemRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_GetItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetItemRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).GetItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_GetItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).GetItem(ctx, req.(*GetItemRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_ListItems_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListItemsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).ListItems(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_ListItems_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).ListItems(ctx, req.(*ListItemsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_UpdateItem_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateItemRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).UpdateItem(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_UpdateItem_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).UpdateItem(ctx, req.(*UpdateItemRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_ChangeItemStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeItemStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).ChangeItemStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_ChangeItemStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).ChangeItemStatus(ctx, req.(*ChangeItemStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_LogActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogActivityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).LogActivity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_LogActivity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).LogActivity(ctx, req.(*LogActivityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_GetActivity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetActivityRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).GetActivity(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_GetActivity_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).GetActivity(ctx, req.(*GetActivityRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_ListActivities_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListActivitiesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).ListActivities(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_ListActivities_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).ListActivities(ctx, req.(*ListActivitiesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DojoService_GeneratePost_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GeneratePostRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DojoServiceServer).GeneratePost(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DojoService_GeneratePost_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DojoServiceServer).GeneratePost(ctx, req.(*GeneratePostRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DojoService_ServiceDesc is the grpc.ServiceDesc for DojoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DojoService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.dojo.v1.DojoService",
 	HandlerType: (*DojoServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/dojo/v1/dojo.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AddItem",
+			Handler:    _DojoService_AddItem_Handler,
+		},
+		{
+			MethodName: "GetItem",
+			Handler:    _DojoService_GetItem_Handler,
+		},
+		{
+			MethodName: "ListItems",
+			Handler:    _DojoService_ListItems_Handler,
+		},
+		{
+			MethodName: "UpdateItem",
+			Handler:    _DojoService_UpdateItem_Handler,
+		},
+		{
+			MethodName: "ChangeItemStatus",
+			Handler:    _DojoService_ChangeItemStatus_Handler,
+		},
+		{
+			MethodName: "LogActivity",
+			Handler:    _DojoService_LogActivity_Handler,
+		},
+		{
+			MethodName: "GetActivity",
+			Handler:    _DojoService_GetActivity_Handler,
+		},
+		{
+			MethodName: "ListActivities",
+			Handler:    _DojoService_ListActivities_Handler,
+		},
+		{
+			MethodName: "GeneratePost",
+			Handler:    _DojoService_GeneratePost_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/dojo/v1/dojo.proto",
 }

@@ -454,7 +454,7 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
 
-- [ ] **P9.1a dojo tables, proto, domain, store** (M) Needs: P2.3
+- [x] **P9.1a dojo tables, proto, domain, store** (M) Needs: P2.3
   Do: migration `00002_learning.sql` (`items`, `activities` per the DDL); `dojo.proto` RPCs AddItem, UpdateItem (FieldMask and `version`), ListItems, GetItem, LogActivity, ListActivities, GetActivity, GeneratePost; `dojo/v1/events.proto` `LearningActivityAdded` and `LearningItemCompleted` (each with `owner_id`); `domain.Item` status machine planned, in_progress, done (sets `started_on` and `completed_on`); sqlc store with keyset pagination. `GetItem` and `GetActivity` are added to the LLD table for fude's post prompt.
   Done when: `make proto` and `bin/buf lint` pass; `cd services/dojo && go test -race ./...` passes with domain table tests and store integration tests.
 
