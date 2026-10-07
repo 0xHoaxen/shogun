@@ -63,7 +63,7 @@ build: ## build every service binary into ./dist (SERVICE=<name> limits it to on
 up: ## build and start the local stack, waiting until every container is healthy
 	$(COMPOSE) up -d --build --wait
 
-up-observability: ## local stack plus Jaeger, services export traces to it
+up-observability: ## local stack plus Jaeger, Prometheus, Alertmanager and Grafana (see compose.obs.yaml)
 	OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317 $(COMPOSE) -f deploy/compose/compose.obs.yaml up -d --build --wait
 
 down: ## stop the local stack (keeps the database volume)
