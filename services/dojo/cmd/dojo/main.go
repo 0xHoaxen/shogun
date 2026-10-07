@@ -13,15 +13,20 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 
+	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/logger"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/dojo/internal/app"
+	dojogrpc "github.com/0xHoaxen/shogun/services/dojo/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/dojo/migrations"
 )
 
@@ -30,6 +35,7 @@ const (
 	migrateOnStartEnv  = "MIGRATE_ON_START"
 	migrateOnStartDflt = "true"
 	migrateCommand     = "migrate"
+	fudeAddrEnv        = "FUDE_ADDR"
 )
 
 func main() {
@@ -107,6 +113,21 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
+	fudeAddr, err := config.Required(lookup, fudeAddrEnv)
+	if err != nil {
+		return err
+	}
+	fudeConn, err := grpcclient.Dial(ctx, fudeAddr, grpcclient.WithSigner(authority))
+	if err != nil {
+		return fmt.Errorf("dial %s: %w", fudeAddrEnv, err)
+	}
+	defer func() {
+		if err := fudeConn.Close(); err != nil {
+			log.Warn("close fude connection", slog.Any("error", err))
+		}
+	}()
+
+	svc := app.NewService(pool, fudev1.NewFudeServiceClient(fudeConn), nil)
 	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
 	if err != nil {
 		return err
@@ -124,6 +145,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		dojov1.RegisterDojoServiceServer(s, dojogrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }
