@@ -26,6 +26,7 @@ func TestMigrationsEnforceTheNotificationChecks(t *testing.T) {
 		wantErr bool
 	}{
 		{"known type", `INSERT INTO notifications (id, owner_id, type, title) VALUES (gen_random_uuid(), gen_random_uuid(), 'offer', 'x')`, false},
+		{"profile suggestion type", `INSERT INTO notifications (id, owner_id, type, title) VALUES (gen_random_uuid(), gen_random_uuid(), 'profile_suggestion', 'x')`, false},
 		{"unknown type", `INSERT INTO notifications (id, owner_id, type, title) VALUES (gen_random_uuid(), gen_random_uuid(), 'bogus', 'x')`, true},
 		{"known channel", `INSERT INTO channel_settings (owner_id, channel) VALUES (gen_random_uuid(), 'in_app')`, false},
 		{"unknown channel", `INSERT INTO channel_settings (owner_id, channel) VALUES (gen_random_uuid(), 'sms')`, true},

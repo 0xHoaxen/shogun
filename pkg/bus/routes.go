@@ -20,6 +20,8 @@ var routes = map[string][]string{
 	"cost.threshold_reached": {"taiko"},
 	"cost.budget_exhausted":  {"taiko"},
 
+	"profile.suggestion_ready": {"taiko"},
+
 	"learning.activity_added": {"fude"},
 	"learning.item_completed": {"fude", "katana"},
 }

@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
+	"github.com/0xHoaxen/shogun/services/katana/internal/domain"
+	"github.com/0xHoaxen/shogun/services/katana/internal/store"
 )
 
 // errorDomain is the ErrorInfo.domain of every error katana returns.
@@ -21,6 +23,9 @@ const (
 	reasonGitHubRateLimited  = "GITHUB_RATE_LIMITED"
 	reasonGitHubUnavailable  = "GITHUB_UNAVAILABLE"
 	reasonInternal           = "INTERNAL"
+	reasonInvalidID          = "INVALID_ID"
+	reasonInvalidToken       = "INVALID_PAGE_TOKEN"
+	reasonNotFound           = "SUGGESTION_NOT_FOUND"
 )
 
 // toStatus maps a use case error to a gRPC status carrying an ErrorInfo
@@ -30,8 +35,20 @@ func toStatus(err error) error {
 	if err == nil {
 		return nil
 	}
-	var limit *app.RateLimitError
+	var (
+		limit    *app.RateLimitError
+		decision *domain.DecisionError
+		bad      *badRequest
+	)
 	switch {
+	case errors.As(err, &bad):
+		return withReason(codes.InvalidArgument, bad.reason, bad.msg)
+	case errors.As(err, &decision):
+		return withReason(codes.FailedPrecondition, decision.Reason, "the suggestion was already accepted or dismissed")
+	case errors.Is(err, app.ErrSuggestionNotFound):
+		return withReason(codes.NotFound, reasonNotFound, "suggestion not found")
+	case errors.Is(err, store.ErrInvalidPageToken):
+		return withReason(codes.InvalidArgument, reasonInvalidToken, "page token is not valid")
 	case errors.Is(err, app.ErrNoOwner):
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner")
 	case errors.Is(err, app.ErrGitHubNotConfigured):
@@ -55,3 +72,11 @@ func withReason(code codes.Code, reason, msg string) error {
 	}
 	return detailed.Err()
 }
+
+// badRequest is a request the handler itself refuses before any use case runs.
+type badRequest struct {
+	reason string
+	msg    string
+}
+
+func (e *badRequest) Error() string { return e.reason + ": " + e.msg }
