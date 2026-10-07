@@ -91,6 +91,11 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 		{"missing sensei address", func(e map[string]string) { delete(e, "SENSEI_ADDR") }, "SENSEI_ADDR"},
 		{"blank allowlist", func(e map[string]string) { e["TORII_ALLOWED_EMAILS"] = " , " }, "no addresses"},
 		{"public url not http", func(e map[string]string) { e["TORII_PUBLIC_URL"] = "ftp://x" }, "TORII_PUBLIC_URL"},
+		{"http public url in production", func(e map[string]string) {
+			e["ENVIRONMENT"] = "production"
+			e["TORII_PUBLIC_URL"] = "http://shogun.example"
+		}, "must be https in production"},
+		{"default public url in production", func(e map[string]string) { e["ENVIRONMENT"] = "production" }, "must be https in production"},
 		{"zero ttl", func(e map[string]string) { e["SESSION_TTL"] = "0s" }, "SESSION_TTL"},
 		{"zero rate limit", func(e map[string]string) { e["TORII_RATE_LIMIT"] = "0" }, "TORII_RATE_LIMIT"},
 		{"zero body cap", func(e map[string]string) { e["TORII_MAX_BODY_BYTES"] = "0" }, "TORII_MAX_BODY_BYTES"},
@@ -109,5 +114,22 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 				t.Fatalf("err = %v, want mention of %q", err, tt.wantMsg)
 			}
 		})
+	}
+}
+
+func TestLoadAcceptsAnHTTPSPublicURLInProductionWithSecureCookies(t *testing.T) {
+	// Arrange
+	env := validEnv()
+	env["ENVIRONMENT"] = "production"
+	env["TORII_PUBLIC_URL"] = "https://shogun.example"
+
+	// Act
+	s, err := settings.Load(lookupOf(env))
+	// Assert
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !s.SecureCookies() {
+		t.Error("SecureCookies = false for an https public URL")
 	}
 }

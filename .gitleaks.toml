@@ -1,0 +1,16 @@
+# Extends gitleaks' default rules. The only exemptions are placeholder keys that
+# are meant to be public: the local-dev values in .env.example and the throwaway
+# keys of service tests. They are exempt from one rule only, so any other kind
+# of secret in these files, and any key anywhere else, still fails the scan.
+title = "shogun"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "placeholder keys in .env.example and in tests"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^\.env\.example$''',
+  '''(^|/)main_test\.go(\.tmpl)?$''',
+]

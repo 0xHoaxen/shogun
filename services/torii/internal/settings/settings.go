@@ -132,6 +132,10 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		MaxBodyBytes:       maxBody,
 	}
 	collect(s.validate())
+	if config.String(lookup, "ENVIRONMENT", config.EnvLocal) == config.EnvProduction && !s.SecureCookies() {
+		// Without https the session cookie would go out without the Secure flag.
+		collect(fmt.Errorf("settings: TORII_PUBLIC_URL %q must be https in production", s.PublicURL))
+	}
 	if err := errors.Join(errs...); err != nil {
 		return Settings{}, err
 	}
