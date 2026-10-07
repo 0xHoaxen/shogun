@@ -170,7 +170,7 @@ func TestChangeItemStatusToDoneWritesOneCompletedEvent(t *testing.T) {
 	var payload dojov1.LearningItemCompleted
 	h.payloadOf(t, "learning.item_completed", &payload)
 	if payload.GetItemId() != item.GetId() || payload.GetTitle() != "go" || payload.GetOwnerId() != h.owner ||
-		payload.GetKind() != dojov1.ItemKind_ITEM_KIND_COURSE {
+		payload.GetKind() != dojov1.ItemKind_ITEM_KIND_COURSE || payload.GetUrl() != "https://example.com/go" {
 		t.Fatalf("payload = %+v", &payload)
 	}
 }

@@ -21,4 +21,6 @@ message LearningItemCompleted {
   string title = 2;
   ItemKind kind = 3;
   string owner_id = 4;
+  // url is the item's link, when it has one; consumers cite it as evidence.
+  string url = 5;
 }

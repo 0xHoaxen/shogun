@@ -1,4 +1,5 @@
-// Package jobs holds katana's River workers: the daily GitHub sync.
+// Package jobs holds katana's River workers: the daily GitHub sync and the
+// suggestion runs.
 //
 // The workers share the outbox relay's River client (see relay.Config), so they
 // are handed over as a Setup rather than started here.
@@ -102,11 +103,12 @@ func syncArgs(now func() time.Time, loc *time.Location) func() (river.JobArgs, *
 }
 
 // NewSetup builds the scheduled jobs. now is the clock, injected for tests.
-func NewSetup(syncer Syncer, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
+func NewSetup(syncer Syncer, suggester Suggester, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
 	at := schedule.Daily{Hour: syncHour, Minute: syncMinute, Loc: loc}
 	return Setup{
 		Workers: func(ws *river.Workers) {
 			river.AddWorker(ws, &syncWorker{syncer: syncer, log: log})
+			river.AddWorker(ws, &suggestWorker{suggester: suggester, now: now, log: log})
 		},
 		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: 1}},
 		PeriodicJobs: []*river.PeriodicJob{
