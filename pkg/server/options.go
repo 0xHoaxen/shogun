@@ -5,6 +5,7 @@ import (
 	"net"
 	"slices"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 )
 
@@ -17,6 +18,7 @@ type settings struct {
 	readiness    []ReadinessCheck
 	authUnary    grpc.UnaryServerInterceptor
 	authStream   grpc.StreamServerInterceptor
+	collectors   []prometheus.Collector
 }
 
 // Option customises Run. Options are pure: they return a modified copy.
@@ -47,6 +49,16 @@ func WithAuth(unary grpc.UnaryServerInterceptor, stream grpc.StreamServerInterce
 	return func(s settings) settings {
 		s.authUnary = unary
 		s.authStream = stream
+		return s
+	}
+}
+
+// WithCollector serves a service's own metrics on /metrics for as long as Run
+// is serving. Run registers it on the default registry and unregisters it on
+// the way out; a registration that fails is logged and does not stop the service.
+func WithCollector(c prometheus.Collector) Option {
+	return func(s settings) settings {
+		s.collectors = append(slices.Clone(s.collectors), c)
 		return s
 	}
 }
