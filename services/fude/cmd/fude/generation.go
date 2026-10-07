@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
@@ -16,6 +17,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/fude/internal/app"
 	"github.com/0xHoaxen/shogun/services/fude/internal/jobs"
+	dojosource "github.com/0xHoaxen/shogun/services/fude/internal/transport/dojo"
 	kagamisource "github.com/0xHoaxen/shogun/services/fude/internal/transport/kagami"
 	tsubamemailer "github.com/0xHoaxen/shogun/services/fude/internal/transport/tsubame"
 )
@@ -24,6 +26,7 @@ const (
 	tsubameAddrEnv = "TSUBAME_ADDR"
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
+	dojoAddrEnv    = "DOJO_ADDR"
 	apiKeyEnv      = "ANTHROPIC_API_KEY"
 	baseURLEnv     = "ANTHROPIC_BASE_URL"
 )
@@ -60,6 +63,10 @@ func newGeneration(
 	if err != nil {
 		return nil, err
 	}
+	dojoAddr, err := config.Required(lookup, dojoAddrEnv)
+	if err != nil {
+		return nil, err
+	}
 	tsubameAddr, err := config.Required(lookup, tsubameAddrEnv)
 	if err != nil {
 		return nil, err
@@ -85,20 +92,32 @@ func newGeneration(
 		_ = sorobanConn.Close()
 		return nil, fmt.Errorf("dial kagami: %w", err)
 	}
+	dojoConn, err := grpcclient.Dial(ctx, dojoAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = sorobanConn.Close()
+		_ = kagamiConn.Close()
+		return nil, fmt.Errorf("dial dojo: %w", err)
+	}
 	tsubameConn, err := grpcclient.Dial(ctx, tsubameAddr, grpcclient.WithSigner(signer))
 	if err != nil {
 		_ = sorobanConn.Close()
 		_ = kagamiConn.Close()
+		_ = dojoConn.Close()
 		return nil, fmt.Errorf("dial tsubame: %w", err)
 	}
-	closeConns := func() { _ = sorobanConn.Close(); _ = kagamiConn.Close(); _ = tsubameConn.Close() }
+	closeConns := func() {
+		_ = sorobanConn.Close()
+		_ = kagamiConn.Close()
+		_ = dojoConn.Close()
+		_ = tsubameConn.Close()
+	}
 
 	completer, err := newCompleter(lookup, apiKey, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
 	if err != nil {
 		closeConns()
 		return nil, err
 	}
-	source := kagamisource.New(kagamiv1.NewKagamiServiceClient(kagamiConn))
+	source := dojosource.New(dojov1.NewDojoServiceClient(dojoConn), kagamisource.New(kagamiv1.NewKagamiServiceClient(kagamiConn)))
 	generator := app.NewGenerator(pool, completer, source, log, nil, app.WithEmbedder(embedder))
 	var sampleEmbedder jobs.SampleEmbedder
 	if embedder != nil {

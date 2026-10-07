@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package shogun.katana.v1;
+
+import "shogun/katana/v1/katana.proto";
+
+// Payloads of the events katana produces. Routes live in pkg/bus/routes.go.
+
+// ProfileSuggestionReady is the payload of profile.suggestion_ready.
+message ProfileSuggestionReady {
+  string suggestion_id = 1;
+  SuggestionTarget target = 2;
+  // owner_id lets consumers act for the owner without a caller identity.
+  string owner_id = 3;
+}

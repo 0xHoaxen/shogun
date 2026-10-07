@@ -14,14 +14,21 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
+	shinobiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/shinobi/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/logger"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/shinobi/internal/app"
+	"github.com/0xHoaxen/shogun/services/shinobi/internal/fetch"
+	"github.com/0xHoaxen/shogun/services/shinobi/internal/jobs"
+	shinobigrpc "github.com/0xHoaxen/shogun/services/shinobi/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/shinobi/migrations"
 )
 
@@ -30,6 +37,7 @@ const (
 	migrateOnStartEnv  = "MIGRATE_ON_START"
 	migrateOnStartDflt = "true"
 	migrateCommand     = "migrate"
+	kagamiAddrEnv      = "KAGAMI_ADDR"
 )
 
 func main() {
@@ -112,7 +120,37 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	queue, err := jobs.NewRiverQueue(pool)
+	if err != nil {
+		return err
+	}
+	model, err := newScoring(ctx, lookup, cfg, authority, log)
+	if err != nil {
+		return err
+	}
+	defer model.close()
+	kagamiAddr, err := config.Required(lookup, kagamiAddrEnv)
+	if err != nil {
+		return err
+	}
+	kagamiConn, err := grpcclient.Dial(ctx, kagamiAddr, grpcclient.WithSigner(authority))
+	if err != nil {
+		return fmt.Errorf("dial %s: %w", kagamiAddrEnv, err)
+	}
+	defer func() {
+		if err := kagamiConn.Close(); err != nil {
+			log.Warn("close kagami connection", slog.Any("error", err))
+		}
+	}()
+	svc := app.NewService(pool, fetch.New(), nil, log,
+		app.WithScoring(queue, model.completer), app.WithTracker(kagamiv1.NewKagamiServiceClient(kagamiConn)))
+	loc, err := jobs.Location()
+	if err != nil {
+		return err
+	}
+	scheduled := jobs.NewSetup(svc, svc, svc, queue, loc, time.Now, log)
+
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err
 	}
@@ -124,6 +162,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		shinobiv1.RegisterShinobiServiceServer(s, shinobigrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

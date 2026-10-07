@@ -33,7 +33,10 @@ func TestConsumersRoutesMailEventsToKagami(t *testing.T) {
 }
 
 func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
-	for _, eventType := range []string{"job.added", "contact.status_changed", "draft.sent", "draft.send_failed"} {
+	for _, eventType := range []string{
+		"job.added", "contact.status_changed", "draft.sent", "draft.send_failed",
+		"learning.activity_added", "learning.item_completed",
+	} {
 		if got := Consumers(eventType); !slices.Contains(got, "fude") {
 			t.Errorf("Consumers(%q) = %v, want fude among them", eventType, got)
 		}
@@ -43,10 +46,28 @@ func TestConsumersRoutesEventsFudeDraftsFor(t *testing.T) {
 	}
 }
 
+func TestConsumersRoutesWhatSenseiProjectsToSensei(t *testing.T) {
+	for _, eventType := range []string{
+		"job.added", "job.status_changed", "job.follow_up_due", "contact.added", "contact.status_changed", "contact.follow_up_due",
+		"mail.classified", "mail.reply_detected", "draft.approved", "draft.sent", "cost.threshold_reached",
+	} {
+		if got := Consumers(eventType); !slices.Contains(got, "sensei") {
+			t.Errorf("Consumers(%q) = %v, want sensei among them", eventType, got)
+		}
+	}
+}
+
+func TestConsumersRoutesFinishedItemsToKatana(t *testing.T) {
+	if got := Consumers("learning.item_completed"); !slices.Contains(got, "katana") {
+		t.Errorf("Consumers(learning.item_completed) = %v, want katana among them", got)
+	}
+}
+
 func TestConsumersRoutesNotificationEventsToTaiko(t *testing.T) {
 	for _, eventType := range []string{
 		"job.follow_up_due", "contact.follow_up_due", "mail.classified", "mail.reply_detected",
 		"draft.ready", "draft.failed", "draft.send_failed", "cost.threshold_reached", "cost.budget_exhausted",
+		"profile.suggestion_ready", "discovery.match_found",
 	} {
 		if got := Consumers(eventType); !slices.Contains(got, "taiko") {
 			t.Errorf("Consumers(%q) = %v, want taiko among them", eventType, got)

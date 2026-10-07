@@ -7,7 +7,10 @@
 package katanav1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,29 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	KatanaService_SyncGitHub_FullMethodName        = "/shogun.katana.v1.KatanaService/SyncGitHub"
+	KatanaService_ListSuggestions_FullMethodName   = "/shogun.katana.v1.KatanaService/ListSuggestions"
+	KatanaService_AcceptSuggestion_FullMethodName  = "/shogun.katana.v1.KatanaService/AcceptSuggestion"
+	KatanaService_DismissSuggestion_FullMethodName = "/shogun.katana.v1.KatanaService/DismissSuggestion"
+)
+
 // KatanaServiceClient is the client API for KatanaService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of katana are added with its first feature task.
+// KatanaService syncs the owner's GitHub activity and suggests resume and
+// LinkedIn changes from it. A suggestion is advice: accepting one only records
+// the decision.
 type KatanaServiceClient interface {
+	// SyncGitHub reads GitHub now. A snapshot is stored only when something
+	// changed since the last one. Callers: torii, the daily schedule.
+	SyncGitHub(ctx context.Context, in *SyncGitHubRequest, opts ...grpc.CallOption) (*SyncGitHubResponse, error)
+	ListSuggestions(ctx context.Context, in *ListSuggestionsRequest, opts ...grpc.CallOption) (*ListSuggestionsResponse, error)
+	// AcceptSuggestion and DismissSuggestion decide an open suggestion. Deciding
+	// twice is FailedPrecondition with reason SUGGESTION_ALREADY_DECIDED.
+	AcceptSuggestion(ctx context.Context, in *AcceptSuggestionRequest, opts ...grpc.CallOption) (*AcceptSuggestionResponse, error)
+	DismissSuggestion(ctx context.Context, in *DismissSuggestionRequest, opts ...grpc.CallOption) (*DismissSuggestionResponse, error)
 }
 
 type katanaServiceClient struct {
@@ -31,12 +51,62 @@ func NewKatanaServiceClient(cc grpc.ClientConnInterface) KatanaServiceClient {
 	return &katanaServiceClient{cc}
 }
 
+func (c *katanaServiceClient) SyncGitHub(ctx context.Context, in *SyncGitHubRequest, opts ...grpc.CallOption) (*SyncGitHubResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SyncGitHubResponse)
+	err := c.cc.Invoke(ctx, KatanaService_SyncGitHub_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *katanaServiceClient) ListSuggestions(ctx context.Context, in *ListSuggestionsRequest, opts ...grpc.CallOption) (*ListSuggestionsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListSuggestionsResponse)
+	err := c.cc.Invoke(ctx, KatanaService_ListSuggestions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *katanaServiceClient) AcceptSuggestion(ctx context.Context, in *AcceptSuggestionRequest, opts ...grpc.CallOption) (*AcceptSuggestionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AcceptSuggestionResponse)
+	err := c.cc.Invoke(ctx, KatanaService_AcceptSuggestion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *katanaServiceClient) DismissSuggestion(ctx context.Context, in *DismissSuggestionRequest, opts ...grpc.CallOption) (*DismissSuggestionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DismissSuggestionResponse)
+	err := c.cc.Invoke(ctx, KatanaService_DismissSuggestion_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KatanaServiceServer is the server API for KatanaService service.
 // All implementations must embed UnimplementedKatanaServiceServer
 // for forward compatibility.
 //
-// The RPCs of katana are added with its first feature task.
+// KatanaService syncs the owner's GitHub activity and suggests resume and
+// LinkedIn changes from it. A suggestion is advice: accepting one only records
+// the decision.
 type KatanaServiceServer interface {
+	// SyncGitHub reads GitHub now. A snapshot is stored only when something
+	// changed since the last one. Callers: torii, the daily schedule.
+	SyncGitHub(context.Context, *SyncGitHubRequest) (*SyncGitHubResponse, error)
+	ListSuggestions(context.Context, *ListSuggestionsRequest) (*ListSuggestionsResponse, error)
+	// AcceptSuggestion and DismissSuggestion decide an open suggestion. Deciding
+	// twice is FailedPrecondition with reason SUGGESTION_ALREADY_DECIDED.
+	AcceptSuggestion(context.Context, *AcceptSuggestionRequest) (*AcceptSuggestionResponse, error)
+	DismissSuggestion(context.Context, *DismissSuggestionRequest) (*DismissSuggestionResponse, error)
 	mustEmbedUnimplementedKatanaServiceServer()
 }
 
@@ -47,6 +117,18 @@ type KatanaServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedKatanaServiceServer struct{}
 
+func (UnimplementedKatanaServiceServer) SyncGitHub(context.Context, *SyncGitHubRequest) (*SyncGitHubResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SyncGitHub not implemented")
+}
+func (UnimplementedKatanaServiceServer) ListSuggestions(context.Context, *ListSuggestionsRequest) (*ListSuggestionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListSuggestions not implemented")
+}
+func (UnimplementedKatanaServiceServer) AcceptSuggestion(context.Context, *AcceptSuggestionRequest) (*AcceptSuggestionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AcceptSuggestion not implemented")
+}
+func (UnimplementedKatanaServiceServer) DismissSuggestion(context.Context, *DismissSuggestionRequest) (*DismissSuggestionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DismissSuggestion not implemented")
+}
 func (UnimplementedKatanaServiceServer) mustEmbedUnimplementedKatanaServiceServer() {}
 func (UnimplementedKatanaServiceServer) testEmbeddedByValue()                       {}
 
@@ -68,13 +150,102 @@ func RegisterKatanaServiceServer(s grpc.ServiceRegistrar, srv KatanaServiceServe
 	s.RegisterService(&KatanaService_ServiceDesc, srv)
 }
 
+func _KatanaService_SyncGitHub_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncGitHubRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).SyncGitHub(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_SyncGitHub_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).SyncGitHub(ctx, req.(*SyncGitHubRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KatanaService_ListSuggestions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListSuggestionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).ListSuggestions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_ListSuggestions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).ListSuggestions(ctx, req.(*ListSuggestionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KatanaService_AcceptSuggestion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AcceptSuggestionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).AcceptSuggestion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_AcceptSuggestion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).AcceptSuggestion(ctx, req.(*AcceptSuggestionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KatanaService_DismissSuggestion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DismissSuggestionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).DismissSuggestion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_DismissSuggestion_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).DismissSuggestion(ctx, req.(*DismissSuggestionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KatanaService_ServiceDesc is the grpc.ServiceDesc for KatanaService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var KatanaService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.katana.v1.KatanaService",
 	HandlerType: (*KatanaServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/katana/v1/katana.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "SyncGitHub",
+			Handler:    _KatanaService_SyncGitHub_Handler,
+		},
+		{
+			MethodName: "ListSuggestions",
+			Handler:    _KatanaService_ListSuggestions_Handler,
+		},
+		{
+			MethodName: "AcceptSuggestion",
+			Handler:    _KatanaService_AcceptSuggestion_Handler,
+		},
+		{
+			MethodName: "DismissSuggestion",
+			Handler:    _KatanaService_DismissSuggestion_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/katana/v1/katana.proto",
 }

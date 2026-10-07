@@ -12,17 +12,19 @@ type Type string
 
 // Notification types.
 const (
-	TypeDraftReady      Type = "draft_ready"
-	TypeDraftFailed     Type = "draft_failed"
-	TypeDraftSendFailed Type = "draft_send_failed"
-	TypeInterviewInvite Type = "interview_invite"
-	TypeOffer           Type = "offer"
-	TypeRejection       Type = "rejection"
-	TypeReplyDetected   Type = "reply_detected"
-	TypeFollowUpDue     Type = "follow_up_due"
-	TypeBudgetThreshold Type = "budget_threshold"
-	TypeBudgetExhausted Type = "budget_exhausted"
-	TypeDailyDigest     Type = "daily_digest"
+	TypeDraftReady        Type = "draft_ready"
+	TypeDraftFailed       Type = "draft_failed"
+	TypeDraftSendFailed   Type = "draft_send_failed"
+	TypeInterviewInvite   Type = "interview_invite"
+	TypeOffer             Type = "offer"
+	TypeRejection         Type = "rejection"
+	TypeReplyDetected     Type = "reply_detected"
+	TypeFollowUpDue       Type = "follow_up_due"
+	TypeBudgetThreshold   Type = "budget_threshold"
+	TypeBudgetExhausted   Type = "budget_exhausted"
+	TypeDailyDigest       Type = "daily_digest"
+	TypeProfileSuggestion Type = "profile_suggestion"
+	TypeDiscoveryMatch    Type = "discovery_match"
 )
 
 // Length limits for what a notification shows.
@@ -43,7 +45,7 @@ var (
 var knownTypes = map[Type]struct{}{
 	TypeDraftReady: {}, TypeDraftFailed: {}, TypeDraftSendFailed: {}, TypeInterviewInvite: {},
 	TypeOffer: {}, TypeRejection: {}, TypeReplyDetected: {}, TypeFollowUpDue: {},
-	TypeBudgetThreshold: {}, TypeBudgetExhausted: {}, TypeDailyDigest: {},
+	TypeBudgetThreshold: {}, TypeBudgetExhausted: {}, TypeDailyDigest: {}, TypeProfileSuggestion: {}, TypeDiscoveryMatch: {},
 }
 
 // Valid reports whether t is a known notification type.

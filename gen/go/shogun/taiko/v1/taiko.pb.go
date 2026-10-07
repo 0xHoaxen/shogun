@@ -27,18 +27,20 @@ const (
 type NotificationType int32
 
 const (
-	NotificationType_NOTIFICATION_TYPE_UNSPECIFIED       NotificationType = 0
-	NotificationType_NOTIFICATION_TYPE_DRAFT_READY       NotificationType = 1
-	NotificationType_NOTIFICATION_TYPE_DRAFT_FAILED      NotificationType = 2
-	NotificationType_NOTIFICATION_TYPE_DRAFT_SEND_FAILED NotificationType = 3
-	NotificationType_NOTIFICATION_TYPE_INTERVIEW_INVITE  NotificationType = 4
-	NotificationType_NOTIFICATION_TYPE_OFFER             NotificationType = 5
-	NotificationType_NOTIFICATION_TYPE_REJECTION         NotificationType = 6
-	NotificationType_NOTIFICATION_TYPE_REPLY_DETECTED    NotificationType = 7
-	NotificationType_NOTIFICATION_TYPE_FOLLOW_UP_DUE     NotificationType = 8
-	NotificationType_NOTIFICATION_TYPE_BUDGET_THRESHOLD  NotificationType = 9
-	NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED  NotificationType = 10
-	NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST      NotificationType = 11
+	NotificationType_NOTIFICATION_TYPE_UNSPECIFIED        NotificationType = 0
+	NotificationType_NOTIFICATION_TYPE_DRAFT_READY        NotificationType = 1
+	NotificationType_NOTIFICATION_TYPE_DRAFT_FAILED       NotificationType = 2
+	NotificationType_NOTIFICATION_TYPE_DRAFT_SEND_FAILED  NotificationType = 3
+	NotificationType_NOTIFICATION_TYPE_INTERVIEW_INVITE   NotificationType = 4
+	NotificationType_NOTIFICATION_TYPE_OFFER              NotificationType = 5
+	NotificationType_NOTIFICATION_TYPE_REJECTION          NotificationType = 6
+	NotificationType_NOTIFICATION_TYPE_REPLY_DETECTED     NotificationType = 7
+	NotificationType_NOTIFICATION_TYPE_FOLLOW_UP_DUE      NotificationType = 8
+	NotificationType_NOTIFICATION_TYPE_BUDGET_THRESHOLD   NotificationType = 9
+	NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED   NotificationType = 10
+	NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST       NotificationType = 11
+	NotificationType_NOTIFICATION_TYPE_PROFILE_SUGGESTION NotificationType = 12
+	NotificationType_NOTIFICATION_TYPE_DISCOVERY_MATCH    NotificationType = 13
 )
 
 // Enum value maps for NotificationType.
@@ -56,20 +58,24 @@ var (
 		9:  "NOTIFICATION_TYPE_BUDGET_THRESHOLD",
 		10: "NOTIFICATION_TYPE_BUDGET_EXHAUSTED",
 		11: "NOTIFICATION_TYPE_DAILY_DIGEST",
+		12: "NOTIFICATION_TYPE_PROFILE_SUGGESTION",
+		13: "NOTIFICATION_TYPE_DISCOVERY_MATCH",
 	}
 	NotificationType_value = map[string]int32{
-		"NOTIFICATION_TYPE_UNSPECIFIED":       0,
-		"NOTIFICATION_TYPE_DRAFT_READY":       1,
-		"NOTIFICATION_TYPE_DRAFT_FAILED":      2,
-		"NOTIFICATION_TYPE_DRAFT_SEND_FAILED": 3,
-		"NOTIFICATION_TYPE_INTERVIEW_INVITE":  4,
-		"NOTIFICATION_TYPE_OFFER":             5,
-		"NOTIFICATION_TYPE_REJECTION":         6,
-		"NOTIFICATION_TYPE_REPLY_DETECTED":    7,
-		"NOTIFICATION_TYPE_FOLLOW_UP_DUE":     8,
-		"NOTIFICATION_TYPE_BUDGET_THRESHOLD":  9,
-		"NOTIFICATION_TYPE_BUDGET_EXHAUSTED":  10,
-		"NOTIFICATION_TYPE_DAILY_DIGEST":      11,
+		"NOTIFICATION_TYPE_UNSPECIFIED":        0,
+		"NOTIFICATION_TYPE_DRAFT_READY":        1,
+		"NOTIFICATION_TYPE_DRAFT_FAILED":       2,
+		"NOTIFICATION_TYPE_DRAFT_SEND_FAILED":  3,
+		"NOTIFICATION_TYPE_INTERVIEW_INVITE":   4,
+		"NOTIFICATION_TYPE_OFFER":              5,
+		"NOTIFICATION_TYPE_REJECTION":          6,
+		"NOTIFICATION_TYPE_REPLY_DETECTED":     7,
+		"NOTIFICATION_TYPE_FOLLOW_UP_DUE":      8,
+		"NOTIFICATION_TYPE_BUDGET_THRESHOLD":   9,
+		"NOTIFICATION_TYPE_BUDGET_EXHAUSTED":   10,
+		"NOTIFICATION_TYPE_DAILY_DIGEST":       11,
+		"NOTIFICATION_TYPE_PROFILE_SUGGESTION": 12,
+		"NOTIFICATION_TYPE_DISCOVERY_MATCH":    13,
 	}
 )
 
@@ -891,7 +897,7 @@ const file_shogun_taiko_v1_taiko_proto_rawDesc = "" +
 	"\x1aSaveChannelSettingsRequest\x12<\n" +
 	"\bsettings\x18\x01 \x01(\v2 .shogun.taiko.v1.ChannelSettingsR\bsettings\"[\n" +
 	"\x1bSaveChannelSettingsResponse\x12<\n" +
-	"\bsettings\x18\x01 \x01(\v2 .shogun.taiko.v1.ChannelSettingsR\bsettings*\xca\x03\n" +
+	"\bsettings\x18\x01 \x01(\v2 .shogun.taiko.v1.ChannelSettingsR\bsettings*\x9b\x04\n" +
 	"\x10NotificationType\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
 	"\x1dNOTIFICATION_TYPE_DRAFT_READY\x10\x01\x12\"\n" +
@@ -905,7 +911,9 @@ const file_shogun_taiko_v1_taiko_proto_rawDesc = "" +
 	"\"NOTIFICATION_TYPE_BUDGET_THRESHOLD\x10\t\x12&\n" +
 	"\"NOTIFICATION_TYPE_BUDGET_EXHAUSTED\x10\n" +
 	"\x12\"\n" +
-	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v2\xb5\x04\n" +
+	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v\x12(\n" +
+	"$NOTIFICATION_TYPE_PROFILE_SUGGESTION\x10\f\x12%\n" +
+	"!NOTIFICATION_TYPE_DISCOVERY_MATCH\x10\r2\xb5\x04\n" +
 	"\fTaikoService\x12C\n" +
 	"\x04List\x12\x1c.shogun.taiko.v1.ListRequest\x1a\x1d.shogun.taiko.v1.ListResponse\x12O\n" +
 	"\bMarkRead\x12 .shogun.taiko.v1.MarkReadRequest\x1a!.shogun.taiko.v1.MarkReadResponse\x12X\n" +

@@ -433,7 +433,8 @@ CREATE TABLE scores (
   score       real NOT NULL CHECK (score BETWEEN 0 AND 1),
   reasons     jsonb NOT NULL,
   scored_by   text NOT NULL CHECK (scored_by IN ('rule','llm')),
-  created_at  timestamptz NOT NULL DEFAULT now()
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  matched_at  timestamptz                   -- first time score reached min_score; discovery.match_found is emitted then, once
 );
 CREATE INDEX scores_top ON scores (score DESC);
 ```

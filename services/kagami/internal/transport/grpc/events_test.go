@@ -79,3 +79,15 @@ func TestJobStatusChangedEventNamesTheOwner(t *testing.T) {
 		t.Fatalf("got %+v, want owner %s and job %s", &got, h.owner, job.GetId())
 	}
 }
+
+func TestContactAddedEventNamesTheOwner(t *testing.T) {
+	h := newHarness(t)
+	contact := h.addContact(t, "Ada", "ada@example.com", "")
+
+	var got kagamiv1.ContactAdded
+	h.payloadOf(t, "contact.added", &got)
+
+	if got.GetOwnerId() != h.owner || got.GetContactId() != contact.GetId() {
+		t.Fatalf("got %+v, want owner %s and contact %s", &got, h.owner, contact.GetId())
+	}
+}

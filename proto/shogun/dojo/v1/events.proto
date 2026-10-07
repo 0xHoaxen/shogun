@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package shogun.dojo.v1;
+
+import "shogun/dojo/v1/dojo.proto";
+
+// Payloads of the events dojo produces. Routes live in pkg/bus/routes.go.
+
+// LearningActivityAdded is the payload of learning.activity_added.
+message LearningActivityAdded {
+  string activity_id = 1;
+  string item_id = 2;
+  string summary = 3;
+  // owner_id lets consumers act for the owner without a caller identity.
+  string owner_id = 4;
+}
+
+// LearningItemCompleted is the payload of learning.item_completed.
+message LearningItemCompleted {
+  string item_id = 1;
+  string title = 2;
+  ItemKind kind = 3;
+  string owner_id = 4;
+  // url is the item's link, when it has one; consumers cite it as evidence.
+  string url = 5;
+}

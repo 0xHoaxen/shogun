@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	senseiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/sensei/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
@@ -22,6 +23,10 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
+	"github.com/0xHoaxen/shogun/services/sensei/internal/app"
+	"github.com/0xHoaxen/shogun/services/sensei/internal/events"
+	"github.com/0xHoaxen/shogun/services/sensei/internal/jobs"
+	senseigrpc "github.com/0xHoaxen/shogun/services/sensei/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/sensei/migrations"
 )
 
@@ -107,12 +112,18 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
+	svc := app.NewService(pool, nil)
+	loc, err := jobs.Location()
+	if err != nil {
+		return err
+	}
+	scheduled := jobs.NewSetup(svc, loc, time.Now, log)
+	sink, err := bus.NewSinkServer(pool, events.Handlers(svc, log, nil), log)
 	if err != nil {
 		return err
 	}
 
-	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, overrides)
+	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err
 	}
@@ -124,6 +135,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
+		senseiv1.RegisterSenseiServiceServer(s, senseigrpc.New(svc))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

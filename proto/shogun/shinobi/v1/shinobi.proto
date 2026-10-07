@@ -2,5 +2,157 @@ syntax = "proto3";
 
 package shogun.shinobi.v1;
 
-// The RPCs of shinobi are added with its first feature task.
-service ShinobiService {}
+import "google/protobuf/timestamp.proto";
+
+// ShinobiService finds job postings from sources the owner provides, scores
+// them against the owner's preferences and saves the good ones to the tracker.
+// Shinobi reads only the sources the owner adds; it never searches the web.
+service ShinobiService {
+  // UpsertSource creates a source, or updates the one named by source.id.
+  rpc UpsertSource(UpsertSourceRequest) returns (UpsertSourceResponse);
+  rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse);
+  // RunSource reads a source now, outside its schedule.
+  rpc RunSource(RunSourceRequest) returns (RunSourceResponse);
+  rpc GetPreferences(GetPreferencesRequest) returns (GetPreferencesResponse);
+  rpc SetPreferences(SetPreferencesRequest) returns (SetPreferencesResponse);
+  // ListPostings returns postings best score first; unscored ones come last.
+  rpc ListPostings(ListPostingsRequest) returns (ListPostingsResponse);
+  // SaveToTracker adds a posting to kagami as a saved job. Saving twice
+  // returns the same job.
+  rpc SaveToTracker(SaveToTrackerRequest) returns (SaveToTrackerResponse);
+}
+
+enum SourceKind {
+  SOURCE_KIND_UNSPECIFIED = 0;
+  // RSS is an RSS or Atom feed at an https address.
+  SOURCE_KIND_RSS = 1;
+  // API is a JSON endpoint at an https address, read through a field mapping.
+  SOURCE_KIND_API = 2;
+  // FILE is a JSON document the owner pasted in, read through a field mapping.
+  SOURCE_KIND_FILE = 3;
+}
+
+// FieldMapping says where in a JSON item each posting field is. Paths are
+// dot-separated keys such as "company.name"; items_path locates the array of
+// items in the document and is empty when the document is the array.
+message FieldMapping {
+  string items_path = 1;
+  string id = 2;
+  string title = 3;
+  string company = 4;
+  string url = 5;
+  string location = 6;
+  string posted_at = 7;
+  string description = 8;
+}
+
+message SourceConfig {
+  // url is the https address of an RSS or API source.
+  string url = 1;
+  // document is the JSON of a FILE source.
+  string document = 2;
+  FieldMapping mapping = 3;
+}
+
+message Source {
+  string id = 1;
+  string name = 2;
+  SourceKind kind = 3;
+  SourceConfig config = 4;
+  // schedule is a five-field cron expression, in Asia/Kolkata time. Empty on
+  // create means 0 7 * * *.
+  string schedule = 5;
+  bool enabled = 6;
+  google.protobuf.Timestamp last_run_at = 7;
+  // last_error is a short code for why the last run failed, empty on success.
+  string last_error = 8;
+}
+
+message UpsertSourceRequest {
+  Source source = 1;
+}
+
+message UpsertSourceResponse {
+  Source source = 1;
+}
+
+message ListSourcesRequest {}
+
+message ListSourcesResponse {
+  repeated Source sources = 1;
+}
+
+message RunSourceRequest {
+  string id = 1;
+}
+
+message RunSourceResponse {
+  // fetched is how many postings the source listed, added how many were new.
+  int32 fetched = 1;
+  int32 added = 2;
+}
+
+message Preferences {
+  repeated string roles = 1;
+  repeated string locations = 2;
+  repeated string must_have = 3;
+  repeated string nice_to_have = 4;
+  repeated string exclude = 5;
+  // min_score is the score from 0 to 1 at which a posting counts as a match.
+  float min_score = 6;
+}
+
+message GetPreferencesRequest {}
+
+message GetPreferencesResponse {
+  Preferences preferences = 1;
+}
+
+message SetPreferencesRequest {
+  Preferences preferences = 1;
+}
+
+message SetPreferencesResponse {
+  Preferences preferences = 1;
+}
+
+message Posting {
+  string id = 1;
+  string source_id = 2;
+  string title = 3;
+  string company = 4;
+  string url = 5;
+  string location = 6;
+  google.protobuf.Timestamp posted_at = 7;
+  // scored is false until the posting has a score; score is then meaningless.
+  bool scored = 8;
+  float score = 9;
+  repeated string reasons = 10;
+  // scored_by is "rule" or "llm".
+  string scored_by = 11;
+  // saved_job_id is the kagami job once the posting is saved to the tracker.
+  string saved_job_id = 12;
+  google.protobuf.Timestamp created_at = 13;
+}
+
+message ListPostingsRequest {
+  // min_score keeps only scored postings at or above it; zero means all.
+  float min_score = 1;
+  // source_id keeps only one source's postings; empty means all.
+  string source_id = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListPostingsResponse {
+  repeated Posting postings = 1;
+  string next_page_token = 2;
+}
+
+message SaveToTrackerRequest {
+  string posting_id = 1;
+}
+
+message SaveToTrackerResponse {
+  string job_id = 1;
+}
