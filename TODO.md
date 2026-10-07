@@ -538,9 +538,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: replaying the same events twice leaves rollups unchanged.
   Status: `rollup` rebuilds `daily_rollups` for the last 45 days (IST) from `facts` in one transaction (delete from that day on, then re-insert), at 01:00 IST, unique per date, 3 tries; days older than the window are left as they are, so a late event is picked up for 45 days. Metrics: `jobs_added`, `applications`, `shortlisted`, `interviews`, `offers`, `rejections` (dimension `source=`, found by joining a status change to its `job.added` fact on `job_id`, or `source=unknown` for a job sensei never saw added), `outreach_sent` and `replies` (dimension `channel=`; a first contact is a contact moving to `reached_out`, a reply a move to `replied`) and `contact_moves` (`status=`). A fact's day is its IST date. `GetFunnel` (group by source or month; interview and offer rates are of applications) and `GetOutreachStats` (group by channel, or by status moved into) read the rollups for a range of at most a year, default the last 30 days, both ends included; today's events show after the next rollup. Job facts gained a `job_id` dimension for the join. The replay test delivers a batch of events twice through the real inbox and rolls up twice with identical results.
 
-- [ ] **P9.4c torii InsightsService and Insights screen** (M) Needs: P9.4b
+- [x] **P9.4c torii InsightsService and Insights screen** (M) Needs: P9.4b
   Do: `api/v1/insights.proto`, handlers, `/insights` page.
   Done when: torii handler tests and mocked-API Playwright tests pass.
+  Status: `InsightsService` (`GetInsightsFunnel`, `GetInsightsOutreach`) over sensei; torii now requires `SENSEI_ADDR` (compose already sets it; `TODO(owner)`: add it to the helm values). `/insights` shows the job funnel (by source or month; added, applied, shortlisted, interviews, offers, rejected, interview and offer rates, with "-" instead of a rate when there were no applications) and outreach (by channel with contacted, replied and reply rate, or by status moved into), for the last 30 days, 90 days or year in India time. 7 mocked-API Playwright tests; no compose spec, since the stack does not run a nightly rollup.
 
 ---
 
