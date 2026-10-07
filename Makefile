@@ -11,7 +11,7 @@ COMPOSE := docker compose --env-file $(COMPOSE_ENV) -f deploy/compose/compose.ya
 
 .DEFAULT_GOAL := help
 
-.PHONY: help tools proto sqlc lint test build up down up-observability migrate new-service rename-service
+.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -45,6 +45,13 @@ lint: ## golangci-lint on every module, buf lint
 
 test: ## go test -race on every module
 	@for m in $(MODULES); do echo "==> test $$m"; (cd $$m && go test -race ./...) || exit 1; done
+
+# Modules that hold failure drills (TestDrill...): each kills or fails something
+# and checks nothing is lost or done twice.
+DRILL_MODULES := pkg services/soroban services/tsubame
+
+drills: ## run the failure drills (needs Docker for Postgres)
+	@for m in $(DRILL_MODULES); do echo "==> drills $$m"; (cd $$m && go test -race -count=1 -run '^TestDrill' ./...) || exit 1; done
 
 build: ## build every service binary into ./dist (SERVICE=<name> limits it to one service)
 	@found=0; for d in services/$(if $(SERVICE),$(SERVICE),*)/cmd/*; do \
