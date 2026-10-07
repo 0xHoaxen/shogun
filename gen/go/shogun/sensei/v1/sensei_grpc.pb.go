@@ -7,7 +7,10 @@
 package senseiv1
 
 import (
+	context "context"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -15,12 +18,24 @@ import (
 // Requires gRPC-Go v1.64.0 or later.
 const _ = grpc.SupportPackageIsVersion9
 
+const (
+	SenseiService_GetFunnel_FullMethodName        = "/shogun.sensei.v1.SenseiService/GetFunnel"
+	SenseiService_GetOutreachStats_FullMethodName = "/shogun.sensei.v1.SenseiService/GetOutreachStats"
+)
+
 // SenseiServiceClient is the client API for SenseiService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The RPCs of sensei are added with its first feature task.
+// SenseiService answers questions about how the job search is going, from facts
+// projected from events and rolled up each night. Days are Asia/Kolkata dates,
+// written YYYY-MM-DD, and a ranges include both ends. Today's events show up
+// after the nightly rollup.
 type SenseiServiceClient interface {
+	// GetFunnel counts jobs at each stage and the rates between them.
+	GetFunnel(ctx context.Context, in *GetFunnelRequest, opts ...grpc.CallOption) (*GetFunnelResponse, error)
+	// GetOutreachStats counts outreach sent and replies to it.
+	GetOutreachStats(ctx context.Context, in *GetOutreachStatsRequest, opts ...grpc.CallOption) (*GetOutreachStatsResponse, error)
 }
 
 type senseiServiceClient struct {
@@ -31,12 +46,39 @@ func NewSenseiServiceClient(cc grpc.ClientConnInterface) SenseiServiceClient {
 	return &senseiServiceClient{cc}
 }
 
+func (c *senseiServiceClient) GetFunnel(ctx context.Context, in *GetFunnelRequest, opts ...grpc.CallOption) (*GetFunnelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFunnelResponse)
+	err := c.cc.Invoke(ctx, SenseiService_GetFunnel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *senseiServiceClient) GetOutreachStats(ctx context.Context, in *GetOutreachStatsRequest, opts ...grpc.CallOption) (*GetOutreachStatsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOutreachStatsResponse)
+	err := c.cc.Invoke(ctx, SenseiService_GetOutreachStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SenseiServiceServer is the server API for SenseiService service.
 // All implementations must embed UnimplementedSenseiServiceServer
 // for forward compatibility.
 //
-// The RPCs of sensei are added with its first feature task.
+// SenseiService answers questions about how the job search is going, from facts
+// projected from events and rolled up each night. Days are Asia/Kolkata dates,
+// written YYYY-MM-DD, and a ranges include both ends. Today's events show up
+// after the nightly rollup.
 type SenseiServiceServer interface {
+	// GetFunnel counts jobs at each stage and the rates between them.
+	GetFunnel(context.Context, *GetFunnelRequest) (*GetFunnelResponse, error)
+	// GetOutreachStats counts outreach sent and replies to it.
+	GetOutreachStats(context.Context, *GetOutreachStatsRequest) (*GetOutreachStatsResponse, error)
 	mustEmbedUnimplementedSenseiServiceServer()
 }
 
@@ -47,6 +89,12 @@ type SenseiServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSenseiServiceServer struct{}
 
+func (UnimplementedSenseiServiceServer) GetFunnel(context.Context, *GetFunnelRequest) (*GetFunnelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFunnel not implemented")
+}
+func (UnimplementedSenseiServiceServer) GetOutreachStats(context.Context, *GetOutreachStatsRequest) (*GetOutreachStatsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOutreachStats not implemented")
+}
 func (UnimplementedSenseiServiceServer) mustEmbedUnimplementedSenseiServiceServer() {}
 func (UnimplementedSenseiServiceServer) testEmbeddedByValue()                       {}
 
@@ -68,13 +116,58 @@ func RegisterSenseiServiceServer(s grpc.ServiceRegistrar, srv SenseiServiceServe
 	s.RegisterService(&SenseiService_ServiceDesc, srv)
 }
 
+func _SenseiService_GetFunnel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFunnelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SenseiServiceServer).GetFunnel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SenseiService_GetFunnel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SenseiServiceServer).GetFunnel(ctx, req.(*GetFunnelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SenseiService_GetOutreachStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOutreachStatsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SenseiServiceServer).GetOutreachStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SenseiService_GetOutreachStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SenseiServiceServer).GetOutreachStats(ctx, req.(*GetOutreachStatsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SenseiService_ServiceDesc is the grpc.ServiceDesc for SenseiService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var SenseiService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "shogun.sensei.v1.SenseiService",
 	HandlerType: (*SenseiServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "shogun/sensei/v1/sensei.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetFunnel",
+			Handler:    _SenseiService_GetFunnel_Handler,
+		},
+		{
+			MethodName: "GetOutreachStats",
+			Handler:    _SenseiService_GetOutreachStats_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "shogun/sensei/v1/sensei.proto",
 }

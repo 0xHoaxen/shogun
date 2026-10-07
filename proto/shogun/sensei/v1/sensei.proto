@@ -2,5 +2,84 @@ syntax = "proto3";
 
 package shogun.sensei.v1;
 
-// The RPCs of sensei are added with its first feature task.
-service SenseiService {}
+// SenseiService answers questions about how the job search is going, from facts
+// projected from events and rolled up each night. Days are Asia/Kolkata dates,
+// written YYYY-MM-DD, and a ranges include both ends. Today's events show up
+// after the nightly rollup.
+service SenseiService {
+  // GetFunnel counts jobs at each stage and the rates between them.
+  rpc GetFunnel(GetFunnelRequest) returns (GetFunnelResponse);
+  // GetOutreachStats counts outreach sent and replies to it.
+  rpc GetOutreachStats(GetOutreachStatsRequest) returns (GetOutreachStatsResponse);
+}
+
+enum FunnelGroupBy {
+  FUNNEL_GROUP_BY_UNSPECIFIED = 0;
+  // FUNNEL_GROUP_BY_SOURCE groups by where the job was found.
+  FUNNEL_GROUP_BY_SOURCE = 1;
+  // FUNNEL_GROUP_BY_MONTH groups by calendar month, YYYY-MM.
+  FUNNEL_GROUP_BY_MONTH = 2;
+}
+
+enum OutreachGroupBy {
+  OUTREACH_GROUP_BY_UNSPECIFIED = 0;
+  // OUTREACH_GROUP_BY_CHANNEL groups by email, linkedin, x, phone or other.
+  OUTREACH_GROUP_BY_CHANNEL = 1;
+  // OUTREACH_GROUP_BY_STATUS groups by the contact status moved into.
+  OUTREACH_GROUP_BY_STATUS = 2;
+}
+
+message GetFunnelRequest {
+  // from and to default to the last 30 days; the range may be at most a year.
+  string from = 1;
+  string to = 2;
+  FunnelGroupBy group_by = 3;
+}
+
+message FunnelRow {
+  // key is the source, or the month.
+  string key = 1;
+  int64 jobs_added = 2;
+  int64 applications = 3;
+  int64 shortlisted = 4;
+  int64 interviews = 5;
+  int64 offers = 6;
+  int64 rejections = 7;
+  // The rates are fractions from 0 to 1 of applications; zero when there are
+  // none.
+  double interview_rate = 8;
+  double offer_rate = 9;
+}
+
+message GetFunnelResponse {
+  string from = 1;
+  string to = 2;
+  repeated FunnelRow rows = 3;
+  // total sums every row.
+  FunnelRow total = 4;
+}
+
+message GetOutreachStatsRequest {
+  string from = 1;
+  string to = 2;
+  OutreachGroupBy group_by = 3;
+}
+
+message OutreachRow {
+  // key is the channel, or the contact status.
+  string key = 1;
+  // sent counts first contacts made, replied the replies, both by channel;
+  // moved_in counts moves into the status, when grouping by status.
+  int64 sent = 2;
+  int64 replied = 3;
+  // reply_rate is replied over sent, from 0 to 1; zero when nothing was sent.
+  double reply_rate = 4;
+  int64 moved_in = 5;
+}
+
+message GetOutreachStatsResponse {
+  string from = 1;
+  string to = 2;
+  repeated OutreachRow rows = 3;
+  OutreachRow total = 4;
+}

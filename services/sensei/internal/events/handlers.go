@@ -42,11 +42,13 @@ type projection struct {
 
 var projections = map[string]projection{
 	domain.TypeJobAdded: {func() ownerEvent { return &kagamiv1.JobAdded{} }, func(p ownerEvent) map[string]string {
-		return map[string]string{domain.DimSource: p.(*kagamiv1.JobAdded).GetSource()}
+		e := p.(*kagamiv1.JobAdded)
+		return map[string]string{domain.DimSource: e.GetSource(), domain.DimJob: e.GetJobId()}
 	}},
 	domain.TypeJobStatusChanged: {func() ownerEvent { return &kagamiv1.JobStatusChanged{} }, func(p ownerEvent) map[string]string {
 		e := p.(*kagamiv1.JobStatusChanged)
 		return map[string]string{
+			domain.DimJob:  e.GetJobId(),
 			domain.DimFrom: domain.EnumLabel(e.GetFrom().String(), "JOB_STATUS_"),
 			domain.DimTo:   domain.EnumLabel(e.GetTo().String(), "JOB_STATUS_"),
 		}

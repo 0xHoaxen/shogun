@@ -53,7 +53,7 @@ func newConsumer(t *testing.T) *consumer {
 		t.Fatalf("migrate: %v", err)
 	}
 	log := slog.New(slog.DiscardHandler)
-	sink, err := bus.NewSinkServer(pool, events.Handlers(app.NewService(), log, func() time.Time { return fallback }), log)
+	sink, err := bus.NewSinkServer(pool, events.Handlers(app.NewService(pool, nil), log, func() time.Time { return fallback }), log)
 	if err != nil {
 		t.Fatalf("sink: %v", err)
 	}
@@ -109,9 +109,9 @@ func TestEachEventTypeBecomesOneFactForTheOwner(t *testing.T) {
 		payload proto.Message
 		want    map[string]string
 	}{
-		{"job added", "job.added", &kagamiv1.JobAdded{OwnerId: owner, JobId: "j", Source: "LinkedIn", Title: "SECRET TITLE", Company: "Acme"}, map[string]string{"source": "linkedin"}},
-		{"job added without a source", "job.added", &kagamiv1.JobAdded{OwnerId: owner}, map[string]string{"source": "unknown"}},
-		{"job status", "job.status_changed", &kagamiv1.JobStatusChanged{OwnerId: owner, From: kagamiv1.JobStatus_JOB_STATUS_SAVED, To: kagamiv1.JobStatus_JOB_STATUS_APPLIED}, map[string]string{"from": "saved", "to": "applied"}},
+		{"job added", "job.added", &kagamiv1.JobAdded{OwnerId: owner, JobId: "j1", Source: "LinkedIn", Title: "SECRET TITLE", Company: "Acme"}, map[string]string{"source": "linkedin", "job_id": "j1"}},
+		{"job added without a source", "job.added", &kagamiv1.JobAdded{OwnerId: owner}, map[string]string{"source": "unknown", "job_id": "unknown"}},
+		{"job status", "job.status_changed", &kagamiv1.JobStatusChanged{OwnerId: owner, JobId: "j1", From: kagamiv1.JobStatus_JOB_STATUS_SAVED, To: kagamiv1.JobStatus_JOB_STATUS_APPLIED}, map[string]string{"job_id": "j1", "from": "saved", "to": "applied"}},
 		{"job follow-up", "job.follow_up_due", &kagamiv1.JobFollowUpDue{OwnerId: owner}, map[string]string{}},
 		{"contact added", "contact.added", &kagamiv1.ContactAdded{OwnerId: owner, Status: kagamiv1.ContactStatus_CONTACT_STATUS_NOT_REACHED}, map[string]string{"status": "not_reached"}},
 		{"contact status", "contact.status_changed", &kagamiv1.ContactStatusChanged{
@@ -150,7 +150,7 @@ func TestEveryTypeSenseiConsumesHasAHandler(t *testing.T) {
 	for _, typ := range events.Types() {
 		want[typ] = true
 	}
-	handlers := events.Handlers(app.NewService(), slog.New(slog.DiscardHandler), nil)
+	handlers := events.Handlers(app.NewService(nil, nil), slog.New(slog.DiscardHandler), nil)
 
 	for typ := range want {
 		if handlers[typ] == nil {
@@ -239,5 +239,75 @@ func TestAFactNeverHoldsMessageTextOrNames(t *testing.T) {
 				t.Fatalf("dimension %s leaks %q", raw, leak)
 			}
 		}
+	}
+}
+
+// Replaying the same events leaves the rollups unchanged: the done-when of the
+// rollup task, through the real inbox and the real rollup.
+func TestReplayingTheSameEventsTwiceLeavesRollupsUnchanged(t *testing.T) {
+	ctx := context.Background()
+	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "sensei")
+	if err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	t.Cleanup(pool.Close)
+	if err := postgres.Migrate(ctx, pool, migrations.FS); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	log := slog.New(slog.DiscardHandler)
+	svc := app.NewService(pool, func() time.Time { return when.AddDate(0, 0, 1) })
+	sink, err := bus.NewSinkServer(pool, events.Handlers(svc, log, nil), log)
+	if err != nil {
+		t.Fatalf("sink: %v", err)
+	}
+	c := &consumer{sink: sink, pool: pool}
+	owner := uuid.NewString()
+	type delivery struct {
+		id, typ string
+		payload proto.Message
+	}
+	batch := []delivery{
+		{uuid.NewString(), "job.added", &kagamiv1.JobAdded{OwnerId: owner, JobId: "j1", Source: "linkedin"}},
+		{uuid.NewString(), "job.status_changed", &kagamiv1.JobStatusChanged{OwnerId: owner, JobId: "j1", To: kagamiv1.JobStatus_JOB_STATUS_APPLIED}},
+		{uuid.NewString(), "job.status_changed", &kagamiv1.JobStatusChanged{OwnerId: owner, JobId: "j1", To: kagamiv1.JobStatus_JOB_STATUS_INTERVIEW}},
+		{uuid.NewString(), "contact.status_changed", &kagamiv1.ContactStatusChanged{OwnerId: owner, To: kagamiv1.ContactStatus_CONTACT_STATUS_REACHED_OUT, Channel: "email"}},
+	}
+	snapshot := func() string {
+		rows, err := pool.Query(ctx, `SELECT day::text || metric || dimension || value::text FROM daily_rollups ORDER BY 1`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+		out := ""
+		for rows.Next() {
+			var s string
+			if err := rows.Scan(&s); err != nil {
+				t.Fatal(err)
+			}
+			out += s + "|"
+		}
+		return out
+	}
+
+	for _, d := range batch {
+		if err := c.deliver(t, d.id, d.typ, d.payload, timestamppb.New(when)); err != nil {
+			t.Fatalf("deliver %s: %v", d.typ, err)
+		}
+	}
+	if err := svc.Rollup(ctx); err != nil {
+		t.Fatalf("rollup: %v", err)
+	}
+	once := snapshot()
+	for _, d := range batch { // the bus delivers at least once: every event again
+		if err := c.deliver(t, d.id, d.typ, d.payload, timestamppb.New(when)); err != nil {
+			t.Fatalf("redeliver %s: %v", d.typ, err)
+		}
+	}
+	if err := svc.Rollup(ctx); err != nil {
+		t.Fatalf("rollup again: %v", err)
+	}
+
+	if once == "" || once != snapshot() || len(c.facts(t)) != 4 {
+		t.Fatalf("rollups changed after a replay:\nbefore %s\nafter  %s\nfacts %d", once, snapshot(), len(c.facts(t)))
 	}
 }
