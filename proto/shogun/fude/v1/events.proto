@@ -13,12 +13,14 @@ message DraftReady {
   TargetType target_type = 3;
   string target_id = 4;
   int32 version = 5;
+  string owner_id = 6;
 }
 
 // DraftFailed is the payload of draft.failed.
 message DraftFailed {
   string draft_id = 1;
   string reason = 2;
+  string owner_id = 3;
 }
 
 // DraftApproved is the payload of draft.approved.

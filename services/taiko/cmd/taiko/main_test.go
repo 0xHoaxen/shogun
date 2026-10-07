@@ -33,13 +33,30 @@ const (
 
 func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
 
+// downstreamAddrs are the services the daily digest reads from. Dialling is
+// lazy, so nothing needs to listen there for the service to start.
+func downstreamAddrs() map[string]string {
+	return map[string]string{
+		"KAGAMI_ADDR":  "127.0.0.1:1",
+		"FUDE_ADDR":    "127.0.0.1:1",
+		"SOROBAN_ADDR": "127.0.0.1:1",
+	}
+}
+
+func withDownstream(env map[string]string) map[string]string {
+	for k, v := range downstreamAddrs() {
+		env[k] = v
+	}
+	return env
+}
+
 func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 	// Arrange
-	env := map[string]string{
+	env := withDownstream(map[string]string{
 		"ENVIRONMENT":          "test",
 		"DATABASE_URL":         postgrestest.NewDatabase(t),
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
-	}
+	})
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
 	httpLis := listen(t)
@@ -80,6 +97,29 @@ func TestRunRejectsMissingIdentityKey(t *testing.T) {
 	}
 }
 
+func TestRunRejectsAMissingDownstreamAddress(t *testing.T) {
+	for _, name := range []string{"KAGAMI_ADDR", "FUDE_ADDR", "SOROBAN_ADDR"} {
+		t.Run(name, func(t *testing.T) {
+			// Arrange
+			env := withDownstream(map[string]string{
+				"ENVIRONMENT":          "test",
+				"DATABASE_URL":         postgrestest.NewDatabase(t),
+				"IDENTITY_SIGNING_KEY": testIdentityKey,
+			})
+			delete(env, name)
+			lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+
+			// Act
+			err := run(context.Background(), lookup, relayOverrides{})
+
+			// Assert
+			if err == nil || !strings.Contains(err.Error(), name) {
+				t.Fatalf("err = %v, want mention of %s", err, name)
+			}
+		})
+	}
+}
+
 // recordingBus is a bus.Bus that reports each delivery as "consumer/event-id".
 type recordingBus struct{ delivered chan string }
 
@@ -91,11 +131,11 @@ func (b *recordingBus) Deliver(_ context.Context, consumer string, env *eventsv1
 func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 	// Arrange
 	dbURL := postgrestest.NewDatabase(t)
-	env := map[string]string{
+	env := withDownstream(map[string]string{
 		"ENVIRONMENT":          "test",
 		"DATABASE_URL":         dbURL,
 		"IDENTITY_SIGNING_KEY": testIdentityKey,
-	}
+	})
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
 	httpLis := listen(t)

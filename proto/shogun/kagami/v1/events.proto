@@ -24,6 +24,7 @@ message JobStatusChanged {
   JobStatus from = 2;
   JobStatus to = 3;
   google.protobuf.Timestamp at = 4;
+  string owner_id = 5;
 }
 
 // JobFollowUpDue is the payload of job.follow_up_due.
@@ -31,6 +32,7 @@ message JobFollowUpDue {
   string job_id = 1;
   // due_on is a YYYY-MM-DD date.
   string due_on = 2;
+  string owner_id = 3;
 }
 
 // ContactAdded is the payload of contact.added.
@@ -54,4 +56,5 @@ message ContactStatusChanged {
 message ContactFollowUpDue {
   string contact_id = 1;
   string due_on = 2;
+  string owner_id = 3;
 }

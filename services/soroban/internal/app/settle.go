@@ -227,6 +227,7 @@ func notifyThresholds(ctx context.Context, tx pgx.Tx, repo *store.Repo, b db.Bud
 			Percent:     threshold,
 			SpentMicros: spent,
 			LimitMicros: b.LimitMicros,
+			OwnerId:     b.OwnerID.String(),
 		})
 		if err != nil {
 			return fmt.Errorf("write %s event: %w", eventThresholdHit, err)

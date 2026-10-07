@@ -194,6 +194,7 @@ func (s *Service) refuse(ctx context.Context, tx pgx.Tx, repo *store.Repo, l loc
 		ScopeValue: denial.ScopeValue,
 		Period:     wire.PeriodToProto(denial.Period),
 		ResetsAt:   timestamppb.New(denial.ResetsAt),
+		OwnerId:    l.budget.OwnerID.String(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("write %s event: %w", eventBudgetExhausted, err)

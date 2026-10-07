@@ -49,6 +49,7 @@ func addLoginSettings(t *testing.T, env map[string]string) *idptest.IDP {
 	env["SOROBAN_ADDR"] = "127.0.0.1:1"
 	env["FUDE_ADDR"] = "127.0.0.1:1"
 	env["TSUBAME_ADDR"] = "127.0.0.1:1"
+	env["TAIKO_ADDR"] = "127.0.0.1:1"
 	return idp
 }
 

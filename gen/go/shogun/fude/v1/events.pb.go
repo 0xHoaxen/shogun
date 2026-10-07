@@ -29,6 +29,7 @@ type DraftReady struct {
 	TargetType    TargetType             `protobuf:"varint,3,opt,name=target_type,json=targetType,proto3,enum=shogun.fude.v1.TargetType" json:"target_type,omitempty"`
 	TargetId      string                 `protobuf:"bytes,4,opt,name=target_id,json=targetId,proto3" json:"target_id,omitempty"`
 	Version       int32                  `protobuf:"varint,5,opt,name=version,proto3" json:"version,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,6,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -98,11 +99,19 @@ func (x *DraftReady) GetVersion() int32 {
 	return 0
 }
 
+func (x *DraftReady) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 // DraftFailed is the payload of draft.failed.
 type DraftFailed struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DraftId       string                 `protobuf:"bytes,1,opt,name=draft_id,json=draftId,proto3" json:"draft_id,omitempty"`
 	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -147,6 +156,13 @@ func (x *DraftFailed) GetDraftId() string {
 func (x *DraftFailed) GetReason() string {
 	if x != nil {
 		return x.Reason
+	}
+	return ""
+}
+
+func (x *DraftFailed) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
 	}
 	return ""
 }
@@ -216,7 +232,7 @@ var File_shogun_fude_v1_events_proto protoreflect.FileDescriptor
 
 const file_shogun_fude_v1_events_proto_rawDesc = "" +
 	"\n" +
-	"\x1bshogun/fude/v1/events.proto\x12\x0eshogun.fude.v1\x1a\x19shogun/fude/v1/fude.proto\"\xca\x01\n" +
+	"\x1bshogun/fude/v1/events.proto\x12\x0eshogun.fude.v1\x1a\x19shogun/fude/v1/fude.proto\"\xe5\x01\n" +
 	"\n" +
 	"DraftReady\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12-\n" +
@@ -224,10 +240,12 @@ const file_shogun_fude_v1_events_proto_rawDesc = "" +
 	"\vtarget_type\x18\x03 \x01(\x0e2\x1a.shogun.fude.v1.TargetTypeR\n" +
 	"targetType\x12\x1b\n" +
 	"\ttarget_id\x18\x04 \x01(\tR\btargetId\x12\x18\n" +
-	"\aversion\x18\x05 \x01(\x05R\aversion\"@\n" +
+	"\aversion\x18\x05 \x01(\x05R\aversion\x12\x19\n" +
+	"\bowner_id\x18\x06 \x01(\tR\aownerId\"[\n" +
 	"\vDraftFailed\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"w\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\"w\n" +
 	"\rDraftApproved\x12\x19\n" +
 	"\bdraft_id\x18\x01 \x01(\tR\adraftId\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x05R\aversion\x121\n" +

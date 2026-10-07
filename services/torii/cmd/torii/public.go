@@ -16,6 +16,7 @@ import (
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
+	taikov1 "github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1"
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/services/torii/internal/app"
@@ -100,6 +101,15 @@ func newPublicServer(
 		return nil, nil, fmt.Errorf("dial tsubame: %w", err)
 	}
 	tsubame := tsubamev1.NewTsubameServiceClient(tsubameConn)
+	taikoConn, err := grpcclient.Dial(ctx, s.TaikoAddr, grpcclient.WithSigner(signer))
+	if err != nil {
+		_ = kagamiConn.Close()
+		_ = sorobanConn.Close()
+		_ = fudeConn.Close()
+		_ = tsubameConn.Close()
+		return nil, nil, fmt.Errorf("dial taiko: %w", err)
+	}
+	taiko := taikov1.NewTaikoServiceClient(taikoConn)
 
 	interceptor := connectapi.NewSessionInterceptor(connectapi.InterceptorConfig{
 		Auth:          auth,
@@ -119,6 +129,7 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewCostsServiceHandler(connectapi.NewCostsServer(soroban, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewDraftsServiceHandler(connectapi.NewDraftsServer(fude, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewMailServiceHandler(connectapi.NewMailServer(tsubame, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewNotificationsServiceHandler(connectapi.NewNotificationsServer(taiko, log), handlerOpts...))
 
 	srv := &http.Server{
 		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
@@ -127,7 +138,7 @@ func newPublicServer(
 	}
 	closeBackends := func() {
 		for name, conn := range map[string]interface{ Close() error }{
-			"kagami": kagamiConn, "soroban": sorobanConn, "fude": fudeConn, "tsubame": tsubameConn,
+			"kagami": kagamiConn, "soroban": sorobanConn, "fude": fudeConn, "tsubame": tsubameConn, "taiko": taikoConn,
 		} {
 			if err := conn.Close(); err != nil {
 				log.Warn("close backend connection", slog.String("backend", name), slog.Any("error", err))

@@ -246,7 +246,7 @@ func (g *Generator) save(ctx context.Context, args GenerateArgs, d db.Draft, sub
 		_, err = outbox.Write(ctx, tx, eventSource, eventDraftReady, saved.ID.String(), &fudev1.DraftReady{
 			DraftId: saved.ID.String(), Kind: wire.KindToProto(domain.Kind(saved.Kind)),
 			TargetType: wire.TargetTypeToProto(domain.TargetType(saved.TargetType)),
-			TargetId:   targetID(saved), Version: args.Version,
+			TargetId:   targetID(saved), Version: args.Version, OwnerId: saved.OwnerID.String(),
 		})
 		return err
 	})
@@ -293,7 +293,7 @@ func (g *Generator) Fail(ctx context.Context, args GenerateArgs, reason string) 
 			}
 		}
 		_, err = outbox.Write(ctx, tx, eventSource, eventDraftFailed, d.ID.String(), &fudev1.DraftFailed{
-			DraftId: d.ID.String(), Reason: reason,
+			DraftId: d.ID.String(), Reason: reason, OwnerId: d.OwnerID.String(),
 		})
 		return err
 	})

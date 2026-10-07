@@ -33,37 +33,82 @@ type InterceptorConfig struct {
 	Log  *slog.Logger
 }
 
-// NewSessionInterceptor authenticates every unary call from the session
-// cookie. It puts the session and the owner's authz identity in the context,
-// so downstream gRPC calls through grpcclient act for the owner, and it
-// refreshes the cookie when the session was renewed.
-func NewSessionInterceptor(cfg InterceptorConfig) connect.UnaryInterceptorFunc {
+// NewSessionInterceptor authenticates every unary and streaming call from the
+// session cookie. It puts the session and the owner's authz identity in the
+// context, so downstream gRPC calls through grpcclient act for the owner, and
+// it refreshes the cookie when the session was renewed.
+//
+// A stream is authenticated once, when it opens. It is not checked again while
+// it runs, so a stream can outlive the session that opened it; handlers keep
+// that in mind and end streams after a bounded time.
+func NewSessionInterceptor(cfg InterceptorConfig) connect.Interceptor {
 	open := make(map[string]struct{}, len(cfg.Open))
 	for _, procedure := range cfg.Open {
 		open[procedure] = struct{}{}
 	}
-	return func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			if _, skip := open[req.Spec().Procedure]; skip {
-				return next(ctx, req)
-			}
-			token := TokenFromHeader(req.Header())
-			session, renewed, err := cfg.Auth.Authenticate(ctx, token)
-			if err != nil {
-				return nil, cfg.authError(ctx, err)
-			}
-			ctx = WithSession(ctx, session)
-			ctx = authz.WithIdentity(ctx, authz.Identity{
-				OwnerID:   session.OwnerID.String(),
-				RequestID: requestID(req.Header()),
-			})
-			resp, err := next(ctx, req)
-			if err == nil && renewed {
-				cookie := httpauth.SessionCookie(token, session.ExpiresAt, cfg.SecureCookies)
-				resp.Header().Add("Set-Cookie", cookie.String())
-			}
-			return resp, err
+	return &sessionInterceptor{cfg: cfg, open: open}
+}
+
+type sessionInterceptor struct {
+	cfg  InterceptorConfig
+	open map[string]struct{}
+}
+
+// authenticate resolves the session behind header and returns a context that
+// carries it. renew is the cookie to send back when the session was renewed.
+func (i *sessionInterceptor) authenticate(ctx context.Context, header http.Header) (_ context.Context, renew *http.Cookie, err error) {
+	token := TokenFromHeader(header)
+	session, renewed, err := i.cfg.Auth.Authenticate(ctx, token)
+	if err != nil {
+		return nil, nil, i.cfg.authError(ctx, err)
+	}
+	ctx = WithSession(ctx, session)
+	ctx = authz.WithIdentity(ctx, authz.Identity{
+		OwnerID:   session.OwnerID.String(),
+		RequestID: requestID(header),
+	})
+	if renewed {
+		renew = httpauth.SessionCookie(token, session.ExpiresAt, i.cfg.SecureCookies)
+	}
+	return ctx, renew, nil
+}
+
+func (i *sessionInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		if _, skip := i.open[req.Spec().Procedure]; skip {
+			return next(ctx, req)
 		}
+		ctx, renew, err := i.authenticate(ctx, req.Header())
+		if err != nil {
+			return nil, err
+		}
+		resp, err := next(ctx, req)
+		if err == nil && renew != nil {
+			resp.Header().Add("Set-Cookie", renew.String())
+		}
+		return resp, err
+	}
+}
+
+// WrapStreamingClient leaves outgoing streams alone: torii only serves them.
+func (i *sessionInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+	return next
+}
+
+func (i *sessionInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		if _, skip := i.open[conn.Spec().Procedure]; skip {
+			return next(ctx, conn)
+		}
+		ctx, renew, err := i.authenticate(ctx, conn.RequestHeader())
+		if err != nil {
+			return err
+		}
+		if renew != nil {
+			// Headers go out with the first message, so the cookie is set now.
+			conn.ResponseHeader().Add("Set-Cookie", renew.String())
+		}
+		return next(ctx, conn)
 	}
 }
 

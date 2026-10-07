@@ -9,7 +9,9 @@ package taikov1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
+	sync "sync"
 	unsafe "unsafe"
 )
 
@@ -20,22 +22,642 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// NotificationType says what happened. The set is closed by a CHECK in the
+// notifications table.
+type NotificationType int32
+
+const (
+	NotificationType_NOTIFICATION_TYPE_UNSPECIFIED       NotificationType = 0
+	NotificationType_NOTIFICATION_TYPE_DRAFT_READY       NotificationType = 1
+	NotificationType_NOTIFICATION_TYPE_DRAFT_FAILED      NotificationType = 2
+	NotificationType_NOTIFICATION_TYPE_DRAFT_SEND_FAILED NotificationType = 3
+	NotificationType_NOTIFICATION_TYPE_INTERVIEW_INVITE  NotificationType = 4
+	NotificationType_NOTIFICATION_TYPE_OFFER             NotificationType = 5
+	NotificationType_NOTIFICATION_TYPE_REJECTION         NotificationType = 6
+	NotificationType_NOTIFICATION_TYPE_REPLY_DETECTED    NotificationType = 7
+	NotificationType_NOTIFICATION_TYPE_FOLLOW_UP_DUE     NotificationType = 8
+	NotificationType_NOTIFICATION_TYPE_BUDGET_THRESHOLD  NotificationType = 9
+	NotificationType_NOTIFICATION_TYPE_BUDGET_EXHAUSTED  NotificationType = 10
+	NotificationType_NOTIFICATION_TYPE_DAILY_DIGEST      NotificationType = 11
+)
+
+// Enum value maps for NotificationType.
+var (
+	NotificationType_name = map[int32]string{
+		0:  "NOTIFICATION_TYPE_UNSPECIFIED",
+		1:  "NOTIFICATION_TYPE_DRAFT_READY",
+		2:  "NOTIFICATION_TYPE_DRAFT_FAILED",
+		3:  "NOTIFICATION_TYPE_DRAFT_SEND_FAILED",
+		4:  "NOTIFICATION_TYPE_INTERVIEW_INVITE",
+		5:  "NOTIFICATION_TYPE_OFFER",
+		6:  "NOTIFICATION_TYPE_REJECTION",
+		7:  "NOTIFICATION_TYPE_REPLY_DETECTED",
+		8:  "NOTIFICATION_TYPE_FOLLOW_UP_DUE",
+		9:  "NOTIFICATION_TYPE_BUDGET_THRESHOLD",
+		10: "NOTIFICATION_TYPE_BUDGET_EXHAUSTED",
+		11: "NOTIFICATION_TYPE_DAILY_DIGEST",
+	}
+	NotificationType_value = map[string]int32{
+		"NOTIFICATION_TYPE_UNSPECIFIED":       0,
+		"NOTIFICATION_TYPE_DRAFT_READY":       1,
+		"NOTIFICATION_TYPE_DRAFT_FAILED":      2,
+		"NOTIFICATION_TYPE_DRAFT_SEND_FAILED": 3,
+		"NOTIFICATION_TYPE_INTERVIEW_INVITE":  4,
+		"NOTIFICATION_TYPE_OFFER":             5,
+		"NOTIFICATION_TYPE_REJECTION":         6,
+		"NOTIFICATION_TYPE_REPLY_DETECTED":    7,
+		"NOTIFICATION_TYPE_FOLLOW_UP_DUE":     8,
+		"NOTIFICATION_TYPE_BUDGET_THRESHOLD":  9,
+		"NOTIFICATION_TYPE_BUDGET_EXHAUSTED":  10,
+		"NOTIFICATION_TYPE_DAILY_DIGEST":      11,
+	}
+)
+
+func (x NotificationType) Enum() *NotificationType {
+	p := new(NotificationType)
+	*p = x
+	return p
+}
+
+func (x NotificationType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (NotificationType) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_taiko_v1_taiko_proto_enumTypes[0].Descriptor()
+}
+
+func (NotificationType) Type() protoreflect.EnumType {
+	return &file_shogun_taiko_v1_taiko_proto_enumTypes[0]
+}
+
+func (x NotificationType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use NotificationType.Descriptor instead.
+func (NotificationType) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{0}
+}
+
+type Notification struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type  NotificationType       `protobuf:"varint,2,opt,name=type,proto3,enum=shogun.taiko.v1.NotificationType" json:"type,omitempty"`
+	Title string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Body  string                 `protobuf:"bytes,4,opt,name=body,proto3" json:"body,omitempty"`
+	// link is an in-app route such as /drafts/<id>; empty when there is none.
+	Link      string                 `protobuf:"bytes,5,opt,name=link,proto3" json:"link,omitempty"`
+	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	// read_at is unset while the notification is unread.
+	ReadAt        *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=read_at,json=readAt,proto3" json:"read_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Notification) Reset() {
+	*x = Notification{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Notification) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Notification) ProtoMessage() {}
+
+func (x *Notification) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Notification.ProtoReflect.Descriptor instead.
+func (*Notification) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Notification) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Notification) GetType() NotificationType {
+	if x != nil {
+		return x.Type
+	}
+	return NotificationType_NOTIFICATION_TYPE_UNSPECIFIED
+}
+
+func (x *Notification) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Notification) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *Notification) GetLink() string {
+	if x != nil {
+		return x.Link
+	}
+	return ""
+}
+
+func (x *Notification) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+func (x *Notification) GetReadAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ReadAt
+	}
+	return nil
+}
+
+type ListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UnreadOnly    bool                   `protobuf:"varint,1,opt,name=unread_only,json=unreadOnly,proto3" json:"unread_only,omitempty"`
+	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	PageToken     string                 `protobuf:"bytes,3,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRequest) Reset() {
+	*x = ListRequest{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRequest) ProtoMessage() {}
+
+func (x *ListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
+func (*ListRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ListRequest) GetUnreadOnly() bool {
+	if x != nil {
+		return x.UnreadOnly
+	}
+	return false
+}
+
+func (x *ListRequest) GetPageSize() int32 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ListRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+type ListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Notifications []*Notification        `protobuf:"bytes,1,rep,name=notifications,proto3" json:"notifications,omitempty"`
+	NextPageToken string                 `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// unread_count is all unread notifications, not only this page.
+	UnreadCount   int32 `protobuf:"varint,3,opt,name=unread_count,json=unreadCount,proto3" json:"unread_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListResponse) Reset() {
+	*x = ListResponse{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListResponse) ProtoMessage() {}
+
+func (x *ListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListResponse.ProtoReflect.Descriptor instead.
+func (*ListResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ListResponse) GetNotifications() []*Notification {
+	if x != nil {
+		return x.Notifications
+	}
+	return nil
+}
+
+func (x *ListResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListResponse) GetUnreadCount() int32 {
+	if x != nil {
+		return x.UnreadCount
+	}
+	return 0
+}
+
+type MarkReadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ids           []string               `protobuf:"bytes,1,rep,name=ids,proto3" json:"ids,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkReadRequest) Reset() {
+	*x = MarkReadRequest{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkReadRequest) ProtoMessage() {}
+
+func (x *MarkReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkReadRequest.ProtoReflect.Descriptor instead.
+func (*MarkReadRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *MarkReadRequest) GetIds() []string {
+	if x != nil {
+		return x.Ids
+	}
+	return nil
+}
+
+type MarkReadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkReadResponse) Reset() {
+	*x = MarkReadResponse{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkReadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkReadResponse) ProtoMessage() {}
+
+func (x *MarkReadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkReadResponse.ProtoReflect.Descriptor instead.
+func (*MarkReadResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{4}
+}
+
+type MarkAllReadRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkAllReadRequest) Reset() {
+	*x = MarkAllReadRequest{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkAllReadRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkAllReadRequest) ProtoMessage() {}
+
+func (x *MarkAllReadRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkAllReadRequest.ProtoReflect.Descriptor instead.
+func (*MarkAllReadRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{5}
+}
+
+type MarkAllReadResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkAllReadResponse) Reset() {
+	*x = MarkAllReadResponse{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkAllReadResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkAllReadResponse) ProtoMessage() {}
+
+func (x *MarkAllReadResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkAllReadResponse.ProtoReflect.Descriptor instead.
+func (*MarkAllReadResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{6}
+}
+
+type SubscribeRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// after_id is the id of the last notification the client saw; empty streams
+	// only new ones.
+	AfterId       string `protobuf:"bytes,1,opt,name=after_id,json=afterId,proto3" json:"after_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubscribeRequest) Reset() {
+	*x = SubscribeRequest{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubscribeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubscribeRequest) ProtoMessage() {}
+
+func (x *SubscribeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubscribeRequest.ProtoReflect.Descriptor instead.
+func (*SubscribeRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *SubscribeRequest) GetAfterId() string {
+	if x != nil {
+		return x.AfterId
+	}
+	return ""
+}
+
+type SubscribeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Notification  *Notification          `protobuf:"bytes,1,opt,name=notification,proto3" json:"notification,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SubscribeResponse) Reset() {
+	*x = SubscribeResponse{}
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubscribeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubscribeResponse) ProtoMessage() {}
+
+func (x *SubscribeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_taiko_v1_taiko_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubscribeResponse.ProtoReflect.Descriptor instead.
+func (*SubscribeResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_taiko_v1_taiko_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *SubscribeResponse) GetNotification() *Notification {
+	if x != nil {
+		return x.Notification
+	}
+	return nil
+}
+
 var File_shogun_taiko_v1_taiko_proto protoreflect.FileDescriptor
 
 const file_shogun_taiko_v1_taiko_proto_rawDesc = "" +
 	"\n" +
-	"\x1bshogun/taiko/v1/taiko.proto\x12\x0fshogun.taiko.v12\x0e\n" +
-	"\fTaikoServiceB\xba\x01\n" +
+	"\x1bshogun/taiko/v1/taiko.proto\x12\x0fshogun.taiko.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x83\x02\n" +
+	"\fNotification\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x125\n" +
+	"\x04type\x18\x02 \x01(\x0e2!.shogun.taiko.v1.NotificationTypeR\x04type\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x12\n" +
+	"\x04body\x18\x04 \x01(\tR\x04body\x12\x12\n" +
+	"\x04link\x18\x05 \x01(\tR\x04link\x129\n" +
+	"\n" +
+	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x123\n" +
+	"\aread_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x06readAt\"j\n" +
+	"\vListRequest\x12\x1f\n" +
+	"\vunread_only\x18\x01 \x01(\bR\n" +
+	"unreadOnly\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x03 \x01(\tR\tpageToken\"\x9e\x01\n" +
+	"\fListResponse\x12C\n" +
+	"\rnotifications\x18\x01 \x03(\v2\x1d.shogun.taiko.v1.NotificationR\rnotifications\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12!\n" +
+	"\funread_count\x18\x03 \x01(\x05R\vunreadCount\"#\n" +
+	"\x0fMarkReadRequest\x12\x10\n" +
+	"\x03ids\x18\x01 \x03(\tR\x03ids\"\x12\n" +
+	"\x10MarkReadResponse\"\x14\n" +
+	"\x12MarkAllReadRequest\"\x15\n" +
+	"\x13MarkAllReadResponse\"-\n" +
+	"\x10SubscribeRequest\x12\x19\n" +
+	"\bafter_id\x18\x01 \x01(\tR\aafterId\"V\n" +
+	"\x11SubscribeResponse\x12A\n" +
+	"\fnotification\x18\x01 \x01(\v2\x1d.shogun.taiko.v1.NotificationR\fnotification*\xca\x03\n" +
+	"\x10NotificationType\x12!\n" +
+	"\x1dNOTIFICATION_TYPE_UNSPECIFIED\x10\x00\x12!\n" +
+	"\x1dNOTIFICATION_TYPE_DRAFT_READY\x10\x01\x12\"\n" +
+	"\x1eNOTIFICATION_TYPE_DRAFT_FAILED\x10\x02\x12'\n" +
+	"#NOTIFICATION_TYPE_DRAFT_SEND_FAILED\x10\x03\x12&\n" +
+	"\"NOTIFICATION_TYPE_INTERVIEW_INVITE\x10\x04\x12\x1b\n" +
+	"\x17NOTIFICATION_TYPE_OFFER\x10\x05\x12\x1f\n" +
+	"\x1bNOTIFICATION_TYPE_REJECTION\x10\x06\x12$\n" +
+	" NOTIFICATION_TYPE_REPLY_DETECTED\x10\a\x12#\n" +
+	"\x1fNOTIFICATION_TYPE_FOLLOW_UP_DUE\x10\b\x12&\n" +
+	"\"NOTIFICATION_TYPE_BUDGET_THRESHOLD\x10\t\x12&\n" +
+	"\"NOTIFICATION_TYPE_BUDGET_EXHAUSTED\x10\n" +
+	"\x12\"\n" +
+	"\x1eNOTIFICATION_TYPE_DAILY_DIGEST\x10\v2\xd4\x02\n" +
+	"\fTaikoService\x12C\n" +
+	"\x04List\x12\x1c.shogun.taiko.v1.ListRequest\x1a\x1d.shogun.taiko.v1.ListResponse\x12O\n" +
+	"\bMarkRead\x12 .shogun.taiko.v1.MarkReadRequest\x1a!.shogun.taiko.v1.MarkReadResponse\x12X\n" +
+	"\vMarkAllRead\x12#.shogun.taiko.v1.MarkAllReadRequest\x1a$.shogun.taiko.v1.MarkAllReadResponse\x12T\n" +
+	"\tSubscribe\x12!.shogun.taiko.v1.SubscribeRequest\x1a\".shogun.taiko.v1.SubscribeResponse0\x01B\xba\x01\n" +
 	"\x13com.shogun.taiko.v1B\n" +
 	"TaikoProtoP\x01Z9github.com/0xHoaxen/shogun/gen/go/shogun/taiko/v1;taikov1\xa2\x02\x03STX\xaa\x02\x0fShogun.Taiko.V1\xca\x02\x0fShogun\\Taiko\\V1\xe2\x02\x1bShogun\\Taiko\\V1\\GPBMetadata\xea\x02\x11Shogun::Taiko::V1b\x06proto3"
 
-var file_shogun_taiko_v1_taiko_proto_goTypes = []any{}
+var (
+	file_shogun_taiko_v1_taiko_proto_rawDescOnce sync.Once
+	file_shogun_taiko_v1_taiko_proto_rawDescData []byte
+)
+
+func file_shogun_taiko_v1_taiko_proto_rawDescGZIP() []byte {
+	file_shogun_taiko_v1_taiko_proto_rawDescOnce.Do(func() {
+		file_shogun_taiko_v1_taiko_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_shogun_taiko_v1_taiko_proto_rawDesc), len(file_shogun_taiko_v1_taiko_proto_rawDesc)))
+	})
+	return file_shogun_taiko_v1_taiko_proto_rawDescData
+}
+
+var file_shogun_taiko_v1_taiko_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_shogun_taiko_v1_taiko_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_shogun_taiko_v1_taiko_proto_goTypes = []any{
+	(NotificationType)(0),         // 0: shogun.taiko.v1.NotificationType
+	(*Notification)(nil),          // 1: shogun.taiko.v1.Notification
+	(*ListRequest)(nil),           // 2: shogun.taiko.v1.ListRequest
+	(*ListResponse)(nil),          // 3: shogun.taiko.v1.ListResponse
+	(*MarkReadRequest)(nil),       // 4: shogun.taiko.v1.MarkReadRequest
+	(*MarkReadResponse)(nil),      // 5: shogun.taiko.v1.MarkReadResponse
+	(*MarkAllReadRequest)(nil),    // 6: shogun.taiko.v1.MarkAllReadRequest
+	(*MarkAllReadResponse)(nil),   // 7: shogun.taiko.v1.MarkAllReadResponse
+	(*SubscribeRequest)(nil),      // 8: shogun.taiko.v1.SubscribeRequest
+	(*SubscribeResponse)(nil),     // 9: shogun.taiko.v1.SubscribeResponse
+	(*timestamppb.Timestamp)(nil), // 10: google.protobuf.Timestamp
+}
 var file_shogun_taiko_v1_taiko_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	0,  // 0: shogun.taiko.v1.Notification.type:type_name -> shogun.taiko.v1.NotificationType
+	10, // 1: shogun.taiko.v1.Notification.created_at:type_name -> google.protobuf.Timestamp
+	10, // 2: shogun.taiko.v1.Notification.read_at:type_name -> google.protobuf.Timestamp
+	1,  // 3: shogun.taiko.v1.ListResponse.notifications:type_name -> shogun.taiko.v1.Notification
+	1,  // 4: shogun.taiko.v1.SubscribeResponse.notification:type_name -> shogun.taiko.v1.Notification
+	2,  // 5: shogun.taiko.v1.TaikoService.List:input_type -> shogun.taiko.v1.ListRequest
+	4,  // 6: shogun.taiko.v1.TaikoService.MarkRead:input_type -> shogun.taiko.v1.MarkReadRequest
+	6,  // 7: shogun.taiko.v1.TaikoService.MarkAllRead:input_type -> shogun.taiko.v1.MarkAllReadRequest
+	8,  // 8: shogun.taiko.v1.TaikoService.Subscribe:input_type -> shogun.taiko.v1.SubscribeRequest
+	3,  // 9: shogun.taiko.v1.TaikoService.List:output_type -> shogun.taiko.v1.ListResponse
+	5,  // 10: shogun.taiko.v1.TaikoService.MarkRead:output_type -> shogun.taiko.v1.MarkReadResponse
+	7,  // 11: shogun.taiko.v1.TaikoService.MarkAllRead:output_type -> shogun.taiko.v1.MarkAllReadResponse
+	9,  // 12: shogun.taiko.v1.TaikoService.Subscribe:output_type -> shogun.taiko.v1.SubscribeResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_shogun_taiko_v1_taiko_proto_init() }
@@ -48,13 +670,15 @@ func file_shogun_taiko_v1_taiko_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_taiko_v1_taiko_proto_rawDesc), len(file_shogun_taiko_v1_taiko_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   0,
+			NumEnums:      1,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_shogun_taiko_v1_taiko_proto_goTypes,
 		DependencyIndexes: file_shogun_taiko_v1_taiko_proto_depIdxs,
+		EnumInfos:         file_shogun_taiko_v1_taiko_proto_enumTypes,
+		MessageInfos:      file_shogun_taiko_v1_taiko_proto_msgTypes,
 	}.Build()
 	File_shogun_taiko_v1_taiko_proto = out.File
 	file_shogun_taiko_v1_taiko_proto_goTypes = nil

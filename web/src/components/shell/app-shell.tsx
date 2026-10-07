@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { NOTIFICATIONS_PATH, NotificationBell } from "@/components/notifications/notification-bell";
 import { Rail } from "@/components/shell/rail";
 import { Button } from "@/components/ui/button";
 import { AuthService } from "@/gen/shogun/api/v1/auth_pb";
@@ -28,6 +29,14 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/settings/mail", label: "Mail", section: "S9 / Settings", railLabel: "MAIL ACCOUNT" },
   { href: "/settings/spend", label: "Spend", section: "S9 / Settings", railLabel: "SPEND LEDGER" },
 ];
+
+// The bell is not a tab, but its page still names itself in the strip and rail.
+const BELL_PAGE: NavItem = {
+  href: NOTIFICATIONS_PATH,
+  label: "Bell",
+  section: "S9 / Taiko",
+  railLabel: "NOTIFICATIONS",
+};
 
 interface AppShellProps {
   children: ReactNode;
@@ -64,7 +73,10 @@ export function AppShell({ children }: AppShellProps) {
     );
   }
 
-  const current = NAV_ITEMS.find((item) => pathname.startsWith(item.href));
+  const onBellPage = pathname.startsWith(NOTIFICATIONS_PATH);
+  const current = onBellPage
+    ? BELL_PAGE
+    : NAV_ITEMS.find((item) => pathname.startsWith(item.href));
   const email = session.data.session?.email ?? "";
 
   return (
@@ -98,6 +110,7 @@ export function AppShell({ children }: AppShellProps) {
           aria-label="Utility"
           className="flex min-h-11 flex-wrap items-center justify-end gap-3 border-t border-ink px-[22px]"
         >
+          <NotificationBell active={onBellPage} />
           <span data-testid="owner-email">{email}</span>
           <Button onClick={() => logout.mutate({})}>Logout</Button>
         </footer>

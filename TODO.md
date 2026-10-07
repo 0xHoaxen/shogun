@@ -392,17 +392,56 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
 
 ## Phase 8: taiko (notifications)
 
-- [ ] **P8.1 taiko service** (M) Needs: P1.6
-  Do: migrations `notifications channel_settings`; consume the events in the LLD catalog; one notification per `source_event_id`; RPCs List, MarkRead, MarkAllRead, Subscribe (server stream).
-  Done when: duplicate event creates one notification; stream test receives a new notification within 1 s.
+- [x] **P8.1a taiko tables, proto, domain, store** (M) Needs: P1.6
+  Do: migration `notifications channel_settings` (types closed by a `CHECK`); `shogun.taiko.v1` RPCs List, MarkRead, MarkAllRead, Subscribe (server stream, `after_id` replay); `domain.Notice` with link and length validation; sqlc store with insert-once on `source_event_id`, keyset list, replay, mark read, channel settings.
+  Done when: `cd services/taiko && go test -race ./...` passes: domain table tests and store integration tests (duplicate `source_event_id` stores one row, pagination, unread only, replay, mark read, settings).
+  Status: `Subscribe` returns `SubscribeResponse` wrapping a `Notification`, as `buf lint` requires. The per-event title and link builders move to P8.1b, where the payloads are known.
 
-- [ ] **P8.2 torii stream and bell UI** (M) Needs: P8.1, P5.1
-  Do: `NotificationsService.Stream` bridging `Subscribe` with last-seen-id reconnect; bell with unread count and list.
+- [x] **P8.1b0 Owner on kagami follow-up and status events** (S) Needs: P8.1a
+  Do: add `owner_id` to `JobStatusChanged`, `JobFollowUpDue` and `ContactFollowUpDue` in `proto/shogun/kagami/v1/events.proto` and fill it in kagami's producers; taiko cannot attribute a notification to the owner without it.
+  Done when: `cd services/kagami && go test -race ./...` passes with the producer tests asserting `owner_id`.
+
+- [x] **P8.1b0b Owner on fude and soroban events** (S) Needs: P8.1b0
+  Do: add `owner_id` to `DraftReady`, `DraftFailed` (fude) and `CostThresholdReached`, `CostBudgetExhausted` (soroban) and fill it in their producers; found while reading the payloads for P8.1b, which has no other way to name the owner.
+  Done when: `cd services/fude && go test -race ./...` and `cd services/soroban && go test -race ./...` pass with producer tests asserting `owner_id`.
+
+- [x] **P8.1b taiko consumes events** (M) Needs: P8.1b0b
+  Do: `internal/events` handlers (shape of fude's) for `job.follow_up_due`, `contact.follow_up_due`, `mail.classified` (interview, offer, rejection), `mail.reply_detected`, `draft.ready`, `draft.failed`, `draft.send_failed`, `cost.threshold_reached`, `cost.budget_exhausted`; title and link builders in `domain`; `app.Service.Record`; routes to `taiko` in `pkg/bus/routes.go`; handlers wired into `bus.NewSinkServer`.
+  Done when: a handler test per event type and an idempotency test (the same envelope twice gives one notification).
+  Status: `job.status_changed` is not consumed although the LLD catalog lists taiko for it. A mail-driven move to interview or offer would notify twice (once from `mail.classified`, once from the status change), and a drag on the board would echo the owner's own action. `TODO(owner)`: say if you want it anyway. Mail and job notifications link to `/jobs` since the board has no job page yet. Ids that end up in links must be uuids or the event is dropped.
+
+- [x] **P8.1c taiko RPCs and Subscribe stream** (M) Needs: P8.1b
+  Do: use cases and gRPC handlers for List, MarkRead, MarkAllRead, Subscribe; `pg_notify` on insert, one `LISTEN` connection feeding an in-process broker, replay from `after_id` after subscribing so no gap; register `TaikoService`.
+  Done when: a handler test per RPC; a stream test where a consumed event reaches an open `Subscribe` within 1 s, including replay and recovery after the `LISTEN` connection drops.
+  Status: `Subscribe` sends response headers once the stream is registered, so a client (torii, tests) knows anything created from then on will arrive. A stream that falls 32 notifications behind, or whose `LISTEN` connection dropped or came back, ends with `Unavailable` / `STREAM_RESET`; the client reconnects with the last id it saw and the table replays the rest. Replay relies on UUIDv7 id order, which holds for one taiko replica; revisit before running more. `List` returns the total `unread_count`. Verified by removing `pg_notify` (four stream tests then fail).
+
+- [x] **P8.2a0 Session interceptor for streams** (S) Needs: P5.1
+  Do: `NewSessionInterceptor` returns a full `connect.Interceptor` that also authenticates server streams. It was a `UnaryInterceptorFunc`, which Connect leaves out of streaming handlers, so a stream handler would have run with no session check.
+  Done when: `cd services/torii && go test -race ./...` passes with stream tests: no cookie, unknown token and expired session are Unauthenticated and never reach the handler; an authenticated stream runs as the owner; a renewed session sets the cookie.
+  Status: a stream is authenticated once when it opens and not rechecked while it runs, so it can outlive its session; P8.2a ends streams after a bounded time. Verified by making the stream wrapper a pass-through (three stream tests then fail).
+
+- [x] **P8.2a torii NotificationsService** (M) Needs: P8.1c, P8.2a0
+  Do: `proto/shogun/api/v1/notifications.proto` (`ListNotifications`, `MarkNotificationsRead`, `MarkAllNotificationsRead`, `Stream` with `last_seen_id`); Connect handlers bridging `taiko.Subscribe`; `TAIKO_ADDR` config. Check the stream through the real proxy chain early, since it is the first server stream.
+  Done when: torii handler tests including a stream bridge with a fake taiko client.
+  Status: `Stream` ends cleanly after 10 minutes (the session is only checked when a stream opens) and with `Unavailable` when taiko resets it; the browser reconnects with its last seen id either way. Connect sends response headers with the first message, so a client call resolves only when the first notification arrives or the stream ends; the bell must not wait on it. Torii's `http.Server` has no `WriteTimeout`, and the rate-limit middleware passes the writer through, so streams are not cut. Not yet checked: a real browser or reverse proxy in front of torii (P8.2b's Playwright run covers the local stack).
+
+- [x] **P8.2b Notification bell** (M) Needs: P8.2a
+  Do: bell with unread count and list, mark read and mark all read, `Stream` subscription that reconnects from the last seen id.
   Done when: Playwright: adding a job leads to a "cover letter ready" notification appearing without reload.
+  Status: the bell sits in the utility footer and links to `/notifications` (Today and Earlier, as on the design board), and it owns the stream, so the count follows new notifications on every page. Each stream message refetches the lists rather than patching the cache; the stream ends and reconnects from the last seen id every 10 minutes, on any error (backing off to 30 s), and stops on a refused session. Found on the real stack: Next gzips what it proxies and gzip held the stream back until it ended, so `compress: false` is set in `next.config.ts`; the compose spec failed before it and passes after. The board's settings form (digest time, quiet hours, toggles) needs channel-settings RPCs that do not exist; add a task when taiko gets them. `e2e/notifications.spec.ts` (browser mocks) and `e2e-compose/notifications.spec.ts` (real stack) both pass; the compose spec assumes a fresh stack like CI's. CI's e2e job now starts taiko and runs on taiko changes.
 
-- [ ] **P8.3 Daily digest** (S) Needs: P8.1, P4.8
-  Do: `daily_digest` at 08:30 summarising due follow-ups, drafts waiting, spend; skipped if empty; respects quiet hours.
-  Done when: tests with fake clock.
+- [x] **P8.3 Daily digest** (M) Needs: P8.1c, P4.8
+  Do: `daily_digest` at 08:30 in the owner's timezone summarising due follow-ups, drafts waiting, spend; one `source_event_id` per date; skipped if empty; snoozed past quiet hours (including windows that wrap midnight); skipped when the in-app channel is disabled. In-app only: an emailed digest would be an external send without a Hanko approval, so `TODO(owner)`: decide whether to add `email_digest`.
+  Done when: tests with fake clock and fake clients.
+  Status: the digest runs for every owner taiko knows (one with a notification or a channel setting), once per IST date, with an event id derived from owner and date, so retries, snoozes and a second job for the same date add nothing. An owner's failure does not stop the others and is returned so River retries. A digest for a day that is already over is dropped. Quiet hours snooze the whole job until the window ends. Taiko now requires `KAGAMI_ADDR`, `FUDE_ADDR` and `SOROBAN_ADDR` (already in the shared compose and helm env). Drafts are counted from the first 200 of the queue and shown as "200+" beyond it, because `ListQueue` has no total. Checked on the compose stack by inserting the River job by hand: one digest, a second job for the same date added none. `go mod tidy` promoted uuid, river, rivertype and genproto from indirect to direct; they were already imported.
+
+- [ ] **P8.3a Move the daily schedule to pkg** (S) Needs: P8.3
+  Do: `dailySchedule` is now copied in kagami and taiko (services cannot import each other); move it to a `pkg` package and use it in both.
+  Done when: `make test` and `make lint` pass; neither service defines its own.
+
+- [ ] **P8.4 Channel settings RPCs and the settings form** (M) Needs: P8.3, P8.2b
+  Do: taiko RPCs to read and save `channel_settings` (in-app enabled, quiet hours), the matching torii API, and the "How Shogun reaches you" form from the Notifications design board. The digest time and per-type toggles on the board have no storage yet: decide with the owner whether they are wanted before adding tables.
+  Done when: a saved quiet window holds the next digest back (E2E), and handler tests cover each RPC.
 
 ---
 
@@ -413,11 +452,11 @@ Legend: `Needs:` prerequisites, `Size:` S under 100 lines, M under 400, L split 
   Done when: logging an activity leads to a pending post draft in the queue (E2E with fake LLM).
 
 - [ ] **P9.2 katana** (L, split) Needs: P6.3
-  Do: GitHub sync with ETags into `github_snapshots`; `suggest` job diffing snapshots plus `learning.item_completed`, feature `katana.suggest`; accept and dismiss RPCs; Profile suggestions screen.
+  Do: GitHub sync with ETags into `github_snapshots`; `suggest` job diffing snapshots plus `learning.item_completed`, feature `katana.suggest`; accept and dismiss RPCs (and the `profile.suggestion_ready` taiko route and handler); Profile suggestions screen.
   Done when: fixture snapshots produce suggestions with evidence links; accepting changes state only.
 
 - [ ] **P9.3 shinobi** (L, split) Needs: P6.3, P4.6
-  Do: sources of kind api, rss, file with schedule; upsert postings by `(source_id, external_id)`; rule score then LLM score for borderline (feature `shinobi.score`); `discovery.match_found`; `SaveToTracker` calling `kagami.AddJob`; Discovery screen. `TODO(owner)`: provide the first real data source.
+  Do: sources of kind api, rss, file with schedule; upsert postings by `(source_id, external_id)`; rule score then LLM score for borderline (feature `shinobi.score`); `discovery.match_found` (and its taiko route and handler); `SaveToTracker` calling `kagami.AddJob`; Discovery screen. `TODO(owner)`: provide the first real data source.
   Done when: fixture RSS and file sources work; score at or above `min_score` emits the event once.
 
 - [ ] **P9.4 sensei** (M) Needs: P7.7
