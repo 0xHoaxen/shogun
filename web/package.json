@@ -38,7 +38,7 @@
     "eslint-config-next": "16.3.8",
     "shadcn": "^4.21.1",
     "tailwindcss": "^4",
-    "typescript": "^6"
+    "typescript": "^7"
   },
   "engines": {
     "node": ">=22"
