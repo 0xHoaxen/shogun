@@ -98,6 +98,9 @@ jobs:
         with:
           version: ${{ needs.modules.outputs.golangci-lint }}
           working-directory: ${{ matrix.dir }}
+          # The lint config job verifies .golangci.yml once; verifying per module
+          # downloads the schema from golangci-lint.run every time and flakes on timeout.
+          verify: false
 
   hanko-boundary:
     name: hanko boundary
