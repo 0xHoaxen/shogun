@@ -12,6 +12,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/riverqueue/river/rivertype"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -251,5 +252,32 @@ func TestRelayIsWokenByNotifyWithoutWaitingForInterval(t *testing.T) {
 func TestNewRejectsMissingDependencies(t *testing.T) {
 	if _, err := relay.New(relay.Config{}); err == nil {
 		t.Fatal("expected error for empty config")
+	}
+}
+
+func TestStopRightAfterStartDoesNotRace(t *testing.T) {
+	// Arrange: many short lives, so the listener goroutine is still starting
+	// when Stop clears the relay's fields. The race detector is the assertion.
+	ctx, pool := newPool(t)
+	for range 20 {
+		r, err := relay.New(relay.Config{
+			Pool: pool, Bus: newFakeBus(nil), Interval: time.Hour, Registerer: prometheus.NewRegistry(),
+		})
+		if err != nil {
+			t.Fatalf("new relay: %v", err)
+		}
+
+		// Act
+		if err := r.Start(ctx); err != nil {
+			t.Fatalf("start: %v", err)
+		}
+		stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		err = r.Stop(stopCtx)
+		cancel()
+
+		// Assert
+		if err != nil {
+			t.Fatalf("stop: %v", err)
+		}
 	}
 }

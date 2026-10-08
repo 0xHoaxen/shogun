@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/riverqueue/river"
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
@@ -62,15 +63,19 @@ type Config struct {
 	Queues map[string]river.QueueConfig
 	// PeriodicJobs are the service's own periodic jobs.
 	PeriodicJobs []*river.PeriodicJob
+	// Registerer receives the relay's metrics (see NewMetrics). Defaults to
+	// prometheus.DefaultRegisterer, which /metrics serves.
+	Registerer prometheus.Registerer
 	// Logger defaults to slog.Default().
 	Logger *slog.Logger
 }
 
 // Relay runs the outbox relay for one service.
 type Relay struct {
-	cfg    Config
-	client *river.Client[pgxTx]
-	log    *slog.Logger
+	cfg     Config
+	client  *river.Client[pgxTx]
+	log     *slog.Logger
+	metrics *Metrics
 
 	mu     sync.Mutex
 	cancel context.CancelFunc
@@ -111,7 +116,10 @@ func New(cfg Config) (*Relay, error) {
 	if cfg.Logger == nil {
 		cfg.Logger = slog.Default()
 	}
-	r := &Relay{cfg: cfg, log: cfg.Logger.With("component", "relay")}
+	if cfg.Registerer == nil {
+		cfg.Registerer = prometheus.DefaultRegisterer
+	}
+	r := &Relay{cfg: cfg, log: cfg.Logger.With("component", "relay"), metrics: NewMetrics(cfg.Pool, cfg.Logger)}
 
 	workers := river.NewWorkers()
 	river.AddWorker(workers, &relayWorker{relay: r})
@@ -167,11 +175,19 @@ func (r *Relay) Start(ctx context.Context) error {
 	if err := r.client.Start(ctx); err != nil {
 		return fmt.Errorf("relay: start river: %w", err)
 	}
+	if err := r.cfg.Registerer.Register(r.metrics); err != nil {
+		// Metrics are not worth stopping the relay for; a second relay in one
+		// process (only in tests) cannot register the same series twice.
+		r.log.Warn("relay: register metrics", "error", err)
+	}
 	listenCtx, cancel := context.WithCancel(ctx)
 	r.cancel = cancel
-	r.done = make(chan struct{})
+	done := make(chan struct{})
+	r.done = done
+	// The goroutine keeps its own reference: Stop clears r.done, and a Stop
+	// right after Start would otherwise race with the goroutine reading it.
 	go func() {
-		defer close(r.done)
+		defer close(done)
 		r.listen(listenCtx)
 	}()
 	return nil
@@ -189,6 +205,7 @@ func (r *Relay) Stop(ctx context.Context) error {
 	}
 	cancel()
 	<-done
+	r.cfg.Registerer.Unregister(r.metrics)
 	if err := r.client.Stop(ctx); err != nil {
 		return fmt.Errorf("relay: stop river: %w", err)
 	}

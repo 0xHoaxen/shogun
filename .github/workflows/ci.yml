@@ -142,6 +142,19 @@ jobs:
         working-directory: ${{ matrix.dir }}
         run: go test -race -count=1 ./...
 
+  drills:
+    name: failure drills
+    needs: modules
+    if: needs.modules.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: .tool-versions
+      - name: Kill, time out, exhaust and fail things; nothing may be lost or done twice
+        run: make drills
+
   isolated-build:
     name: build (${{ matrix.dir }}, GOWORK=off)
     needs: modules
@@ -228,6 +241,8 @@ jobs:
           cache-dependency-path: web/package-lock.json
       # Only what the flows need: other services are not called, and the event
       # relay to them just retries. mock-apis stands in for Anthropic and Gmail.
+      - name: Test the log check itself
+        run: scripts/check-logs-clean_test.sh
       - name: Start the stack with stub identity, Claude and Gmail
         run: $COMPOSE up -d --build --wait postgres kagami torii web mock-oauth2 soroban fude tsubame taiko dojo mock-apis
       - name: Install web dependencies and the browser
@@ -238,6 +253,15 @@ jobs:
       - name: Log in, add a job, move it; connect mail, send a draft; get notified
         working-directory: web
         run: npm run test:e2e:compose
+      # What the flows sent through the services (a recipient, the approved
+      # text, Gmail tokens, the OAuth secret and code) must not be in any of
+      # their logs. The stubs log what they receive, so they are left out.
+      - name: Check the service logs hold no message text or tokens
+        run: |
+          $COMPOSE logs --no-color kagami torii web soroban fude tsubame taiko dojo \
+            | scripts/check-logs-clean.sh \
+              "jobs@lumen.example" "this is the text the owner approved" \
+              "stub-access" "stub-refresh" "e2e-secret" "e2e-code"
       - name: Show container logs
         if: failure()
         run: $COMPOSE logs --no-color --tail=200
@@ -256,7 +280,7 @@ jobs:
   ci-ok:
     name: ci ok
     if: always()
-    needs: [modules, lint, lint-config, hanko-boundary, test, isolated-build, build, docker-build, web, e2e-compose]
+    needs: [modules, lint, lint-config, hanko-boundary, test, drills, isolated-build, build, docker-build, web, e2e-compose]
     runs-on: ubuntu-latest
     steps:
       # Matrix jobs are skipped when nothing they cover changed, so a skipped

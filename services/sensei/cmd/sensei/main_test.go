@@ -15,6 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	"github.com/0xHoaxen/shogun/pkg/authz/authztest"
 	"github.com/0xHoaxen/shogun/pkg/outbox"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
@@ -56,6 +57,39 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 	if status != grpc_health_v1.HealthCheckResponse_SERVING {
 		t.Fatalf("health status = %v, want SERVING", status)
 	}
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatalf("run returned %v", err)
+		}
+	case <-time.After(exitTimeout):
+		t.Fatal("run did not exit after cancel")
+	}
+}
+
+func TestEveryRPCRequiresIdentity(t *testing.T) {
+	// Arrange
+	env := map[string]string{
+		"ENVIRONMENT":          "test",
+		"DATABASE_URL":         postgrestest.NewDatabase(t),
+		"IDENTITY_SIGNING_KEY": testIdentityKey,
+	}
+	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+	grpcLis := listen(t)
+	httpLis := listen(t)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan error, 1)
+
+	// Act: once it serves, call every RPC without identity.
+	go func() { done <- run(ctx, lookup, relayOverrides{}, server.WithListeners(grpcLis, httpLis)) }()
+	if status := checkHealth(t, grpcLis.Addr().String()); status != grpc_health_v1.HealthCheckResponse_SERVING {
+		t.Fatalf("health status = %v, want SERVING", status)
+	}
+	authztest.RequireIdentityOnEveryRPC(t, grpcLis.Addr().String())
+	cancel()
+
+	// Assert
 	select {
 	case err := <-done:
 		if err != nil {

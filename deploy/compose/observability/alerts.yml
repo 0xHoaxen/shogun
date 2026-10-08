@@ -1,0 +1,44 @@
+# Alert rules from the LLD (Config, secrets, observability). The `job` label is
+# the service name.
+groups:
+  - name: shogun
+    rules:
+      - alert: OutboxLag
+        expr: shogun_outbox_lag_seconds > 300
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.job }}: an event has waited over 5 minutes for a consumer"
+
+      - alert: DiscardedJobs
+        expr: shogun_river_jobs_discarded > 0
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.job }}: {{ $value }} {{ $labels.kind }} jobs discarded in the last 24 h"
+
+      # Only server faults count; NotFound, InvalidArgument and the like are the caller's.
+      - alert: ErrorRate
+        expr: |
+          sum by (job) (rate(shogun_grpc_requests_total{code=~"Internal|Unknown|Unavailable|DataLoss|DeadlineExceeded"}[10m]))
+            / sum by (job) (rate(shogun_grpc_requests_total[10m])) > 0.02
+        for: 10m
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.job }}: over 2% of RPCs failing for 10 minutes"
+
+      - alert: GmailSyncFailing
+        expr: shogun_gmail_sync_age_seconds > 3600
+        labels: {severity: critical}
+        annotations:
+          summary: "A mailbox has not synced for over an hour"
+
+      - alert: BudgetNearLimit
+        expr: shogun_budget_used_ratio >= 0.8 and shogun_budget_used_ratio < 1
+        labels: {severity: warning}
+        annotations:
+          summary: "{{ $labels.scope_type }} {{ $labels.scope_value }} {{ $labels.period }} budget is at {{ $value | humanizePercentage }}"
+
+      - alert: BudgetExhausted
+        expr: shogun_budget_used_ratio >= 1
+        labels: {severity: critical}
+        annotations:
+          summary: "{{ $labels.scope_type }} {{ $labels.scope_value }} {{ $labels.period }} budget is used up"

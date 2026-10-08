@@ -54,3 +54,59 @@ func TestLevelFiltering(t *testing.T) {
 		})
 	}
 }
+
+func TestSensitiveKeysAreRedactedWhateverTheirCase(t *testing.T) {
+	for _, key := range []string{
+		"body", "Body", "subject", "snippet", "prompt", "email", "recipient", "recipients",
+		"token", "access_token", "refresh_token", "id_token", "api_key", "hanko",
+		"password", "secret", "authorization", "Authorization", "cookie", "set-cookie",
+	} {
+		t.Run(key, func(t *testing.T) {
+			// Arrange
+			var buf bytes.Buffer
+
+			// Act
+			New(&buf, "tsubame", "info").Info("hello", slog.String(key, "do-not-log-this"))
+
+			// Assert
+			if got := decode(t, &buf)[key]; got != Redacted {
+				t.Errorf("%s = %v, want %q", key, got, Redacted)
+			}
+			if bytes.Contains(buf.Bytes(), []byte("do-not-log-this")) {
+				t.Errorf("the value leaked into the log line: %s", buf.String())
+			}
+		})
+	}
+}
+
+func TestSensitiveKeysAreRedactedInsideGroupsAndWith(t *testing.T) {
+	// Arrange
+	var buf bytes.Buffer
+	log := New(&buf, "tsubame", "info").With(slog.String("token", "leak-1"))
+
+	// Act
+	log.Info("hello", slog.Group("mail", slog.String("body", "leak-2"), slog.String("id", "m1")))
+
+	// Assert
+	if bytes.Contains(buf.Bytes(), []byte("leak-")) {
+		t.Fatalf("a value leaked into the log line: %s", buf.String())
+	}
+	mail, _ := decode(t, &buf)["mail"].(map[string]any)
+	if mail["id"] != "m1" || mail["body"] != Redacted {
+		t.Errorf("mail group = %v, want the id kept and the body redacted", mail)
+	}
+}
+
+func TestOrdinaryKeysAreLeftAlone(t *testing.T) {
+	// Arrange
+	var buf bytes.Buffer
+
+	// Act
+	New(&buf, "kagami", "info").Info("hello", slog.String("addr", "127.0.0.1:9090"), slog.String("message_id", "m1"), slog.String("draft_id", "d1"))
+
+	// Assert
+	m := decode(t, &buf)
+	if m["addr"] != "127.0.0.1:9090" || m["message_id"] != "m1" || m["draft_id"] != "d1" {
+		t.Errorf("record = %v, want ids and addresses untouched", m)
+	}
+}
