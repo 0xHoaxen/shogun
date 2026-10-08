@@ -3,7 +3,7 @@ module github.com/0xHoaxen/shogun/gen/go
 go 1.25.14
 
 require (
-	connectrpc.com/connect v1.18.1
+	connectrpc.com/connect v1.21.0
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 )
