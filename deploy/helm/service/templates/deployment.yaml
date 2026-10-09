@@ -35,6 +35,10 @@ spec:
               containerPort: {{ .Values.ports.grpc }}
             - name: http
               containerPort: {{ .Values.ports.http }}
+            {{- if .Values.publicPort.enabled }}
+            - name: public
+              containerPort: {{ .Values.publicPort.port }}
+            {{- end }}
           env:
             {{- include "shogun.env" . | nindent 12 }}
           envFrom:
