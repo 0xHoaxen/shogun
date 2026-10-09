@@ -8,7 +8,7 @@ Ten Go services over gRPC behind one gateway (`torii`), one Postgres 17 database
 
 ## Prerequisites
 
-- Go 1.25.14 (see `.tool-versions`)
+- Go 1.26.9 (see `.tool-versions`)
 - Docker (integration tests use Postgres via testcontainers)
 - Node 22 (web app, from Phase 5)
 

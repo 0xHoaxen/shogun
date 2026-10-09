@@ -1,6 +1,6 @@
 module github.com/0xHoaxen/shogun/gen/go
 
-go 1.25.14
+go 1.26.9
 
 require (
 	connectrpc.com/connect v1.18.1
@@ -9,8 +9,8 @@ require (
 )
 
 require (
-	golang.org/x/net v0.57.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
+	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
 )

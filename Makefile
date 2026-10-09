@@ -2,7 +2,7 @@ BIN := $(CURDIR)/bin
 export PATH := $(BIN):$(PATH)
 export GOTOOLCHAIN := local
 
-GOLANGCI_LINT_VERSION := 2.4.0
+GOLANGCI_LINT_VERSION := 2.14.0
 MODULES := $(shell go list -m -f '{{.Dir}}' 2>/dev/null)
 
 # Local stack: use .env when present, otherwise the dev placeholders.
