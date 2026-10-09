@@ -1,0 +1,35 @@
+# Defaults for the web app chart. Per-environment values live in
+# deploy/helm/values/<environment>/web.yaml.
+#
+# Next.js bakes its /api and /auth rewrites into the image at build time, so the
+# image must be built with the in-cluster address of torii's public port:
+#   docker build -f deploy/docker/web.Dockerfile \
+#     --build-arg TORII_URL=http://shogun-torii:8081 -t <image>:<tag> web
+# The chart cannot change that address.
+image:
+  # Empty means ghcr.io/0xhoaxen/shogun-web.
+  repository: ""
+  # Required.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Secrets for a private registry, for example [{name: ghcr}].
+imagePullSecrets: []
+
+replicaCount: 1
+
+port: 3000
+
+# Plain environment variables for the container.
+env: {}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 384Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
