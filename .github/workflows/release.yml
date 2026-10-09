@@ -2,7 +2,8 @@ name: release
 
 # release-please opens one release PR per module. Merging it tags the module
 # (for example services/kagami/v0.4.0); released services are then built,
-# pushed to ghcr.io with an SBOM and provenance, and deployed to staging.
+# pushed to ghcr.io with an SBOM and provenance, their Helm charts pushed to
+# ghcr.io/0xhoaxen/charts, and deployed to staging.
 
 on:
   # push:
@@ -91,6 +92,37 @@ jobs:
             VERSION=${{ matrix.version }}
             COMMIT=${{ github.sha }}
           tags: ghcr.io/0xhoaxen/shogun-${{ matrix.service }}:${{ matrix.version }}
+
+  publish-charts:
+    name: publish chart (${{ matrix.service }} ${{ matrix.version }})
+    needs: [release-please, publish]
+    if: needs.release-please.outputs.any-service == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.release-please.outputs.services) }}
+    env:
+      SERVICE: ${{ matrix.service }}
+      VERSION: ${{ matrix.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: services/${{ matrix.service }}/v${{ matrix.version }}
+      - name: Log in to ghcr.io
+        env:
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          helm version --short
+          helm registry login ghcr.io --username "$REGISTRY_USER" --password-stdin <<<"$REGISTRY_TOKEN"
+      - name: Package and push the chart
+        run: |
+          helm package "deploy/helm/$SERVICE" --dependency-update \
+            --version "$VERSION" --app-version "$VERSION" --destination "$RUNNER_TEMP/charts"
+          helm push "$RUNNER_TEMP/charts/shogun-$SERVICE-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
 
   deploy-staging:
     name: deploy staging (${{ matrix.service }} ${{ matrix.version }})
