@@ -6,6 +6,7 @@ coverage.*
 
 # local config and secrets
 .env
+.secrets/
 
 # web
 node_modules/
