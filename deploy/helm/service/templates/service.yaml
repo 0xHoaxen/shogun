@@ -14,3 +14,8 @@ spec:
     - name: http
       port: {{ .Values.ports.http }}
       targetPort: http
+    {{- if .Values.publicPort.enabled }}
+    - name: public
+      port: {{ .Values.publicPort.port }}
+      targetPort: public
+    {{- end }}

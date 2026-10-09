@@ -17,6 +17,12 @@ ports:
   grpc: 9090
   http: 8080
 
+# An extra port for a service that listens for browsers, which only torii does
+# (TORII_PUBLIC_ADDR). The service's own env must make it listen on this port.
+publicPort:
+  enabled: false
+  port: 8081
+
 # Plain environment variables, merged over the chart's own (ENVIRONMENT, ports).
 env:
   ENVIRONMENT: production

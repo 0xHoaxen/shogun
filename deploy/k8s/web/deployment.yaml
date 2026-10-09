@@ -1,0 +1,70 @@
+# The web app (Next.js standalone, deploy/docker/web.Dockerfile). The image has
+# torii's address baked in at build time (--build-arg TORII_URL=http://shogun-torii:8081),
+# so it must be built for the namespace it runs in.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shogun-web
+  labels:
+    app.kubernetes.io/name: shogun-web
+    app.kubernetes.io/part-of: shogun
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: shogun-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: shogun-web
+        app.kubernetes.io/part-of: shogun
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        # The image's user is "node"; Kubernetes can only check a numeric id.
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          # Set the tag with kustomize: see kustomization.yaml.
+          image: shogun-web
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: http
+            periodSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          volumeMounts:
+            # Next writes its image and fetch cache here at run time.
+            - name: next-cache
+              mountPath: /app/.next/cache
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: next-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
