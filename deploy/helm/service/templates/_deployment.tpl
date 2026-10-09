@@ -1,3 +1,4 @@
+{{- define "shogun.deployment" -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -70,3 +71,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+{{- end }}

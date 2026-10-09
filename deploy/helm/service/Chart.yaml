@@ -1,6 +1,6 @@
 apiVersion: v2
 name: shogun-service
-description: One Shogun service (gRPC, health and metrics on HTTP, Postgres via a secret).
-type: application
+description: Library of templates shared by the per-service charts (gRPC, health and metrics on HTTP, Postgres via a secret).
+type: library
 version: 0.1.0
 appVersion: "0.0.0"

@@ -1,16 +1,15 @@
-{{- if .Values.serviceMonitor.enabled }}
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
+{{- define "shogun.pdb" -}}
+{{- if .Values.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
 metadata:
   name: {{ include "shogun.fullname" . }}
   labels:
     {{- include "shogun.labels" . | nindent 4 }}
 spec:
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
   selector:
     matchLabels:
       {{- include "shogun.selectorLabels" . | nindent 6 }}
-  endpoints:
-    - port: http
-      path: /metrics
-      interval: {{ .Values.serviceMonitor.interval }}
+{{- end }}
 {{- end }}
