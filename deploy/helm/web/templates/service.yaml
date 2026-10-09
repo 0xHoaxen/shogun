@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "shogunWeb.fullname" . }}
+  labels:
+    {{- include "shogunWeb.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "shogunWeb.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.port }}
+      targetPort: http

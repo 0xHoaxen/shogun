@@ -75,6 +75,7 @@ shogun/
 │   │   └── postgres/init.sql    # extensions, schema and role per service
 │   └── helm/
 │       ├── service/             # one generic chart
+│       ├── web/                 # chart for the Next.js app
 │       └── values/<env>/<service>.yaml
 │
 ├── scripts/

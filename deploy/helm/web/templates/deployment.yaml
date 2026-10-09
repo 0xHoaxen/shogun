@@ -1,36 +1,34 @@
-# The web app (Next.js standalone, deploy/docker/web.Dockerfile). The image has
-# torii's address baked in at build time (--build-arg TORII_URL=http://shogun-torii:8081),
-# so it must be built for the namespace it runs in.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shogun-web
+  name: {{ include "shogunWeb.fullname" . }}
   labels:
-    app.kubernetes.io/name: shogun-web
-    app.kubernetes.io/part-of: shogun
+    {{- include "shogunWeb.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: shogun-web
+      {{- include "shogunWeb.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: shogun-web
-        app.kubernetes.io/part-of: shogun
+        {{- include "shogunWeb.labels" . | nindent 8 }}
     spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       securityContext:
+        # The image's user is "node"; Kubernetes can only verify a numeric id.
         runAsNonRoot: true
-        # The image's user is "node"; Kubernetes can only check a numeric id.
         runAsUser: 1000
         runAsGroup: 1000
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: web
-          # Set the tag with kustomize: see kustomization.yaml.
-          image: shogun-web
-          imagePullPolicy: IfNotPresent
+          image: {{ include "shogunWeb.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -38,7 +36,14 @@ spec:
               drop: ["ALL"]
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: {{ .Values.port }}
+          {{- with .Values.env }}
+          env:
+            {{- range $key, $value := . }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- end }}
           readinessProbe:
             httpGet:
               path: /login
@@ -52,11 +57,7 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 10
           resources:
-            requests:
-              cpu: 50m
-              memory: 128Mi
-            limits:
-              memory: 384Mi
+            {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             # Next writes its image and fetch cache here at run time.
             - name: next-cache
@@ -68,3 +69,15 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
