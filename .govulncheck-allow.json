@@ -8,15 +8,5 @@
     "id": "GO-2026-4883",
     "reason": "github.com/docker/docker has no fixed release; only the test database helper reaches it, through testcontainers",
     "only_imported_by": "github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
-  },
-  {
-    "id": "GO-2026-6355",
-    "reason": "golang.org/x/crypto 0.56.0 needs Go 1.26; only the test database helper reaches it, through testcontainers' ssh client. Remove when the toolchain moves to Go 1.26",
-    "only_imported_by": "github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
-  },
-  {
-    "id": "GO-2026-6354",
-    "reason": "golang.org/x/crypto 0.56.0 needs Go 1.26; only the test database helper reaches it, through testcontainers' ssh client. Remove when the toolchain moves to Go 1.26",
-    "only_imported_by": "github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
   }
 ]

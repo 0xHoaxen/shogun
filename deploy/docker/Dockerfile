@@ -2,7 +2,7 @@
 # Build one service image from the repo root:
 #   docker build --build-arg SERVICE=kagami -f deploy/docker/Dockerfile .
 
-ARG GO_VERSION=1.25.14
+ARG GO_VERSION=1.26.9
 
 FROM golang:${GO_VERSION} AS build
 ARG SERVICE
