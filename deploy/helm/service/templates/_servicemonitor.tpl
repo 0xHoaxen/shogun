@@ -1,0 +1,18 @@
+{{- define "shogun.serviceMonitor" -}}
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "shogun.fullname" . }}
+  labels:
+    {{- include "shogun.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "shogun.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+{{- end }}
+{{- end }}

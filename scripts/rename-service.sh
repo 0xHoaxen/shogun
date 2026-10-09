@@ -32,6 +32,7 @@ move "services/$old" "services/$new"
 for env in staging production; do
 	[[ -f "deploy/helm/values/$env/$old.yaml" ]] && move "deploy/helm/values/$env/$old.yaml" "deploy/helm/values/$env/$new.yaml"
 done
+[[ -d "deploy/helm/$old" ]] && move "deploy/helm/$old" "deploy/helm/$new"
 move "services/$new/cmd/$old" "services/$new/cmd/$new"
 if [[ -d "proto/shogun/$old" ]]; then
 	move "proto/shogun/$old" "proto/shogun/$new"

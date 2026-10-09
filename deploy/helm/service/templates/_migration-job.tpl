@@ -1,3 +1,4 @@
+{{- define "shogun.migrationJob" -}}
 {{- if .Values.migrationJob.enabled }}
 apiVersion: batch/v1
 kind: Job
@@ -37,4 +38,5 @@ spec:
           envFrom:
             - secretRef:
                 name: {{ include "shogun.secretName" . }}
+{{- end }}
 {{- end }}

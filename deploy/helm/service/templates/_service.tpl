@@ -1,3 +1,4 @@
+{{- define "shogun.service" -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -19,3 +20,4 @@ spec:
       port: {{ .Values.publicPort.port }}
       targetPort: public
     {{- end }}
+{{- end }}
