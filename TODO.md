@@ -627,10 +627,31 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `helm lint deploy/helm/postgres -f deploy/helm/values/staging/postgres.yaml` passes; the rendered ConfigMap, Service and StatefulSet match the old kustomize output apart from Helm labels; `helm package` includes the three init files.
   Status: all three checks pass (the one difference in the StatefulSet is an explicit `imagePullPolicy: IfNotPresent`, the default). The StatefulSet carries a `checksum/init` annotation so a changed init script rolls the pod, though the script itself runs on an empty volume only. The name stays `shogun-postgres`, so an existing cluster keeps its PVC: delete the old StatefulSet and Service, then install the chart (note in `docs/deploy.md`). `deploy/k8s/postgres/` is removed; `docs/deploy.md` and the comment in `scripts/k8s-secrets.sh` point at the chart. Not run on a cluster (`kind` is not installed here). Not done: publishing this chart from `release.yml`, which only publishes the service charts.
 
-- [ ] **P10.5 First deploy** (M) Needs: P3.6, P3.7, P10.1, P10.5a, P10.5b, P10.5c, P10.5d, P10.5h
+- [ ] **P10.5i Pull secret in the charts** (S) Needs: P10.5h
+  Do: an optional `imagePullSecrets` value in the `shogun-service` library chart, used by the Deployment and the migration Job pod specs, and in the web chart; empty by default. The alternative is making the ghcr.io packages public, so state which one the VM uses.
+  Done when: `helm lint` and `helm template` pass for all ten service charts and the web chart with and without `--set imagePullSecrets[0].name=ghcr`; the rendered Deployment and migration Job carry the secret only when set; `scripts/helm.py check` is clean.
+  `TODO(owner)`: decide private (pull secret) or public packages.
+
+- [ ] **P10.5j Publish the web image and chart** (S) Needs: P10.5e, P10.5i
+  Do: extend `release.yml` so a web release builds `deploy/docker/web.Dockerfile` with `--build-arg TORII_URL=http://shogun-torii:8081`, pushes `ghcr.io/0xhoaxen/shogun-web:<version>`, and pushes `deploy/helm/web` to `oci://ghcr.io/0xhoaxen/charts`. Add a `web` package to `release-please-config.json` and the manifest. Replace the placeholder tag in `deploy/helm/values/staging/web.yaml`. Do not touch `release.yml` triggers here (P10.5k).
+  Done when: `actionlint` passes; the workflow parses; `helm package deploy/helm/web --version 1.2.3 --app-version 1.2.3` renders on its own. `release.yml` is protected: do this only when the owner asks for it.
+
+- [ ] **P10.5k Turn on automatic releases** (S) Needs: P3.6, P10.5j
+  Do: uncomment the `push: branches: [main]` trigger in `release.yml`, once the P3.6 dry run is done and "Allow GitHub Actions to create and approve pull requests" is enabled.
+  Done when: merging a `feat(kagami):` commit to `main` opens a release PR for `services/kagami` only; merging it pushes the image and the chart to ghcr.io and opens the staging values bump PR. `TODO(owner)`: `release.yml` is protected and the repo setting is the owner's.
+
+- [ ] **P10.5l Deploy script for the VM** (M) Needs: P10.5i, P10.5j
+  Do: `scripts/deploy.sh --context <ctx> --namespace <ns> --env <staging|production>` that installs from the registry only: Postgres first, `soroban`, then the other services, then web, each with `helm upgrade --install oci://ghcr.io/0xhoaxen/charts/shogun-<name> --version <v> -f values/<env>/<name>.yaml --wait`. Versions come from the `image.tag` in each values file by default, so the values files must be fetched at the same git ref (a checkout, or `git archive` of the deploy ref); an optional `versions.env` overrides them. Refuse without `--context` and `--namespace`. A shell test with fake `helm` covers order, refusal and version selection.
+  Done when: `scripts/deploy_test.sh` passes; `shellcheck scripts/deploy.sh` is clean.
+
+- [ ] **P10.5 First deploy** (M) Needs: P3.6, P3.7, P10.1, P10.5a, P10.5b, P10.5c, P10.5d, P10.5h, P10.5k, P10.5l
   Do: deploy to a cluster (kind first) with secrets from P10.5c; smoke test script. Images and the chart come from a registry: install the ten services with `--set image.repository=... --set image.tag=...`, Postgres first with `deploy/helm/postgres`, then the ten services, then the web app with `deploy/helm/web`.
   Done when: smoke test passes against the cluster: migration Jobs complete, every pod Ready, sign-in works, one test email goes through the approval flow. `TODO(owner)`: choose the registry (Artifact Registry or ghcr.io) and the final deploy target.
   Status: not started. Follow-ups found while planning, not yet tasks: `imagePullSecrets` in the chart (the Deployment and migration Job templates have no field for it, needed for a private registry); a chart `helm package` and `helm push` step in `release.yml` (it publishes service images to ghcr.io only, and its `push` trigger is commented out); publishing the web image; the per-service values files live outside the chart directory, so they are not in the packaged chart; a backup CronJob (the Compose `backup` service does not exist in a cluster). P3.6 is still open (the release-please dry run needs a GitHub token and a repo setting). Production torii also needs `TORII_PUBLIC_URL` (https) and its peer `*_ADDR` values in the helm values.
+
+- [ ] **P10.5m Rewrite the deploy runbook** (S) Needs: P10.5
+  Do: rewrite `docs/deploy.md` from what actually worked on the VM: per-service charts `oci://ghcr.io/0xhoaxen/charts/shogun-<name>`, the Postgres chart, the web chart, `scripts/deploy.sh`, the pull secret, and the Kubernetes setup on the VM. Remove the old kustomize and `shogun-service` instructions, track the file in git, and clear the open-items table.
+  Done when: every command in the file was run on the VM; no mention of `deploy/k8s/web`, `deploy/k8s/postgres` or `deploy/helm/service`.
 
 ---
 
