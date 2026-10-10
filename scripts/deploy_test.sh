@@ -56,7 +56,7 @@ fi
 run "${base[@]}"
 check "a full run succeeds" '[ "$code" -eq 0 ]'
 check "installs postgres, soroban, the services, then web" \
-	'[ "$(release_order)" = "shogun-postgres shogun-soroban shogun-kagami shogun-fude shogun-tsubame shogun-taiko shogun-dojo shogun-katana shogun-shinobi shogun-sensei shogun-torii shogun-web " ]'
+	'[ "$(release_order)" = "postgres shogun-soroban shogun-kagami shogun-fude shogun-tsubame shogun-taiko shogun-dojo shogun-katana shogun-shinobi shogun-sensei shogun-torii shogun-web " ]'
 check "every call is upgrade --install" '[ "$(calls | grep -c "^upgrade --install ")" -eq 12 ]'
 check "every call pins the context and namespace" \
 	'[ "$(calls | grep -c -- "--kube-context kind-shogun --namespace shogun")" -eq 12 ]'

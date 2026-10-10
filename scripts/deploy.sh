@@ -63,8 +63,8 @@ install_postgres() {
 	if [ -f "$values_dir/postgres.yaml" ]; then
 		args+=(-f "$values_dir/postgres.yaml")
 	fi
-	"$HELM" upgrade --install shogun-postgres "$ROOT/deploy/helm/postgres" "${args[@]}"
-	echo "installed shogun-postgres (local chart)"
+	"$HELM" upgrade --install postgres "$ROOT/deploy/helm/postgres" "${args[@]}"
+	echo "installed postgres (local chart)"
 }
 
 # install_chart CONTEXT NAMESPACE VALUES_DIR NAME VERSION PULL_SECRET

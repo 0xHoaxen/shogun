@@ -27,8 +27,6 @@ Checked against `main` (`release.yml`, `deploy.yml`, `deploy/helm/service`):
 | `imagePullSecrets` in the chart | **Missing.** The Deployment and migration Job templates have no field for it, so a private ghcr.io package cannot be pulled. Make the packages public, or add the field first |
 | Production values | `values/production/*.yaml` carry only `ENVIRONMENT` and resources. torii needs `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR` and `publicPort.enabled` before a real deploy. They are protected files; the owner edits them |
 
-`TODO(owner)`: record the chart's OCI reference here once the release step exists. Everything below uses `CHART_REF` for it, for example `oci://ghcr.io/0xhoaxen/charts/shogun-service`.
-
 ## Before you start
 
 You need `kubectl`, `helm` 3.8 or newer (OCI support), `openssl` 3, and a cluster. For kind:
@@ -36,7 +34,6 @@ You need `kubectl`, `helm` 3.8 or newer (OCI support), `openssl` 3, and a cluste
 ```sh
 kind create cluster --name shogun
 export CTX=kind-shogun NS=shogun
-export CHART_REF=oci://ghcr.io/0xhoaxen/charts/shogun-service   # TODO(owner): confirm
 ```
 
 Always pass `--kube-context "$CTX"` (Helm) and `--context "$CTX"` (kubectl). The default context may be a real cluster.
@@ -91,13 +88,15 @@ Already running the old kustomize Postgres? Helm will not adopt it, because it d
 
 ## Install the services
 
+`scripts/deploy.sh --context "$CTX" --namespace "$NS" --env staging` does Postgres and every service below in one go, with the same release names (`postgres` for the database, `shogun-<name>` for the services). The loop is the manual version. Each service has its own chart, `oci://ghcr.io/0xhoaxen/charts/shogun-<name>`, and the release is `shogun-<name>`, so no shell variable has to be set for the chart reference.
+
 Install `soroban` first (every Claude call reserves budget through it), then the rest. Each install runs its migration Job before the Deployment is created, and `--wait` blocks until the pods are Ready.
 
 ```sh
 . ./versions.env
 install_service() {
   name=$1 version=$2
-  helm upgrade --install "$name" "$CHART_REF" \
+  helm upgrade --install "shogun-$name" "oci://ghcr.io/0xhoaxen/charts/shogun-$name" \
     --version "$version" \
     --kube-context "$CTX" --namespace "$NS" \
     -f "deploy/helm/values/staging/$name.yaml" \
@@ -117,7 +116,7 @@ done
 Notes:
 
 - `--version` selects the chart from the registry; `image.tag` selects the image. They are set separately on purpose. If the release step publishes the chart with the service version, pass the same value to both. If it publishes one chart version for all services, use that for `--version` and each service's own version for `image.tag`. `TODO(owner)`: state which in [State of the repo](#state-of-the-repo) once decided.
-- Without the release step on `main`, replace `"$CHART_REF" --version "$version"` with `deploy/helm/service` from a local checkout. The result is the same chart at the checked-out commit.
+- Without the release step on `main`, replace the `oci://` chart and `--version "$version"` with `deploy/helm/service` from a local checkout. The result is the same chart at the checked-out commit.
 - Every pod gets all ten `*_ADDR` values, so the install order does not matter to Helm. `--wait` can still time out if a service refuses to become Ready until a peer is up; if it does, install the others and rerun.
 - A failed migration Job fails the install. Read it with `kubectl -n "$NS" logs job/shogun-<name>-migrate`. Helm deletes the Job on success, and `before-hook-creation` removes a failed one on the next try.
 - Use `values/production/` instead of `values/staging/` only after the production gaps listed above are closed.
