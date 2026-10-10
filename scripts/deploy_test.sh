@@ -56,7 +56,7 @@ fi
 run "${base[@]}"
 check "a full run succeeds" '[ "$code" -eq 0 ]'
 check "installs postgres, soroban, the services, then web" \
-	'[ "$(release_order)" = "postgres shogun-soroban shogun-kagami shogun-fude shogun-tsubame shogun-taiko shogun-dojo shogun-katana shogun-shinobi shogun-sensei shogun-torii shogun-web " ]'
+	'[ "$(release_order)" = "postgres soroban kagami fude tsubame taiko dojo katana shinobi sensei torii web " ]'
 check "every call is upgrade --install" '[ "$(calls | grep -c "^upgrade --install ")" -eq 12 ]'
 check "every call pins the context and namespace" \
 	'[ "$(calls | grep -c -- "--kube-context kind-shogun --namespace shogun")" -eq 12 ]'
@@ -64,14 +64,14 @@ check "every call waits" '[ "$(calls | grep -c -- "--wait")" -eq 12 ]'
 check "postgres comes from the checkout, not the registry" \
 	'calls | head -n 1 | grep -q "deploy/helm/postgres" && ! calls | head -n 1 | grep -q "oci://"'
 check "services come from the registry" \
-	'calls | grep "^upgrade --install shogun-kagami " | grep -q "oci://ghcr.io/0xhoaxen/charts/shogun-kagami"'
+	'calls | grep "^upgrade --install kagami " | grep -q "oci://ghcr.io/0xhoaxen/charts/kagami"'
 check "web comes from the registry" \
-	'calls | grep "^upgrade --install shogun-web " | grep -q "oci://ghcr.io/0xhoaxen/charts/shogun-web"'
+	'calls | grep "^upgrade --install web " | grep -q "oci://ghcr.io/0xhoaxen/charts/web"'
 check "uses the values file of the env" \
-	'calls | grep "shogun-kagami " | grep -q -- "-f .*/values/staging/kagami.yaml"'
+	'calls | grep "kagami " | grep -q -- "-f .*/values/staging/kagami.yaml"'
 check "chart version and image tag are the values-file tag" \
 	'tag=$(staging_tag kagami);
-	 calls | grep "shogun-kagami " | grep -q -- "--version $tag " && calls | grep "shogun-kagami " | grep -q -- "--set image.tag=$tag "'
+	 calls | grep "kagami " | grep -q -- "--version $tag " && calls | grep "kagami " | grep -q -- "--set image.tag=$tag "'
 check "passes the ghcr pull secret to services" \
 	'[ "$(calls | grep -c -- "--set imagePullSecrets\[0\].name=ghcr")" -eq 11 ]'
 check "does not pass the pull secret to postgres" '! calls | head -n 1 | grep -q imagePullSecrets'
@@ -79,10 +79,10 @@ check "does not pass the pull secret to postgres" '! calls | head -n 1 | grep -q
 printf 'KAGAMI=9.9.9\nWEB=8.8.8\nKAGAMI=7.7.7\n' >"$work/versions.env"
 run "${base[@]}" --versions-file "$work/versions.env"
 check "versions file overrides the values file (last line wins)" \
-	'calls | grep "shogun-kagami " | grep -q -- "--version 7.7.7 " && calls | grep "shogun-kagami " | grep -q -- "--set image.tag=7.7.7 "'
-check "versions file applies to web" 'calls | grep "shogun-web " | grep -q -- "--version 8.8.8 "'
+	'calls | grep "kagami " | grep -q -- "--version 7.7.7 " && calls | grep "kagami " | grep -q -- "--set image.tag=7.7.7 "'
+check "versions file applies to web" 'calls | grep "web " | grep -q -- "--version 8.8.8 "'
 check "services missing from the versions file keep their values-file tag" \
-	'tag=$(staging_tag torii); calls | grep "shogun-torii " | grep -q -- "--version $tag "'
+	'tag=$(staging_tag torii); calls | grep "torii " | grep -q -- "--version $tag "'
 
 run "${base[@]}" --pull-secret ""
 check "an empty --pull-secret turns it off" '[ "$code" -eq 0 ] && ! calls | grep -q imagePullSecrets'

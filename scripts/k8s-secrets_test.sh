@@ -63,18 +63,18 @@ check "never prints a value" '! echo "$out" | grep -q "$sentinel"'
 check "the env file is private" '[ "$(stat -f %Lp "$env_file" 2>/dev/null || stat -c %a "$env_file")" = 600 ]'
 
 keys() { sed 's/=.*//' "$work/fake/$1.env" | sort | tr '\n' ' '; }
-check "postgres holds eleven passwords" '[ "$(keys shogun-postgres | wc -w | tr -d " ")" -eq 11 ]'
-check "torii keys" '[ "$(keys shogun-torii)" = "DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET IDENTITY_SIGNING_KEY TORII_ALLOWED_EMAILS TORII_PUBLIC_URL " ]'
-check "fude keys" '[ "$(keys shogun-fude)" = "ANTHROPIC_API_KEY DATABASE_URL FUDE_HANKO_KEY_ID FUDE_HANKO_SIGNING_KEY IDENTITY_SIGNING_KEY " ]'
-check "tsubame keys" '[ "$(keys shogun-tsubame)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS TSUBAME_TOKEN_KEY_ID TSUBAME_TOKEN_MASTER_KEY " ]'
-check "katana keys" '[ "$(keys shogun-katana)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY KATANA_GITHUB_TOKEN KATANA_GITHUB_USER " ]'
-check "kagami has only the common keys" '[ "$(keys shogun-kagami)" = "DATABASE_URL IDENTITY_SIGNING_KEY " ]'
+check "postgres holds eleven passwords" '[ "$(keys postgres | wc -w | tr -d " ")" -eq 11 ]'
+check "torii keys" '[ "$(keys torii)" = "DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET IDENTITY_SIGNING_KEY TORII_ALLOWED_EMAILS TORII_PUBLIC_URL " ]'
+check "fude keys" '[ "$(keys fude)" = "ANTHROPIC_API_KEY DATABASE_URL FUDE_HANKO_KEY_ID FUDE_HANKO_SIGNING_KEY IDENTITY_SIGNING_KEY " ]'
+check "tsubame keys" '[ "$(keys tsubame)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS TSUBAME_TOKEN_KEY_ID TSUBAME_TOKEN_MASTER_KEY " ]'
+check "katana keys" '[ "$(keys katana)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY KATANA_GITHUB_TOKEN KATANA_GITHUB_USER " ]'
+check "kagami has only the common keys" '[ "$(keys kagami)" = "DATABASE_URL IDENTITY_SIGNING_KEY " ]'
 
 value() { sed -n "s/^$2=//p" "$work/fake/$1.env"; }
-check "every service shares one identity key" '[ "$(value shogun-torii IDENTITY_SIGNING_KEY)" = "$(value shogun-soroban IDENTITY_SIGNING_KEY)" ]'
+check "every service shares one identity key" '[ "$(value torii IDENTITY_SIGNING_KEY)" = "$(value soroban IDENTITY_SIGNING_KEY)" ]'
 check "a DATABASE_URL uses its own role and password" '
-	pw=$(value shogun-postgres KAGAMI_DB_PASSWORD)
-	[ "$(value shogun-kagami DATABASE_URL)" = "postgres://kagami:$pw@shogun-postgres:5432/shogun" ]'
+	pw=$(value postgres KAGAMI_DB_PASSWORD)
+	[ "$(value kagami DATABASE_URL)" = "postgres://kagami:$pw@postgres:5432/shogun" ]'
 
 # source the script for its functions (it only runs main when executed)
 . "$script"
@@ -82,8 +82,8 @@ dev_seed="AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
 dev_public="A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg="
 check "the Hanko public key derivation matches the dev pair in .env.example" '[ "$(hanko_public_key "$dev_seed")" = "$dev_public" ]'
 check "tsubame verifies with the public half of the fude key" '
-	seed=$(value shogun-fude FUDE_HANKO_SIGNING_KEY)
-	[ "$(value shogun-tsubame TSUBAME_HANKO_VERIFY_KEYS)" = "fude-1=$(hanko_public_key "$seed")" ]'
+	seed=$(value fude FUDE_HANKO_SIGNING_KEY)
+	[ "$(value tsubame TSUBAME_HANKO_VERIFY_KEYS)" = "fude-1=$(hanko_public_key "$seed")" ]'
 
 check "no pull secret without a GHCR token" '[ ! -e "$work/fake/ghcr.env" ]'
 printf 'GHCR_USER=octocat\nGHCR_TOKEN=%s\n' "$sentinel" >>"$env_file"

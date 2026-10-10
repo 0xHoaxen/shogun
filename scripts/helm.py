@@ -54,13 +54,13 @@ resources:
 """
 
 CHART = """apiVersion: v2
-name: shogun-{name}
+name: {name}
 description: The {name} service.
 type: application
 version: 0.1.0
 appVersion: "0.0.0"
 dependencies:
-  - name: shogun-service
+  - name: service
     version: 0.1.0
     repository: file://../service
 """

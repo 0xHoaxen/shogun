@@ -5,7 +5,7 @@
 # Usage: scripts/deploy.sh --context <ctx> --namespace <ns> --env <staging|production>
 #                          [--versions-file <file>] [--pull-secret <name>]
 #
-# Charts come from oci://ghcr.io/0xhoaxen/charts/shogun-<name> at the version to
+# Charts come from oci://ghcr.io/0xhoaxen/charts/<name> at the version to
 # deploy. That version is the image.tag in deploy/helm/values/<env>/<name>.yaml,
 # so run this from a checkout of the git ref you are deploying. A versions file
 # (KAGAMI=1.2.3 lines, upper-case service name, WEB for the web app) overrides it.
@@ -80,8 +80,8 @@ install_chart() {
 	if [ -n "$pull_secret" ]; then
 		args+=(--set "imagePullSecrets[0].name=$pull_secret")
 	fi
-	"$HELM" upgrade --install "shogun-$name" "$CHART_REGISTRY/shogun-$name" "${args[@]}"
-	echo "installed shogun-$name $version"
+	"$HELM" upgrade --install "$name" "$CHART_REGISTRY/$name" "${args[@]}"
+	echo "installed $name $version"
 }
 
 main() {

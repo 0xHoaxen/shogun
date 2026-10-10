@@ -1,10 +1,10 @@
 apiVersion: v2
-name: shogun-tsubame
+name: tsubame
 description: The tsubame service.
 type: application
 version: 0.1.0
 appVersion: "0.0.0"
 dependencies:
-  - name: shogun-service
+  - name: service
     version: 0.1.0
     repository: file://../service

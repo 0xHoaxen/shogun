@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Creates the Secrets a cluster needs: shogun-postgres (read by deploy/helm/postgres)
-# and shogun-<service> for the ten services (read by the Helm chart with envFrom).
+# Creates the Secrets a cluster needs: postgres (read by deploy/helm/postgres)
+# and <service> for the ten services (read by the Helm chart with envFrom).
 # With GHCR_USER and GHCR_TOKEN set in the env file it also creates the pull secret
 # "ghcr" (a token with read:packages) for private ghcr.io images; the charts use it
 # through imagePullSecrets.
@@ -144,7 +144,7 @@ apply_pull_secret() {
 service_env() {
 	local src=$1 dest=$2 svc=$3 key value
 	{
-		echo "DATABASE_URL=postgres://$svc:$(env_get "$src" "$(upper "$svc")_DB_PASSWORD")@shogun-postgres:5432/shogun"
+		echo "DATABASE_URL=postgres://$svc:$(env_get "$src" "$(upper "$svc")_DB_PASSWORD")@postgres:5432/shogun"
 		echo "IDENTITY_SIGNING_KEY=$(env_get "$src" IDENTITY_SIGNING_KEY)"
 		for key in $(service_keys "$svc"); do
 			value=$(env_get "$src" "$key")
@@ -185,11 +185,11 @@ main() {
 	"$KUBECTL" --context "$context" create namespace "$namespace" --dry-run=client -o yaml |
 		"$KUBECTL" --context "$context" apply -f - >/dev/null
 
-	grep -E '^(POSTGRES_PASSWORD|[A-Z]+_DB_PASSWORD)=' "$env_file" >"$tmp/shogun-postgres.env"
-	apply_secret "$context" "$namespace" shogun-postgres "$tmp/shogun-postgres.env"
+	grep -E '^(POSTGRES_PASSWORD|[A-Z]+_DB_PASSWORD)=' "$env_file" >"$tmp/postgres.env"
+	apply_secret "$context" "$namespace" postgres "$tmp/postgres.env"
 	for svc in $SERVICES; do
-		service_env "$env_file" "$tmp/shogun-$svc.env" "$svc"
-		apply_secret "$context" "$namespace" "shogun-$svc" "$tmp/shogun-$svc.env"
+		service_env "$env_file" "$tmp/$svc.env" "$svc"
+		apply_secret "$context" "$namespace" "$svc" "$tmp/$svc.env"
 	done
 	ghcr_user=$(env_get "$env_file" GHCR_USER)
 	ghcr_token=$(env_get "$env_file" GHCR_TOKEN)

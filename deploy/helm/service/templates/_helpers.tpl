@@ -3,7 +3,7 @@
 {{- end }}
 
 {{- define "shogun.fullname" -}}
-shogun-{{ include "shogun.name" . }}
+{{ include "shogun.name" . }}
 {{- end }}
 
 {{- define "shogun.image" -}}
@@ -42,6 +42,6 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- range $peer := .Values.peers }}
 - name: {{ upper $peer }}_ADDR
-  value: {{ printf "shogun-%s:%v" $peer $.Values.ports.grpc | quote }}
+  value: {{ printf "%s:%v" $peer $.Values.ports.grpc | quote }}
 {{- end }}
 {{- end }}

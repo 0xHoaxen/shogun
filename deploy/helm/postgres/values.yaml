@@ -14,7 +14,7 @@ image:
 # init.sh creates a schema and a login role for every such variable. It is
 # created by scripts/k8s-secrets.sh, never by this chart, because Postgres
 # creates its roles once and the passwords must not change.
-secretName: shogun-postgres
+secretName: postgres
 
 database: shogun
 

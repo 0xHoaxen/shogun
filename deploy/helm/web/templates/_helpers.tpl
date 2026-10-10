@@ -1,5 +1,5 @@
 {{- define "shogunWeb.fullname" -}}
-shogun-web
+web
 {{- end }}
 
 {{- define "shogunWeb.image" -}}
