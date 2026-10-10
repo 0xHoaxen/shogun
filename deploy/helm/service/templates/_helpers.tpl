@@ -7,7 +7,7 @@
 {{- end }}
 
 {{- define "shogun.image" -}}
-{{- $repo := .Values.image.repository | default (printf "ghcr.io/0xhoaxen/shogun-%s" (include "shogun.name" .)) -}}
+{{- $repo := .Values.image.repository | default (printf "ghcr.io/0xhoaxen/%s" (include "shogun.name" .)) -}}
 {{ $repo }}:{{ .Values.image.tag }}
 {{- end }}
 

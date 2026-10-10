@@ -6,7 +6,7 @@ This is the runbook for deploying Shogun to a Kubernetes cluster (kind first) fr
 
 | Piece | Where it comes from |
 | --- | --- |
-| Service image `shogun-<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/shogun-<name>` by the `release` workflow, one per released service |
+| Service image `<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/<name>` by the `release` workflow, one per released service |
 | Helm chart `service` | Pushed as an OCI artifact by the `release` workflow after the image push, with the released version |
 | Per-service values `deploy/helm/values/<env>/<name>.yaml` | The repo, not the chart (they sit outside `deploy/helm/service`, so `helm package` does not include them). Use a checkout at the version you deploy |
 | Postgres 17 + pgvector | `deploy/helm/postgres` (its own Helm release, installed once, outside the service releases) |
@@ -128,9 +128,9 @@ The Next.js rewrites to torii are baked in at build time, so the image must be b
 ```sh
 docker build -f deploy/docker/web.Dockerfile \
   --build-arg TORII_URL=http://torii:8081 \
-  -t shogun-web:<tag> .
-kind load docker-image shogun-web:<tag> --name shogun
-(cd deploy/k8s/web && kustomize edit set image shogun-web=shogun-web:<tag>)   # do not commit this change
+  -t web:<tag> .
+kind load docker-image web:<tag> --name shogun
+(cd deploy/k8s/web && kustomize edit set image web=web:<tag>)   # do not commit this change
 kubectl --context "$CTX" -n "$NS" apply -k deploy/k8s/web
 kubectl --context "$CTX" -n "$NS" rollout status deployment/web
 ```

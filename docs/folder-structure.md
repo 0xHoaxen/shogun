@@ -131,4 +131,4 @@ services/A  ──✗──▶        services/B        (call it over gRPC inste
 
 - Directory, proto package, schema, role and env prefix are the same word: `kagami` / `shogun.kagami.v1` / schema `kagami` / `KAGAMI_ADDR`.
 - Go module path for a service: `github.com/0xHoaxen/shogun/services/kagami`.
-- Image: `ghcr.io/0xhoaxen/shogun-kagami:<version>`. Tag: `services/kagami/v0.4.0`.
+- Image: `ghcr.io/0xhoaxen/kagami:<version>`. Tag: `services/kagami/v0.4.0`.

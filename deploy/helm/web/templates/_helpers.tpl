@@ -3,7 +3,7 @@ web
 {{- end }}
 
 {{- define "shogunWeb.image" -}}
-{{- $repo := .Values.image.repository | default "ghcr.io/0xhoaxen/shogun-web" -}}
+{{- $repo := .Values.image.repository | default "ghcr.io/0xhoaxen/web" -}}
 {{ $repo }}:{{ required "values.image.tag is required" .Values.image.tag }}
 {{- end }}
 

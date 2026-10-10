@@ -7,7 +7,7 @@
 #     --build-arg TORII_URL=http://torii:8081 -t <image>:<tag> web
 # The chart cannot change that address.
 image:
-  # Empty means ghcr.io/0xhoaxen/shogun-web.
+  # Empty means ghcr.io/0xhoaxen/web.
   repository: ""
   # Required.
   tag: ""

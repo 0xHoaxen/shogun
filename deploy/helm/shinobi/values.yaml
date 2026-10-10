@@ -9,7 +9,7 @@
 name: shinobi
 
 image:
-  # Empty means ghcr.io/0xhoaxen/shogun-<name>.
+  # Empty means ghcr.io/0xhoaxen/<name>.
   repository: ""
   # Bumped by the deploy workflow after a release.
   tag: "0.0.0"

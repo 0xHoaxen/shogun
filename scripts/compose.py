@@ -19,7 +19,7 @@ FIRST_GRPC_PORT = 9091
 
 STANZA = """  {name}:
     <<: *service
-    image: shogun-{name}:local
+    image: {name}:local
     build:
       <<: *build
       args:
