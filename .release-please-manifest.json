@@ -1,6 +1,6 @@
 {
   "pkg": "0.1.0",
-  "gen/go": "0.1.0",
+  "gen/go": "0.2.0",
   "services/torii": "0.1.0",
   "services/kagami": "0.1.0",
   "services/tsubame": "0.1.0",
