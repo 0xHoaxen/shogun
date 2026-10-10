@@ -15,7 +15,10 @@ case " $* " in
 	name="" file="" prev=""
 	for arg in "$@"; do
 		[ "$prev" = generic ] && name=$arg
-		case $arg in --from-env-file=*) file=${arg#--from-env-file=} ;; esac
+		case $arg in
+		--from-env-file=*) file=${arg#--from-env-file=} ;;
+		--from-file=*) file=${arg#*=.dockerconfigjson=}; file=${file#--from-file=} ;;
+		esac
 		prev=$arg
 	done
 	cp "$file" "$FAKE_DIR/$name.env"
@@ -81,6 +84,13 @@ check "the Hanko public key derivation matches the dev pair in .env.example" '[ 
 check "tsubame verifies with the public half of the fude key" '
 	seed=$(value shogun-fude FUDE_HANKO_SIGNING_KEY)
 	[ "$(value shogun-tsubame TSUBAME_HANKO_VERIFY_KEYS)" = "fude-1=$(hanko_public_key "$seed")" ]'
+
+check "no pull secret without a GHCR token" '[ ! -e "$work/fake/ghcr.env" ]'
+printf 'GHCR_USER=octocat\nGHCR_TOKEN=%s\n' "$sentinel" >>"$env_file"
+run --context kind-shogun --namespace shogun --env-file "$env_file"
+check "a GHCR token creates the pull secret" '[ "$code" -eq 0 ] && [ -s "$work/fake/ghcr.env" ]'
+check "the pull secret is a dockerconfigjson for ghcr.io" 'grep -q "\"ghcr.io\"" "$work/fake/ghcr.env" && grep -q "octocat" "$work/fake/ghcr.env"'
+check "the token is never printed" '! echo "$out" | grep -q "$sentinel"'
 
 before=$(cksum <"$env_file")
 run --context kind-shogun --namespace shogun --env-file "$env_file"

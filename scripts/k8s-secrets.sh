@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Creates the Secrets a cluster needs: shogun-postgres (read by deploy/helm/postgres)
 # and shogun-<service> for the ten services (read by the Helm chart with envFrom).
+# With GHCR_USER and GHCR_TOKEN set in the env file it also creates the pull secret
+# "ghcr" (a token with read:packages) for private ghcr.io images; the charts use it
+# through imagePullSecrets.
 #
 # Usage: scripts/k8s-secrets.sh --context <ctx> --namespace <ns> [--env-file <file>]
 #
@@ -100,6 +103,9 @@ warn_unset() {
 	if [ "$(env_get "$file" TORII_ALLOWED_EMAILS)" = "$PLACEHOLDER_EMAIL" ]; then
 		echo "k8s-secrets: TORII_ALLOWED_EMAILS is a placeholder; nobody can sign in" >&2
 	fi
+	if [ -z "$(env_get "$file" GHCR_TOKEN)" ]; then
+		echo "k8s-secrets: GHCR_TOKEN is not set; no pull secret is created, so private ghcr.io images cannot be pulled" >&2
+	fi
 	for key in ANTHROPIC_API_KEY KATANA_GITHUB_USER KATANA_GITHUB_TOKEN; do
 		if [ -z "$(env_get "$file" "$key")" ]; then
 			echo "k8s-secrets: $key is not set; the services that use it start, but drafts or GitHub sync will fail" >&2
@@ -115,6 +121,23 @@ apply_secret() {
 		--from-env-file="$file" --dry-run=client -o yaml |
 		"$KUBECTL" --context "$context" -n "$namespace" apply -f - >/dev/null
 	echo "secret/$name applied ($keys keys)"
+}
+
+# apply_pull_secret CONTEXT NAMESPACE USER TOKEN TMPDIR creates the ghcr.io pull secret
+# from a dockerconfigjson file, so the token never appears on a command line.
+apply_pull_secret() {
+	local context=$1 namespace=$2 user=$3 token=$4 tmp=$5 auth
+	case "$user$token" in
+	*[\"\\]*) die "GHCR_USER and GHCR_TOKEN must not contain quotes or backslashes" ;;
+	esac
+	auth=$(printf '%s:%s' "$user" "$token" | base64 | tr -d '\n')
+	printf '{"auths":{"ghcr.io":{"username":"%s","password":"%s","auth":"%s"}}}' \
+		"$user" "$token" "$auth" >"$tmp/dockerconfigjson"
+	"$KUBECTL" --context "$context" -n "$namespace" create secret generic ghcr \
+		--type=kubernetes.io/dockerconfigjson \
+		--from-file=.dockerconfigjson="$tmp/dockerconfigjson" --dry-run=client -o yaml |
+		"$KUBECTL" --context "$context" -n "$namespace" apply -f - >/dev/null
+	echo "secret/ghcr applied (pull secret for ghcr.io)"
 }
 
 # service_env SRC DEST SERVICE writes the variables for one service Secret.
@@ -136,7 +159,7 @@ service_env() {
 }
 
 main() {
-	local context="" namespace="" env_file="$DEFAULT_ENV_FILE" tmp svc
+	local context="" namespace="" env_file="$DEFAULT_ENV_FILE" tmp svc ghcr_user ghcr_token
 	while [ $# -gt 0 ]; do
 		case $1 in
 		--context) context=${2:-}; shift 2 ;;
@@ -168,6 +191,11 @@ main() {
 		service_env "$env_file" "$tmp/shogun-$svc.env" "$svc"
 		apply_secret "$context" "$namespace" "shogun-$svc" "$tmp/shogun-$svc.env"
 	done
+	ghcr_user=$(env_get "$env_file" GHCR_USER)
+	ghcr_token=$(env_get "$env_file" GHCR_TOKEN)
+	if [ -n "$ghcr_user" ] && [ -n "$ghcr_token" ]; then
+		apply_pull_secret "$context" "$namespace" "$ghcr_user" "$ghcr_token" "$tmp"
+	fi
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then
