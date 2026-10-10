@@ -7,18 +7,18 @@ name: release
 # goes the same way in its own jobs, because its build differs.
 
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       service:
-        description: 'Service to release (optional)'
+        description: "Service to release (optional)"
         required: false
-        default: ''
+        default: ""
       version:
-        description: 'Version to release (optional)'
+        description: "Version to release (optional)"
         required: false
-        default: ''
+        default: ""
 
 concurrency:
   group: release
