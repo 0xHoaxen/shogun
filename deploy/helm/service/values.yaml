@@ -13,6 +13,10 @@ image:
   tag: "0.0.0"
   pullPolicy: IfNotPresent
 
+# Secrets for a private registry, for example [{name: ghcr}]. Applied to the
+# Deployment and the migration Job. scripts/k8s-secrets.sh creates "ghcr".
+imagePullSecrets: []
+
 replicaCount: 1
 
 ports:
