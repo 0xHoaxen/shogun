@@ -1,5 +1,5 @@
 {{- define "shogunPostgres.fullname" -}}
-shogun-postgres
+postgres
 {{- end }}
 
 {{- define "shogunPostgres.labels" -}}

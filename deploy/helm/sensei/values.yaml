@@ -9,7 +9,7 @@
 name: sensei
 
 image:
-  # Empty means ghcr.io/0xhoaxen/shogun-<name>.
+  # Empty means ghcr.io/0xhoaxen/<name>.
   repository: ""
   # Bumped by the deploy workflow after a release.
   tag: "0.0.0"
@@ -37,7 +37,7 @@ env:
   LOG_LEVEL: info
 
 # Secret holding DATABASE_URL and IDENTITY_SIGNING_KEY. Empty means
-# shogun-<name>. The chart never creates it.
+# <name>. The chart never creates it.
 existingSecret: ""
 
 # Every service, so each pod gets <NAME>_ADDR for event delivery. Kept in sync

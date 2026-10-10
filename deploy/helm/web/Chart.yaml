@@ -1,5 +1,5 @@
 apiVersion: v2
-name: shogun-web
+name: web
 description: The Shogun web app (Next.js standalone server).
 type: application
 version: 0.1.0

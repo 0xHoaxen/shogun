@@ -94,7 +94,7 @@ jobs:
             SERVICE=${{ matrix.service }}
             VERSION=${{ matrix.version }}
             COMMIT=${{ github.sha }}
-          tags: ghcr.io/0xhoaxen/shogun-${{ matrix.service }}:${{ matrix.version }}
+          tags: ghcr.io/0xhoaxen/${{ matrix.service }}:${{ matrix.version }}
 
   publish-charts:
     name: publish chart (${{ matrix.service }} ${{ matrix.version }})
@@ -125,7 +125,7 @@ jobs:
         run: |
           helm package "deploy/helm/$SERVICE" --dependency-update \
             --version "$VERSION" --app-version "$VERSION" --destination "$RUNNER_TEMP/charts"
-          helm push "$RUNNER_TEMP/charts/shogun-$SERVICE-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
+          helm push "$RUNNER_TEMP/charts/$SERVICE-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
 
   deploy-staging:
     name: deploy staging (${{ matrix.service }} ${{ matrix.version }})
@@ -173,8 +173,8 @@ jobs:
           sbom: true
           provenance: mode=max
           build-args: |
-            TORII_URL=http://shogun-torii:8081
-          tags: ghcr.io/0xhoaxen/shogun-web:${{ needs.release-please.outputs.web-version }}
+            TORII_URL=http://torii:8081
+          tags: ghcr.io/0xhoaxen/web:${{ needs.release-please.outputs.web-version }}
 
   publish-web-chart:
     name: publish web chart ${{ needs.release-please.outputs.web-version }}
@@ -201,7 +201,7 @@ jobs:
         run: |
           helm package deploy/helm/web \
             --version "$VERSION" --app-version "$VERSION" --destination "$RUNNER_TEMP/charts"
-          helm push "$RUNNER_TEMP/charts/shogun-web-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
+          helm push "$RUNNER_TEMP/charts/web-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
 
   deploy-staging-web:
     name: deploy staging (web ${{ needs.release-please.outputs.web-version }})

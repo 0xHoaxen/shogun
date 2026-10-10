@@ -4,10 +4,10 @@
 # Next.js bakes its /api and /auth rewrites into the image at build time, so the
 # image must be built with the in-cluster address of torii's public port:
 #   docker build -f deploy/docker/web.Dockerfile \
-#     --build-arg TORII_URL=http://shogun-torii:8081 -t <image>:<tag> web
+#     --build-arg TORII_URL=http://torii:8081 -t <image>:<tag> web
 # The chart cannot change that address.
 image:
-  # Empty means ghcr.io/0xhoaxen/shogun-web.
+  # Empty means ghcr.io/0xhoaxen/web.
   repository: ""
   # Required.
   tag: ""

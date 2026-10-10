@@ -6,14 +6,14 @@ This is the runbook for deploying Shogun to a Kubernetes cluster (kind first) fr
 
 | Piece | Where it comes from |
 | --- | --- |
-| Service image `shogun-<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/shogun-<name>` by the `release` workflow, one per released service |
-| Helm chart `shogun-service` | Pushed as an OCI artifact by the `release` workflow after the image push, with the released version |
+| Service image `<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/<name>` by the `release` workflow, one per released service |
+| Helm chart `service` | Pushed as an OCI artifact by the `release` workflow after the image push, with the released version |
 | Per-service values `deploy/helm/values/<env>/<name>.yaml` | The repo, not the chart (they sit outside `deploy/helm/service`, so `helm package` does not include them). Use a checkout at the version you deploy |
 | Postgres 17 + pgvector | `deploy/helm/postgres` (its own Helm release, installed once, outside the service releases) |
-| Secrets `shogun-postgres`, `shogun-<name>` | `scripts/k8s-secrets.sh` (the chart never creates them) |
+| Secrets `postgres`, `<name>` | `scripts/k8s-secrets.sh` (the chart never creates them) |
 | Web app | `deploy/k8s/web` (kustomize). There is no web chart |
 
-One chart deploys one service. Installing it creates `shogun-<name>` (Deployment, Service, optional HPA, PDB and ServiceMonitor) plus a `shogun-<name>-migrate` Job that runs as a `pre-install,pre-upgrade` hook. Services reach each other at `shogun-<peer>:9090`; the chart sets these as `<PEER>_ADDR`. The Service name comes from `values.name`, not from the Helm release name.
+One chart deploys one service. Installing it creates `<name>` (Deployment, Service, optional HPA, PDB and ServiceMonitor) plus a `<name>-migrate` Job that runs as a `pre-install,pre-upgrade` hook. Services reach each other at `<peer>:9090`; the chart sets these as `<PEER>_ADDR`. The Service name comes from `values.name`, not from the Helm release name.
 
 ## State of the repo
 
@@ -71,7 +71,7 @@ $EDITOR .secrets/k8s.env                             # Google OAuth, allowed ema
 scripts/k8s-secrets.sh --context "$CTX" --namespace "$NS"
 ```
 
-The script creates the namespace, `shogun-postgres` and the ten `shogun-<name>` Secrets. It generates database passwords and signing keys and writes them back to `.secrets/k8s.env`. **Keep that file**: Postgres creates its roles once, so passwords must not change, and losing it means the Secrets cannot be recreated. Rerunning changes nothing.
+The script creates the namespace, `postgres` and the ten `<name>` Secrets. It generates database passwords and signing keys and writes them back to `.secrets/k8s.env`. **Keep that file**: Postgres creates its roles once, so passwords must not change, and losing it means the Secrets cannot be recreated. Rerunning changes nothing.
 
 Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*` let the stack start, but sign-in, drafts and GitHub sync will not work until you fill them in.
 
@@ -82,13 +82,13 @@ helm --kube-context "$CTX" -n "$NS" upgrade --install postgres deploy/helm/postg
   -f deploy/helm/values/staging/postgres.yaml --wait --timeout 180s
 ```
 
-The init script creates the ten schemas and roles on the first start of an empty volume only. The migration Jobs need them, so wait for the rollout before installing anything. The Secrets script points `DATABASE_URL` at the Service `shogun-postgres`.
+The init script creates the ten schemas and roles on the first start of an empty volume only. The migration Jobs need them, so wait for the rollout before installing anything. The Secrets script points `DATABASE_URL` at the Service `postgres`.
 
-Already running the old kustomize Postgres? Helm will not adopt it, because it did not create it. Delete only the StatefulSet and the Service (`kubectl delete statefulset,service shogun-postgres`); the PVC `data-shogun-postgres-0` stays, and the new StatefulSet has the same name, so it reattaches to the existing data.
+Already running the old kustomize Postgres? Helm will not adopt it, because it did not create it. Delete only the StatefulSet and the Service (`kubectl delete statefulset,service postgres`); the PVC `data-postgres-0` stays, and the new StatefulSet has the same name, so it reattaches to the existing data.
 
 ## Install the services
 
-`scripts/deploy.sh --context "$CTX" --namespace "$NS" --env staging` does Postgres and every service below in one go, with the same release names (`postgres` for the database, `shogun-<name>` for the services). The loop is the manual version. Each service has its own chart, `oci://ghcr.io/0xhoaxen/charts/shogun-<name>`, and the release is `shogun-<name>`, so no shell variable has to be set for the chart reference.
+`scripts/deploy.sh --context "$CTX" --namespace "$NS" --env staging` does Postgres and every service below in one go, with the same release names (`postgres` for the database, `<name>` for the services). The loop is the manual version. Each service has its own chart, `oci://ghcr.io/0xhoaxen/charts/<name>`, and the release is `<name>`, so no shell variable has to be set for the chart reference.
 
 Install `soroban` first (every Claude call reserves budget through it), then the rest. Each install runs its migration Job before the Deployment is created, and `--wait` blocks until the pods are Ready.
 
@@ -96,7 +96,7 @@ Install `soroban` first (every Claude call reserves budget through it), then the
 . ./versions.env
 install_service() {
   name=$1 version=$2
-  helm upgrade --install "shogun-$name" "oci://ghcr.io/0xhoaxen/charts/shogun-$name" \
+  helm upgrade --install "$name" "oci://ghcr.io/0xhoaxen/charts/$name" \
     --version "$version" \
     --kube-context "$CTX" --namespace "$NS" \
     -f "deploy/helm/values/staging/$name.yaml" \
@@ -118,7 +118,7 @@ Notes:
 - `--version` selects the chart from the registry; `image.tag` selects the image. They are set separately on purpose. If the release step publishes the chart with the service version, pass the same value to both. If it publishes one chart version for all services, use that for `--version` and each service's own version for `image.tag`. `TODO(owner)`: state which in [State of the repo](#state-of-the-repo) once decided.
 - Without the release step on `main`, replace the `oci://` chart and `--version "$version"` with `deploy/helm/service` from a local checkout. The result is the same chart at the checked-out commit.
 - Every pod gets all ten `*_ADDR` values, so the install order does not matter to Helm. `--wait` can still time out if a service refuses to become Ready until a peer is up; if it does, install the others and rerun.
-- A failed migration Job fails the install. Read it with `kubectl -n "$NS" logs job/shogun-<name>-migrate`. Helm deletes the Job on success, and `before-hook-creation` removes a failed one on the next try.
+- A failed migration Job fails the install. Read it with `kubectl -n "$NS" logs job/<name>-migrate`. Helm deletes the Job on success, and `before-hook-creation` removes a failed one on the next try.
 - Use `values/production/` instead of `values/staging/` only after the production gaps listed above are closed.
 
 ## Web app
@@ -127,12 +127,12 @@ The Next.js rewrites to torii are baked in at build time, so the image must be b
 
 ```sh
 docker build -f deploy/docker/web.Dockerfile \
-  --build-arg TORII_URL=http://shogun-torii:8081 \
-  -t shogun-web:<tag> .
-kind load docker-image shogun-web:<tag> --name shogun
-(cd deploy/k8s/web && kustomize edit set image shogun-web=shogun-web:<tag>)   # do not commit this change
+  --build-arg TORII_URL=http://torii:8081 \
+  -t web:<tag> .
+kind load docker-image web:<tag> --name shogun
+(cd deploy/k8s/web && kustomize edit set image web=web:<tag>)   # do not commit this change
 kubectl --context "$CTX" -n "$NS" apply -k deploy/k8s/web
-kubectl --context "$CTX" -n "$NS" rollout status deployment/shogun-web
+kubectl --context "$CTX" -n "$NS" rollout status deployment/web
 ```
 
 Use a unique `<tag>` per build, not `local`, or the pod will not pick up a new image. On a real cluster push the image to a registry instead of `kind load`. Check the image name in `deploy/k8s/web/kustomization.yaml` before running `kustomize edit`.
@@ -143,14 +143,14 @@ Use a unique `<tag>` per build, not `local`, or the pod will not pick up a new i
 kubectl --context "$CTX" -n "$NS" get pods                 # all Running/Ready, no restarts
 kubectl --context "$CTX" -n "$NS" get jobs                 # no failed migrate Jobs left behind
 helm --kube-context "$CTX" -n "$NS" list                   # ten releases, status deployed
-kubectl --context "$CTX" -n "$NS" port-forward svc/shogun-web 3000:3000
+kubectl --context "$CTX" -n "$NS" port-forward svc/web 3000:3000
 ```
 
 Then, with the port-forward running:
 
 1. `curl -fsSI http://localhost:3000/login | head -1` returns 200.
 2. Open http://localhost:3000 and sign in with an address in `TORII_ALLOWED_EMAILS`. The redirect URI registered in Google must be `http://localhost:3000/auth/callback`, so keep `TORII_PUBLIC_URL` and the port-forward port the same.
-3. Check one service's readiness: `kubectl -n "$NS" port-forward svc/shogun-kagami 8080:8080` and `curl -fsS localhost:8080/readyz`.
+3. Check one service's readiness: `kubectl -n "$NS" port-forward svc/kagami 8080:8080` and `curl -fsS localhost:8080/readyz`.
 4. Add a draft, approve it and send it to yourself, once, to exercise the whole Hanko path.
 
 The smoke test script from `P10.5` is not written yet; the steps above are what it should automate.
@@ -170,7 +170,7 @@ helm --kube-context "$CTX" -n "$NS" history kagami
 helm --kube-context "$CTX" -n "$NS" rollback kagami <revision> --wait
 ```
 
-Take a database dump before any upgrade that adds a migration. There is no backup job in the cluster (the Compose `backup` service does not exist here), so run it by hand; the superuser name and password come from the `shogun-postgres` Secret and the StatefulSet env, so check them first:
+Take a database dump before any upgrade that adds a migration. There is no backup job in the cluster (the Compose `backup` service does not exist here), so run it by hand; the superuser name and password come from the `postgres` Secret and the StatefulSet env, so check them first:
 
 ```sh
 kubectl --context "$CTX" -n "$NS" exec statefulset/<name> -- \

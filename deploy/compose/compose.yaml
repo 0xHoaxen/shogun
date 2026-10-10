@@ -94,7 +94,7 @@ services:
   # services begin
   torii:
     <<: *service
-    image: shogun-torii:local
+    image: torii:local
     build:
       <<: *build
       args:
@@ -118,7 +118,7 @@ services:
 
   kagami:
     <<: *service
-    image: shogun-kagami:local
+    image: kagami:local
     build:
       <<: *build
       args:
@@ -133,7 +133,7 @@ services:
 
   tsubame:
     <<: *service
-    image: shogun-tsubame:local
+    image: tsubame:local
     build:
       <<: *build
       args:
@@ -155,7 +155,7 @@ services:
 
   fude:
     <<: *service
-    image: shogun-fude:local
+    image: fude:local
     build:
       <<: *build
       args:
@@ -173,7 +173,7 @@ services:
 
   taiko:
     <<: *service
-    image: shogun-taiko:local
+    image: taiko:local
     build:
       <<: *build
       args:
@@ -188,7 +188,7 @@ services:
 
   dojo:
     <<: *service
-    image: shogun-dojo:local
+    image: dojo:local
     build:
       <<: *build
       args:
@@ -203,7 +203,7 @@ services:
 
   katana:
     <<: *service
-    image: shogun-katana:local
+    image: katana:local
     build:
       <<: *build
       args:
@@ -222,7 +222,7 @@ services:
 
   shinobi:
     <<: *service
-    image: shogun-shinobi:local
+    image: shinobi:local
     build:
       <<: *build
       args:
@@ -238,7 +238,7 @@ services:
 
   sensei:
     <<: *service
-    image: shogun-sensei:local
+    image: sensei:local
     build:
       <<: *build
       args:
@@ -253,7 +253,7 @@ services:
 
   soroban:
     <<: *service
-    image: shogun-soroban:local
+    image: soroban:local
     build:
       <<: *build
       args:
@@ -271,7 +271,7 @@ services:
   # The web app, outside the generated block above. Next bakes its rewrites in
   # at build time, so torii's address is a build arg.
   web:
-    image: shogun-web:local
+    image: web:local
     restart: unless-stopped
     build:
       context: ../../web
