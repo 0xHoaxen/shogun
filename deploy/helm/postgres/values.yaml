@@ -1,0 +1,35 @@
+# Defaults for the Postgres chart. Per-environment values live in
+# deploy/helm/values/<environment>/postgres.yaml.
+#
+# Install it once, before any service chart, and keep it out of their
+# lifecycle: the service charts run migration Jobs that need the schemas and
+# roles this chart creates, and a rollback of a service must never touch the
+# database.
+image:
+  repository: pgvector/pgvector
+  tag: pg17
+  pullPolicy: IfNotPresent
+
+# Secret holding POSTGRES_PASSWORD and one <NAME>_DB_PASSWORD per service;
+# init.sh creates a schema and a login role for every such variable. It is
+# created by scripts/k8s-secrets.sh, never by this chart, because Postgres
+# creates its roles once and the passwords must not change.
+secretName: shogun-postgres
+
+database: shogun
+
+persistence:
+  size: 5Gi
+  # Empty means the cluster default.
+  storageClassName: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

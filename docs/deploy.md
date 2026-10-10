@@ -9,7 +9,7 @@ This is the runbook for deploying Shogun to a Kubernetes cluster (kind first) fr
 | Service image `shogun-<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/shogun-<name>` by the `release` workflow, one per released service |
 | Helm chart `shogun-service` | Pushed as an OCI artifact by the `release` workflow after the image push, with the released version |
 | Per-service values `deploy/helm/values/<env>/<name>.yaml` | The repo, not the chart (they sit outside `deploy/helm/service`, so `helm package` does not include them). Use a checkout at the version you deploy |
-| Postgres 17 + pgvector | `deploy/k8s/postgres` (kustomize) |
+| Postgres 17 + pgvector | `deploy/helm/postgres` (its own Helm release, installed once, outside the service releases) |
 | Secrets `shogun-postgres`, `shogun-<name>` | `scripts/k8s-secrets.sh` (the chart never creates them) |
 | Web app | `deploy/k8s/web` (kustomize). There is no web chart |
 
@@ -81,13 +81,13 @@ Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*
 ## 2. Postgres
 
 ```sh
-kubectl --context "$CTX" kustomize --load-restrictor=LoadRestrictionsNone deploy/k8s/postgres \
-  | kubectl --context "$CTX" -n "$NS" apply -f -
-kubectl --context "$CTX" -n "$NS" get statefulset            # note the name
-kubectl --context "$CTX" -n "$NS" rollout status statefulset/<name> --timeout=180s
+helm --kube-context "$CTX" -n "$NS" upgrade --install postgres deploy/helm/postgres \
+  -f deploy/helm/values/staging/postgres.yaml --wait --timeout 180s
 ```
 
 The init script creates the ten schemas and roles on the first start of an empty volume only. The migration Jobs need them, so wait for the rollout before installing anything. The Secrets script points `DATABASE_URL` at the Service `shogun-postgres`.
+
+Already running the old kustomize Postgres? Helm will not adopt it, because it did not create it. Delete only the StatefulSet and the Service (`kubectl delete statefulset,service shogun-postgres`); the PVC `data-shogun-postgres-0` stays, and the new StatefulSet has the same name, so it reattaches to the existing data.
 
 ## Install the services
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the Secrets a cluster needs: shogun-postgres (read by deploy/k8s/postgres)
+# Creates the Secrets a cluster needs: shogun-postgres (read by deploy/helm/postgres)
 # and shogun-<service> for the ten services (read by the Helm chart with envFrom).
 #
 # Usage: scripts/k8s-secrets.sh --context <ctx> --namespace <ns> [--env-file <file>]
