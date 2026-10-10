@@ -1,0 +1,90 @@
+# Postgres 17 with pgvector: the same image and bootstrap as
+# deploy/compose/compose.yaml.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "shogunPostgres.fullname" . }}
+  labels:
+    {{- include "shogunPostgres.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ include "shogunPostgres.fullname" . }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "shogunPostgres.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "shogunPostgres.labels" . | nindent 8 }}
+      annotations:
+        checksum/init: {{ include (print $.Template.BasePath "/init-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: postgres
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.database | quote }}
+            # A subdirectory, because a fresh volume has a lost+found that
+            # initdb refuses to start in.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            - name: SHOGUN_INIT_DIR
+              value: /opt/shogun/postgres
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secretName }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-h", "localhost", "-U", "postgres", "-d", {{ .Values.database | quote }}]
+            periodSeconds: 5
+            failureThreshold: 20
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-h", "localhost", "-U", "postgres", "-d", {{ .Values.database | quote }}]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            # The entrypoint runs this on an empty data directory only.
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d/00-shogun.sh
+              subPath: 00-shogun.sh
+            # init.sql and service.sql, read through SHOGUN_INIT_DIR.
+            - name: init
+              mountPath: /opt/shogun/postgres
+      volumes:
+        - name: init
+          configMap:
+            name: {{ include "shogunPostgres.fullname" . }}-init
+            defaultMode: 0555
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with .Values.persistence.storageClassName }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}

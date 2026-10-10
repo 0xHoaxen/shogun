@@ -1,0 +1,12 @@
+# The bootstrap is shared with Compose: files/ links to deploy/compose/postgres/.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "shogunPostgres.fullname" . }}-init
+  labels:
+    {{- include "shogunPostgres.labels" . | nindent 4 }}
+data:
+  {{- range $name := list "00-shogun.sh" "init.sql" "service.sql" }}
+  {{ $name }}: |
+    {{- $.Files.Get (printf "files/%s" $name) | nindent 4 }}
+  {{- end }}

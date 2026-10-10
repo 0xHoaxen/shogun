@@ -1,0 +1,6 @@
+apiVersion: v2
+name: shogun-postgres
+description: Postgres 17 with pgvector for Shogun, bootstrapped with a schema and a login role per service.
+type: application
+version: 0.1.0
+appVersion: "17"
