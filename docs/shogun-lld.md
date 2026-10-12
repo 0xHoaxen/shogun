@@ -395,7 +395,7 @@ Each module releases on its own semantic version, driven by Conventional Commits
 | `deploy.yml` | release published, or manual | bumps the image tag in `deploy/helm/values/<env>/<svc>.yaml`; staging automatically, production behind a GitHub environment approval |
 | `codeql.yml` | weekly, pull request | static security analysis |
 
-**Deploy shape.** One generic Helm chart (`deploy/helm/service`) renders Deployment, Service, HPA, PodDisruptionBudget, ServiceMonitor and a migration Job hook; each service supplies only a values file. GitOps (Argo CD watching `deploy/helm/values`) is the target; the workflow writes the new tag and Argo rolls it out. Until a cluster exists, the same images run with `docker compose` on a single VM.
+**Deploy shape.** One generic Helm chart (`deploy/helm/apps/service`) renders Deployment, Service, HPA, PodDisruptionBudget, ServiceMonitor and a migration Job hook; each service supplies only a values file. GitOps (Argo CD watching `deploy/helm/values`) is the target; the workflow writes the new tag and Argo rolls it out. Until a cluster exists, the same images run with `docker compose` on a single VM.
 
 ## How it scales, and open questions
 

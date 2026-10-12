@@ -1,1 +1,0 @@
-../../../compose/postgres/init.sql

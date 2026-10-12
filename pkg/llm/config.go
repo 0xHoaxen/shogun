@@ -20,6 +20,10 @@ const (
 	// modelEnvPrefix starts the variable that overrides a feature's model:
 	// LLM_MODEL_FUDE_COVER_LETTER for fude.cover_letter.
 	modelEnvPrefix = "LLM_MODEL_"
+	// modelEnv sets one model for every feature of a service, such as when a
+	// base URL points at a gateway that serves a single model. A per-feature
+	// variable still wins.
+	modelEnv = "ANTHROPIC_MODEL"
 )
 
 // FeatureConfig is how one feature calls the model.
@@ -57,7 +61,8 @@ func defaultFeatures() map[string]FeatureConfig {
 }
 
 // NewConfig returns the Config of service: its features with their default
-// settings, each model overridable by LLM_MODEL_<FEATURE>.
+// settings, each model overridable by LLM_MODEL_<FEATURE>, or for all of them
+// by ANTHROPIC_MODEL.
 func NewConfig(service string, lookup config.LookupFunc) (Config, error) {
 	if service == "" {
 		return Config{}, fmt.Errorf("llm: service is required")
@@ -67,7 +72,8 @@ func NewConfig(service string, lookup config.LookupFunc) (Config, error) {
 		if !strings.HasPrefix(name, service+".") {
 			continue
 		}
-		fc.Model = config.String(lookup, modelEnvPrefix+envName(name), fc.Model)
+		fc.Model = config.String(lookup, modelEnvPrefix+envName(name),
+			config.String(lookup, modelEnv, fc.Model))
 		features[name] = fc
 	}
 	if len(features) == 0 {

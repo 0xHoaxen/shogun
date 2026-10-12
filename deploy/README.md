@@ -1,0 +1,31 @@
+# deploy/
+
+Everything that builds, runs or ships Shogun. Pick the folder by the question you have.
+
+| Folder | What it holds | Used by |
+| --- | --- | --- |
+| `docker/` | `Dockerfile` (all Go services, `ARG SERVICE`) and `web.Dockerfile` | CI, `release.yml` |
+| `compose/` | the local stack, its observability profile, Postgres bootstrap SQL | `make up`, e2e tests |
+| `k8s/` | plain manifests per cluster: namespaces, LimitRange and ResourceQuota in `base/`, one overlay per environment, and the sealed Secrets in `<env>/secrets/` | `scripts/platform.sh`, `scripts/seal-secrets.sh` |
+| `helm/apps/` | charts for what we ship: ten services, `web`, `postgres`, and the `service` library chart | `scripts/deploy.sh`, `release.yml` |
+| `helm/platform/` | charts installed once per cluster: `ingress` (Traefik redirect, Let's Encrypt issuers) | `scripts/platform.sh` |
+| `helm/monitoring/` | everything observability, one release: Prometheus, Alertmanager and Grafana (kube-prometheus-stack as a dependency), Shogun's alert rules and dashboard | `scripts/platform.sh` |
+| `helm/values/<env>/` | per-service values for `staging` and `production`; `image.tag` is bumped here by `deploy.yml` | `scripts/deploy.sh`, `deploy.yml` |
+
+## Rules of thumb
+
+- A chart that ships with a release goes in `helm/apps/`. A chart you install once and forget goes in `helm/platform/`.
+- Per-environment settings go in `helm/values/<env>/`, never in a chart's own `values.yaml`.
+- Service charts are generated: change `helm/apps/service/` and run `scripts/helm.py sync`.
+- The alert rules, the dashboard and the Postgres bootstrap SQL have one copy, under `compose/`. The charts link to it with symlinks.
+
+## Install order on a new cluster
+
+Staging and production are separate clusters, each with its own sealing key.
+
+1. `scripts/platform.sh --context <ctx> --env <env>`: namespaces and quotas, then the sealed-secrets controller. With no sealed Secrets committed it stops here (exit 3) and prints the next commands.
+2. `scripts/seal-secrets.sh --env <env> --fetch-cert --context <ctx>`, then `--backup-key`, then `scripts/seal-secrets.sh --env <env>`. Commit `deploy/k8s/<env>`. Keep `.secrets/` out of git and backed up.
+3. `scripts/platform.sh --context <ctx> --env <env>` again: applies the Secrets, then cert-manager, ingress, monitoring.
+4. `scripts/deploy.sh --context <ctx> --namespace shogun --env <env>`: Postgres, the services, then web.
+
+The full runbook is `docs/deploy.md`.

@@ -123,7 +123,7 @@ jobs:
           helm registry login ghcr.io --username "$REGISTRY_USER" --password-stdin <<<"$REGISTRY_TOKEN"
       - name: Package and push the chart
         run: |
-          helm package "deploy/helm/$SERVICE" --dependency-update \
+          helm package "deploy/helm/apps/$SERVICE" --dependency-update \
             --version "$VERSION" --app-version "$VERSION" --destination "$RUNNER_TEMP/charts"
           helm push "$RUNNER_TEMP/charts/$SERVICE-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
 
@@ -199,7 +199,7 @@ jobs:
           helm registry login ghcr.io --username "$REGISTRY_USER" --password-stdin <<<"$REGISTRY_TOKEN"
       - name: Package and push the chart
         run: |
-          helm package deploy/helm/web \
+          helm package deploy/helm/apps/web \
             --version "$VERSION" --app-version "$VERSION" --destination "$RUNNER_TEMP/charts"
           helm push "$RUNNER_TEMP/charts/web-$VERSION.tgz" oci://ghcr.io/0xhoaxen/charts
 
