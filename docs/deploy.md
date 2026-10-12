@@ -50,8 +50,7 @@ The VM runs k3s, which bundles Traefik. `scripts/platform.sh` adds what the app 
 
 1. cert-manager, CRDs included.
 2. The local chart `deploy/helm/platform/ingress`: Traefik redirects HTTP to HTTPS, and the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
-3. kube-prometheus-stack in namespace `monitoring`: Prometheus (15 days on a 10Gi `local-path` volume), Alertmanager and Grafana. It picks up ServiceMonitors and PrometheusRules from every namespace; the k3s control-plane scrapes are off.
-4. The local chart `deploy/helm/monitoring`: the six Shogun alert rules and the "Shogun overview" dashboard, read through symlinks from `deploy/compose/observability/`, so Compose and the cluster share one copy.
+3. The local chart `deploy/helm/monitoring` in namespace `monitoring`, one release that wraps kube-prometheus-stack (pinned in its `Chart.yaml`): Prometheus (7 days on a 5Gi `local-path` volume), Alertmanager and Grafana, plus the six Shogun alert rules and the "Shogun overview" dashboard, read through symlinks from `deploy/compose/observability/` so Compose and the cluster share one copy. It picks up ServiceMonitors and PrometheusRules from every namespace; the k3s control-plane scrapes are off.
 
 Run `scripts/k8s-secrets.sh` (section 1 below) first, because Grafana's login comes from Secret `grafana-admin` in `monitoring`. Run `scripts/platform.sh` before `scripts/deploy.sh`, because the staging service values turn on `serviceMonitor` and that needs the Prometheus Operator CRDs.
 
@@ -62,18 +61,18 @@ kubectl --context "$CTX" get clusterissuer                                      
 kubectl --context "$CTX" -n monitoring get pods                                             # all Ready
 ```
 
-Cluster-wide values are in `deploy/helm/values/cluster/`. Rerun the script after changing one of them or a pinned version. Traefik's access log stays off: it would record the OAuth callback's code.
+Cluster-wide settings are in each chart's own `values.yaml` (`deploy/helm/platform/ingress`, `deploy/helm/monitoring`). Rerun the script after changing one of them or a pinned version. Traefik's access log stays off: it would record the OAuth callback's code.
 
 To expose the web app, point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `values/<env>/web.yaml` (see the commented block in the staging file) and redeploy web. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n "$NS" get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL`, `TSUBAME_GMAIL_REDIRECT_URL` and the Google redirect URIs to `https://<host>`, then rerun `scripts/k8s-secrets.sh` and restart torii and tsubame.
 
 ### Grafana, Prometheus and Alertmanager
 
-Grafana is reached through Traefik once its host is set (the `TODO(owner)` block under `grafana:` in `values/cluster/kube-prometheus-stack.yaml`). Until then, use a port-forward. Sign in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `.secrets/k8s.env`; anonymous access is off. Prometheus and Alertmanager are never exposed:
+Grafana is reached through Traefik once its host is set (the `TODO(owner)` block under `kube-prometheus-stack.grafana:` in `deploy/helm/monitoring/values.yaml`). Until then, use a port-forward. Sign in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `.secrets/k8s.env`; anonymous access is off. Prometheus and Alertmanager are never exposed:
 
 ```sh
-kubectl --context "$CTX" -n monitoring port-forward svc/kube-prometheus-stack-grafana 3001:80
-kubectl --context "$CTX" -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9190:9090     # Status > Targets: ten shogun services up
-kubectl --context "$CTX" -n monitoring port-forward svc/kube-prometheus-stack-alertmanager 9191:9093
+kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-grafana 3001:80
+kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9190:9090     # Status > Targets: ten shogun services up
+kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-kube-prometheus-alertmanager 9191:9093
 ```
 
 Alertmanager sends to the chart's `null` receiver until an email receiver is added (`TODO(owner)` in the same values file).

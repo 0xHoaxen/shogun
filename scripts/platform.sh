@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # Installs or upgrades the cluster-wide pieces the app releases rely on: cert-manager,
 # the ingress chart (Traefik's HTTP to HTTPS redirect and the Let's Encrypt
-# issuers), kube-prometheus-stack, then the monitoring chart (Shogun's alert rules
-# and dashboard). Run it once per cluster before scripts/deploy.sh, whose
-# ServiceMonitors need the Prometheus Operator CRDs, and again after changing a
-# version here or a file in deploy/helm/values/cluster/.
+# issuers), then the monitoring chart (Prometheus, Alertmanager and Grafana with
+# Shogun's alert rules and dashboard). Run it once per cluster before
+# scripts/deploy.sh, whose ServiceMonitors need the Prometheus Operator CRDs, and
+# again after changing a version here or in deploy/helm/monitoring.
 #
 # Usage: scripts/platform.sh --context <ctx>
 #
 # Run scripts/k8s-secrets.sh first: Grafana reads its login from Secret
-# grafana-admin. Written for k3s, which bundles Traefik. Upstream charts are
-# pinned below; the local charts are installed from the checkout.
+# grafana-admin. Written for k3s, which bundles Traefik. cert-manager is pinned
+# below, the Prometheus stack in deploy/helm/monitoring/Chart.yaml; the local
+# charts are installed from the checkout.
 set -euo pipefail
 
 HELM="${HELM:-helm}"
@@ -20,13 +21,10 @@ CERT_MANAGER_VERSION="v1.21.2"
 CERT_MANAGER_NAMESPACE="cert-manager"
 # The HelmChartConfig must live next to k3s's Traefik HelmChart.
 INGRESS_NAMESPACE="kube-system"
-KPS_CHART="oci://ghcr.io/prometheus-community/charts/kube-prometheus-stack"
-KPS_VERSION="92.3.0"
 MONITORING_NAMESPACE="monitoring"
 TIMEOUT="5m"
-# kube-prometheus-stack pulls several images on a fresh node.
-KPS_TIMEOUT="10m"
-CLUSTER_VALUES="kube-prometheus-stack"
+# The Prometheus stack pulls several images on a fresh node.
+MONITORING_TIMEOUT="10m"
 
 die() {
 	echo "platform: $*" >&2
@@ -54,23 +52,14 @@ install_ingress() {
 	echo "installed ingress (local chart)"
 }
 
-# install_kps CONTEXT VALUES_DIR installs Prometheus, Alertmanager and Grafana.
-install_kps() {
-	local context=$1 values_dir=$2
-	"$HELM" upgrade --install kube-prometheus-stack "$KPS_CHART" \
-		--version "$KPS_VERSION" \
-		--kube-context "$context" --namespace "$MONITORING_NAMESPACE" --create-namespace \
-		-f "$values_dir/kube-prometheus-stack.yaml" \
-		--wait --timeout "$KPS_TIMEOUT"
-	echo "installed kube-prometheus-stack $KPS_VERSION"
-}
-
-# install_monitoring CONTEXT installs the local chart with Shogun's rules and dashboard.
+# install_monitoring CONTEXT installs the local umbrella chart: the Prometheus
+# stack plus Shogun's rules and dashboard, in one release.
 install_monitoring() {
 	local context=$1
 	"$HELM" upgrade --install monitoring "$ROOT/deploy/helm/monitoring" \
-		--kube-context "$context" --namespace "$MONITORING_NAMESPACE" \
-		--wait --timeout "$TIMEOUT"
+		--dependency-update \
+		--kube-context "$context" --namespace "$MONITORING_NAMESPACE" --create-namespace \
+		--wait --timeout "$MONITORING_TIMEOUT"
 	echo "installed monitoring (local chart)"
 }
 
@@ -84,14 +73,9 @@ main() {
 	done
 	[ -n "$context" ] || die "--context is required (never installs to the current context by default)"
 
-	local values_dir="$ROOT/deploy/helm/values/cluster" name
-	for name in $CLUSTER_VALUES; do
-		[ -f "$values_dir/$name.yaml" ] || die "missing $values_dir/$name.yaml"
-	done
 
 	install_cert_manager "$context"
 	install_ingress "$context"
-	install_kps "$context" "$values_dir"
 	install_monitoring "$context"
 }
 

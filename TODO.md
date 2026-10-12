@@ -682,9 +682,10 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `helm template` of every chart is byte-identical before and after the move; `scripts/helm.py check`, `platform_test.sh` and `deploy_test.sh` pass.
   Status: 23 renders (ten services in both environments, web, postgres, ingress) compare equal with `cmp`; the three checks pass. `values/production/**` was not touched. `actionlint` is not installed here, so `release.yml` was not linted (the change is two paths). `docs/deploy.md` still describes `deploy/k8s/web`; that is P10.5m.
 
-- [ ] **P10.7b Monitoring umbrella chart** (M) Needs: P10.7a
+- [x] **P10.7b Monitoring umbrella chart** (M) Needs: P10.7a
   Do: `deploy/helm/monitoring` depends on kube-prometheus-stack (pinned in `Chart.yaml`), its values move under `kube-prometheus-stack:` in `values.yaml` and are sized for a 2 vCPU / 4 GiB VM; `platform.sh` installs one `monitoring` release; delete `values/cluster/`.
   Done when: `helm dependency build`, `helm lint` and `helm template` pass; `promtool check rules` accepts the rendered rules; the dashboard still matches the Compose file; `platform_test.sh` passes.
+  Status: all checks pass. The stack is kube-prometheus-stack `92.3.0` as a dependency of the `monitoring` chart (now 0.2.0); the combined render has 120 resources, `promtool` reports 6 rules, the dashboard matches Compose (`jq -S`), no control-plane monitors, ten ServiceMonitors from the services are unaffected. Resources are explicit (Prometheus 100m/384Mi request, 1Gi limit, 7d on 5Gi). `platform_test.sh` passes 14 checks. Judgement calls: the Helm release is now `monitoring`, so Service names change to `monitoring-grafana` and `monitoring-kube-prometheus-prometheus` (docs updated); the Shogun PrometheusRule now installs in the same release as the CRD, which Helm creates first from `crds/`; not run on a cluster, so confirm that on the first install.
 
 - [ ] **P10.7c Namespaces, LimitRange and ResourceQuota** (M) Needs: P10.7b
   Do: `deploy/k8s/base` (namespaces `shogun` and `monitoring`, a LimitRange and a ResourceQuota on `shogun`) and `deploy/k8s/{staging,production}`; `platform.sh --env` applies them first. `TODO(owner)`: production values (HPA min 2) do not fit the quota on a 4 GiB VM.

@@ -81,10 +81,8 @@ shogun/
 │       │   └── postgres/        # Postgres 17 with pgvector
 │       ├── platform/
 │       │   └── ingress/         # once per cluster: Traefik HTTPS redirect, Let's Encrypt issuers
-│       ├── monitoring/          # once per cluster: alert rules and dashboard, linked from compose/observability
-│       └── values/
-│           ├── <env>/<service>.yaml
-│           └── cluster/         # values for the once-per-cluster charts (scripts/platform.sh)
+│       ├── monitoring/          # once per cluster, one release: Prometheus stack plus our rules and dashboard
+│       └── values/<env>/<service>.yaml
 │
 ├── scripts/
 │   ├── new-service.sh           # scaffold from templates/service

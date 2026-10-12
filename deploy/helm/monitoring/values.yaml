@@ -1,6 +1,122 @@
-# The monitoring chart has no settings of its own. Install it once per cluster
-# with scripts/platform.sh, after kube-prometheus-stack (it needs the
-# PrometheusRule CRD).
+# The observability chart for a cluster, installed once by scripts/platform.sh
+# into namespace monitoring. Everything is here: settings for the upstream
+# stack sit under kube-prometheus-stack:, and the Shogun alert rules and
+# dashboard are templates of this chart. The stack version is pinned in
+# Chart.yaml.
 #
 # files/ holds symlinks into deploy/compose/observability/, so the rules and the
 # dashboard stay the same as in the Compose profile: edit them there.
+#
+# The services' ServiceMonitors come from serviceMonitor.enabled in their values.
+
+kube-prometheus-stack:
+  # k3s runs the control plane inside its own process, so these endpoints are not
+  # scrapeable and their targets and alerts would always be down.
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
+  kubeEtcd:
+    enabled: false
+  defaultRules:
+    rules:
+      etcd: false
+      kubeControllerManager: false
+      kubeProxy: false
+      kubeSchedulerAlerting: false
+      kubeSchedulerRecording: false
+      windows: false
+
+  # Requests are small and explicit, sized for a 2 vCPU / 4 GiB VM that also runs
+  # the app. Raise them if the VM grows.
+  prometheusOperator:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        memory: 192Mi
+
+  kube-state-metrics:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        memory: 128Mi
+
+  prometheus-node-exporter:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 24Mi
+      limits:
+        memory: 64Mi
+
+  prometheus:
+    prometheusSpec:
+      # Pick up ServiceMonitors and PrometheusRules from every namespace, not only
+      # those labelled with this release.
+      serviceMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      retention: 7d
+      resources:
+        requests:
+          cpu: 100m
+          memory: 384Mi
+        limits:
+          memory: 1Gi
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            # k3s's default provisioner.
+            storageClassName: local-path
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests:
+                storage: 5Gi
+
+  # The chart's default route sends everything to its "null" receiver.
+  # TODO(owner): send alerts to email. Add an email receiver under
+  # alertmanager.config (address and SMTP settings, the password from a Secret
+  # through alertmanager.alertmanagerSpec.secrets, never in this file).
+  alertmanager:
+    alertmanagerSpec:
+      retention: 120h
+      resources:
+        requests:
+          cpu: 10m
+          memory: 48Mi
+        limits:
+          memory: 128Mi
+
+  grafana:
+    # Login from Secret grafana-admin (admin-user, admin-password), created by
+    # scripts/k8s-secrets.sh. Anonymous access stays off.
+    admin:
+      existingSecret: grafana-admin
+    defaultDashboardsTimezone: browser
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 256Mi
+    # TODO(owner): once DNS points the host at the VM, enable it and set the host
+    # in all three places:
+    #   ingress.enabled: true, ingress.hosts: [grafana.example.com],
+    #   ingress.tls[0].hosts: [grafana.example.com],
+    #   grafana.ini.server.root_url: https://grafana.example.com
+    # Switch the issuer to letsencrypt-prod once the staging certificate is issued.
+    ingress:
+      enabled: false
+      ingressClassName: traefik
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-staging
+      hosts: []
+      tls:
+        - secretName: grafana-tls
+          hosts: []

@@ -4,7 +4,7 @@
 # With GHCR_USER and GHCR_TOKEN set in the env file it also creates the pull secret
 # "ghcr" (a token with read:packages) for private ghcr.io images; the charts use it
 # through imagePullSecrets. It also creates grafana-admin (Grafana's login, read by
-# kube-prometheus-stack) in the monitoring namespace.
+# the monitoring chart) in the monitoring namespace.
 #
 # Usage: scripts/k8s-secrets.sh --context <ctx> --namespace <ns> [--env-file <file>]
 #                               [--monitoring-namespace <ns>]
