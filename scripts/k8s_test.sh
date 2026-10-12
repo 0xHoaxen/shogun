@@ -71,7 +71,7 @@ def field(block, key):
 
 quota = {}
 hard = quota_text.split("hard:", 1)[1]
-for key in ("requests.cpu", "requests.memory", "limits.memory", "pods"):
+for key in ("requests.cpu", "requests.memory", "limits.memory", "pods", "persistentvolumeclaims", "requests.storage"):
     quota[key] = field(hard, key)
 
 # An autoscaled Deployment runs at least minReplicas pods.
@@ -85,9 +85,15 @@ for doc in re.split(r"\n---\n", rendered):
 
 steady = {"cpu": 0, "req_mem": 0, "lim_mem": 0, "pods": 0}
 job = {"cpu": 0, "req_mem": 0, "lim_mem": 0}
+cron = {"cpu": 0, "req_mem": 0, "lim_mem": 0, "pods": 0}
+storage = {"pvcs": 0, "storage": 0}
 for doc in re.split(r"\n---\n", rendered):
     kind = re.search(r"^kind: (\w+)$", doc, re.M)
-    if not kind or kind.group(1) not in ("Deployment", "StatefulSet", "Job"):
+    if kind and kind.group(1) in ("PersistentVolumeClaim", "StatefulSet"):
+        for size in re.findall(r"^\s+storage: (\S+)$", doc, re.M):
+            storage["pvcs"] += 1
+            storage["storage"] += mem(size)
+    if not kind or kind.group(1) not in ("Deployment", "StatefulSet", "Job", "CronJob"):
         continue
     blocks = re.findall(r"^\s+resources:\n((?:\s{12,}.*\n)+)", doc + "\n", re.M)
     req_cpu = req_mem = lim_mem = 0
@@ -105,6 +111,11 @@ for doc in re.split(r"\n---\n", rendered):
         for k, v in (("cpu", req_cpu), ("req_mem", req_mem), ("lim_mem", lim_mem)):
             job[k] = max(job[k], v)
         continue
+    # A CronJob (the nightly backup) may run while a migration Job does.
+    if kind.group(1) == "CronJob":
+        for k, v in (("cpu", req_cpu), ("req_mem", req_mem), ("lim_mem", lim_mem), ("pods", 1)):
+            cron[k] += v
+        continue
     name = re.search(r"^  name: (\S+)$", doc, re.M)
     replicas = min_replicas.get(name.group(1) if name else "", int(field(doc, "replicas") or 1))
     steady["cpu"] += req_cpu * replicas
@@ -113,16 +124,20 @@ for doc in re.split(r"\n---\n", rendered):
     steady["pods"] += replicas
 
 need = {
-    "cpu": steady["cpu"] + job["cpu"],
-    "req_mem": steady["req_mem"] + job["req_mem"],
-    "lim_mem": steady["lim_mem"] + job["lim_mem"],
-    "pods": steady["pods"] + 1,
+    "cpu": steady["cpu"] + job["cpu"] + cron["cpu"],
+    "req_mem": steady["req_mem"] + job["req_mem"] + cron["req_mem"],
+    "lim_mem": steady["lim_mem"] + job["lim_mem"] + cron["lim_mem"],
+    "pods": steady["pods"] + 1 + cron["pods"],
+    "pvcs": storage["pvcs"],
+    "storage": storage["storage"],
 }
 have = {
     "cpu": cpu(quota["requests.cpu"]),
     "req_mem": mem(quota["requests.memory"]),
     "lim_mem": mem(quota["limits.memory"]),
     "pods": int(quota["pods"]),
+    "pvcs": int(quota["persistentvolumeclaims"]),
+    "storage": mem(quota["requests.storage"]),
 }
 over = [k for k in need if need[k] > have[k]]
 for k in need:
@@ -136,7 +151,7 @@ check "staging renders a quota, a limit range and both namespaces" \
 	 [ "$(echo "$out" | grep -c "^kind: Namespace")" -eq 2 ] &&
 	 echo "$out" | grep -q "^kind: ResourceQuota" && echo "$out" | grep -q "^kind: LimitRange"'
 check "production renders" 'namespaces production >/dev/null'
-check "staging requests, limits and pods fit the quota with a migration Job on top" \
+check "staging requests, limits, pods and volumes fit the quota with a migration Job and the backup on top" \
 	'report=$(fit staging); code=$?; echo "$report"; [ "$code" -eq 0 ]'
 
 # Production is reported, not asserted: its HPA minimum of two replicas does not
