@@ -45,7 +45,7 @@ It shows the diff and asks before applying (production also asks you to type the
 
 A rerun is safe: releases that did not change are skipped. To run one phase, `ARGS="-l phase=<phase>"`. Settings live in `deploy/infrastructure/<component>/values*.yaml`; rerun `make deploy` after changing one.
 
-The sealed Secrets, issuers and Traefik config were applied with `kubectl` before they became releases. Their releases set `takeOwnership`, so the first `make deploy` on such a cluster adopts them instead of failing.
+The sealed Secrets, issuers and Traefik config were applied with `kubectl` before they became releases. On such a cluster, run the first `make deploy` with `ARGS="--state-values-set adopt=true"` so their releases adopt them instead of failing. Leave it off on a new cluster: taking ownership makes the diff look up the ClusterIssuer and SealedSecret kinds before their CRDs are installed.
 
 ## 1. Secrets
 

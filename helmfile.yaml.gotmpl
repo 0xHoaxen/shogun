@@ -12,6 +12,7 @@
 #   helmfile -e <staging|production> --kube-context <ctx> apply --concurrency 1
 # One phase or app: -l phase=<phase> or -l name=<app>.
 # Override an image tag without editing values: --state-values-set tags.kagami=1.2.3
+# Adopt objects once applied with kubectl: --state-values-set adopt=true
 #
 # Until secrets/<env>/ is sealed (make seal), only bootstrap is declared: the
 # rest reads Secrets that do not exist yet.
@@ -33,9 +34,11 @@ environments:
   staging:
     values:
       - tags: {}
+        adopt: false
   production:
     values:
       - tags: {}
+        adopt: false
 
 ---
 helmDefaults:
@@ -44,6 +47,7 @@ helmDefaults:
 
 {{- $env := .Environment.Name }}
 {{- $tags := .Values.tags }}
+{{- $adopt := .Values.adopt }}
 {{- $sealed := printf "deploy/infrastructure/sealed-secrets/secrets/%s" $env }}
 
 releases:
@@ -70,11 +74,14 @@ releases:
 
   # ---- secrets ---------------------------------------------------------------
   # The plain manifest directories below become charts through helmfile. They
-  # were once applied with kubectl, so a release takes over what already exists.
+  # were once applied with kubectl; adopt=true makes a release take over what
+  # already exists. It is off by default: take-ownership makes helm diff look
+  # up every object, which fails on a fresh cluster whose CRDs arrive in the
+  # same apply.
   - name: secrets
     namespace: kube-system
     chart: ./{{ $sealed }}
-    takeOwnership: true
+    takeOwnership: {{ $adopt }}
     # The SealedSecret CRD arrives with the controller in the same apply.
     disableValidationOnInstall: true
     labels:
@@ -128,7 +135,7 @@ releases:
   - name: cluster-issuers
     namespace: cert-manager
     chart: ./deploy/infrastructure/cert-manager/issuers
-    takeOwnership: true
+    takeOwnership: {{ $adopt }}
     disableValidationOnInstall: true
     labels:
       phase: ingress
@@ -138,7 +145,7 @@ releases:
   - name: traefik-config
     namespace: kube-system
     chart: ./deploy/infrastructure/traefik
-    takeOwnership: true
+    takeOwnership: {{ $adopt }}
     labels:
       phase: ingress
 
