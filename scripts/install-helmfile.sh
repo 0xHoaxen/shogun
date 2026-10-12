@@ -62,8 +62,17 @@ install_helm_diff() {
 	fi
 	helm plugin uninstall diff >/dev/null 2>&1 || true
 	# Helm 4 verifies plugin signatures by default; helm-diff publishes none, so
-	# the pinned tag is what we trust.
-	helm plugin install https://github.com/databus23/helm-diff --version "v$HELM_DIFF_VERSION" --verify=false
+	# the pinned tag is what we trust. Helm 3 (CI runners) has no --verify flag.
+	local verify=""
+	if [ "$(helm_major)" -ge 4 ]; then
+		verify="--verify=false"
+	fi
+	# shellcheck disable=SC2086 # $verify is empty or a single flag
+	helm plugin install https://github.com/databus23/helm-diff --version "v$HELM_DIFF_VERSION" $verify
+}
+
+helm_major() {
+	helm version --template '{{.Version}}' | sed -E 's/^v([0-9]+).*/\1/'
 }
 
 install_helmfile
