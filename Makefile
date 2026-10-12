@@ -11,7 +11,7 @@ COMPOSE := docker compose --env-file $(COMPOSE_ENV) -f deploy/compose/compose.ya
 
 .DEFAULT_GOAL := help
 
-.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service deploy-plan deploy deploy-status deploy-test
+.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service deploy-plan deploy deploy-status deploy-test seal
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -91,6 +91,9 @@ deploy: ## install or upgrade a cluster, phase by phase: make deploy ENV=staging
 
 deploy-status: ## releases, pods not ready and the last backup: make deploy-status ENV=staging CONTEXT=<ctx>
 	@$(DEPLOY) status $(DEPLOY_TARGET)
+
+seal: ## seal a cluster's Secrets offline from .secrets/<env>.env: make seal ENV=staging
+	@$(DEPLOY) secrets seal --env "$(ENV)"
 
 deploy-test: ## tests and lint for the deploy CLI in scripts/deploy
 	cd scripts/deploy && uv run pytest && uv run ruff check . && uv run ruff format --check .

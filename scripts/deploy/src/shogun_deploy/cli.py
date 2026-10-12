@@ -4,7 +4,7 @@ from typing import Annotated
 
 import typer
 
-from shogun_deploy import console, ops, phases, plan, preflight
+from shogun_deploy import cli_secrets, console, ops, phases, plan, preflight, seal
 from shogun_deploy.runner import Runner, StepFailed
 from shogun_deploy.settings import (
     ENVIRONMENTS,
@@ -25,6 +25,7 @@ app = typer.Typer(
 )
 backup_app = typer.Typer(help="Postgres backups on the cluster.", no_args_is_help=True)
 app.add_typer(backup_app, name="backup")
+app.add_typer(cli_secrets.app, name="secrets")
 
 Env = Annotated[str, typer.Option("--env", "-e", help="staging or production.")]
 Context = Annotated[
@@ -124,28 +125,53 @@ def _confirm(target: Target, yes: bool) -> None:
         raise _exit(EXIT_USAGE, "stopped; nothing was applied")
 
 
+def _seal_now(target: Target, runner: Runner, yes: bool) -> bool:
+    """On a new cluster: offers to fetch the certificate, back up the key and seal."""
+    paths = seal.Paths(target.root, target.env)
+    console.warn(f"nothing is sealed for {target.env} yet; the controller is installed")
+    if yes or not console.interactive():
+        for line in (
+            f"shogun-deploy secrets fetch-cert --env {target.env} --context {target.context}",
+            f"shogun-deploy secrets backup-key --env {target.env} --context {target.context}",
+            f"shogun-deploy secrets seal --env {target.env}",
+            "commit deploy/infrastructure/sealed-secrets, then: "
+            f"shogun-deploy up --env {target.env} --context {target.context} --from secrets",
+        ):
+            console.info(line)
+        return False
+    if not console.confirm(
+        f"Fetch the certificate, back up the sealing key and seal from "
+        f"{console.shown(paths.env_file, target.root)} now?"
+    ):
+        return False
+    seal.fetch_cert(target.tools, runner, paths, target.context)
+    seal.backup_key(target.tools, runner, paths, target.context)
+    seal.seal_all(target.tools, runner, paths, paths.env_file, [])
+    console.warn("commit deploy/infrastructure/sealed-secrets when this run is done")
+    return True
+
+
 def _apply(
     target: Target,
     runner: Runner,
     chosen: list[phases.Phase],
     overrides: dict[str, str],
+    yes: bool,
     releases: list[str] | None = None,
 ) -> None:
     try:
-        phases.run(target, runner, chosen, overrides, releases)
+        try:
+            phases.run(target, runner, chosen, overrides, releases)
+        except phases.SecretsMissing as error:
+            if not _seal_now(target, runner, yes):
+                raise typer.Exit(EXIT_WAITING) from error
+            phases.run(target, runner, phases.select("secrets"), overrides, releases)
+    except typer.Exit:
+        raise
     except StepFailed as error:
         raise typer.Exit(EXIT_FAILED) from error
-    except phases.SecretsMissing as error:
-        console.fail(f"no sealed Secrets in {error} yet; the controller is installed. Now:")
-        for line in (
-            f"scripts/seal-secrets.sh --env {target.env} --fetch-cert --context {target.context}",
-            f"scripts/seal-secrets.sh --env {target.env} --backup-key --context {target.context}",
-            f"scripts/seal-secrets.sh --env {target.env}",
-            "commit deploy/infrastructure/sealed-secrets, then run: "
-            f"shogun-deploy up --env {target.env} --context {target.context} --from secrets",
-        ):
-            console.info(line)
-        raise typer.Exit(EXIT_WAITING) from error
+    except (OSError, RuntimeError, ValueError) as error:
+        raise _exit(EXIT_FAILED, str(error)) from error
     console.ok(f"done; log: {runner.log_path}")
 
 
@@ -189,7 +215,7 @@ def up(
     _preflight(target, runner)
     _summary(target, chosen, versions)
     _confirm(target, yes)
-    _apply(target, runner, chosen, overrides)
+    _apply(target, runner, chosen, overrides, yes)
 
 
 @app.command()
@@ -215,7 +241,7 @@ def apps(
     _preflight(target, runner)
     _summary(target, chosen, shown)
     _confirm(target, yes)
-    _apply(target, runner, chosen, overrides, names or None)
+    _apply(target, runner, chosen, overrides, yes, names or None)
 
 
 @app.command()

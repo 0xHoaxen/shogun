@@ -139,7 +139,7 @@ def test_stops_with_exit_3_and_the_next_steps_when_nothing_is_sealed(fakes, cli)
     ).unlink()
     result = cli("up", *STAGING, "--yes")
     assert result.exit_code == EXIT_WAITING
-    assert "--fetch-cert --context k3s" in result.output
+    assert "secrets fetch-cert --env staging --context k3s" in result.output
     assert "--from secrets" in result.output
     assert fakes.applies() == ["bootstrap"]
 

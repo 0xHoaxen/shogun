@@ -1,6 +1,6 @@
 # Values for every app release, applied before deploy/apps/<name>/values.yaml.
 
-# The registry pull secret, sealed by scripts/seal-secrets.sh. Remove it if the
+# The registry pull secret, sealed by shogun-deploy secrets seal. Remove it if the
 # ghcr.io packages are public.
 imagePullSecrets:
   - name: ghcr

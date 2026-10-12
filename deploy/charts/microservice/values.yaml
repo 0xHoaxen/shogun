@@ -48,7 +48,7 @@ env: {}
 peers: []
 
 # The Secret loaded with envFrom (DATABASE_URL, IDENTITY_SIGNING_KEY, ...). The
-# chart never creates it: scripts/seal-secrets.sh seals one per service.
+# chart never creates it: shogun-deploy secrets seal seals one per service.
 secret:
   enabled: true
   # Empty means <name>.

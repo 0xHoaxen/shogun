@@ -12,7 +12,7 @@ image:
 
 # Secret holding POSTGRES_PASSWORD and one <NAME>_DB_PASSWORD per service;
 # init.sh creates a schema and a login role for every such variable. It is
-# created by scripts/seal-secrets.sh, never by this chart, because Postgres
+# created by shogun-deploy secrets seal, never by this chart, because Postgres
 # creates its roles once and the passwords must not change.
 secretName: postgres
 

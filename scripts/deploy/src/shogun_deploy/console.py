@@ -1,6 +1,7 @@
 """Everything the user sees: step headers, results, tables and questions."""
 
 import sys
+from pathlib import Path
 
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
@@ -10,6 +11,11 @@ from rich.table import Table
 # might read.
 err = Console(stderr=True, highlight=False)
 out = Console(highlight=False)
+
+
+def shown(path: Path, root: Path) -> str:
+    """A path relative to the repo when it is inside it."""
+    return str(path.relative_to(root)) if path.is_relative_to(root) else str(path)
 
 
 def interactive() -> bool:

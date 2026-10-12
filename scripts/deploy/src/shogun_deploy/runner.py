@@ -83,6 +83,25 @@ class Runner:
         self._log(f"# exit {code} after {time.monotonic() - started:.1f}s\n")
         return Result(code, tuple(lines if capture else last))
 
+    def secret(self, argv: list[str], title: str, stdin: str = "") -> str:
+        """Runs argv whose input or output holds secrets: neither is logged or shown.
+
+        Only the command line, the exit code and stderr reach the log. Returns
+        stdout; raises StepFailed when the command fails.
+        """
+        self._log(f"\n$ {' '.join(redact(argv))}  # output not logged\n")
+        try:
+            done = subprocess.run(argv, input=stdin, capture_output=True, text=True, check=False)
+        except FileNotFoundError as error:
+            console.fail(f"{title}: {argv[0]} is not installed or not on PATH")
+            raise StepFailed(title) from error
+        self._log(done.stderr + f"# exit {done.returncode}\n")
+        if done.returncode != 0:
+            console.fail(f"{title} (exit {done.returncode})")
+            console.tail(done.stderr.splitlines()[-TAIL_LINES:])
+            raise StepFailed(title)
+        return done.stdout
+
     def must(self, argv: list[str], title: str, *, capture: bool = False) -> Result:
         """Runs argv and reports it; on failure shows the tail and the log path."""
         started = time.monotonic()

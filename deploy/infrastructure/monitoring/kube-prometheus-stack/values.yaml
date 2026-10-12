@@ -92,7 +92,7 @@ alertmanager:
 
 grafana:
   # Login from Secret grafana-admin (admin-user, admin-password), created by
-  # scripts/seal-secrets.sh. Anonymous access stays off.
+  # shogun-deploy secrets seal. Anonymous access stays off.
   admin:
     existingSecret: grafana-admin
   defaultDashboardsTimezone: browser
