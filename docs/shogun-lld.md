@@ -366,7 +366,7 @@ All Claude API calls go through `fude` (and `tsubame` for classification) throug
 | Logs | JSON `slog` with `trace_id`, `request_id`, `owner_id`; never logs message bodies or tokens | stdout, collected by Loki |
 | Alerts | outbox lag > 5 min, discarded jobs > 0, error rate > 2% for 10 min, Gmail sync failing for 1 h | Alertmanager to email |
 
-Local compose runs Jaeger, Prometheus, Alertmanager and Grafana behind a `make up-observability` profile so the default stack stays light (services export traces straight to Jaeger; there is no collector yet). Alert rules are in `deploy/compose/observability/alerts.yml`; Alertmanager has no receiver until the owner adds an email one.
+Local compose runs Jaeger, Prometheus, Alertmanager and Grafana behind a `make up-observability` profile so the default stack stays light (services export traces straight to Jaeger; there is no collector yet). Alert rules are in `deploy/compose/observability/alerts.yml`; Alertmanager has no receiver until the owner adds an email one. On the k3s cluster, kube-prometheus-stack runs Prometheus, Alertmanager and Grafana. It scrapes the services through the chart's ServiceMonitors and loads the same rules and dashboard through `deploy/helm/monitoring`, which links to the Compose files (see `docs/deploy.md`).
 
 ## Versioning, CI/CD and deploy
 

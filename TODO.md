@@ -660,9 +660,22 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `helm lint` and `helm template` pass for the ingress chart and for the web chart with the ingress on and off; the web chart refuses an enabled ingress without a host; with the ingress off the web output equals `main`; `scripts/platform_test.sh` passes.
   Status: all checks pass (`platform_test.sh` 14 checks, `deploy_test.sh` still 27). cert-manager is `v1.21.2` from `oci://quay.io/jetstack/charts/cert-manager`, installed with `--wait` before the issuers because its webhook must answer first. Only web is exposed; torii stays internal behind Next's `/api` and `/auth` rewrites. The ingress release lives in `kube-system` next to k3s's Traefik HelmChart. Judgement calls: the ACME email is optional (Let's Encrypt no longer sends expiry mail), so an empty one does not block the install; Traefik's access log stays off because it records the full path and the OAuth callback carries its code in the query string. The redirect uses `ports.web.http.redirections`, which needs Traefik chart 34 or newer; the k3s version on the VM was not checked. Not run on a cluster. `TODO(owner)`: pick the web host, add the DNS record and set `ingress.host` in `values/staging/web.yaml` (commented block there) and in production `web.yaml` (protected); then set `TORII_PUBLIC_URL` and the Google redirect URI to `https://<host>`. `shellcheck` is not installed here.
 
-- [ ] **P10.6b Prometheus, Alertmanager and Grafana on k3s** (M) Needs: P10.6a
+- [x] **P10.6b Prometheus, Alertmanager and Grafana on k3s** (M) Needs: P10.6a
   Do: kube-prometheus-stack (pinned in `scripts/platform.sh`, values in `deploy/helm/values/cluster/kube-prometheus-stack.yaml`: picks up ServiceMonitors and rules from every namespace, k3s control-plane scrapes off, Alertmanager with the `nobody` receiver, Grafana login from Secret `grafana-admin` and an Ingress through Traefik with TLS); a local chart `deploy/helm/monitoring/` that renders `deploy/compose/observability/alerts.yml` as a PrometheusRule and the Compose dashboard as a sidecar ConfigMap (symlinks, like the Postgres init files); `scripts/k8s-secrets.sh` generates `GRAFANA_ADMIN_PASSWORD` and creates `grafana-admin`; `serviceMonitor.enabled: true` in the ten staging values files.
   Done when: `helm lint` and `helm template` pass for the monitoring chart; `promtool check rules` accepts the rendered rule spec; kube-prometheus-stack renders with the values file; the ten staging service charts render a ServiceMonitor; `scripts/helm.py check`, `platform_test.sh` and `k8s-secrets_test.sh` pass.
+  Status: all checks pass.
+  - **Rules and dashboard:** `promtool` (prom/prometheus v3.5.0) reports "SUCCESS: 6 rules found" on the rendered PrometheusRule spec, and the rendered dashboard is identical to the Compose file (`jq -S` diff). The `files/` symlinks keep one copy for Compose and the cluster.
+  - **Stack:** kube-prometheus-stack `92.3.0` from `oci://ghcr.io/prometheus-community/charts` renders 108 resources with the values file. Selectors are `{}`, Grafana reads `grafana-admin`, and no etcd, scheduler, controller-manager or kube-proxy monitors are rendered. With the documented ingress values set, it renders a Traefik Ingress with `grafana-tls`.
+  - **Services:** every staging service renders one ServiceMonitor. The job label is the Service name, which the rules group by.
+  - **Shell tests:** `platform_test.sh` passes 17 checks (order cert-manager, ingress, kube-prometheus-stack, monitoring; 10 m timeout for the stack). `k8s-secrets_test.sh` passes 26 checks, including `grafana-admin` with `admin-user` and `admin-password` in `monitoring` (`--monitoring-namespace` overrides it) and a generated password that is never printed. `deploy_test.sh` still passes 27.
+  - **Judgement calls:**
+    - The monitoring chart is installed in `monitoring` rather than the app namespace, so `platform.sh` needs no namespace. Both selectors span all namespaces.
+    - Alertmanager keeps the chart's `null` receiver, the same as Compose.
+    - Grafana has no persistence: its dashboards are provisioned and its login comes from the Secret.
+  - **Ordering:** `k8s-secrets.sh` must run before `platform.sh` (Grafana's Secret), and `platform.sh` before `deploy.sh` (ServiceMonitor CRD). This is in `docs/deploy.md`.
+  - **Not done:**
+    - Not run on a cluster.
+    - `TODO(owner)`: the Grafana host (values file, three places plus `root_url`); an Alertmanager email receiver; `serviceMonitor.enabled: true` in the production values (protected path).
 
 ---
 

@@ -1,0 +1,10 @@
+# The Compose alert rules as they are. .Files.Get is not templated, so the
+# {{ "{{ $labels.job }}" }} in the annotations reaches Prometheus untouched.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: shogun
+  labels:
+    {{- include "shogunMonitoring.labels" . | nindent 4 }}
+spec:
+{{ .Files.Get "files/alerts.yml" | indent 2 }}

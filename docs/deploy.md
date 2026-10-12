@@ -46,17 +46,37 @@ echo "$GHCR_TOKEN" | helm registry login ghcr.io -u <github user> --password-std
 
 ## Platform (once per cluster)
 
-The VM runs k3s, which bundles Traefik. `scripts/platform.sh` adds what the app releases rely on: cert-manager (pinned in the script, CRDs included), then the local chart `deploy/helm/ingress`, which makes Traefik redirect HTTP to HTTPS and creates the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
+The VM runs k3s, which bundles Traefik. `scripts/platform.sh` adds what the app releases rely on, in this order (upstream versions pinned in the script):
+
+1. cert-manager, CRDs included.
+2. The local chart `deploy/helm/ingress`: Traefik redirects HTTP to HTTPS, and the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
+3. kube-prometheus-stack in namespace `monitoring`: Prometheus (15 days on a 10Gi `local-path` volume), Alertmanager and Grafana. It picks up ServiceMonitors and PrometheusRules from every namespace; the k3s control-plane scrapes are off.
+4. The local chart `deploy/helm/monitoring`: the six Shogun alert rules and the "Shogun overview" dashboard, read through symlinks from `deploy/compose/observability/`, so Compose and the cluster share one copy.
+
+Run `scripts/k8s-secrets.sh` (section 1 below) first, because Grafana's login comes from Secret `grafana-admin` in `monitoring`. Run `scripts/platform.sh` before `scripts/deploy.sh`, because the staging service values turn on `serviceMonitor` and that needs the Prometheus Operator CRDs.
 
 ```sh
 kubectl --context "$CTX" -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'   # needs Traefik chart 34 or newer
 scripts/platform.sh --context "$CTX"
 kubectl --context "$CTX" get clusterissuer                                                  # both READY True
+kubectl --context "$CTX" -n monitoring get pods                                             # all Ready
 ```
 
 Cluster-wide values are in `deploy/helm/values/cluster/`. Rerun the script after changing one of them or a pinned version. Traefik's access log stays off: it would record the OAuth callback's code.
 
-To expose the web app, point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `values/<env>/web.yaml` (see the commented block in the staging file) and redeploy web. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n "$NS" get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL` in `.secrets/k8s.env` and the Google redirect URI to `https://<host>`, then rerun `scripts/k8s-secrets.sh` and restart torii.
+To expose the web app, point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `values/<env>/web.yaml` (see the commented block in the staging file) and redeploy web. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n "$NS" get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL`, `TSUBAME_GMAIL_REDIRECT_URL` and the Google redirect URIs to `https://<host>`, then rerun `scripts/k8s-secrets.sh` and restart torii and tsubame.
+
+### Grafana, Prometheus and Alertmanager
+
+Grafana is reached through Traefik once its host is set (the `TODO(owner)` block under `grafana:` in `values/cluster/kube-prometheus-stack.yaml`). Until then, use a port-forward. Sign in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `.secrets/k8s.env`; anonymous access is off. Prometheus and Alertmanager are never exposed:
+
+```sh
+kubectl --context "$CTX" -n monitoring port-forward svc/kube-prometheus-stack-grafana 3001:80
+kubectl --context "$CTX" -n monitoring port-forward svc/kube-prometheus-stack-prometheus 9190:9090     # Status > Targets: ten shogun services up
+kubectl --context "$CTX" -n monitoring port-forward svc/kube-prometheus-stack-alertmanager 9191:9093
+```
+
+Alertmanager sends to the chart's `null` receiver until an email receiver is added (`TODO(owner)` in the same values file).
 
 ## Pick the versions
 
@@ -208,7 +228,7 @@ kubectl --context "$CTX" delete namespace "$NS"      # also deletes Postgres dat
 - [ ] `ENVIRONMENT=production` and `TORII_PUBLIC_URL` is `https://` in the production values.
 - [ ] No placeholder remains: `grep replace-me .secrets/k8s.env` prints nothing.
 - [ ] `TORII_ALLOWED_EMAILS` lists only you.
-- [ ] Only the web app is exposed outside the cluster; Postgres and the service Services stay `ClusterIP`.
+- [ ] Only the web app and Grafana are exposed outside the cluster; Postgres, Prometheus, Alertmanager and the service Services stay `ClusterIP`.
 - [ ] Hanko keys match (a test send succeeds; a tampered draft is refused).
 - [ ] The Google OAuth consent screen is limited to you.
 - [ ] A database dump exists off the cluster and one restore has been checked.

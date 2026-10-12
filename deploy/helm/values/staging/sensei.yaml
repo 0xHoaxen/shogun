@@ -4,3 +4,5 @@ image:
   tag: "1.0.0"
 env:
   ENVIRONMENT: staging
+serviceMonitor:
+  enabled: true

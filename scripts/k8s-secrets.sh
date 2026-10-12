@@ -3,9 +3,11 @@
 # and <service> for the ten services (read by the Helm chart with envFrom).
 # With GHCR_USER and GHCR_TOKEN set in the env file it also creates the pull secret
 # "ghcr" (a token with read:packages) for private ghcr.io images; the charts use it
-# through imagePullSecrets.
+# through imagePullSecrets. It also creates grafana-admin (Grafana's login, read by
+# kube-prometheus-stack) in the monitoring namespace.
 #
 # Usage: scripts/k8s-secrets.sh --context <ctx> --namespace <ns> [--env-file <file>]
+#                               [--monitoring-namespace <ns>]
 #
 # Values come from the env file (default .secrets/k8s.env, git-ignored, KEY=value
 # lines, no quoting). Anything generated is written back to that file, so a second
@@ -17,6 +19,8 @@ set -euo pipefail
 SERVICES="torii kagami tsubame fude taiko dojo katana shinobi sensei soroban"
 KUBECTL="${KUBECTL:-kubectl}"
 DEFAULT_ENV_FILE=".secrets/k8s.env"
+DEFAULT_MONITORING_NAMESPACE="monitoring"
+GRAFANA_ADMIN_USER="admin"
 PLACEHOLDER_ID="replace-me.apps.googleusercontent.com"
 PLACEHOLDER_SECRET="replace-me"
 PLACEHOLDER_EMAIL="you@example.com"
@@ -79,6 +83,7 @@ fill_env() {
 	for svc in $SERVICES; do
 		env_set_default "$file" "$(upper "$svc")_DB_PASSWORD" "$(openssl rand -hex 24)"
 	done
+	env_set_default "$file" GRAFANA_ADMIN_PASSWORD "$(openssl rand -hex 24)"
 	env_set_default "$file" IDENTITY_SIGNING_KEY "$(openssl rand -hex 32)"
 	env_set_default "$file" TSUBAME_TOKEN_MASTER_KEY "$(openssl rand -base64 32)"
 	env_set_default "$file" FUDE_HANKO_SIGNING_KEY "$(openssl rand -base64 32)"
@@ -160,16 +165,19 @@ service_env() {
 
 main() {
 	local context="" namespace="" env_file="$DEFAULT_ENV_FILE" tmp svc ghcr_user ghcr_token
+	local monitoring_namespace="$DEFAULT_MONITORING_NAMESPACE" ns
 	while [ $# -gt 0 ]; do
 		case $1 in
 		--context) context=${2:-}; shift 2 ;;
 		--namespace) namespace=${2:-}; shift 2 ;;
 		--env-file) env_file=${2:-}; shift 2 ;;
+		--monitoring-namespace) monitoring_namespace=${2:-}; shift 2 ;;
 		*) die "unknown argument: $1" ;;
 		esac
 	done
 	[ -n "$context" ] || die "--context is required (the current kubectl context is never assumed)"
 	[ -n "$namespace" ] || die "--namespace is required"
+	[ -n "$monitoring_namespace" ] || die "--monitoring-namespace must not be empty"
 	require_openssl3
 
 	umask 077
@@ -182,8 +190,10 @@ main() {
 	tmp=$(mktemp -d)
 	trap 'rm -rf "${tmp:-}"' EXIT
 
-	"$KUBECTL" --context "$context" create namespace "$namespace" --dry-run=client -o yaml |
-		"$KUBECTL" --context "$context" apply -f - >/dev/null
+	for ns in "$namespace" "$monitoring_namespace"; do
+		"$KUBECTL" --context "$context" create namespace "$ns" --dry-run=client -o yaml |
+			"$KUBECTL" --context "$context" apply -f - >/dev/null
+	done
 
 	grep -E '^(POSTGRES_PASSWORD|[A-Z]+_DB_PASSWORD)=' "$env_file" >"$tmp/postgres.env"
 	apply_secret "$context" "$namespace" postgres "$tmp/postgres.env"
@@ -191,6 +201,8 @@ main() {
 		service_env "$env_file" "$tmp/$svc.env" "$svc"
 		apply_secret "$context" "$namespace" "$svc" "$tmp/$svc.env"
 	done
+	printf 'admin-user=%s\nadmin-password=%s\n' "$GRAFANA_ADMIN_USER" "$(env_get "$env_file" GRAFANA_ADMIN_PASSWORD)" >"$tmp/grafana-admin.env"
+	apply_secret "$context" "$monitoring_namespace" grafana-admin "$tmp/grafana-admin.env"
 	ghcr_user=$(env_get "$env_file" GHCR_USER)
 	ghcr_token=$(env_get "$env_file" GHCR_TOKEN)
 	if [ -n "$ghcr_user" ] && [ -n "$ghcr_token" ]; then

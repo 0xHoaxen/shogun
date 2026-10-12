@@ -12,9 +12,10 @@ cat >"$work/kubectl" <<'FAKE'
 #!/usr/bin/env bash
 case " $* " in
 *" create secret generic "*)
-	name="" file="" prev=""
+	name="" file="" prev="" ns=""
 	for arg in "$@"; do
 		[ "$prev" = generic ] && name=$arg
+		[ "$prev" = -n ] && ns=$arg
 		case $arg in
 		--from-env-file=*) file=${arg#--from-env-file=} ;;
 		--from-file=*) file=${arg#*=.dockerconfigjson=}; file=${file#--from-file=} ;;
@@ -22,6 +23,7 @@ case " $* " in
 		prev=$arg
 	done
 	cp "$file" "$FAKE_DIR/$name.env"
+	echo "$ns" >"$FAKE_DIR/$name.ns"
 	echo "kind: Secret" ;;
 *" create namespace "*) echo "kind: Namespace" ;;
 *" apply "*) cat >/dev/null ;;
@@ -58,7 +60,7 @@ check "nothing was created when it refused" '[ -z "$(ls "$work/fake" 2>/dev/null
 
 run --context kind-shogun --namespace shogun --env-file "$env_file"
 check "a full run succeeds" '[ "$code" -eq 0 ]'
-check "creates 11 Secrets" '[ "$(ls "$work/fake" | wc -l | tr -d " ")" -eq 11 ]'
+check "creates 12 Secrets" '[ "$(ls "$work/fake"/*.env | wc -l | tr -d " ")" -eq 12 ]'
 check "never prints a value" '! echo "$out" | grep -q "$sentinel"'
 check "the env file is private" '[ "$(stat -f %Lp "$env_file" 2>/dev/null || stat -c %a "$env_file")" = 600 ]'
 
@@ -84,6 +86,14 @@ check "the Hanko public key derivation matches the dev pair in .env.example" '[ 
 check "tsubame verifies with the public half of the fude key" '
 	seed=$(value fude FUDE_HANKO_SIGNING_KEY)
 	[ "$(value tsubame TSUBAME_HANKO_VERIFY_KEYS)" = "fude-1=$(hanko_public_key "$seed")" ]'
+
+check "grafana-admin holds the login keys Grafana reads" '[ "$(keys grafana-admin)" = "admin-password admin-user " ]'
+check "grafana-admin goes to the monitoring namespace" '[ "$(cat "$work/fake/grafana-admin.ns")" = monitoring ] && [ "$(cat "$work/fake/kagami.ns")" = shogun ]'
+check "the Grafana password is generated and never printed" '
+	pw=$(value grafana-admin admin-password)
+	[ ${#pw} -ge 32 ] && [ "$pw" = "$(sed -n "s/^GRAFANA_ADMIN_PASSWORD=//p" "$env_file")" ] && ! echo "$out" | grep -q "$pw"'
+run --context kind-shogun --namespace shogun --env-file "$env_file" --monitoring-namespace obs
+check "--monitoring-namespace moves grafana-admin" '[ "$code" -eq 0 ] && [ "$(cat "$work/fake/grafana-admin.ns")" = obs ]'
 
 check "no pull secret without a GHCR token" '[ ! -e "$work/fake/ghcr.env" ]'
 printf 'GHCR_USER=octocat\nGHCR_TOKEN=%s\n' "$sentinel" >>"$env_file"

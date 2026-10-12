@@ -40,10 +40,11 @@ check "helm was never called when it refused" '[ -z "$(calls)" ]'
 
 run --context k3s
 check "a full run succeeds" '[ "$code" -eq 0 ]'
-check "installs cert-manager, then the ingress chart" '[ "$(release_order)" = "cert-manager ingress " ]'
-check "every call is upgrade --install" '[ "$(calls | grep -c "^upgrade --install ")" -eq 2 ]'
-check "every call pins the context" '[ "$(calls | grep -c -- "--kube-context k3s ")" -eq 2 ]'
-check "every call waits" '[ "$(calls | grep -c -- "--wait")" -eq 2 ]'
+check "installs cert-manager, ingress, the stack, then the shogun rules" \
+	'[ "$(release_order)" = "cert-manager ingress kube-prometheus-stack monitoring " ]'
+check "every call is upgrade --install" '[ "$(calls | grep -c "^upgrade --install ")" -eq 4 ]'
+check "every call pins the context" '[ "$(calls | grep -c -- "--kube-context k3s ")" -eq 4 ]'
+check "every call waits" '[ "$(calls | grep -c -- "--wait")" -eq 4 ]'
 check "cert-manager is pinned and installs its CRDs" \
 	'calls | grep "^upgrade --install cert-manager " | grep -q -- "--version v[0-9]" &&
 	 calls | grep "^upgrade --install cert-manager " | grep -q -- "--set crds.enabled=true"'
@@ -54,16 +55,30 @@ check "the ingress chart comes from the checkout with the cluster values" \
 	 calls | grep "^upgrade --install ingress " | grep -q -- "-f .*/values/cluster/ingress.yaml"'
 check "the ingress release lives next to k3s Traefik" \
 	'calls | grep "^upgrade --install ingress " | grep -q -- "--namespace kube-system"'
+check "the stack is pinned, in monitoring, with the cluster values" \
+	'calls | grep "^upgrade --install kube-prometheus-stack " | grep -q -- "--version [0-9]" &&
+	 calls | grep "^upgrade --install kube-prometheus-stack " | grep -q -- "--namespace monitoring --create-namespace" &&
+	 calls | grep "^upgrade --install kube-prometheus-stack " | grep -q -- "-f .*/values/cluster/kube-prometheus-stack.yaml"'
+check "the shogun rules come from the checkout, next to the stack" \
+	'calls | grep "^upgrade --install monitoring " | grep -q "deploy/helm/monitoring " &&
+	 calls | grep "^upgrade --install monitoring " | grep -q -- "--namespace monitoring"'
 
 # A missing cluster values file stops the run before anything is installed.
 fixture="$work/repo"
 mkdir -p "$fixture/scripts" "$fixture/deploy/helm/values/cluster"
 cp "$script" "$fixture/scripts/platform.sh"
-log="$work/helm.log"
-rm -f "$log"
-out=$(FAKE_LOG="$log" HELM="$work/helm" "$fixture/scripts/platform.sh" --context k3s 2>&1)
-code=$?
+run_fixture() {
+	log="$work/helm.log"
+	rm -f "$log"
+	out=$(FAKE_LOG="$log" HELM="$work/helm" "$fixture/scripts/platform.sh" --context k3s 2>&1)
+	code=$?
+}
+run_fixture
 check "refuses when the ingress values are missing" '[ "$code" -eq 2 ] && echo "$out" | grep -q "missing .*cluster/ingress.yaml"'
 check "nothing was installed before the check failed" '[ -z "$(calls)" ]'
+touch "$fixture/deploy/helm/values/cluster/ingress.yaml"
+run_fixture
+check "refuses when the stack values are missing" \
+	'[ "$code" -eq 2 ] && echo "$out" | grep -q "missing .*cluster/kube-prometheus-stack.yaml" && [ -z "$(calls)" ]'
 
 exit "$failed"

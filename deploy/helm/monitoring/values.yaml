@@ -1,0 +1,6 @@
+# The monitoring chart has no settings of its own. Install it once per cluster
+# with scripts/platform.sh, after kube-prometheus-stack (it needs the
+# PrometheusRule CRD).
+#
+# files/ holds symlinks into deploy/compose/observability/, so the rules and the
+# dashboard stay the same as in the Compose profile: edit them there.

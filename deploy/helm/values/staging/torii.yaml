@@ -7,3 +7,5 @@ env:
   TORII_PUBLIC_ADDR: ":8081"
 publicPort:
   enabled: true
+serviceMonitor:
+  enabled: true
