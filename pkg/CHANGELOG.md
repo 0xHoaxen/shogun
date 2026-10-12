@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/pkg/v1.0.0...pkg/v1.1.0) (2026-10-12)
+
+
+### Features
+
+* **deploy:** Prometheus, Alertmanager and Grafana on k3s ([f1d652e](https://github.com/0xHoaxen/shogun/commit/f1d652e36723f88c35ae49af230e6ef7f249929a))
+* **deploy:** Traefik HTTPS redirect, Let's Encrypt issuers and web Ingress for k3s ([6f176cd](https://github.com/0xHoaxen/shogun/commit/6f176cd4e2e2621a730e97fa5b5c2baeaa46b3e6))
+* **pkg/llm:** support ANTHROPIC_MODEL environment variable ([0945dfb](https://github.com/0xHoaxen/shogun/commit/0945dfba3856c53ab1a1b71ccc8956e608523010))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/pkg/v0.0.1...pkg/v1.0.0) (2026-10-10)
 
 
