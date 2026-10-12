@@ -1,255 +1,145 @@
-# Deploying Shogun with Helm
+# Deploying Shogun to a cluster
 
-This is the runbook for deploying Shogun to a Kubernetes cluster (kind first) from released artifacts. Nothing is built on the machine you deploy from: every service image and the Helm chart come from a registry.
+This is the runbook for deploying Shogun to a Kubernetes cluster (k3s on a VM, or kind to try it) from released images. Nothing is built on the machine you deploy from: images come from ghcr.io; the charts and values come from the checkout. Layout: `deploy/README.md`.
 
 ## How the pieces fit
 
 | Piece | Where it comes from |
 | --- | --- |
-| Service image `<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/<name>` by the `release` workflow, one per released service |
-| Helm chart `service` | Pushed as an OCI artifact by the `release` workflow after the image push, with the released version |
-| Per-service values `deploy/helm/values/<env>/<name>.yaml` | The repo, not the chart (they sit outside `deploy/helm/apps/service`, so `helm package` does not include them). Use a checkout at the version you deploy |
-| Postgres 17 + pgvector | `deploy/helm/apps/postgres` (its own Helm release, installed once, outside the service releases) |
-| Secrets `postgres`, `<name>` | `scripts/seal-secrets.sh`, sealed files in `deploy/k8s/<env>/secrets` (the chart never creates them) |
-| Web app | `deploy/k8s/web` (kustomize). There is no web chart |
+| Images `ghcr.io/0xhoaxen/<name>:<version>` | The `release` workflow, one per released service, and `web` |
+| One chart for every app | `deploy/charts/microservice`, from the checkout (not published) |
+| App values | `deploy/apps/<name>/values.yaml` and `values-<env>.yaml`; `image.tag` is bumped by `deploy.yml` pull requests |
+| Postgres 17 + pgvector, nightly backup | `deploy/charts/postgres`, values in `deploy/infrastructure/postgres/` |
+| Everything else in the cluster | upstream charts with values in `deploy/infrastructure/<component>/`, versions pinned in `helmfile.yaml.gotmpl` |
+| Secrets `postgres`, `<name>`, `grafana-admin`, `ghcr` | sealed with `shogun-deploy secrets seal`, committed in `deploy/infrastructure/sealed-secrets/secrets/<env>/`; no chart creates them |
 
-One chart deploys one service. Installing it creates `<name>` (Deployment, Service, optional HPA, PDB and ServiceMonitor) plus a `<name>-migrate` Job that runs as a `pre-install,pre-upgrade` hook. Services reach each other at `<peer>:9090`; the chart sets these as `<PEER>_ADDR`. The Service name comes from `values.name`, not from the Helm release name.
-
-## State of the repo
-
-Checked against `main` (`release.yml`, `deploy.yml`, `deploy/helm/apps/service`):
-
-| Item | State |
-| --- | --- |
-| Image push to ghcr.io on release | In `release.yml`, but the `push` trigger is commented out and `P3.6` is open, so it runs only through `workflow_dispatch` |
-| `helm package` / `helm push` step | **Not in `release.yml` on `main`.** This runbook assumes it exists, as agreed. Until it is merged, use the local chart path instead of the OCI reference (see [Install the services](#install-the-services)) |
-| Web image | **Not published.** Build and load it yourself (see [Web app](#web-app)) |
-| `imagePullSecrets` in the chart | **Missing.** The Deployment and migration Job templates have no field for it, so a private ghcr.io package cannot be pulled. Make the packages public, or add the field first |
-| Production values | `values/production/*.yaml` carry only `ENVIRONMENT` and resources. torii needs `TORII_PUBLIC_URL`, `TORII_PUBLIC_ADDR` and `publicPort.enabled` before a real deploy. They are protected files; the owner edits them |
+Each app release creates `<name>` (Deployment, Service, optional HPA, PDB and ServiceMonitor) plus, for the Go services, a `<name>-migrate` Job that runs as a `pre-install,pre-upgrade` hook. Services reach each other at `<peer>:9090` (`<PEER>_ADDR`). The web app is the only thing exposed, through Traefik.
 
 ## Before you start
 
-You need `kubectl`, `helm` 3.8 or newer (OCI support), `openssl` 3, and a cluster. For kind:
+You need `kubectl`, `helm` 4, `uv`, `kubeseal`, `openssl` 3 and a cluster. `make tools` installs the pinned `helmfile` into `./bin` and the `helm-diff` plugin. `shogun-deploy preflight --env <env> --context <ctx>` checks all of it and that the cluster answers.
 
 ```sh
-kind create cluster --name shogun
-export CTX=kind-shogun NS=shogun
+kind create cluster --name shogun      # or use the k3s VM's context
+export CTX=kind-shogun
 ```
 
-Always pass `--kube-context "$CTX"` (Helm) and `--context "$CTX"` (kubectl). The default context may be a real cluster.
+Every command takes `--env` and `--context`. Without `--context` it asks you to pick one; it never uses the current context on its own, because that may be a real cluster. Every run writes its log to `.deploy-logs/<time>-<env>.log`; `-v` streams the commands' output, and a failed step prints its last lines and the log path.
 
-If the chart or images are private, log in first:
+If the images are private, `GHCR_USER` and a `GHCR_TOKEN` with `read:packages` go in the env file (section 1), which seals the pull secret `ghcr` that `deploy/apps/common.yaml` names.
+
+## 0. First install
 
 ```sh
-echo "$GHCR_TOKEN" | helm registry login ghcr.io -u <github user> --password-stdin
+make deploy ENV=staging CONTEXT="$CTX"     # same as: shogun-deploy up --env staging --context "$CTX"
 ```
 
-## Platform (once per cluster)
+It shows what it will apply and asks (production: type the context name). The phases, in order:
 
-The VM runs k3s, which bundles Traefik. `scripts/platform.sh --env <staging|production>` adds what the app releases rely on, in this order (cert-manager is pinned in the script):
+1. `bootstrap`: namespaces `shogun` and `monitoring`, a LimitRange (50m CPU and 64Mi request, 256Mi memory limit per container by default) and a ResourceQuota on `shogun` sized for a 2 vCPU / 4 GiB VM; the sealed-secrets controller. Production does not fit that quota yet: `scripts/k8s_test.sh` prints how far over it is.
+2. `secrets`: the sealed Secrets. On a new cluster none are committed yet: with a terminal, `up` offers to fetch the certificate, back up the key and seal now (section 1), then carries on; otherwise it stops with exit 3 and prints the commands.
+3. `platform`: cert-manager with its CRDs; kube-prometheus-stack as release `monitoring` (Prometheus 7 days on 5Gi `local-path`, Alertmanager, Grafana); `monitoring-extras` with Shogun's six alert rules and the "Shogun overview" dashboard, linked from `deploy/compose/observability/` so Compose and the cluster share one copy.
+4. `ingress`: the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`, and the k3s Traefik redirect from HTTP to HTTPS (needs Traefik chart 34 or newer: `kubectl -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'`). On a cluster that is not k3s (kind) the redirect step fails, because the HelmChartConfig kind does not exist there; continue with `--from data`.
+5. `data`: Postgres and its nightly backup CronJob. The init script creates the ten schemas and roles on the first start of an empty volume only; the migration Jobs need them.
+6. `apps`: `soroban` first (every Claude call reserves budget through it), then the other nine services, then web. Each Go service runs its migration Job before its pods start.
 
-0. `deploy/k8s/<env>`, applied with `kubectl apply -k`, then the sealed-secrets controller and `deploy/k8s/<env>/secrets` (section 1): the namespaces `shogun` and `monitoring`, a LimitRange (default 50m CPU and 64Mi request, 256Mi memory limit per container) and a ResourceQuota on `shogun` sized for a 2 vCPU / 4 GiB VM. Production does not fit that quota yet: `scripts/k8s_test.sh` prints how far over it is.
-1. cert-manager, CRDs included.
-2. The local chart `deploy/helm/platform/ingress`: Traefik redirects HTTP to HTTPS, and the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
-3. The local chart `deploy/helm/monitoring` in namespace `monitoring`, one release that wraps kube-prometheus-stack (pinned in its `Chart.yaml`): Prometheus (7 days on a 5Gi `local-path` volume), Alertmanager and Grafana, plus the six Shogun alert rules and the "Shogun overview" dashboard, read through symlinks from `deploy/compose/observability/` so Compose and the cluster share one copy. It picks up ServiceMonitors and PrometheusRules from every namespace; the k3s control-plane scrapes are off.
+Resume a stopped or failed run with `--from <phase>`. Settings live in `deploy/infrastructure/<component>/values*.yaml`; rerun `up` after changing one.
 
-The first run stops after the sealed-secrets controller until you have sealed the Secrets (section 1 below), because Grafana's login comes from Secret `grafana-admin` in `monitoring`. Run `scripts/platform.sh` before `scripts/deploy.sh`, because the staging service values turn on `serviceMonitor` and that needs the Prometheus Operator CRDs.
+## 1. Secrets
+
+Secrets are sealed with kubeseal and committed, so the cluster can be rebuilt from git. Sealing needs only the controller's public certificate, so it works offline.
 
 ```sh
-kubectl --context "$CTX" -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'   # needs Traefik chart 34 or newer
-scripts/platform.sh --context "$CTX" --env staging
-kubectl --context "$CTX" get clusterissuer                                                  # both READY True
-kubectl --context "$CTX" -n monitoring get pods                                             # all Ready
+cp deploy/infrastructure/sealed-secrets/secrets.example.env .secrets/staging.env   # git-ignored
+$EDITOR .secrets/staging.env                                                       # Google OAuth, allowed emails, API keys
+shogun-deploy secrets fetch-cert --env staging --context "$CTX"   # certs/staging-pub-cert.pem (public, commit it)
+shogun-deploy secrets backup-key --env staging --context "$CTX"   # .secrets/staging-sealed-secrets-key.yaml (private)
+make seal ENV=staging                                             # secrets/staging/*.yaml
+git add deploy/infrastructure/sealed-secrets && git commit
+shogun-deploy up --env staging --context "$CTX" --from secrets
 ```
 
-Cluster-wide settings are in each chart's own `values.yaml` (`deploy/helm/platform/ingress`, `deploy/helm/monitoring`). Rerun the script after changing one of them or a pinned version. Traefik's access log stays off: it would record the OAuth callback's code.
+It seals `postgres` and the ten `<name>` Secrets for `shogun`, `grafana-admin` for `monitoring`, and `ghcr` when `GHCR_USER` and `GHCR_TOKEN` are set. It generates database passwords and signing keys and writes them back to `.secrets/staging.env`; values are never printed or logged. **Keep that file**: it is the plaintext source, and Postgres creates its roles once, so a regenerated password would not be accepted. **Back up the key file too, outside git**: a rebuilt cluster gets a new sealing key and cannot decrypt what is committed without the old one. Restore it into `kube-system` before the controller starts, then restart the controller. To change one value, edit the env file and run `shogun-deploy secrets seal --env staging --only <name>`.
 
-To expose the web app, point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `values/<env>/web.yaml` (see the commented block in the staging file) and redeploy web. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n "$NS" get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL`, `TSUBAME_GMAIL_REDIRECT_URL` and the Google redirect URIs to `https://<host>`, then re-seal with `scripts/seal-secrets.sh --env <env> --only torii --only tsubame`, commit, and rerun `scripts/platform.sh` and restart torii and tsubame.
+Each environment is its own cluster with its own key and certificate, so seal staging and production separately. A SealedSecret is bound to its name and namespace (strict scope).
 
-### Grafana, Prometheus and Alertmanager
+Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*` let the stack start, but sign-in, drafts and GitHub sync will not work until you fill them in; `seal` warns about each one.
 
-Grafana is reached through Traefik once its host is set (the `TODO(owner)` block under `kube-prometheus-stack.grafana:` in `deploy/helm/monitoring/values.yaml`). Until then, use a port-forward. Sign in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `.secrets/k8s.env`; anonymous access is off. Prometheus and Alertmanager are never exposed:
+## 2. Exposing the web app and Grafana
+
+Point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `deploy/apps/web/values-<env>.yaml` (see the commented block in the staging file) and run `shogun-deploy apps web --env <env> --context "$CTX"`. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n shogun get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL`, `TSUBAME_GMAIL_REDIRECT_URL` and the Google redirect URIs to `https://<host>`, re-seal with `--only torii --only tsubame`, commit, and run `up --from secrets`. Traefik's access log stays off: it would record the OAuth callback's code.
+
+Grafana is reached through Traefik once its host is set (the `TODO(owner)` block under `grafana:` in `deploy/infrastructure/monitoring/kube-prometheus-stack/values.yaml`). Until then, port-forward. Sign in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `.secrets/<env>.env`. Prometheus and Alertmanager are never exposed:
 
 ```sh
 kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-grafana 3001:80
-kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9190:9090     # Status > Targets: ten shogun services up
+kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9190:9090   # Status > Targets: ten services up
 kubectl --context "$CTX" -n monitoring port-forward svc/monitoring-kube-prometheus-alertmanager 9191:9093
 ```
 
 Alertmanager sends to the chart's `null` receiver until an email receiver is added (`TODO(owner)` in the same values file).
 
-## Pick the versions
-
-Each service is versioned on its own (tags like `services/kagami/v0.4.0`), so there is no single version for the stack. List what is released and write down one version per service:
+## 3. Verify
 
 ```sh
-gh release list --repo 0xHoaxen/shogun
-```
-
-Keep them in a file you can reuse. Do not use `latest`. The tag in `values/<env>/<name>.yaml` is bumped by the deploy workflow's pull requests and is also a valid source:
-
-```sh
-# versions.env  (KEY=version)
-TORII=1.0.0
-KAGAMI=1.0.0
-# ... one line per service
-```
-
-Check out the repo at a commit whose values files match (the latest merged deploy PR), since the values files are not in the chart.
-
-## 1. Secrets
-
-Secrets are sealed with kubeseal and committed, so the cluster can be rebuilt from git. Only `scripts/platform.sh` (section 0 above) installs the sealed-secrets controller, so the first run on a new cluster stops after it (exit 3) and tells you what to do:
-
-```sh
-scripts/platform.sh --context "$CTX" --env staging                   # installs the controller, then stops
-cp deploy/k8s/secrets.example.env .secrets/staging.env               # git-ignored
-$EDITOR .secrets/staging.env                                         # Google OAuth, allowed emails, API keys
-scripts/seal-secrets.sh --env staging --fetch-cert --context "$CTX"  # deploy/k8s/staging/sealed-secrets.pem (public)
-scripts/seal-secrets.sh --env staging --backup-key --context "$CTX"  # .secrets/staging-sealed-secrets-key.yaml (private)
-scripts/seal-secrets.sh --env staging                                # deploy/k8s/staging/secrets/*.yaml
-git add deploy/k8s/staging && git commit
-scripts/platform.sh --context "$CTX" --env staging                   # applies them, then the rest
-```
-
-Sealing needs the certificate only, so it works offline. It seals `postgres` and the ten `<name>` Secrets for `shogun`, `grafana-admin` for `monitoring`, and `ghcr` when `GHCR_USER` and `GHCR_TOKEN` are set. It generates database passwords and signing keys and writes them back to `.secrets/staging.env`. **Keep that file**: it is the plaintext source, and Postgres creates its roles once, so a regenerated password would not be accepted. **Back up the key file too, outside git**: a rebuilt cluster gets a new sealing key and cannot decrypt what is committed without the old one. Restore it into `kube-system` before installing the controller, then restart the controller. To change one value, edit the env file and run `scripts/seal-secrets.sh --env staging --only <name>`.
-
-Each environment is its own cluster with its own key and certificate, so seal staging and production separately. A SealedSecret is bound to its name and namespace (strict scope): it cannot be copied under another name.
-
-Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*` let the stack start, but sign-in, drafts and GitHub sync will not work until you fill them in.
-
-## 2. Postgres
-
-```sh
-helm --kube-context "$CTX" -n "$NS" upgrade --install postgres deploy/helm/apps/postgres \
-  -f deploy/helm/values/staging/postgres.yaml --wait --timeout 180s
-```
-
-The init script creates the ten schemas and roles on the first start of an empty volume only. The migration Jobs need them, so wait for the rollout before installing anything. The Secrets script points `DATABASE_URL` at the Service `postgres`.
-
-Already running the old kustomize Postgres? Helm will not adopt it, because it did not create it. Delete only the StatefulSet and the Service (`kubectl delete statefulset,service postgres`); the PVC `data-postgres-0` stays, and the new StatefulSet has the same name, so it reattaches to the existing data.
-
-## Install the services
-
-`scripts/deploy.sh --context "$CTX" --namespace "$NS" --env staging` does Postgres and every service below in one go, with the same release names (`postgres` for the database, `<name>` for the services). The loop is the manual version. Each service has its own chart, `oci://ghcr.io/0xhoaxen/charts/<name>`, and the release is `<name>`, so no shell variable has to be set for the chart reference.
-
-Install `soroban` first (every Claude call reserves budget through it), then the rest. Each install runs its migration Job before the Deployment is created, and `--wait` blocks until the pods are Ready.
-
-```sh
-. ./versions.env
-install_service() {
-  name=$1 version=$2
-  helm upgrade --install "$name" "oci://ghcr.io/0xhoaxen/charts/$name" \
-    --version "$version" \
-    --kube-context "$CTX" --namespace "$NS" \
-    -f "deploy/helm/values/staging/$name.yaml" \
-    --set image.tag="$version" \
-    --wait --timeout 5m
-}
-
-install_service soroban "$SOROBAN"
-for s in kagami fude tsubame taiko dojo katana shinobi sensei torii; do
-  v=$(printf '%s' "$s" | tr '[:lower:]' '[:upper:]')
-  install_service "$s" "${!v}"
-done
-```
-
-(`${!v}` needs bash; zsh users run it as `bash -c` or use `${(P)v}`.)
-
-Notes:
-
-- `--version` selects the chart from the registry; `image.tag` selects the image. They are set separately on purpose. If the release step publishes the chart with the service version, pass the same value to both. If it publishes one chart version for all services, use that for `--version` and each service's own version for `image.tag`. `TODO(owner)`: state which in [State of the repo](#state-of-the-repo) once decided.
-- Without the release step on `main`, replace the `oci://` chart and `--version "$version"` with `deploy/helm/apps/service` from a local checkout. The result is the same chart at the checked-out commit.
-- Every pod gets all ten `*_ADDR` values, so the install order does not matter to Helm. `--wait` can still time out if a service refuses to become Ready until a peer is up; if it does, install the others and rerun.
-- A failed migration Job fails the install. Read it with `kubectl -n "$NS" logs job/<name>-migrate`. Helm deletes the Job on success, and `before-hook-creation` removes a failed one on the next try.
-- Use `values/production/` instead of `values/staging/` only after the production gaps listed above are closed.
-
-## Web app
-
-The Next.js rewrites to torii are baked in at build time, so the image must be built with torii's in-cluster address:
-
-```sh
-docker build -f deploy/docker/web.Dockerfile \
-  --build-arg TORII_URL=http://torii:8081 \
-  -t web:<tag> .
-kind load docker-image web:<tag> --name shogun
-(cd deploy/k8s/web && kustomize edit set image web=web:<tag>)   # do not commit this change
-kubectl --context "$CTX" -n "$NS" apply -k deploy/k8s/web
-kubectl --context "$CTX" -n "$NS" rollout status deployment/web
-```
-
-Use a unique `<tag>` per build, not `local`, or the pod will not pick up a new image. On a real cluster push the image to a registry instead of `kind load`. Check the image name in `deploy/k8s/web/kustomization.yaml` before running `kustomize edit`.
-
-## Verify
-
-```sh
-kubectl --context "$CTX" -n "$NS" get pods                 # all Running/Ready, no restarts
-kubectl --context "$CTX" -n "$NS" get jobs                 # no failed migrate Jobs left behind
-helm --kube-context "$CTX" -n "$NS" list                   # ten releases, status deployed
-kubectl --context "$CTX" -n "$NS" port-forward svc/web 3000:3000
+make deploy-status ENV=staging CONTEXT="$CTX"     # releases, pods not ready, last backup
+kubectl --context "$CTX" -n shogun port-forward svc/web 3000:3000
 ```
 
 Then, with the port-forward running:
 
 1. `curl -fsSI http://localhost:3000/login | head -1` returns 200.
 2. Open http://localhost:3000 and sign in with an address in `TORII_ALLOWED_EMAILS`. The redirect URI registered in Google must be `http://localhost:3000/auth/callback`, so keep `TORII_PUBLIC_URL` and the port-forward port the same.
-3. Check one service's readiness: `kubectl -n "$NS" port-forward svc/kagami 8080:8080` and `curl -fsS localhost:8080/readyz`.
+3. Check one service's readiness: `kubectl -n shogun port-forward svc/kagami 8080:8080` and `curl -fsS localhost:8080/readyz`.
 4. Add a draft, approve it and send it to yourself, once, to exercise the whole Hanko path.
+5. `shogun-deploy backup now --env staging --context "$CTX"` writes a backup; restore it once (`docs/backup-restore.md`, "On the cluster").
 
 The smoke test script from `P10.5` is not written yet; the steps above are what it should automate.
 
-## Upgrade
+## 4. Upgrade
 
-A service releases on its own, so an upgrade is one `helm upgrade` per changed service:
+A service releases on its own: the release workflow opens a pull request that bumps `image.tag` in `deploy/apps/<name>/values-staging.yaml`. After merging it:
 
 ```sh
-install_service kagami 1.1.0
+make deploy-plan ENV=staging CONTEXT="$CTX"                            # helmfile diff, per phase
+shogun-deploy apps kagami --env staging --context "$CTX"               # just that app
+shogun-deploy apps --env staging --context "$CTX" --tag kagami=1.1.0   # try a version without editing values
 ```
 
-The migration Job runs first (`pre-upgrade`), then the pods roll. Migrations are append-only and there is no down step. Roll back a bad release with `helm rollback`, but only if the new version added no migration; if it did, the old code does not know the new schema and you restore a database backup instead.
+The migration Job runs first (`pre-upgrade`), then the pods roll. Migrations are append-only and there is no down step. Roll back a bad release with `helm rollback`, but only if the new version added no migration; if it did, the old code does not know the new schema and you restore a backup instead. Take one first with `shogun-deploy backup now`.
 
 ```sh
-helm --kube-context "$CTX" -n "$NS" history kagami
-helm --kube-context "$CTX" -n "$NS" rollback kagami <revision> --wait
+helm --kube-context "$CTX" -n shogun history kagami
+helm --kube-context "$CTX" -n shogun rollback kagami <revision> --wait
 ```
 
-Take a database dump before any upgrade that adds a migration. There is no backup job in the cluster (the Compose `backup` service does not exist here), so run it by hand; the superuser name and password come from the `postgres` Secret and the StatefulSet env, so check them first:
+## 5. Remove
 
 ```sh
-kubectl --context "$CTX" -n "$NS" exec statefulset/<name> -- \
-  sh -c 'pg_dump -U "$POSTGRES_USER" -Fc shogun' > "shogun-$(date +%F).dump"
-```
-
-## Remove
-
-```sh
-for s in torii sensei shinobi katana dojo taiko tsubame fude kagami soroban; do
-  helm --kube-context "$CTX" -n "$NS" uninstall "$s"
-done
-kubectl --context "$CTX" delete namespace "$NS"      # also deletes Postgres data and the Secrets
+bin/helmfile -e staging --kube-context "$CTX" destroy   # every release; namespaces and the backup volume are kept
+kubectl --context "$CTX" delete namespace shogun        # also deletes Postgres data, backups and the Secrets
 ```
 
 `kind delete cluster --name shogun` removes everything.
 
 ## Security checklist before a real login
 
-- [ ] `.secrets/k8s.env` is mode 600, not in git, and backed up.
+- [ ] `.secrets/<env>.env` is mode 600, not in git, and backed up; so is the sealing key backup.
 - [ ] `ENVIRONMENT=production` and `TORII_PUBLIC_URL` is `https://` in the production values.
-- [ ] No placeholder remains: `grep replace-me .secrets/k8s.env` prints nothing.
+- [ ] No placeholder remains: `grep replace-me .secrets/<env>.env` prints nothing.
 - [ ] `TORII_ALLOWED_EMAILS` lists only you.
 - [ ] Only the web app and Grafana are exposed outside the cluster; Postgres, Prometheus, Alertmanager and the service Services stay `ClusterIP`.
 - [ ] Hanko keys match (a test send succeeds; a tampered draft is refused).
 - [ ] The Google OAuth consent screen is limited to you.
-- [ ] A database dump exists off the cluster and one restore has been checked.
+- [ ] A backup exists off the cluster and one restore has been checked.
 
 ## Open items
 
 | Item | Owner |
 | --- | --- |
-| Chart OCI reference and version scheme (one chart version, or the service version) | `TODO(owner)` |
-| `helm package` and `helm push` step in `release.yml`, and enabling its `push` trigger (`P3.6`) | task to add |
-| `imagePullSecrets` in the chart, if the ghcr.io packages stay private | task to add |
-| Publish the web image from CI | task to add |
-| Web host and DNS record for the Ingress (`ingress.host` in `values/<env>/web.yaml`) | `TODO(owner)` |
-| Backup CronJob and off-cluster destination | `TODO(owner)` |
-| Production values: torii URL, public port and peers | `TODO(owner)` (protected files) |
+| Enable the `push` trigger of `release.yml` (`P10.5k`) | task |
+| Web host and DNS record for the Ingress (`ingress.host` in `deploy/apps/web/values-<env>.yaml`) | `TODO(owner)` |
+| Production web values (`deploy/apps/web/values-production.yaml`) | `TODO(owner)` |
+| Production quota: the HPA minimum of two replicas does not fit a 4 GiB VM | `TODO(owner)` |
+| Backup retention and an off-cluster copy | `TODO(owner)` |
+| Production values: torii URL and public port | `TODO(owner)` (protected files) |

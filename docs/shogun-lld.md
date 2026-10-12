@@ -366,7 +366,7 @@ All Claude API calls go through `fude` (and `tsubame` for classification) throug
 | Logs | JSON `slog` with `trace_id`, `request_id`, `owner_id`; never logs message bodies or tokens | stdout, collected by Loki |
 | Alerts | outbox lag > 5 min, discarded jobs > 0, error rate > 2% for 10 min, Gmail sync failing for 1 h | Alertmanager to email |
 
-Local compose runs Jaeger, Prometheus, Alertmanager and Grafana behind a `make up-observability` profile so the default stack stays light (services export traces straight to Jaeger; there is no collector yet). Alert rules are in `deploy/compose/observability/alerts.yml`; Alertmanager has no receiver until the owner adds an email one. On the k3s cluster, kube-prometheus-stack runs Prometheus, Alertmanager and Grafana. It scrapes the services through the chart's ServiceMonitors and loads the same rules and dashboard through `deploy/helm/monitoring`, which links to the Compose files (see `docs/deploy.md`).
+Local compose runs Jaeger, Prometheus, Alertmanager and Grafana behind a `make up-observability` profile so the default stack stays light (services export traces straight to Jaeger; there is no collector yet). Alert rules are in `deploy/compose/observability/alerts.yml`; Alertmanager has no receiver until the owner adds an email one. On the k3s cluster, kube-prometheus-stack runs Prometheus, Alertmanager and Grafana. It scrapes the services through the chart's ServiceMonitors and loads the same rules and dashboard through `deploy/charts/monitoring-extras`, which links to the Compose files (see `docs/deploy.md`).
 
 ## Versioning, CI/CD and deploy
 
@@ -392,10 +392,10 @@ Each module releases on its own semantic version, driven by Conventional Commits
 | `proto.yml` | changes under `proto/` | `buf lint`, `buf breaking` against main, `buf generate` then fail if `gen/` differs |
 | `pr-title.yml` | pull request | Conventional Commit title check |
 | `release.yml` | push to main | release-please opens or updates one release PR per module; when merged it tags, writes CHANGELOGs and outputs the released paths, then builds and pushes `ghcr.io/sboy99/shogun-<svc>:<version>` (for example `shogun-kagami:0.4.0`) with SBOM and provenance |
-| `deploy.yml` | release published, or manual | bumps the image tag in `deploy/helm/values/<env>/<svc>.yaml`; staging automatically, production behind a GitHub environment approval |
+| `deploy.yml` | release published, or manual | bumps the image tag in `deploy/apps/<svc>/values-<env>.yaml`; staging automatically, production behind a GitHub environment approval |
 | `codeql.yml` | weekly, pull request | static security analysis |
 
-**Deploy shape.** One generic Helm chart (`deploy/helm/apps/service`) renders Deployment, Service, HPA, PodDisruptionBudget, ServiceMonitor and a migration Job hook; each service supplies only a values file. GitOps (Argo CD watching `deploy/helm/values`) is the target; the workflow writes the new tag and Argo rolls it out. Until a cluster exists, the same images run with `docker compose` on a single VM.
+**Deploy shape.** One generic Helm chart (`deploy/charts/microservice`) renders Deployment, Service, HPA, PodDisruptionBudget, ServiceMonitor and a migration Job hook; each service supplies only a values file. GitOps (Argo CD watching `deploy/apps` and `deploy/infrastructure`) is the target; the workflow writes the new tag and Argo rolls it out. Until a cluster exists, the same images run with `docker compose` on a single VM.
 
 ## How it scales, and open questions
 
