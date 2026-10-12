@@ -1,0 +1,18 @@
+# Defaults for the ingress chart. Cluster-wide values live in
+# deploy/helm/values/cluster/ingress.yaml.
+#
+# Install it once per cluster with scripts/platform.sh, after cert-manager: the
+# ClusterIssuers need cert-manager's CRDs. It is not part of any app release.
+
+traefik:
+  # Writes a HelmChartConfig for the Traefik that k3s bundles. Turn off on a
+  # cluster that is not k3s (the HelmChartConfig CRD only exists there).
+  configure: true
+  # Permanent redirect of every request on :80 to :443. Let's Encrypt follows the
+  # redirect for HTTP-01 challenges, and k3s routes an Ingress on both ports.
+  redirectToHttps: true
+
+acme:
+  # Contact on the Let's Encrypt account. Optional: Let's Encrypt no longer
+  # sends expiry mail.
+  email: ""

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ingress
+description: Cluster-wide ingress setup for k3s - the HTTP to HTTPS redirect in the bundled Traefik and the Let's Encrypt issuers for cert-manager.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

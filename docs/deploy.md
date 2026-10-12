@@ -44,6 +44,20 @@ If the chart or images are private, log in first:
 echo "$GHCR_TOKEN" | helm registry login ghcr.io -u <github user> --password-stdin
 ```
 
+## Platform (once per cluster)
+
+The VM runs k3s, which bundles Traefik. `scripts/platform.sh` adds what the app releases rely on: cert-manager (pinned in the script, CRDs included), then the local chart `deploy/helm/ingress`, which makes Traefik redirect HTTP to HTTPS and creates the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
+
+```sh
+kubectl --context "$CTX" -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'   # needs Traefik chart 34 or newer
+scripts/platform.sh --context "$CTX"
+kubectl --context "$CTX" get clusterissuer                                                  # both READY True
+```
+
+Cluster-wide values are in `deploy/helm/values/cluster/`. Rerun the script after changing one of them or a pinned version. Traefik's access log stays off: it would record the OAuth callback's code.
+
+To expose the web app, point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `values/<env>/web.yaml` (see the commented block in the staging file) and redeploy web. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n "$NS" get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL` in `.secrets/k8s.env` and the Google redirect URI to `https://<host>`, then rerun `scripts/k8s-secrets.sh` and restart torii.
+
 ## Pick the versions
 
 Each service is versioned on its own (tags like `services/kagami/v0.4.0`), so there is no single version for the stack. List what is released and write down one version per service:
@@ -207,6 +221,6 @@ kubectl --context "$CTX" delete namespace "$NS"      # also deletes Postgres dat
 | `helm package` and `helm push` step in `release.yml`, and enabling its `push` trigger (`P3.6`) | task to add |
 | `imagePullSecrets` in the chart, if the ghcr.io packages stay private | task to add |
 | Publish the web image from CI | task to add |
-| Ingress with TLS for the web app (the port-forward is for kind only) | `TODO(owner)` |
+| Web host and DNS record for the Ingress (`ingress.host` in `values/<env>/web.yaml`) | `TODO(owner)` |
 | Backup CronJob and off-cluster destination | `TODO(owner)` |
 | Production values: torii URL, public port and peers | `TODO(owner)` (protected files) |

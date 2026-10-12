@@ -1,0 +1,4 @@
+# ingress, once per cluster. Installed by scripts/platform.sh.
+# TODO(owner): set acme.email if you want a contact on the Let's Encrypt account.
+acme:
+  email: ""

@@ -20,6 +20,18 @@ replicaCount: 1
 
 port: 3000
 
+# Public HTTPS entry through Traefik, with a certificate from cert-manager (the
+# issuers come from deploy/helm/ingress). The web app is the only thing exposed:
+# it proxies /api and /auth to torii inside the cluster. TORII_PUBLIC_URL and the
+# Google redirect URI must be https://<host>.
+ingress:
+  enabled: false
+  className: traefik
+  # Required when enabled, for example shogun.example.com.
+  host: ""
+  # letsencrypt-staging until the host resolves, then letsencrypt-prod.
+  clusterIssuer: letsencrypt-staging
+
 # Plain environment variables for the container.
 env: {}
 
