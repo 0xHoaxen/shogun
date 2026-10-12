@@ -1,0 +1,15 @@
+{{- range .Values.namespaces }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ required "each namespace needs a name" .name }}
+  # Uninstalling the release must never delete a namespace and everything in it.
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    app.kubernetes.io/part-of: shogun
+    {{- with .labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}

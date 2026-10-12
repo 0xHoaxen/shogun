@@ -1,0 +1,31 @@
+{{- if .Values.migrationJob.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "microservice.name" . }}-migrate
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        {{- include "microservice.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- include "microservice.podSpecCommon" . | nindent 6 }}
+      containers:
+        - name: migrate
+          image: {{ include "microservice.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["migrate"]
+          securityContext:
+            {{- include "microservice.containerSecurityContext" . | nindent 12 }}
+          {{- with (include "microservice.envBlock" . | trim) }}
+          {{- . | nindent 10 }}
+          {{- end }}
+{{- end }}

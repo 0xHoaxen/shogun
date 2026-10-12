@@ -29,10 +29,7 @@ fi
 move() { git mv "$1" "$2" 2>/dev/null || mv "$1" "$2"; }
 
 move "services/$old" "services/$new"
-for env in staging production; do
-	[[ -f "deploy/helm/values/$env/$old.yaml" ]] && move "deploy/helm/values/$env/$old.yaml" "deploy/helm/values/$env/$new.yaml"
-done
-[[ -d "deploy/helm/apps/$old" ]] && move "deploy/helm/apps/$old" "deploy/helm/apps/$new"
+[[ -d "deploy/apps/$old" ]] && move "deploy/apps/$old" "deploy/apps/$new"
 move "services/$new/cmd/$old" "services/$new/cmd/$new"
 if [[ -d "proto/shogun/$old" ]]; then
 	move "proto/shogun/$old" "proto/shogun/$new"

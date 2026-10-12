@@ -11,15 +11,16 @@ COMPOSE := docker compose --env-file $(COMPOSE_ENV) -f deploy/compose/compose.ya
 
 .DEFAULT_GOAL := help
 
-.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service
+.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service deploy-plan deploy deploy-status deploy-test seal
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
-tools: ## install pinned buf, protoc plugins, goose, sqlc and golangci-lint into ./bin
+tools: ## install pinned buf, protoc plugins, goose, sqlc, golangci-lint and helmfile into ./bin, and helm-diff
 	mkdir -p $(BIN)
 	cd tools && GOWORK=off GOBIN=$(BIN) go install tool
 	GOWORK=off GOBIN=$(BIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v$(GOLANGCI_LINT_VERSION)
+	BIN=$(BIN) scripts/install-helmfile.sh
 
 proto: ## buf lint + buf generate into gen/go and web/src/gen
 	$(BIN)/buf lint
@@ -77,3 +78,22 @@ new-service: ## generate a service skeleton: make new-service NAME=<name>
 
 rename-service: ## rename a service everywhere: make rename-service OLD=a NEW=b
 	@scripts/rename-service.sh "$(OLD)" "$(NEW)"
+
+# Cluster deploys: ENV=staging|production, CONTEXT=<kube context> (asked for when empty).
+DEPLOY := uv run --project scripts/deploy shogun-deploy
+DEPLOY_TARGET = --env "$(ENV)" $(if $(CONTEXT),--context "$(CONTEXT)")
+
+deploy-plan: ## show what a deploy would change: make deploy-plan ENV=staging CONTEXT=<ctx>
+	@$(DEPLOY) plan $(DEPLOY_TARGET)
+
+deploy: ## install or upgrade a cluster, phase by phase: make deploy ENV=staging CONTEXT=<ctx>
+	@$(DEPLOY) up $(DEPLOY_TARGET)
+
+deploy-status: ## releases, pods not ready and the last backup: make deploy-status ENV=staging CONTEXT=<ctx>
+	@$(DEPLOY) status $(DEPLOY_TARGET)
+
+seal: ## seal a cluster's Secrets offline from .secrets/<env>.env: make seal ENV=staging
+	@$(DEPLOY) secrets seal --env "$(ENV)"
+
+deploy-test: ## tests and lint for the deploy CLI in scripts/deploy
+	cd scripts/deploy && uv run pytest && uv run ruff check . && uv run ruff format --check .

@@ -1,0 +1,4 @@
+# torii: what the service is. Per-environment settings are in values-<env>.yaml.
+name: torii
+env:
+  LOG_LEVEL: info

@@ -1,0 +1,70 @@
+{{- if .Values.backup.enabled }}
+# Runs backup.sh once a night. The same image as the database, so pg_dump
+# matches the server version. A failed run deletes no old backup; the next
+# night tries again.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "shogunPostgres.fullname" . }}-backup
+  labels:
+    {{- include "shogunPostgres.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.backup.schedule | quote }}
+  timeZone: {{ .Values.backup.timeZone | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            {{- include "shogunPostgres.labels" . | nindent 12 }}
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: Never
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: backup
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["/opt/shogun/backup.sh", "once"]
+              env:
+                - name: PGHOST
+                  value: {{ include "shogunPostgres.fullname" . }}
+                - name: PGDATABASE
+                  value: {{ .Values.database | quote }}
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.secretName }}
+                      key: POSTGRES_PASSWORD
+                - name: BACKUP_DIR
+                  value: /backups
+                - name: RETENTION_DAYS
+                  value: {{ .Values.backup.retentionDays | quote }}
+              resources:
+                {{- toYaml .Values.backup.resources | nindent 16 }}
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+                - name: script
+                  mountPath: /opt/shogun/backup.sh
+                  subPath: backup.sh
+          volumes:
+            - name: backups
+              persistentVolumeClaim:
+                claimName: {{ include "shogunPostgres.fullname" . }}-backups
+            - name: script
+              configMap:
+                name: {{ include "shogunPostgres.fullname" . }}-backup
+                defaultMode: 0555
+{{- end }}

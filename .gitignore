@@ -16,5 +16,12 @@ web/.next/
 .DS_Store
 
 # Helm dependency output (helm package -u rebuilds it)
-deploy/helm/**/charts/
-deploy/helm/**/Chart.lock
+deploy/charts/**/charts/
+deploy/charts/**/Chart.lock
+
+# Deploy CLI (scripts/deploy): its virtualenv and caches, and one log per run
+.deploy-logs/
+scripts/deploy/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/

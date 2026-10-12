@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Checks deploy/k8s: both overlays render, and what the staging charts request
-# fits the ResourceQuota. Needs helm and kubectl. Run: scripts/k8s_test.sh
+# Checks the namespaces chart: both environments render, and what the staging charts request
+# fits the ResourceQuota. Needs helm. Run: scripts/k8s_test.sh
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 root="$here/.."
-helm_dir="$root/deploy/helm"
+infra_dir="$root/deploy/infrastructure"
+apps_dir="$root/deploy/apps"
 failed=0
 SERVICES="torii kagami tsubame fude taiko dojo katana shinobi sensei soroban"
 
@@ -17,20 +18,23 @@ check() { # name, command that succeeds when the behaviour holds
 	if eval "$2"; then ok "$1"; else fail "$1"; fi
 }
 
+# namespaces ENV renders the namespaces chart of an environment.
+namespaces() {
+	helm template namespaces "$root/deploy/charts/namespaces" -f "$infra_dir/namespaces/values.yaml" \
+		-f "$infra_dir/namespaces/values-$1.yaml"
+}
+
 # render ENV prints every app chart of an environment, one YAML stream.
 render() {
 	local env=$1 name
-	for name in $SERVICES; do
-		helm template "shogun-$name" "$helm_dir/apps/$name" -n shogun -f "$helm_dir/values/$env/$name.yaml" 2>/dev/null
+	for name in $SERVICES web; do
+		[ -f "$apps_dir/$name/values-$env.yaml" ] || continue
+		helm template "$name" "$root/deploy/charts/microservice" -n shogun -f "$apps_dir/common.yaml" \
+			-f "$apps_dir/$name/values.yaml" -f "$apps_dir/$name/values-$env.yaml" 2>/dev/null
 		echo "---"
 	done
-	if [ -f "$helm_dir/values/$env/web.yaml" ]; then
-		helm template shogun-web "$helm_dir/apps/web" -n shogun -f "$helm_dir/values/$env/web.yaml" 2>/dev/null
-		echo "---"
-	fi
-	if [ -f "$helm_dir/values/$env/postgres.yaml" ]; then
-		helm template postgres "$helm_dir/apps/postgres" -n shogun -f "$helm_dir/values/$env/postgres.yaml" 2>/dev/null
-	fi
+	helm template postgres "$root/deploy/charts/postgres" -n shogun -f "$infra_dir/postgres/values.yaml" \
+		-f "$infra_dir/postgres/values-$env.yaml" 2>/dev/null
 }
 
 # fit ENV prints the totals of an environment's pods against the quota and exits
@@ -39,7 +43,7 @@ render() {
 fit() {
 	local env=$1
 	{
-		kubectl kustomize "$root/deploy/k8s/$env"
+		namespaces "$env"
 		echo "#RENDER"
 		render "$env"
 	} | python3 -I -c '
@@ -67,7 +71,7 @@ def field(block, key):
 
 quota = {}
 hard = quota_text.split("hard:", 1)[1]
-for key in ("requests.cpu", "requests.memory", "limits.memory", "pods"):
+for key in ("requests.cpu", "requests.memory", "limits.memory", "pods", "persistentvolumeclaims", "requests.storage"):
     quota[key] = field(hard, key)
 
 # An autoscaled Deployment runs at least minReplicas pods.
@@ -81,9 +85,15 @@ for doc in re.split(r"\n---\n", rendered):
 
 steady = {"cpu": 0, "req_mem": 0, "lim_mem": 0, "pods": 0}
 job = {"cpu": 0, "req_mem": 0, "lim_mem": 0}
+cron = {"cpu": 0, "req_mem": 0, "lim_mem": 0, "pods": 0}
+storage = {"pvcs": 0, "storage": 0}
 for doc in re.split(r"\n---\n", rendered):
     kind = re.search(r"^kind: (\w+)$", doc, re.M)
-    if not kind or kind.group(1) not in ("Deployment", "StatefulSet", "Job"):
+    if kind and kind.group(1) in ("PersistentVolumeClaim", "StatefulSet"):
+        for size in re.findall(r"^\s+storage: (\S+)$", doc, re.M):
+            storage["pvcs"] += 1
+            storage["storage"] += mem(size)
+    if not kind or kind.group(1) not in ("Deployment", "StatefulSet", "Job", "CronJob"):
         continue
     blocks = re.findall(r"^\s+resources:\n((?:\s{12,}.*\n)+)", doc + "\n", re.M)
     req_cpu = req_mem = lim_mem = 0
@@ -101,6 +111,11 @@ for doc in re.split(r"\n---\n", rendered):
         for k, v in (("cpu", req_cpu), ("req_mem", req_mem), ("lim_mem", lim_mem)):
             job[k] = max(job[k], v)
         continue
+    # A CronJob (the nightly backup) may run while a migration Job does.
+    if kind.group(1) == "CronJob":
+        for k, v in (("cpu", req_cpu), ("req_mem", req_mem), ("lim_mem", lim_mem), ("pods", 1)):
+            cron[k] += v
+        continue
     name = re.search(r"^  name: (\S+)$", doc, re.M)
     replicas = min_replicas.get(name.group(1) if name else "", int(field(doc, "replicas") or 1))
     steady["cpu"] += req_cpu * replicas
@@ -109,16 +124,20 @@ for doc in re.split(r"\n---\n", rendered):
     steady["pods"] += replicas
 
 need = {
-    "cpu": steady["cpu"] + job["cpu"],
-    "req_mem": steady["req_mem"] + job["req_mem"],
-    "lim_mem": steady["lim_mem"] + job["lim_mem"],
-    "pods": steady["pods"] + 1,
+    "cpu": steady["cpu"] + job["cpu"] + cron["cpu"],
+    "req_mem": steady["req_mem"] + job["req_mem"] + cron["req_mem"],
+    "lim_mem": steady["lim_mem"] + job["lim_mem"] + cron["lim_mem"],
+    "pods": steady["pods"] + 1 + cron["pods"],
+    "pvcs": storage["pvcs"],
+    "storage": storage["storage"],
 }
 have = {
     "cpu": cpu(quota["requests.cpu"]),
     "req_mem": mem(quota["requests.memory"]),
     "lim_mem": mem(quota["limits.memory"]),
     "pods": int(quota["pods"]),
+    "pvcs": int(quota["persistentvolumeclaims"]),
+    "storage": mem(quota["requests.storage"]),
 }
 over = [k for k in need if need[k] > have[k]]
 for k in need:
@@ -127,16 +146,16 @@ sys.exit(1 if over else 0)
 '
 }
 
-check "the staging overlay renders a quota, a limit range and both namespaces" \
-	'out=$(kubectl kustomize "$root/deploy/k8s/staging") &&
+check "staging renders a quota, a limit range and both namespaces" \
+	'out=$(namespaces staging) &&
 	 [ "$(echo "$out" | grep -c "^kind: Namespace")" -eq 2 ] &&
 	 echo "$out" | grep -q "^kind: ResourceQuota" && echo "$out" | grep -q "^kind: LimitRange"'
-check "the production overlay renders" 'kubectl kustomize "$root/deploy/k8s/production" >/dev/null'
-check "staging requests, limits and pods fit the quota with a migration Job on top" \
+check "production renders" 'namespaces production >/dev/null'
+check "staging requests, limits, pods and volumes fit the quota with a migration Job and the backup on top" \
 	'report=$(fit staging); code=$?; echo "$report"; [ "$code" -eq 0 ]'
 
 # Production is reported, not asserted: its HPA minimum of two replicas does not
-# fit a 4 GiB VM yet (TODO(owner), see deploy/k8s/base/resource-quota.yaml).
+# fit a 4 GiB VM yet (TODO(owner), see deploy/infrastructure/namespaces/values.yaml).
 echo "info production (not asserted):"
 fit production
 

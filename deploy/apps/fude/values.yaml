@@ -1,0 +1,4 @@
+# fude: what the service is. Per-environment settings are in values-<env>.yaml.
+name: fude
+env:
+  LOG_LEVEL: info
