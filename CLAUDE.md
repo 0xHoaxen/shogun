@@ -30,7 +30,7 @@ The rules, commands and architecture in `AGENTS.md` apply in full. This file add
 
 Do not hand-edit: `gen/go/**`, `web/src/gen/**`, `go.work.sum`, any `*_sqlc.go` / `internal/store/db/*.go`. Regenerate with `make proto` or `make sqlc`.
 
-Never touch without being asked: `.github/workflows/release.yml`, `deploy/helm/values/production/**`, `.release-please-manifest.json`.
+Never touch without being asked: `.github/workflows/release.yml`, `deploy/apps/*/values-production.yaml`, `.release-please-manifest.json`.
 
 ## Skeleton rules for new code
 

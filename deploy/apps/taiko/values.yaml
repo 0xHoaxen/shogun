@@ -1,0 +1,4 @@
+# taiko: what the service is. Per-environment settings are in values-<env>.yaml.
+name: taiko
+env:
+  LOG_LEVEL: info

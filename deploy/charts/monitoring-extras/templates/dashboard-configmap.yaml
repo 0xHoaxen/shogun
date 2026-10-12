@@ -1,0 +1,12 @@
+# Loaded by the Grafana dashboard sidecar, which watches every namespace for
+# this label. The dashboard's datasource uid "prometheus" is the stack's default.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shogun-dashboard
+  labels:
+    {{- include "shogunMonitoring.labels" . | nindent 4 }}
+    grafana_dashboard: "1"
+data:
+  shogun.json: |-
+{{ .Files.Get "files/shogun.json" | indent 4 }}

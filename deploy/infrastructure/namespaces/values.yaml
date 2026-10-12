@@ -1,0 +1,33 @@
+# The two namespaces every cluster has, installed first (phase bootstrap) so no
+# other release needs --create-namespace for them. Helm replaces lists whole, so
+# a values-<env>.yaml that sets namespaces: must repeat both entries.
+namespaces:
+  - name: shogun
+    # What the shogun namespace may ask for in total, sized for a 2 vCPU / 4 GiB
+    # VM that also runs k3s, cert-manager and the monitoring stack.
+    # Staging steady state is 650m CPU and 1 GiB of requests (ten services at
+    # 50m/64Mi, web 50m/128Mi, Postgres 100m/256Mi); the rest is room for a
+    # rolling update and a migration Job.
+    # TODO(owner): revisit after the first real deploy, and raise it with the VM.
+    # Production does not fit yet: its values ask for two replicas per service.
+    quota:
+      requests.cpu: 1200m
+      requests.memory: 1792Mi
+      limits.memory: 5Gi
+      pods: "25"
+      persistentvolumeclaims: "3"
+      requests.storage: 15Gi
+    # Defaults for a container that sets no resources, and a ceiling for one
+    # that does. The memory limit is what protects the node: a leak in one pod
+    # gets OOM-killed instead of starving Postgres. CPU has no limit, so a busy
+    # pod can use idle cores.
+    limitRange:
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      default:
+        memory: 256Mi
+      max:
+        memory: 1Gi
+  # No quota on purpose: the stack's own requests are explicit in its values.
+  - name: monitoring

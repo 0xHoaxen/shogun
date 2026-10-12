@@ -1,0 +1,4 @@
+# The sealed-secrets controller (bitnami-labs), release sealed-secrets in
+# kube-system, phase bootstrap. kubeseal looks for exactly this name and
+# namespace unless told otherwise, so keep them.
+fullnameOverride: sealed-secrets-controller

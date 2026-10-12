@@ -1,0 +1,6 @@
+apiVersion: v2
+name: microservice
+description: One chart for every app Shogun ships, the ten Go services and the web app. Per-app values live in deploy/apps/<name>/.
+type: application
+version: 0.1.0
+appVersion: "0.0.0"
