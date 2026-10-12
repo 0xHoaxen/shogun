@@ -1,0 +1,4 @@
+# kagami: what the service is. Per-environment settings are in values-<env>.yaml.
+name: kagami
+env:
+  LOG_LEVEL: info

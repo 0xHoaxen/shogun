@@ -67,6 +67,27 @@ func TestNewConfigReadsAModelOverrideFromTheEnvironment(t *testing.T) {
 	}
 }
 
+func TestNewConfigReadsOneModelForEveryFeatureFromTheEnvironment(t *testing.T) {
+	env := map[string]string{
+		"ANTHROPIC_MODEL":             "claude-sonnet-5-5",
+		"LLM_MODEL_FUDE_COVER_LETTER": "claude-opus-5-5",
+	}
+	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+
+	fude, _ := llm.NewConfig("fude", lookup)
+	tsubame, _ := llm.NewConfig("tsubame", lookup)
+
+	if got := fude.Features["fude.post"].Model; got != "claude-sonnet-5-5" {
+		t.Errorf("post model = %s, want the shared override", got)
+	}
+	if got := tsubame.Features["tsubame.classify"].Model; got != "claude-sonnet-5-5" {
+		t.Errorf("classify model = %s, want the shared override", got)
+	}
+	if got := fude.Features["fude.cover_letter"].Model; got != "claude-opus-5-5" {
+		t.Errorf("cover letter model = %s, want the feature override to win", got)
+	}
+}
+
 func TestNewConfigRejectsAServiceWithoutFeatures(t *testing.T) {
 	for _, service := range []string{"", "kagami"} {
 		if _, err := llm.NewConfig(service, noEnv); err == nil {

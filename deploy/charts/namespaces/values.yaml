@@ -1,0 +1,8 @@
+# One entry per namespace. Set them in deploy/infrastructure/namespaces/.
+#   - name: shogun                  required
+#     labels: {}                    extra labels, for example Pod Security
+#     quota: {}                     ResourceQuota spec.hard; none when empty
+#     limitRange: {}                one Container limit (defaultRequest, default, max)
+#     defaultDenyIngress: false     deny ingress except from the same namespace,
+#                                   Traefik (kube-system) and monitoring
+namespaces: []

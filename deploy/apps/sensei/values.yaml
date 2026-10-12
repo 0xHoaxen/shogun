@@ -1,0 +1,4 @@
+# sensei: what the service is. Per-environment settings are in values-<env>.yaml.
+name: sensei
+env:
+  LOG_LEVEL: info

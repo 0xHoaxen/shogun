@@ -1,6 +1,6 @@
 name: deploy
 
-# Bumps image.tag in deploy/helm/values/<environment>/<service>.yaml through a
+# Bumps image.tag in deploy/apps/<service>/values-<environment>.yaml through a
 # pull request. Staging is called by the release workflow; production is only
 # ever bumped by running this by hand.
 
@@ -54,9 +54,9 @@ jobs:
           [[ "$ENVIRONMENT" =~ ^(staging|production)$ ]] || { echo "bad environment: $ENVIRONMENT" >&2; exit 1; }
           [[ "$SERVICE" =~ ^[a-z][a-z0-9]*$ ]] || { echo "bad service: $SERVICE" >&2; exit 1; }
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]] || { echo "bad version: $VERSION" >&2; exit 1; }
-          test -f "deploy/helm/values/$ENVIRONMENT/$SERVICE.yaml" || { echo "no values file for $SERVICE in $ENVIRONMENT" >&2; exit 1; }
+          test -f "deploy/apps/$SERVICE/values-$ENVIRONMENT.yaml" || { echo "no values file for $SERVICE in $ENVIRONMENT" >&2; exit 1; }
       - name: Set image.tag
-        run: yq -i '.image.tag = strenv(VERSION)' "deploy/helm/values/$ENVIRONMENT/$SERVICE.yaml"
+        run: yq -i '.image.tag = strenv(VERSION)' "deploy/apps/$SERVICE/values-$ENVIRONMENT.yaml"
       - name: Open the pull request
         run: |
           branch="deploy/$ENVIRONMENT-$SERVICE-$VERSION"
@@ -67,4 +67,4 @@ jobs:
           git push -u origin "$branch"
           gh pr create --base main --head "$branch" \
             --title "chore(deploy): $SERVICE $VERSION to $ENVIRONMENT" \
-            --body "Sets image.tag to $VERSION in deploy/helm/values/$ENVIRONMENT/$SERVICE.yaml."
+            --body "Sets image.tag to $VERSION in deploy/apps/$SERVICE/values-$ENVIRONMENT.yaml."

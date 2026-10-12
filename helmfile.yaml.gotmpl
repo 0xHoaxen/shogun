@@ -1,0 +1,137 @@
+# Every Helm release of a Shogun cluster, its values and its install order.
+# Normally run through the deploy CLI, which applies one phase at a time and the
+# plain manifests between them (sealed Secrets after bootstrap; ClusterIssuers
+# and the k3s Traefik config after cert-manager):
+#
+#   bootstrap  namespaces, sealed-secrets controller
+#   platform   cert-manager, monitoring (kube-prometheus-stack), monitoring-extras
+#   data       postgres
+#   apps       soroban, then the other services and web
+#
+# By hand: helmfile -e <staging|production> --kube-context <ctx> -l phase=<phase> apply
+# Override an image tag without editing values: --state-values-set tags.kagami=1.2.3
+#
+# Each environment is its own cluster with its own sealing key. Paths are
+# relative to this file.
+
+repositories:
+  - name: sealed-secrets
+    url: https://bitnami.github.io/sealed-secrets
+  - name: jetstack
+    url: quay.io/jetstack/charts
+    oci: true
+  - name: prometheus-community
+    url: ghcr.io/prometheus-community/charts
+    oci: true
+
+environments:
+  staging:
+    values:
+      - tags: {}
+  production:
+    values:
+      - tags: {}
+
+---
+helmDefaults:
+  wait: true
+  timeout: 300
+
+{{- $env := .Environment.Name }}
+{{- $tags := .Values.tags }}
+
+releases:
+  # ---- bootstrap -------------------------------------------------------------
+  # Namespace objects are cluster-wide; the release record lives in kube-system.
+  - name: namespaces
+    namespace: kube-system
+    chart: ./deploy/charts/namespaces
+    labels:
+      phase: bootstrap
+    values:
+      - deploy/infrastructure/namespaces/values.yaml
+      - deploy/infrastructure/namespaces/values-{{ $env }}.yaml
+
+  - name: sealed-secrets
+    namespace: kube-system
+    chart: sealed-secrets/sealed-secrets
+    version: 2.20.0
+    labels:
+      phase: bootstrap
+    values:
+      - deploy/infrastructure/sealed-secrets/values.yaml
+
+  # ---- platform --------------------------------------------------------------
+  - name: cert-manager
+    namespace: cert-manager
+    createNamespace: true
+    chart: jetstack/cert-manager
+    version: v1.21.2
+    labels:
+      phase: platform
+    values:
+      - deploy/infrastructure/cert-manager/values.yaml
+
+  # Release name "monitoring" gives the Service names monitoring-grafana and
+  # monitoring-kube-prometheus-prometheus that docs/deploy.md uses.
+  - name: monitoring
+    namespace: monitoring
+    chart: prometheus-community/kube-prometheus-stack
+    version: 92.3.0
+    # The stack pulls several images on a fresh node.
+    timeout: 600
+    labels:
+      phase: platform
+    needs:
+      - kube-system/namespaces
+    values:
+      - deploy/infrastructure/monitoring/kube-prometheus-stack/values.yaml
+      - deploy/infrastructure/monitoring/kube-prometheus-stack/values-{{ $env }}.yaml
+
+  - name: monitoring-extras
+    namespace: monitoring
+    chart: ./deploy/charts/monitoring-extras
+    labels:
+      phase: platform
+    needs:
+      - monitoring/monitoring
+
+  # ---- data ------------------------------------------------------------------
+  - name: postgres
+    namespace: shogun
+    chart: ./deploy/charts/postgres
+    timeout: 180
+    labels:
+      phase: data
+    needs:
+      - kube-system/namespaces
+    values:
+      - deploy/infrastructure/postgres/values.yaml
+      - deploy/infrastructure/postgres/values-{{ $env }}.yaml
+
+  # ---- apps ------------------------------------------------------------------
+  # soroban first: the other services reserve LLM cost with it. An app without
+  # values-<env>.yaml is not part of that environment (web has no production
+  # values yet).
+{{- range $name := list "soroban" "kagami" "fude" "tsubame" "taiko" "dojo" "katana" "shinobi" "sensei" "torii" "web" }}
+{{- if isFile (printf "deploy/apps/%s/values-%s.yaml" $name $env) }}
+  - name: {{ $name }}
+    namespace: shogun
+    chart: ./deploy/charts/microservice
+    labels:
+      phase: apps
+    needs:
+      - shogun/postgres
+      {{- if ne $name "soroban" }}
+      - shogun/soroban
+      {{- end }}
+    values:
+      - deploy/apps/common.yaml
+      - deploy/apps/{{ $name }}/values.yaml
+      - deploy/apps/{{ $name }}/values-{{ $env }}.yaml
+      {{- with index $tags $name }}
+      - image:
+          tag: {{ . | quote }}
+      {{- end }}
+{{- end }}
+{{- end }}

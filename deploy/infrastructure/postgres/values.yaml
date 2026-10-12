@@ -1,0 +1,5 @@
+# Postgres for both environments, over the chart defaults in
+# deploy/charts/postgres/values.yaml. Installed in phase data, after the
+# namespaces and the sealed Secret "postgres", before any app: the apps'
+# migration Jobs need the schemas and roles it creates.
+{}

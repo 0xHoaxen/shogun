@@ -53,6 +53,53 @@ Run it after changing the schema, and from time to time: a backup nobody has res
 
 What a restore does not bring back: anything that happened after the backup. Events written after it are gone, and so is `tsubame`'s record of any email it sent after it, so the single-use check can no longer stop a second send of that draft. Look at the mailbox's Sent folder before approving a draft again.
 
+## On the cluster
+
+The Postgres chart (`deploy/charts/postgres`) runs the same script once a night: CronJob `postgres-backup` in namespace `shogun` runs `backup.sh once` at 02:30 India time and writes both files to the `postgres-backups` volume. The script is a link to `deploy/compose/backup/backup.sh`, so a change there reaches both. Settings are under `backup:` in `deploy/infrastructure/postgres/values*.yaml` (`retentionDays`, `schedule`, `persistence.size`; `enabled: false` turns it off). The volume survives `helm uninstall`, and like the Compose volume it sits on the same node as the database. `TODO(owner)`: an offsite copy.
+
+Below, `ctx` is the cluster's kube context.
+
+Take one now, and see how the last runs went:
+
+```sh
+kubectl --context ctx -n shogun create job --from=cronjob/postgres-backup backup-now-$(date +%s)
+kubectl --context ctx -n shogun get jobs -l app.kubernetes.io/component=backup
+kubectl --context ctx -n shogun logs job/<job-name>
+```
+
+List and copy out a pair through a short-lived pod that mounts the volume:
+
+```sh
+kubectl --context ctx -n shogun apply -f - <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backup-reader
+spec:
+  restartPolicy: Never
+  containers:
+    - name: reader
+      image: pgvector/pgvector:pg17
+      command: ["sleep", "900"]
+      resources: {requests: {cpu: 10m, memory: 32Mi}, limits: {memory: 64Mi}}
+      volumeMounts: [{name: backups, mountPath: /backups}]
+  volumes:
+    - name: backups
+      persistentVolumeClaim: {claimName: postgres-backups}
+EOF
+kubectl --context ctx -n shogun exec backup-reader -- ls -1t /backups
+kubectl --context ctx -n shogun cp backup-reader:/backups/shogun-<time>.dump ./shogun-<time>.dump
+kubectl --context ctx -n shogun cp backup-reader:/backups/shogun-<time>.roles.sql ./shogun-<time>.roles.sql
+kubectl --context ctx -n shogun delete pod backup-reader
+```
+
+Restore follows the steps above, with `kubectl` in place of `docker compose`:
+
+1. Stop everything that writes: `kubectl --context ctx -n shogun scale deployment --all --replicas=0`. In production the HPAs scale back up, so delete them first (`kubectl delete hpa --all`); the next deploy recreates them.
+2. Copy both files into the database pod: `kubectl --context ctx -n shogun cp shogun-<time>.dump postgres-0:/tmp/` (and the roles file).
+3. Run steps 4 to 6 inside it, for example `kubectl --context ctx -n shogun exec -it postgres-0 -- psql -v ON_ERROR_STOP=1 -U postgres -d postgres -f /tmp/shogun-<time>.roles.sql`.
+4. Run the app phase of the deploy again to bring the services back.
+
 ## Settings
 
 | Variable | Default | Meaning |

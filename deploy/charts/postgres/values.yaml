@@ -1,0 +1,58 @@
+# Defaults for the Postgres chart. Per-environment values live in
+# deploy/infrastructure/postgres/values{,-<environment>}.yaml.
+#
+# Install it once, before any service chart, and keep it out of their
+# lifecycle: the service charts run migration Jobs that need the schemas and
+# roles this chart creates, and a rollback of a service must never touch the
+# database.
+image:
+  repository: pgvector/pgvector
+  tag: pg17
+  pullPolicy: IfNotPresent
+
+# Secret holding POSTGRES_PASSWORD and one <NAME>_DB_PASSWORD per service;
+# init.sh creates a schema and a login role for every such variable. It is
+# created by shogun-deploy secrets seal, never by this chart, because Postgres
+# creates its roles once and the passwords must not change.
+secretName: postgres
+
+database: shogun
+
+persistence:
+  size: 5Gi
+  # Empty means the cluster default.
+  storageClassName: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+# A nightly CronJob running deploy/compose/backup/backup.sh once (the script the
+# Compose backup service runs in a loop), writing a pg_dump and the login roles
+# to the postgres-backups volume. See docs/backup-restore.md. The volume lives on
+# the same node as the database: it protects against a bad migration or an
+# accidental delete, not against losing the node.
+backup:
+  enabled: true
+  # 02:30 India time, after sensei's 01:00 rollup, as in Compose.
+  schedule: "30 2 * * *"
+  timeZone: Asia/Kolkata
+  # TODO(owner): how many days of backups to keep, and an offsite copy.
+  retentionDays: 14
+  persistence:
+    size: 5Gi
+    # Empty means the cluster default.
+    storageClassName: ""
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      memory: 256Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
