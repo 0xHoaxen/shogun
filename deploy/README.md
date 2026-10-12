@@ -6,7 +6,7 @@ Everything that builds, runs or ships Shogun. Pick the folder by the question yo
 | --- | --- | --- |
 | `docker/` | `Dockerfile` (all Go services, `ARG SERVICE`) and `web.Dockerfile` | CI, `release.yml` |
 | `compose/` | the local stack, its observability profile, Postgres bootstrap SQL | `make up`, e2e tests |
-| `k8s/` | plain manifests per cluster: namespaces, LimitRange and ResourceQuota in `base/`, one overlay per environment | `scripts/platform.sh` |
+| `k8s/` | plain manifests per cluster: namespaces, LimitRange and ResourceQuota in `base/`, one overlay per environment, and the sealed Secrets in `<env>/secrets/` | `scripts/platform.sh`, `scripts/seal-secrets.sh` |
 | `helm/apps/` | charts for what we ship: ten services, `web`, `postgres`, and the `service` library chart | `scripts/deploy.sh`, `release.yml` |
 | `helm/platform/` | charts installed once per cluster: `ingress` (Traefik redirect, Let's Encrypt issuers) | `scripts/platform.sh` |
 | `helm/monitoring/` | everything observability, one release: Prometheus, Alertmanager and Grafana (kube-prometheus-stack as a dependency), Shogun's alert rules and dashboard | `scripts/platform.sh` |
@@ -21,8 +21,11 @@ Everything that builds, runs or ships Shogun. Pick the folder by the question yo
 
 ## Install order on a new cluster
 
-1. `scripts/k8s-secrets.sh --context <ctx> --namespace <ns>`: Secrets for Postgres, the services and Grafana (Grafana reads its login at install).
-2. `scripts/platform.sh --context <ctx> --env <env>`: namespaces and quotas, cert-manager, ingress, monitoring.
-3. `scripts/deploy.sh --context <ctx> --namespace <ns> --env <env>`: Postgres, the services, then web.
+Staging and production are separate clusters, each with its own sealing key.
+
+1. `scripts/platform.sh --context <ctx> --env <env>`: namespaces and quotas, then the sealed-secrets controller. With no sealed Secrets committed it stops here (exit 3) and prints the next commands.
+2. `scripts/seal-secrets.sh --env <env> --fetch-cert --context <ctx>`, then `--backup-key`, then `scripts/seal-secrets.sh --env <env>`. Commit `deploy/k8s/<env>`. Keep `.secrets/` out of git and backed up.
+3. `scripts/platform.sh --context <ctx> --env <env>` again: applies the Secrets, then cert-manager, ingress, monitoring.
+4. `scripts/deploy.sh --context <ctx> --namespace shogun --env <env>`: Postgres, the services, then web.
 
 The full runbook is `docs/deploy.md`.

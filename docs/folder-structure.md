@@ -69,7 +69,7 @@ shogun/
 │
 ├── deploy/
 │   ├── docker/Dockerfile        # one multi-stage file, ARG SERVICE
-│   ├── k8s/                     # per-cluster basics, `kubectl apply -k deploy/k8s/<env>`: namespaces, LimitRange, ResourceQuota
+│   ├── k8s/                     # per-cluster basics, `kubectl apply -k deploy/k8s/<env>`: namespaces, LimitRange, ResourceQuota, sealed Secrets
 │   ├── compose/
 │   │   ├── compose.yaml         # local stack: postgres, ten services, torii, web
 │   │   ├── compose.obs.yaml     # profile: OTel collector, Jaeger, Prometheus, Grafana
@@ -90,6 +90,7 @@ shogun/
 │   ├── rename-service.sh        # rename folder, proto pkg, schema, role, values, tags
 │   ├── changed-modules.sh       # prints the CI matrix for a diff
 │   ├── platform.sh              # once per cluster: k8s basics, cert-manager, ingress, monitoring
+│   ├── seal-secrets.sh         # seal a cluster's Secrets with kubeseal into deploy/k8s/<env>/secrets
 │   └── templates/service/       # skeleton used by new-service.sh
 │
 ├── docs/

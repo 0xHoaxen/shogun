@@ -95,7 +95,7 @@ kube-prometheus-stack:
 
   grafana:
     # Login from Secret grafana-admin (admin-user, admin-password), created by
-    # scripts/k8s-secrets.sh. Anonymous access stays off.
+    # scripts/seal-secrets.sh. Anonymous access stays off.
     admin:
       existingSecret: grafana-admin
     defaultDashboardsTimezone: browser

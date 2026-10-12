@@ -12,7 +12,7 @@
 #
 # Postgres is not published to the registry: it is installed from deploy/helm/apps/postgres
 # in the checkout. Log in to the registry first (helm registry login ghcr.io) and
-# create the Secrets with scripts/k8s-secrets.sh, which also creates the "ghcr" pull
+# create the Secrets with scripts/seal-secrets.sh, which also seals the "ghcr" pull
 # secret. --pull-secret "" turns the pull secret off (public packages).
 set -euo pipefail
 
