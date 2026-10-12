@@ -8,8 +8,8 @@ This is the runbook for deploying Shogun to a Kubernetes cluster (kind first) fr
 | --- | --- |
 | Service image `<name>:<version>` | Pushed to `ghcr.io/0xhoaxen/<name>` by the `release` workflow, one per released service |
 | Helm chart `service` | Pushed as an OCI artifact by the `release` workflow after the image push, with the released version |
-| Per-service values `deploy/helm/values/<env>/<name>.yaml` | The repo, not the chart (they sit outside `deploy/helm/service`, so `helm package` does not include them). Use a checkout at the version you deploy |
-| Postgres 17 + pgvector | `deploy/helm/postgres` (its own Helm release, installed once, outside the service releases) |
+| Per-service values `deploy/helm/values/<env>/<name>.yaml` | The repo, not the chart (they sit outside `deploy/helm/apps/service`, so `helm package` does not include them). Use a checkout at the version you deploy |
+| Postgres 17 + pgvector | `deploy/helm/apps/postgres` (its own Helm release, installed once, outside the service releases) |
 | Secrets `postgres`, `<name>` | `scripts/k8s-secrets.sh` (the chart never creates them) |
 | Web app | `deploy/k8s/web` (kustomize). There is no web chart |
 
@@ -17,7 +17,7 @@ One chart deploys one service. Installing it creates `<name>` (Deployment, Servi
 
 ## State of the repo
 
-Checked against `main` (`release.yml`, `deploy.yml`, `deploy/helm/service`):
+Checked against `main` (`release.yml`, `deploy.yml`, `deploy/helm/apps/service`):
 
 | Item | State |
 | --- | --- |
@@ -49,7 +49,7 @@ echo "$GHCR_TOKEN" | helm registry login ghcr.io -u <github user> --password-std
 The VM runs k3s, which bundles Traefik. `scripts/platform.sh` adds what the app releases rely on, in this order (upstream versions pinned in the script):
 
 1. cert-manager, CRDs included.
-2. The local chart `deploy/helm/ingress`: Traefik redirects HTTP to HTTPS, and the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
+2. The local chart `deploy/helm/platform/ingress`: Traefik redirects HTTP to HTTPS, and the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
 3. kube-prometheus-stack in namespace `monitoring`: Prometheus (15 days on a 10Gi `local-path` volume), Alertmanager and Grafana. It picks up ServiceMonitors and PrometheusRules from every namespace; the k3s control-plane scrapes are off.
 4. The local chart `deploy/helm/monitoring`: the six Shogun alert rules and the "Shogun overview" dashboard, read through symlinks from `deploy/compose/observability/`, so Compose and the cluster share one copy.
 
@@ -112,7 +112,7 @@ Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*
 ## 2. Postgres
 
 ```sh
-helm --kube-context "$CTX" -n "$NS" upgrade --install postgres deploy/helm/postgres \
+helm --kube-context "$CTX" -n "$NS" upgrade --install postgres deploy/helm/apps/postgres \
   -f deploy/helm/values/staging/postgres.yaml --wait --timeout 180s
 ```
 
@@ -150,7 +150,7 @@ done
 Notes:
 
 - `--version` selects the chart from the registry; `image.tag` selects the image. They are set separately on purpose. If the release step publishes the chart with the service version, pass the same value to both. If it publishes one chart version for all services, use that for `--version` and each service's own version for `image.tag`. `TODO(owner)`: state which in [State of the repo](#state-of-the-repo) once decided.
-- Without the release step on `main`, replace the `oci://` chart and `--version "$version"` with `deploy/helm/service` from a local checkout. The result is the same chart at the checked-out commit.
+- Without the release step on `main`, replace the `oci://` chart and `--version "$version"` with `deploy/helm/apps/service` from a local checkout. The result is the same chart at the checked-out commit.
 - Every pod gets all ten `*_ADDR` values, so the install order does not matter to Helm. `--wait` can still time out if a service refuses to become Ready until a peer is up; if it does, install the others and rerun.
 - A failed migration Job fails the install. Read it with `kubectl -n "$NS" logs job/<name>-migrate`. Helm deletes the Job on success, and `before-hook-creation` removes a failed one on the next try.
 - Use `values/production/` instead of `values/staging/` only after the production gaps listed above are closed.

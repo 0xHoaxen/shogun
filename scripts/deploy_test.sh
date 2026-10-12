@@ -62,7 +62,7 @@ check "every call pins the context and namespace" \
 	'[ "$(calls | grep -c -- "--kube-context kind-shogun --namespace shogun")" -eq 12 ]'
 check "every call waits" '[ "$(calls | grep -c -- "--wait")" -eq 12 ]'
 check "postgres comes from the checkout, not the registry" \
-	'calls | head -n 1 | grep -q "deploy/helm/postgres" && ! calls | head -n 1 | grep -q "oci://"'
+	'calls | head -n 1 | grep -q "deploy/helm/apps/postgres" && ! calls | head -n 1 | grep -q "oci://"'
 check "services come from the registry" \
 	'calls | grep "^upgrade --install kagami " | grep -q "oci://ghcr.io/0xhoaxen/charts/kagami"'
 check "web comes from the registry" \
@@ -92,7 +92,7 @@ check "a named pull secret is passed through" \
 
 # A values file without a tag stops the run before anything is installed.
 fixture="$work/repo"
-mkdir -p "$fixture/scripts" "$fixture/deploy/helm/postgres" "$fixture/deploy/helm/values/staging"
+mkdir -p "$fixture/scripts" "$fixture/deploy/helm/apps/postgres" "$fixture/deploy/helm/values/staging"
 cp "$script" "$fixture/scripts/deploy.sh"
 for n in soroban kagami fude tsubame taiko dojo katana shinobi sensei torii web; do
 	printf 'name: %s\nimage:\n  tag: "1.0.0"\n' "$n" >"$fixture/deploy/helm/values/staging/$n.yaml"

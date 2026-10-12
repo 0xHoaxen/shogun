@@ -677,6 +677,23 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
     - Not run on a cluster.
     - `TODO(owner)`: the Grafana host (values file, three places plus `root_url`); an Alertmanager email receiver; `serviceMonitor.enabled: true` in the production values (protected path).
 
+- [x] **P10.7a Group Helm charts by role** (S) Needs: P10.6b
+  Do: move the ten service charts, `service`, `web` and `postgres` into `deploy/helm/apps/` and `ingress` into `deploy/helm/platform/`; fold `values/cluster/ingress.yaml` into the ingress chart's `values.yaml`; point `scripts/helm.py`, `deploy.sh`, `platform.sh`, `rename-service.sh`, the two tests, `release.yml` (the two `helm package` paths), `.gitignore` and the docs at the new paths; add `deploy/README.md`.
+  Done when: `helm template` of every chart is byte-identical before and after the move; `scripts/helm.py check`, `platform_test.sh` and `deploy_test.sh` pass.
+  Status: 23 renders (ten services in both environments, web, postgres, ingress) compare equal with `cmp`; the three checks pass. `values/production/**` was not touched. `actionlint` is not installed here, so `release.yml` was not linted (the change is two paths). `docs/deploy.md` still describes `deploy/k8s/web`; that is P10.5m.
+
+- [ ] **P10.7b Monitoring umbrella chart** (M) Needs: P10.7a
+  Do: `deploy/helm/monitoring` depends on kube-prometheus-stack (pinned in `Chart.yaml`), its values move under `kube-prometheus-stack:` in `values.yaml` and are sized for a 2 vCPU / 4 GiB VM; `platform.sh` installs one `monitoring` release; delete `values/cluster/`.
+  Done when: `helm dependency build`, `helm lint` and `helm template` pass; `promtool check rules` accepts the rendered rules; the dashboard still matches the Compose file; `platform_test.sh` passes.
+
+- [ ] **P10.7c Namespaces, LimitRange and ResourceQuota** (M) Needs: P10.7b
+  Do: `deploy/k8s/base` (namespaces `shogun` and `monitoring`, a LimitRange and a ResourceQuota on `shogun`) and `deploy/k8s/{staging,production}`; `platform.sh --env` applies them first. `TODO(owner)`: production values (HPA min 2) do not fit the quota on a 4 GiB VM.
+  Done when: `kubectl kustomize deploy/k8s/staging` and `.../production` render; `platform_test.sh` checks the apply comes first.
+
+- [ ] **P10.7d Sealed secrets with kubeseal** (L) Needs: P10.7c
+  Do: `platform.sh` installs the sealed-secrets controller; `scripts/seal-secrets.sh` replaces `k8s-secrets.sh` (fetch the cert, back up the key, seal offline into `deploy/k8s/<env>/secrets/`); each environment has its own cluster and key. Split if it passes about 400 changed lines.
+  Done when: `seal-secrets_test.sh` and `platform_test.sh` pass; on a kind cluster the sealed Secrets are unsealed. `TODO(owner)`: seal and commit the real secrets per cluster.
+
 ---
 
 ## Later (not scheduled)

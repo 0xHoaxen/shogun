@@ -50,9 +50,8 @@ check "cert-manager is pinned and installs its CRDs" \
 	 calls | grep "^upgrade --install cert-manager " | grep -q -- "--set crds.enabled=true"'
 check "cert-manager goes into its own namespace" \
 	'calls | grep "^upgrade --install cert-manager " | grep -q -- "--namespace cert-manager --create-namespace"'
-check "the ingress chart comes from the checkout with the cluster values" \
-	'calls | grep "^upgrade --install ingress " | grep -q "deploy/helm/ingress " &&
-	 calls | grep "^upgrade --install ingress " | grep -q -- "-f .*/values/cluster/ingress.yaml"'
+check "the ingress chart comes from the checkout" \
+	'calls | grep "^upgrade --install ingress " | grep -q "deploy/helm/platform/ingress "'
 check "the ingress release lives next to k3s Traefik" \
 	'calls | grep "^upgrade --install ingress " | grep -q -- "--namespace kube-system"'
 check "the stack is pinned, in monitoring, with the cluster values" \
@@ -63,7 +62,7 @@ check "the shogun rules come from the checkout, next to the stack" \
 	'calls | grep "^upgrade --install monitoring " | grep -q "deploy/helm/monitoring " &&
 	 calls | grep "^upgrade --install monitoring " | grep -q -- "--namespace monitoring"'
 
-# A missing cluster values file stops the run before anything is installed.
+# A missing stack values file stops the run before anything is installed.
 fixture="$work/repo"
 mkdir -p "$fixture/scripts" "$fixture/deploy/helm/values/cluster"
 cp "$script" "$fixture/scripts/platform.sh"
@@ -73,10 +72,6 @@ run_fixture() {
 	out=$(FAKE_LOG="$log" HELM="$work/helm" "$fixture/scripts/platform.sh" --context k3s 2>&1)
 	code=$?
 }
-run_fixture
-check "refuses when the ingress values are missing" '[ "$code" -eq 2 ] && echo "$out" | grep -q "missing .*cluster/ingress.yaml"'
-check "nothing was installed before the check failed" '[ -z "$(calls)" ]'
-touch "$fixture/deploy/helm/values/cluster/ingress.yaml"
 run_fixture
 check "refuses when the stack values are missing" \
 	'[ "$code" -eq 2 ] && echo "$out" | grep -q "missing .*cluster/kube-prometheus-stack.yaml" && [ -z "$(calls)" ]'

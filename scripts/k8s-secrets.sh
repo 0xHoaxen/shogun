@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the Secrets a cluster needs: postgres (read by deploy/helm/postgres)
+# Creates the Secrets a cluster needs: postgres (read by deploy/helm/apps/postgres)
 # and <service> for the ten services (read by the Helm chart with envFrom).
 # With GHCR_USER and GHCR_TOKEN set in the env file it also creates the pull secret
 # "ghcr" (a token with read:packages) for private ghcr.io images; the charts use it

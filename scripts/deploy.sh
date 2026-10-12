@@ -10,7 +10,7 @@
 # so run this from a checkout of the git ref you are deploying. A versions file
 # (KAGAMI=1.2.3 lines, upper-case service name, WEB for the web app) overrides it.
 #
-# Postgres is not published to the registry: it is installed from deploy/helm/postgres
+# Postgres is not published to the registry: it is installed from deploy/helm/apps/postgres
 # in the checkout. Log in to the registry first (helm registry login ghcr.io) and
 # create the Secrets with scripts/k8s-secrets.sh, which also creates the "ghcr" pull
 # secret. --pull-secret "" turns the pull secret off (public packages).
@@ -63,7 +63,7 @@ install_postgres() {
 	if [ -f "$values_dir/postgres.yaml" ]; then
 		args+=(-f "$values_dir/postgres.yaml")
 	fi
-	"$HELM" upgrade --install postgres "$ROOT/deploy/helm/postgres" "${args[@]}"
+	"$HELM" upgrade --install postgres "$ROOT/deploy/helm/apps/postgres" "${args[@]}"
 	echo "installed postgres (local chart)"
 }
 

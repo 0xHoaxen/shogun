@@ -26,7 +26,7 @@ MONITORING_NAMESPACE="monitoring"
 TIMEOUT="5m"
 # kube-prometheus-stack pulls several images on a fresh node.
 KPS_TIMEOUT="10m"
-CLUSTER_VALUES="ingress kube-prometheus-stack"
+CLUSTER_VALUES="kube-prometheus-stack"
 
 die() {
 	echo "platform: $*" >&2
@@ -45,12 +45,11 @@ install_cert_manager() {
 	echo "installed cert-manager $CERT_MANAGER_VERSION"
 }
 
-# install_ingress CONTEXT VALUES_DIR installs the local ingress chart.
+# install_ingress CONTEXT installs the local ingress chart.
 install_ingress() {
-	local context=$1 values_dir=$2
-	"$HELM" upgrade --install ingress "$ROOT/deploy/helm/ingress" \
+	local context=$1
+	"$HELM" upgrade --install ingress "$ROOT/deploy/helm/platform/ingress" \
 		--kube-context "$context" --namespace "$INGRESS_NAMESPACE" \
-		-f "$values_dir/ingress.yaml" \
 		--wait --timeout "$TIMEOUT"
 	echo "installed ingress (local chart)"
 }
@@ -91,7 +90,7 @@ main() {
 	done
 
 	install_cert_manager "$context"
-	install_ingress "$context" "$values_dir"
+	install_ingress "$context"
 	install_kps "$context" "$values_dir"
 	install_monitoring "$context"
 }
