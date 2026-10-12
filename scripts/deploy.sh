@@ -1,28 +1,20 @@
 #!/usr/bin/env bash
-# Installs or upgrades the whole stack on a cluster from the registry: Postgres,
-# then soroban, then the other services, then the web app.
+# Installs or upgrades the data and apps of a cluster, in the order of
+# helmfile.yaml.gotmpl: phase data (Postgres), then phase apps (soroban, the
+# other services, web). Run scripts/platform.sh first.
 #
-# Usage: scripts/deploy.sh --context <ctx> --namespace <ns> --env <staging|production>
-#                          [--versions-file <file>]
+# Usage: scripts/deploy.sh --context <ctx> --env <staging|production> [--versions-file <file>]
 #
-# Every app is installed with deploy/charts/microservice from the checkout, with
-# deploy/apps/common.yaml, deploy/apps/<name>/values.yaml and
-# values-<env>.yaml. The image tag is image.tag in values-<env>.yaml, so run this
-# from a checkout of the git ref you are deploying. A versions file (KAGAMI=1.2.3
-# lines, upper-case service name, WEB for the web app) overrides it.
-#
-# Postgres is installed from deploy/helm/apps/postgres. Create the Secrets with
-# scripts/seal-secrets.sh first; it also seals the "ghcr" pull secret that
-# deploy/apps/common.yaml names.
+# The image tag of each app is image.tag in deploy/apps/<name>/values-<env>.yaml,
+# so run this from a checkout of the git ref you are deploying. A versions file
+# (KAGAMI=1.2.3 lines, upper-case app name, WEB for the web app) overrides it.
+# An app without values-<env>.yaml is not part of that environment.
 set -euo pipefail
 
-SERVICES="soroban kagami fude tsubame taiko dojo katana shinobi sensei torii"
-HELM="${HELM:-helm}"
+APPS="soroban kagami fude tsubame taiko dojo katana shinobi sensei torii web"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HELMFILE="${HELMFILE:-$ROOT/bin/helmfile}"
 APPS_DIR="$ROOT/deploy/apps"
-CHART="$ROOT/deploy/charts/microservice"
-SERVICE_TIMEOUT="5m"
-POSTGRES_TIMEOUT="3m"
 
 die() {
 	echo "deploy: $*" >&2
@@ -43,54 +35,26 @@ values_tag() {
 # versions_get FILE KEY prints the last value of KEY in a versions file, or nothing.
 versions_get() { sed -n "s/^$2=//p" "$1" | tail -n 1; }
 
-# resolve_version ENV VERSIONS_FILE NAME prints the version to deploy.
-resolve_version() {
-	local env=$1 versions_file=$2 name=$3 version=""
-	if [ -n "$versions_file" ]; then
-		version=$(versions_get "$versions_file" "$(upper "$name")")
-	fi
-	if [ -z "$version" ]; then
-		version=$(values_tag "$APPS_DIR/$name/values-$env.yaml")
-	fi
-	[ -n "$version" ] || die "no version for $name: set image.tag in deploy/apps/$name/values-$env.yaml or $(upper "$name") in the versions file"
-	printf '%s' "$version"
-}
-
-# install_postgres CONTEXT NAMESPACE VALUES_DIR installs the chart from the checkout.
-install_postgres() {
-	local context=$1 namespace=$2 values_dir=$3
-	local args=(--kube-context "$context" --namespace "$namespace" --wait --timeout "$POSTGRES_TIMEOUT")
-	if [ -f "$values_dir/postgres.yaml" ]; then
-		args+=(-f "$values_dir/postgres.yaml")
-	fi
-	"$HELM" upgrade --install postgres "$ROOT/deploy/helm/apps/postgres" "${args[@]}"
-	echo "installed postgres (local chart)"
-}
-
-# install_app CONTEXT NAMESPACE ENV NAME VERSION installs one app with the shared chart.
-install_app() {
-	local context=$1 namespace=$2 env=$3 name=$4 version=$5
-	"$HELM" upgrade --install "$name" "$CHART" \
-		--kube-context "$context" --namespace "$namespace" \
-		-f "$APPS_DIR/common.yaml" -f "$APPS_DIR/$name/values.yaml" -f "$APPS_DIR/$name/values-$env.yaml" \
-		--set "image.tag=$version" \
-		--wait --timeout "$SERVICE_TIMEOUT"
-	echo "installed $name $version"
+# phase CONTEXT ENV NAME [ARGS...] applies the releases labelled phase=NAME.
+phase() {
+	local context=$1 env=$2 name=$3
+	shift 3
+	"$HELMFILE" --file "$ROOT/helmfile.yaml.gotmpl" --environment "$env" --kube-context "$context" \
+		--selector "phase=$name" "$@" apply --concurrency 1 --suppress-diff
+	echo "applied phase $name"
 }
 
 main() {
-	local context="" namespace="" env="" versions_file=""
+	local context="" env="" versions_file="" name file version override
 	while [ $# -gt 0 ]; do
 		case $1 in
 		--context) context=${2:-}; shift 2 ;;
-		--namespace) namespace=${2:-}; shift 2 ;;
 		--env) env=${2:-}; shift 2 ;;
 		--versions-file) versions_file=${2:-}; shift 2 ;;
 		*) die "unknown argument: $1" ;;
 		esac
 	done
 	[ -n "$context" ] || die "--context is required (never deploys to the current context by default)"
-	[ -n "$namespace" ] || die "--namespace is required"
 	case $env in
 	staging | production) ;;
 	*) die "--env must be staging or production" ;;
@@ -99,21 +63,24 @@ main() {
 		die "versions file not found: $versions_file"
 	fi
 
-	local values_dir="$ROOT/deploy/helm/values/$env" name version entry
-	local -a plan=()
-
-	# Resolve everything before the first install, so a missing file or version
-	# stops the run while the cluster is still untouched.
-	for name in $SERVICES web; do
-		[ -f "$APPS_DIR/$name/values-$env.yaml" ] || die "missing deploy/apps/$name/values-$env.yaml"
-		version=$(resolve_version "$env" "$versions_file" "$name")
-		plan+=("$name=$version")
+	# Resolve every version before the first install, so a missing one stops the
+	# run while the cluster is still untouched.
+	local -a sets=()
+	for name in $APPS; do
+		file="$APPS_DIR/$name/values-$env.yaml"
+		if [ ! -f "$file" ]; then
+			echo "deploy: $name has no values-$env.yaml; it is not part of $env" >&2
+			continue
+		fi
+		override=""
+		[ -z "$versions_file" ] || override=$(versions_get "$versions_file" "$(upper "$name")")
+		version=${override:-$(values_tag "$file")}
+		[ -n "$version" ] || die "no version for $name: set image.tag in deploy/apps/$name/values-$env.yaml or $(upper "$name") in the versions file"
+		[ -z "$override" ] || sets+=(--state-values-set "tags.$name=$override")
 	done
 
-	install_postgres "$context" "$namespace" "$values_dir"
-	for entry in "${plan[@]}"; do
-		install_app "$context" "$namespace" "$env" "${entry%%=*}" "${entry#*=}"
-	done
+	phase "$context" "$env" data
+	phase "$context" "$env" apps "${sets[@]+"${sets[@]}"}"
 }
 
 if [ "${BASH_SOURCE[0]}" = "$0" ]; then

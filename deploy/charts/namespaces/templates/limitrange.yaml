@@ -1,0 +1,15 @@
+{{- range .Values.namespaces }}
+{{- $namespace := .name }}
+{{- with .limitRange }}
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ $namespace }}-defaults
+  namespace: {{ $namespace }}
+spec:
+  limits:
+    - type: Container
+      {{- toYaml . | nindent 6 }}
+{{- end }}
+{{- end }}

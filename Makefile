@@ -16,10 +16,11 @@ COMPOSE := docker compose --env-file $(COMPOSE_ENV) -f deploy/compose/compose.ya
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
 
-tools: ## install pinned buf, protoc plugins, goose, sqlc and golangci-lint into ./bin
+tools: ## install pinned buf, protoc plugins, goose, sqlc, golangci-lint and helmfile into ./bin, and helm-diff
 	mkdir -p $(BIN)
 	cd tools && GOWORK=off GOBIN=$(BIN) go install tool
 	GOWORK=off GOBIN=$(BIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v$(GOLANGCI_LINT_VERSION)
+	BIN=$(BIN) scripts/install-helmfile.sh
 
 proto: ## buf lint + buf generate into gen/go and web/src/gen
 	$(BIN)/buf lint

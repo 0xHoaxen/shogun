@@ -1,0 +1,14 @@
+{{- range .Values.namespaces }}
+{{- $namespace := .name }}
+{{- with .quota }}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ $namespace }}
+  namespace: {{ $namespace }}
+spec:
+  hard:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+{{- end }}

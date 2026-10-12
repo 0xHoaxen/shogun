@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Seals the Secrets a cluster needs with kubeseal, so they can be committed:
-# postgres (read by deploy/helm/apps/postgres) and <service> for the ten services
+# postgres (read by deploy/charts/postgres) and <service> for the ten services
 # (read by the Helm chart with envFrom), in namespace shogun, and grafana-admin
 # (Grafana's login, read by the monitoring chart) in namespace monitoring. With
 # GHCR_USER and GHCR_TOKEN set it also seals the pull secret "ghcr" (a token with
@@ -12,18 +12,19 @@
 #   scripts/seal-secrets.sh --env <env> [--env-file <file>] [--cert <file>] [--only <name>]...
 #
 # --fetch-cert writes the controller's public certificate to
-# deploy/k8s/<env>/sealed-secrets.pem (safe to commit). --backup-key saves the
+# deploy/infrastructure/sealed-secrets/certs/<env>-pub-cert.pem (safe to commit). --backup-key saves the
 # controller's private key to .secrets/<env>-sealed-secrets-key.yaml (never commit
 # it): without it, a rebuilt cluster cannot decrypt what is committed.
 # Sealing needs only the certificate, not the cluster, and writes
-# deploy/k8s/<env>/secrets/<name>.yaml plus a kustomization.yaml that lists them.
+# deploy/infrastructure/sealed-secrets/secrets/<env>/<name>.yaml plus a
+# kustomization.yaml that lists them.
 # scripts/platform.sh applies that directory.
 #
 # Values come from the env file (default .secrets/<env>.env, git-ignored, KEY=value
 # lines, no quoting). Anything generated is written back to that file, so a second
 # run keeps every value: Postgres creates its roles once, so passwords must not
 # move. kubeseal encrypts with a fresh random nonce, so a rerun rewrites every
-# sealed file; use --only to touch one. See deploy/k8s/secrets.example.env for what
+# sealed file; use --only to touch one. See deploy/infrastructure/sealed-secrets/secrets.example.env for what
 # you supply yourself. Values are never printed, only key and Secret names.
 set -euo pipefail
 
@@ -31,6 +32,7 @@ SERVICES="torii kagami tsubame fude taiko dojo katana shinobi sensei soroban"
 KUBECTL="${KUBECTL:-kubectl}"
 KUBESEAL="${KUBESEAL:-kubeseal}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SEALED_DIR="$ROOT/deploy/infrastructure/sealed-secrets"
 APP_NAMESPACE="shogun"
 MONITORING_NAMESPACE="monitoring"
 # kubeseal's own defaults; scripts/platform.sh installs the controller under these.
@@ -230,9 +232,10 @@ backup_key() {
 	echo "wrote $file (private: keep it out of git, store it safely)"
 }
 
-# seal_all ENV ENV_FILE CERT seals the selected Secrets into deploy/k8s/<env>/secrets.
+# seal_all ENV ENV_FILE CERT seals the selected Secrets into
+# deploy/infrastructure/sealed-secrets/secrets/<env>.
 seal_all() {
-	local env=$1 env_file=$2 cert=$3 outdir="$ROOT/deploy/k8s/$1/secrets" tmp svc ghcr_user ghcr_token
+	local env=$1 env_file=$2 cert=$3 outdir="$SEALED_DIR/secrets/$1" tmp svc ghcr_user ghcr_token
 	[ -f "$cert" ] || die "no certificate at $cert (run --fetch-cert first)"
 	require_openssl3
 
@@ -287,7 +290,7 @@ main() {
 	*) die "--env must be staging or production" ;;
 	esac
 	[ -n "$env_file" ] || env_file=".secrets/$env.env"
-	[ -n "$cert" ] || cert="$ROOT/deploy/k8s/$env/sealed-secrets.pem"
+	[ -n "$cert" ] || cert="$SEALED_DIR/certs/$env-pub-cert.pem"
 
 	case $action in
 	fetch-cert | backup-key)

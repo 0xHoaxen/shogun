@@ -6,9 +6,9 @@ failed=0
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-# The script writes into deploy/k8s of the repo it lives in, so test a copy.
+# The script writes into deploy/infrastructure of the repo it lives in, so test a copy.
 fixture="$work/repo"
-mkdir -p "$fixture/scripts" "$fixture/deploy/k8s/staging" "$fixture/deploy/k8s/production"
+mkdir -p "$fixture/scripts" "$fixture/deploy/infrastructure/sealed-secrets"
 cp "$here/seal-secrets.sh" "$fixture/scripts/seal-secrets.sh"
 script="$fixture/scripts/seal-secrets.sh"
 
@@ -65,9 +65,9 @@ run() {
 	out=$(cd "$work" && FAKE_DIR="$work/fake" KUBECTL="$work/kubectl" KUBESEAL="$work/kubeseal" "$script" "$@" 2>&1)
 	code=$?
 }
-reset() { rm -rf "$work/fake" "$fixture/deploy/k8s/staging/secrets"; }
-secrets_dir="$fixture/deploy/k8s/staging/secrets"
-cert="$fixture/deploy/k8s/staging/sealed-secrets.pem"
+reset() { rm -rf "$work/fake" "$fixture/deploy/infrastructure/sealed-secrets/secrets/staging"; }
+secrets_dir="$fixture/deploy/infrastructure/sealed-secrets/secrets/staging"
+cert="$fixture/deploy/infrastructure/sealed-secrets/certs/staging-pub-cert.pem"
 
 # A key the user supplies, with a value that must never reach the output or a sealed file.
 sentinel="sentinel-value-must-not-print"
@@ -88,7 +88,7 @@ reset
 run --env staging --fetch-cert --context kind-shogun
 check "fetch-cert writes the certificate" '[ "$code" -eq 0 ] && grep -q "FAKE CERT" "$cert"'
 run --env production --fetch-cert --context kind-prod
-check "each env has its own certificate" '[ -s "$fixture/deploy/k8s/production/sealed-secrets.pem" ]'
+check "each env has its own certificate" '[ -s "$fixture/deploy/infrastructure/sealed-secrets/certs/production-pub-cert.pem" ]'
 run --env staging --backup-key --context kind-shogun
 check "backup-key writes a private file under .secrets" \
 	'[ "$code" -eq 0 ] && [ "$(stat -f %Lp "$work/.secrets/staging-sealed-secrets-key.yaml" 2>/dev/null || stat -c %a "$work/.secrets/staging-sealed-secrets-key.yaml")" = 600 ]'

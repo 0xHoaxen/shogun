@@ -1,0 +1,6 @@
+apiVersion: v2
+name: namespaces
+description: The namespaces a cluster needs, with their ResourceQuota, LimitRange and optional default-deny NetworkPolicy. Values in deploy/infrastructure/namespaces/.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

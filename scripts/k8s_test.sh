@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Checks deploy/k8s: both overlays render, and what the staging charts request
-# fits the ResourceQuota. Needs helm and kubectl. Run: scripts/k8s_test.sh
+# Checks the namespaces chart: both environments render, and what the staging charts request
+# fits the ResourceQuota. Needs helm. Run: scripts/k8s_test.sh
 set -u
 here=$(cd "$(dirname "$0")" && pwd)
 root="$here/.."
-helm_dir="$root/deploy/helm"
+infra_dir="$root/deploy/infrastructure"
 apps_dir="$root/deploy/apps"
 failed=0
 SERVICES="torii kagami tsubame fude taiko dojo katana shinobi sensei soroban"
@@ -18,6 +18,12 @@ check() { # name, command that succeeds when the behaviour holds
 	if eval "$2"; then ok "$1"; else fail "$1"; fi
 }
 
+# namespaces ENV renders the namespaces chart of an environment.
+namespaces() {
+	helm template namespaces "$root/deploy/charts/namespaces" -f "$infra_dir/namespaces/values.yaml" \
+		-f "$infra_dir/namespaces/values-$1.yaml"
+}
+
 # render ENV prints every app chart of an environment, one YAML stream.
 render() {
 	local env=$1 name
@@ -27,9 +33,8 @@ render() {
 			-f "$apps_dir/$name/values.yaml" -f "$apps_dir/$name/values-$env.yaml" 2>/dev/null
 		echo "---"
 	done
-	if [ -f "$helm_dir/values/$env/postgres.yaml" ]; then
-		helm template postgres "$helm_dir/apps/postgres" -n shogun -f "$helm_dir/values/$env/postgres.yaml" 2>/dev/null
-	fi
+	helm template postgres "$root/deploy/charts/postgres" -n shogun -f "$infra_dir/postgres/values.yaml" \
+		-f "$infra_dir/postgres/values-$env.yaml" 2>/dev/null
 }
 
 # fit ENV prints the totals of an environment's pods against the quota and exits
@@ -38,7 +43,7 @@ render() {
 fit() {
 	local env=$1
 	{
-		kubectl kustomize "$root/deploy/k8s/$env"
+		namespaces "$env"
 		echo "#RENDER"
 		render "$env"
 	} | python3 -I -c '
@@ -126,16 +131,16 @@ sys.exit(1 if over else 0)
 '
 }
 
-check "the staging overlay renders a quota, a limit range and both namespaces" \
-	'out=$(kubectl kustomize "$root/deploy/k8s/staging") &&
+check "staging renders a quota, a limit range and both namespaces" \
+	'out=$(namespaces staging) &&
 	 [ "$(echo "$out" | grep -c "^kind: Namespace")" -eq 2 ] &&
 	 echo "$out" | grep -q "^kind: ResourceQuota" && echo "$out" | grep -q "^kind: LimitRange"'
-check "the production overlay renders" 'kubectl kustomize "$root/deploy/k8s/production" >/dev/null'
+check "production renders" 'namespaces production >/dev/null'
 check "staging requests, limits and pods fit the quota with a migration Job on top" \
 	'report=$(fit staging); code=$?; echo "$report"; [ "$code" -eq 0 ]'
 
 # Production is reported, not asserted: its HPA minimum of two replicas does not
-# fit a 4 GiB VM yet (TODO(owner), see deploy/k8s/base/resource-quota.yaml).
+# fit a 4 GiB VM yet (TODO(owner), see deploy/infrastructure/namespaces/values.yaml).
 echo "info production (not asserted):"
 fit production
 
