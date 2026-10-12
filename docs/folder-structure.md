@@ -94,7 +94,7 @@ shogun/
 │   ├── changed-modules.sh       # prints the CI matrix for a diff
 │   ├── helm.py                  # `add NAME`: deploy values and peers entry for a new service
 │   ├── install-helmfile.sh      # pinned helmfile binary and helm-diff plugin (make tools)
-│   ├── deploy/                  # shogun-deploy: preflight, plan, up, apps, status, backup, secrets
+│   ├── seal-secrets.sh          # seals a cluster's Secrets with kubeseal (make seal, make seal-cert)
 │   └── templates/service/       # skeleton used by new-service.sh
 │
 ├── docs/

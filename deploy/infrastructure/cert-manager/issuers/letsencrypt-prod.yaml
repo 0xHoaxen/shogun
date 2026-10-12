@@ -1,6 +1,6 @@
 # Trusted certificates with strict rate limits: switch to this issuer once
-# letsencrypt-staging has issued for the host. Applied after cert-manager
-# (phase platform).
+# letsencrypt-staging has issued for the host. Release cluster-issuers,
+# after cert-manager.
 # TODO(owner): add spec.acme.email if you want a contact on the account (optional;
 # Let's Encrypt no longer sends expiry mail).
 apiVersion: cert-manager.io/v1

@@ -1,5 +1,5 @@
 # k3s bundles Traefik and installs it from a HelmChart in kube-system; this
-# HelmChartConfig is merged into that chart's values. Applied in phase platform.
+# HelmChartConfig is merged into that chart's values. Release traefik-config (phase ingress).
 # Only on k3s: the HelmChartConfig CRD exists nowhere else.
 #
 # A permanent redirect of every request on :80 to :443. Let's Encrypt follows the

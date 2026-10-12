@@ -1,15 +1,20 @@
 # Every Helm release of a Shogun cluster, its values and its install order.
-# Normally run through the deploy CLI, which applies one phase at a time and the
-# plain manifests between them (sealed Secrets after bootstrap; ClusterIssuers
-# and the k3s Traefik config after cert-manager):
+# `needs` orders the releases, so one apply installs a cluster from scratch:
 #
 #   bootstrap  namespaces, sealed-secrets controller
+#   secrets    the sealed Secrets committed for the environment
 #   platform   cert-manager, monitoring (kube-prometheus-stack), monitoring-extras
+#   ingress    ClusterIssuers, the k3s Traefik redirect
 #   data       postgres
 #   apps       soroban, then the other services and web
 #
-# By hand: helmfile -e <staging|production> --kube-context <ctx> -l phase=<phase> apply
+# Normally run through make (deploy, deploy-plan, deploy-status). By hand:
+#   helmfile -e <staging|production> --kube-context <ctx> apply --concurrency 1
+# One phase or app: -l phase=<phase> or -l name=<app>.
 # Override an image tag without editing values: --state-values-set tags.kagami=1.2.3
+#
+# Until secrets/<env>/ is sealed (make seal), only bootstrap is declared: the
+# rest reads Secrets that do not exist yet.
 #
 # Each environment is its own cluster with its own sealing key. Paths are
 # relative to this file.
@@ -39,6 +44,7 @@ helmDefaults:
 
 {{- $env := .Environment.Name }}
 {{- $tags := .Values.tags }}
+{{- $sealed := printf "deploy/infrastructure/sealed-secrets/secrets/%s" $env }}
 
 releases:
   # ---- bootstrap -------------------------------------------------------------
@@ -60,6 +66,22 @@ releases:
       phase: bootstrap
     values:
       - deploy/infrastructure/sealed-secrets/values.yaml
+{{- if isDir $sealed }}
+
+  # ---- secrets ---------------------------------------------------------------
+  # The plain manifest directories below become charts through helmfile. They
+  # were once applied with kubectl, so a release takes over what already exists.
+  - name: secrets
+    namespace: kube-system
+    chart: ./{{ $sealed }}
+    takeOwnership: true
+    # The SealedSecret CRD arrives with the controller in the same apply.
+    disableValidationOnInstall: true
+    labels:
+      phase: secrets
+    needs:
+      - kube-system/namespaces
+      - kube-system/sealed-secrets
 
   # ---- platform --------------------------------------------------------------
   - name: cert-manager
@@ -84,6 +106,7 @@ releases:
       phase: platform
     needs:
       - kube-system/namespaces
+      - kube-system/secrets
     values:
       - deploy/infrastructure/monitoring/kube-prometheus-stack/values.yaml
       - deploy/infrastructure/monitoring/kube-prometheus-stack/values-{{ $env }}.yaml
@@ -91,10 +114,30 @@ releases:
   - name: monitoring-extras
     namespace: monitoring
     chart: ./deploy/charts/monitoring-extras
+    # Its PrometheusRule CRD arrives with monitoring in the same apply.
+    disableValidationOnInstall: true
     labels:
       phase: platform
     needs:
       - monitoring/monitoring
+
+  # ---- ingress ---------------------------------------------------------------
+  - name: cluster-issuers
+    namespace: cert-manager
+    chart: ./deploy/infrastructure/cert-manager/issuers
+    takeOwnership: true
+    disableValidationOnInstall: true
+    labels:
+      phase: ingress
+    needs:
+      - cert-manager/cert-manager
+
+  - name: traefik-config
+    namespace: kube-system
+    chart: ./deploy/infrastructure/traefik
+    takeOwnership: true
+    labels:
+      phase: ingress
 
   # ---- data ------------------------------------------------------------------
   - name: postgres
@@ -105,6 +148,7 @@ releases:
       phase: data
     needs:
       - kube-system/namespaces
+      - kube-system/secrets
     values:
       - deploy/infrastructure/postgres/values.yaml
       - deploy/infrastructure/postgres/values-{{ $env }}.yaml
@@ -118,6 +162,8 @@ releases:
   - name: {{ $name }}
     namespace: shogun
     chart: ./deploy/charts/microservice
+    # ServiceMonitor and Certificate kinds may not be installed yet on a fresh cluster.
+    disableValidationOnInstall: true
     labels:
       phase: apps
     needs:
@@ -133,5 +179,6 @@ releases:
       - image:
           tag: {{ . | quote }}
       {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}

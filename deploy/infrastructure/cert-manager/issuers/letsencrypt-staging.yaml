@@ -1,6 +1,6 @@
 # Staging certificates are not trusted by browsers but have generous rate
 # limits: use this issuer until the host and DNS are right, then switch the
-# Ingress to letsencrypt-prod. Applied after cert-manager (phase platform).
+# Ingress to letsencrypt-prod. Release cluster-issuers, after cert-manager.
 # TODO(owner): add spec.acme.email if you want a contact on the account (optional;
 # Let's Encrypt no longer sends expiry mail).
 apiVersion: cert-manager.io/v1
