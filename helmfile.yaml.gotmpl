@@ -102,6 +102,9 @@ releases:
     version: 92.3.0
     # The stack pulls several images on a fresh node.
     timeout: 600
+    # Its own CRDs (Prometheus, ServiceMonitor, ...) arrive with this release,
+    # so a diff on a fresh cluster cannot validate against them yet.
+    disableValidationOnInstall: true
     labels:
       phase: platform
     needs:
