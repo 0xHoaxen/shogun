@@ -1,0 +1,18 @@
+# Defaults for a container that sets no resources, and a ceiling for one that does.
+# The memory limit is what protects the node: a leak in one pod gets OOM-killed
+# instead of starving Postgres. CPU has no limit, so a busy pod can use idle cores.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: shogun-defaults
+  namespace: shogun
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      default:
+        memory: 256Mi
+      max:
+        memory: 1Gi

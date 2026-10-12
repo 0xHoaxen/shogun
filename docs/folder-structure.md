@@ -69,6 +69,7 @@ shogun/
 │
 ├── deploy/
 │   ├── docker/Dockerfile        # one multi-stage file, ARG SERVICE
+│   ├── k8s/                     # per-cluster basics, `kubectl apply -k deploy/k8s/<env>`: namespaces, LimitRange, ResourceQuota
 │   ├── compose/
 │   │   ├── compose.yaml         # local stack: postgres, ten services, torii, web
 │   │   ├── compose.obs.yaml     # profile: OTel collector, Jaeger, Prometheus, Grafana
@@ -88,7 +89,7 @@ shogun/
 │   ├── new-service.sh           # scaffold from templates/service
 │   ├── rename-service.sh        # rename folder, proto pkg, schema, role, values, tags
 │   ├── changed-modules.sh       # prints the CI matrix for a diff
-│   ├── platform.sh              # once per cluster: cert-manager, ingress, kube-prometheus-stack, monitoring
+│   ├── platform.sh              # once per cluster: k8s basics, cert-manager, ingress, monitoring
 │   └── templates/service/       # skeleton used by new-service.sh
 │
 ├── docs/

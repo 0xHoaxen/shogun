@@ -13,6 +13,11 @@ cat >"$work/helm" <<'FAKE'
 echo "$*" >>"$FAKE_LOG"
 FAKE
 chmod +x "$work/helm"
+cat >"$work/kubectl" <<'FAKE'
+#!/usr/bin/env bash
+echo "kubectl $*" >>"$FAKE_LOG"
+FAKE
+chmod +x "$work/kubectl"
 
 ok() { echo "ok   $1"; }
 fail() {
@@ -26,20 +31,27 @@ check() { # name, command that succeeds when the behaviour holds
 run() { # args...; sets $out and $code, calls are in $log
 	log="$work/helm.log"
 	rm -f "$log"
-	out=$(FAKE_LOG="$log" HELM="$work/helm" "$script" "$@" 2>&1)
+	out=$(FAKE_LOG="$log" HELM="$work/helm" KUBECTL="$work/kubectl" "$script" "$@" 2>&1)
 	code=$?
 }
 calls() { cat "$log" 2>/dev/null; }
-release_order() { calls | awk '{ print $3 }' | tr '\n' ' '; }
+release_order() { calls | grep '^upgrade ' | awk '{ print $3 }' | tr '\n' ' '; }
 
 run
 check "refuses without a context" '[ "$code" -eq 2 ] && echo "$out" | grep -q -- "--context is required"'
-run --context k3s --namespace shogun
+run --context k3s --env staging --namespace shogun
 check "refuses an unknown argument" '[ "$code" -eq 2 ] && echo "$out" | grep -q "unknown argument"'
 check "helm was never called when it refused" '[ -z "$(calls)" ]'
 
 run --context k3s
+check "refuses without an env" '[ "$code" -eq 2 ] && echo "$out" | grep -q -- "--env must be"'
+run --context k3s --env qa
+check "refuses an unknown env" '[ "$code" -eq 2 ] && echo "$out" | grep -q -- "--env must be"'
+check "nothing ran when it refused the env" '[ -z "$(calls)" ]'
+run --context k3s --env staging
 check "a full run succeeds" '[ "$code" -eq 0 ]'
+check "applies the cluster basics for the env before any release" \
+	'calls | head -n 1 | grep -q "^kubectl --context k3s apply -k .*/deploy/k8s/staging$"'
 check "installs cert-manager, ingress, then monitoring" \
 	'[ "$(release_order)" = "cert-manager ingress monitoring " ]'
 check "every call is upgrade --install" '[ "$(calls | grep -c "^upgrade --install ")" -eq 3 ]'
@@ -54,11 +66,16 @@ check "the ingress chart comes from the checkout" \
 	'calls | grep "^upgrade --install ingress " | grep -q "deploy/helm/platform/ingress "'
 check "the ingress release lives next to k3s Traefik" \
 	'calls | grep "^upgrade --install ingress " | grep -q -- "--namespace kube-system"'
-check "monitoring is the local umbrella chart, in its own namespace" \
+check "monitoring is the local umbrella chart, in the namespace deploy/k8s created" \
 	'calls | grep "^upgrade --install monitoring " | grep -q "deploy/helm/monitoring " &&
-	 calls | grep "^upgrade --install monitoring " | grep -q -- "--namespace monitoring --create-namespace"'
+	 calls | grep "^upgrade --install monitoring " | grep -q -- "--namespace monitoring" &&
+	 ! calls | grep "^upgrade --install monitoring " | grep -q -- "--create-namespace"'
 check "monitoring fetches the stack dependency and has the longer timeout" \
 	'calls | grep "^upgrade --install monitoring " | grep -q -- "--dependency-update" &&
 	 calls | grep "^upgrade --install monitoring " | grep -q -- "--timeout 10m"'
+
+run --context k3s --env production
+check "production applies its own overlay" \
+	'calls | head -n 1 | grep -q "^kubectl --context k3s apply -k .*/deploy/k8s/production$"'
 
 exit "$failed"

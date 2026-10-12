@@ -1,0 +1,15 @@
+# The two namespaces every cluster has. Applied by scripts/platform.sh before any
+# Helm release, so no release needs --create-namespace for them.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shogun
+  labels:
+    app.kubernetes.io/part-of: shogun
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    app.kubernetes.io/part-of: shogun

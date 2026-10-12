@@ -46,8 +46,9 @@ echo "$GHCR_TOKEN" | helm registry login ghcr.io -u <github user> --password-std
 
 ## Platform (once per cluster)
 
-The VM runs k3s, which bundles Traefik. `scripts/platform.sh` adds what the app releases rely on, in this order (upstream versions pinned in the script):
+The VM runs k3s, which bundles Traefik. `scripts/platform.sh --env <staging|production>` adds what the app releases rely on, in this order (cert-manager is pinned in the script):
 
+0. `deploy/k8s/<env>`, applied with `kubectl apply -k`: the namespaces `shogun` and `monitoring`, a LimitRange (default 50m CPU and 64Mi request, 256Mi memory limit per container) and a ResourceQuota on `shogun` sized for a 2 vCPU / 4 GiB VM. Production does not fit that quota yet: `scripts/k8s_test.sh` prints how far over it is.
 1. cert-manager, CRDs included.
 2. The local chart `deploy/helm/platform/ingress`: Traefik redirects HTTP to HTTPS, and the ClusterIssuers `letsencrypt-staging` and `letsencrypt-prod`.
 3. The local chart `deploy/helm/monitoring` in namespace `monitoring`, one release that wraps kube-prometheus-stack (pinned in its `Chart.yaml`): Prometheus (7 days on a 5Gi `local-path` volume), Alertmanager and Grafana, plus the six Shogun alert rules and the "Shogun overview" dashboard, read through symlinks from `deploy/compose/observability/` so Compose and the cluster share one copy. It picks up ServiceMonitors and PrometheusRules from every namespace; the k3s control-plane scrapes are off.
@@ -56,7 +57,7 @@ Run `scripts/k8s-secrets.sh` (section 1 below) first, because Grafana's login co
 
 ```sh
 kubectl --context "$CTX" -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'   # needs Traefik chart 34 or newer
-scripts/platform.sh --context "$CTX"
+scripts/platform.sh --context "$CTX" --env staging
 kubectl --context "$CTX" get clusterissuer                                                  # both READY True
 kubectl --context "$CTX" -n monitoring get pods                                             # all Ready
 ```
