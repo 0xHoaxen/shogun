@@ -3,24 +3,24 @@
 # then soroban, then the other services, then the web app.
 #
 # Usage: scripts/deploy.sh --context <ctx> --namespace <ns> --env <staging|production>
-#                          [--versions-file <file>] [--pull-secret <name>]
+#                          [--versions-file <file>]
 #
-# Charts come from oci://ghcr.io/0xhoaxen/charts/<name> at the version to
-# deploy. That version is the image.tag in deploy/helm/values/<env>/<name>.yaml,
-# so run this from a checkout of the git ref you are deploying. A versions file
-# (KAGAMI=1.2.3 lines, upper-case service name, WEB for the web app) overrides it.
+# Every app is installed with deploy/charts/microservice from the checkout, with
+# deploy/apps/common.yaml, deploy/apps/<name>/values.yaml and
+# values-<env>.yaml. The image tag is image.tag in values-<env>.yaml, so run this
+# from a checkout of the git ref you are deploying. A versions file (KAGAMI=1.2.3
+# lines, upper-case service name, WEB for the web app) overrides it.
 #
-# Postgres is not published to the registry: it is installed from deploy/helm/apps/postgres
-# in the checkout. Log in to the registry first (helm registry login ghcr.io) and
-# create the Secrets with scripts/seal-secrets.sh, which also seals the "ghcr" pull
-# secret. --pull-secret "" turns the pull secret off (public packages).
+# Postgres is installed from deploy/helm/apps/postgres. Create the Secrets with
+# scripts/seal-secrets.sh first; it also seals the "ghcr" pull secret that
+# deploy/apps/common.yaml names.
 set -euo pipefail
 
 SERVICES="soroban kagami fude tsubame taiko dojo katana shinobi sensei torii"
 HELM="${HELM:-helm}"
-CHART_REGISTRY="oci://ghcr.io/0xhoaxen/charts"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DEFAULT_PULL_SECRET="ghcr"
+APPS_DIR="$ROOT/deploy/apps"
+CHART="$ROOT/deploy/charts/microservice"
 SERVICE_TIMEOUT="5m"
 POSTGRES_TIMEOUT="3m"
 
@@ -43,16 +43,16 @@ values_tag() {
 # versions_get FILE KEY prints the last value of KEY in a versions file, or nothing.
 versions_get() { sed -n "s/^$2=//p" "$1" | tail -n 1; }
 
-# resolve_version VALUES_DIR VERSIONS_FILE NAME prints the version to deploy.
+# resolve_version ENV VERSIONS_FILE NAME prints the version to deploy.
 resolve_version() {
-	local values_dir=$1 versions_file=$2 name=$3 version=""
+	local env=$1 versions_file=$2 name=$3 version=""
 	if [ -n "$versions_file" ]; then
 		version=$(versions_get "$versions_file" "$(upper "$name")")
 	fi
 	if [ -z "$version" ]; then
-		version=$(values_tag "$values_dir/$name.yaml")
+		version=$(values_tag "$APPS_DIR/$name/values-$env.yaml")
 	fi
-	[ -n "$version" ] || die "no version for $name: set image.tag in $values_dir/$name.yaml or $(upper "$name") in the versions file"
+	[ -n "$version" ] || die "no version for $name: set image.tag in deploy/apps/$name/values-$env.yaml or $(upper "$name") in the versions file"
 	printf '%s' "$version"
 }
 
@@ -67,32 +67,25 @@ install_postgres() {
 	echo "installed postgres (local chart)"
 }
 
-# install_chart CONTEXT NAMESPACE VALUES_DIR NAME VERSION PULL_SECRET
-install_chart() {
-	local context=$1 namespace=$2 values_dir=$3 name=$4 version=$5 pull_secret=$6
-	local args=(
-		--version "$version"
-		--kube-context "$context" --namespace "$namespace"
-		-f "$values_dir/$name.yaml"
-		--set "image.tag=$version"
+# install_app CONTEXT NAMESPACE ENV NAME VERSION installs one app with the shared chart.
+install_app() {
+	local context=$1 namespace=$2 env=$3 name=$4 version=$5
+	"$HELM" upgrade --install "$name" "$CHART" \
+		--kube-context "$context" --namespace "$namespace" \
+		-f "$APPS_DIR/common.yaml" -f "$APPS_DIR/$name/values.yaml" -f "$APPS_DIR/$name/values-$env.yaml" \
+		--set "image.tag=$version" \
 		--wait --timeout "$SERVICE_TIMEOUT"
-	)
-	if [ -n "$pull_secret" ]; then
-		args+=(--set "imagePullSecrets[0].name=$pull_secret")
-	fi
-	"$HELM" upgrade --install "$name" "$CHART_REGISTRY/$name" "${args[@]}"
 	echo "installed $name $version"
 }
 
 main() {
-	local context="" namespace="" env="" versions_file="" pull_secret="$DEFAULT_PULL_SECRET"
+	local context="" namespace="" env="" versions_file=""
 	while [ $# -gt 0 ]; do
 		case $1 in
 		--context) context=${2:-}; shift 2 ;;
 		--namespace) namespace=${2:-}; shift 2 ;;
 		--env) env=${2:-}; shift 2 ;;
 		--versions-file) versions_file=${2:-}; shift 2 ;;
-		--pull-secret) pull_secret=${2-}; shift 2 ;;
 		*) die "unknown argument: $1" ;;
 		esac
 	done
@@ -112,14 +105,14 @@ main() {
 	# Resolve everything before the first install, so a missing file or version
 	# stops the run while the cluster is still untouched.
 	for name in $SERVICES web; do
-		[ -f "$values_dir/$name.yaml" ] || die "missing $values_dir/$name.yaml"
-		version=$(resolve_version "$values_dir" "$versions_file" "$name")
+		[ -f "$APPS_DIR/$name/values-$env.yaml" ] || die "missing deploy/apps/$name/values-$env.yaml"
+		version=$(resolve_version "$env" "$versions_file" "$name")
 		plan+=("$name=$version")
 	done
 
 	install_postgres "$context" "$namespace" "$values_dir"
 	for entry in "${plan[@]}"; do
-		install_chart "$context" "$namespace" "$values_dir" "${entry%%=*}" "${entry#*=}" "$pull_secret"
+		install_app "$context" "$namespace" "$env" "${entry%%=*}" "${entry#*=}"
 	done
 }
 

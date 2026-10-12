@@ -1,0 +1,22 @@
+# Values for every app release, applied before deploy/apps/<name>/values.yaml.
+
+# The registry pull secret, sealed by scripts/seal-secrets.sh. Remove it if the
+# ghcr.io packages are public.
+imagePullSecrets:
+  - name: ghcr
+
+# Every service, so each pod gets <NAME>_ADDR for event delivery. The web app
+# ignores it (serviceEnv: false). scripts/helm.py add appends to it.
+peers:
+  # peers begin
+  - torii
+  - kagami
+  - tsubame
+  - fude
+  - taiko
+  - dojo
+  - katana
+  - shinobi
+  - sensei
+  - soroban
+  # peers end

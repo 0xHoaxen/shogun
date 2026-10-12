@@ -16,5 +16,7 @@ web/.next/
 .DS_Store
 
 # Helm dependency output (helm package -u rebuilds it)
+deploy/charts/**/charts/
+deploy/charts/**/Chart.lock
 deploy/helm/**/charts/
 deploy/helm/**/Chart.lock

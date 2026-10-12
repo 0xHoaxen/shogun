@@ -1,0 +1,120 @@
+# Defaults for every app. Values are layered, last wins:
+#   deploy/apps/common.yaml              peers and the pull secret, for every app
+#   deploy/apps/<name>/values.yaml       what the app is (name, ports, probes)
+#   deploy/apps/<name>/values-<env>.yaml image.tag and per-environment settings
+# The defaults describe a Go service; deploy/apps/web/values.yaml turns the Go
+# parts off.
+
+# App name, for example kagami. Required. Names the Deployment, the Service and
+# the default image ghcr.io/0xhoaxen/<name>.
+name: ""
+
+image:
+  # Empty means ghcr.io/0xhoaxen/<name>.
+  repository: ""
+  # Required. Bumped in values-<env>.yaml by .github/workflows/deploy.yml.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Secrets for a private registry, for example [{name: ghcr}]. Applied to the
+# Deployment and the migration Job.
+imagePullSecrets: []
+
+replicaCount: 1
+
+# Name of the single container.
+containerName: service
+
+ports:
+  # 0 means no gRPC port (the web app).
+  grpc: 9090
+  http: 8080
+
+# An extra port for a service that listens for browsers, which only torii does
+# (TORII_PUBLIC_ADDR). The service's own env must make it listen on this port.
+publicPort:
+  enabled: false
+  port: 8081
+
+# GRPC_PORT, HTTP_PORT, MIGRATE_ON_START and one <PEER>_ADDR per peer, which
+# every Go service reads. Off for the web app.
+serviceEnv: true
+
+# Plain environment variables, merged over the chart's own.
+env: {}
+
+# Every service, so each pod gets <NAME>_ADDR for event delivery. Set in
+# deploy/apps/common.yaml, kept in sync by scripts/helm.py.
+peers: []
+
+# The Secret loaded with envFrom (DATABASE_URL, IDENTITY_SIGNING_KEY, ...). The
+# chart never creates it: scripts/seal-secrets.sh seals one per service.
+secret:
+  enabled: true
+  # Empty means <name>.
+  name: ""
+
+# The pre-install/pre-upgrade Job runs `<binary> migrate`, so pods skip migrating on start.
+migrateOnStart: false
+migrationJob:
+  enabled: true
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  seccompProfile:
+    type: RuntimeDefault
+
+probes:
+  liveness:
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    httpGet:
+      path: /readyz
+      port: http
+    periodSeconds: 5
+    failureThreshold: 3
+
+# Extra writable paths for a read-only root filesystem.
+volumes: []
+volumeMounts: []
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+# Needs the Prometheus Operator CRDs in the cluster.
+serviceMonitor:
+  enabled: false
+  interval: 30s
+
+# Public HTTPS entry through Traefik with a certificate from cert-manager. Only
+# the web app turns it on.
+ingress:
+  enabled: false
+  className: traefik
+  # Required when enabled, for example shogun.example.com.
+  host: ""
+  # letsencrypt-staging until the host resolves, then letsencrypt-prod.
+  clusterIssuer: letsencrypt-staging
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

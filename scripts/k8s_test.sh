@@ -5,6 +5,7 @@ set -u
 here=$(cd "$(dirname "$0")" && pwd)
 root="$here/.."
 helm_dir="$root/deploy/helm"
+apps_dir="$root/deploy/apps"
 failed=0
 SERVICES="torii kagami tsubame fude taiko dojo katana shinobi sensei soroban"
 
@@ -20,14 +21,12 @@ check() { # name, command that succeeds when the behaviour holds
 # render ENV prints every app chart of an environment, one YAML stream.
 render() {
 	local env=$1 name
-	for name in $SERVICES; do
-		helm template "shogun-$name" "$helm_dir/apps/$name" -n shogun -f "$helm_dir/values/$env/$name.yaml" 2>/dev/null
+	for name in $SERVICES web; do
+		[ -f "$apps_dir/$name/values-$env.yaml" ] || continue
+		helm template "$name" "$root/deploy/charts/microservice" -n shogun -f "$apps_dir/common.yaml" \
+			-f "$apps_dir/$name/values.yaml" -f "$apps_dir/$name/values-$env.yaml" 2>/dev/null
 		echo "---"
 	done
-	if [ -f "$helm_dir/values/$env/web.yaml" ]; then
-		helm template shogun-web "$helm_dir/apps/web" -n shogun -f "$helm_dir/values/$env/web.yaml" 2>/dev/null
-		echo "---"
-	fi
 	if [ -f "$helm_dir/values/$env/postgres.yaml" ]; then
 		helm template postgres "$helm_dir/apps/postgres" -n shogun -f "$helm_dir/values/$env/postgres.yaml" 2>/dev/null
 	fi

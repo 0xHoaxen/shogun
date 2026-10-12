@@ -1,0 +1,60 @@
+# web: the Next.js standalone server. Per-environment settings are in values-<env>.yaml.
+#
+# Next.js bakes its /api and /auth rewrites into the image at build time, so the
+# image must be built with the in-cluster address of torii's public port:
+#   docker build -f deploy/docker/web.Dockerfile \
+#     --build-arg TORII_URL=http://torii:8081 -t <image>:<tag> web
+# The chart cannot change that address.
+name: web
+containerName: web
+
+# Not a Go service: no gRPC port, no peers, no migrations, no Secret.
+ports:
+  grpc: 0
+  http: 3000
+serviceEnv: false
+migrationJob:
+  enabled: false
+secret:
+  enabled: false
+
+# The image's user is "node"; Kubernetes can only verify a numeric id.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+probes:
+  readiness:
+    httpGet:
+      path: /login
+      port: http
+    periodSeconds: 5
+    failureThreshold: 6
+  liveness:
+    httpGet:
+      path: /login
+      port: http
+    initialDelaySeconds: 15
+    periodSeconds: 10
+
+# Next writes its image and fetch cache here at run time.
+volumeMounts:
+  - name: next-cache
+    mountPath: /app/.next/cache
+  - name: tmp
+    mountPath: /tmp
+volumes:
+  - name: next-cache
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 384Mi
