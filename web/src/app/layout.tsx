@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Space_Grotesk } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const spaceGrotesk = Space_Grotesk({
+// Self-hosted latin variable fonts from Google Fonts (OFL, licences beside
+// them), so the build never fetches fonts over the network.
+const spaceGrotesk = localFont({
+  src: "./fonts/space-grotesk-latin.woff2",
   variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: "300 700",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "./fonts/geist-mono-latin.woff2",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: "100 900",
 });
 
 export const metadata: Metadata = {
