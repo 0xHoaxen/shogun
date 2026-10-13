@@ -1,0 +1,6 @@
+apiVersion: v2
+name: traefik-config
+description: The k3s Traefik HelmChartConfig (HTTP to HTTPS redirect); renders nothing on clusters without that CRD.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

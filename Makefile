@@ -11,7 +11,7 @@ COMPOSE := docker compose --env-file $(COMPOSE_ENV) -f deploy/compose/compose.ya
 
 .DEFAULT_GOAL := help
 
-.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service deploy-plan deploy deploy-status deploy-test seal
+.PHONY: help tools proto sqlc lint test drills build up down up-observability migrate new-service rename-service deploy-check deploy-plan deploy deploy-status backup-now seal-cert seal deploy-test
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  %-16s %s\n", $$1, $$2}'
@@ -79,21 +79,52 @@ new-service: ## generate a service skeleton: make new-service NAME=<name>
 rename-service: ## rename a service everywhere: make rename-service OLD=a NEW=b
 	@scripts/rename-service.sh "$(OLD)" "$(NEW)"
 
-# Cluster deploys: ENV=staging|production, CONTEXT=<kube context> (asked for when empty).
-DEPLOY := uv run --project scripts/deploy shogun-deploy
-DEPLOY_TARGET = --env "$(ENV)" $(if $(CONTEXT),--context "$(CONTEXT)")
+# Cluster deploys with helmfile.yaml.gotmpl: ENV=staging|production and
+# CONTEXT=<kube context> are required; the current kubectl context is never
+# assumed. ARGS passes extra helmfile flags, e.g. ARGS="-l name=kagami" or
+# ARGS="--state-values-set tags.kagami=1.2.3". YES=1 skips the questions (CI).
+# kubeContext lets the helmfile template ask the same cluster which CRDs exist.
+HELMFILE = helmfile --environment "$(ENV)" --kube-context "$(CONTEXT)" --state-values-set kubeContext="$(CONTEXT)"
+KUBECTL = kubectl --context "$(CONTEXT)"
+SEALED_DIR = deploy/infrastructure/sealed-secrets/secrets/$(ENV)
+BACKUP_TIMEOUT := 15m
 
-deploy-plan: ## show what a deploy would change: make deploy-plan ENV=staging CONTEXT=<ctx>
-	@$(DEPLOY) plan $(DEPLOY_TARGET)
+deploy-check:
+	@case "$(ENV)" in staging | production) ;; *) echo "ENV must be staging or production" >&2; exit 2 ;; esac
+	@[ -n "$(CONTEXT)" ] || { echo "CONTEXT is required; pick one from: kubectl config get-contexts -o name" >&2; exit 2; }
 
-deploy: ## install or upgrade a cluster, phase by phase: make deploy ENV=staging CONTEXT=<ctx>
-	@$(DEPLOY) up $(DEPLOY_TARGET)
+deploy-plan: deploy-check ## show what a deploy would change: make deploy-plan ENV=staging CONTEXT=<ctx>
+	$(HELMFILE) diff --detailed-exitcode $(ARGS)
 
-deploy-status: ## releases, pods not ready and the last backup: make deploy-status ENV=staging CONTEXT=<ctx>
-	@$(DEPLOY) status $(DEPLOY_TARGET)
+# One release at a time: a small node spikes when charts install in parallel.
+deploy: deploy-check ## install or upgrade a cluster in dependency order: make deploy ENV=staging CONTEXT=<ctx>
+	@if [ "$(ENV)" = production ] && [ -z "$(YES)" ]; then \
+		printf 'Type the context name to deploy production: '; read -r answer; \
+		[ "$$answer" = "$(CONTEXT)" ] || { echo "not deploying" >&2; exit 2; }; \
+	fi
+	$(HELMFILE) apply --concurrency 1 $(if $(YES),,--interactive) $(ARGS)
+	@[ -d "$(SEALED_DIR)" ] || { \
+		echo "Only bootstrap is installed: nothing is sealed for $(ENV) yet. Next:" >&2; \
+		echo "  make seal-cert ENV=$(ENV) CONTEXT=$(CONTEXT) && make seal ENV=$(ENV)" >&2; \
+		echo "  commit $(SEALED_DIR), then make deploy again" >&2; exit 3; }
 
-seal: ## seal a cluster's Secrets offline from .secrets/<env>.env: make seal ENV=staging
-	@$(DEPLOY) secrets seal --env "$(ENV)"
+deploy-status: deploy-check ## releases, pods not running and the last backups: make deploy-status ENV=staging CONTEXT=<ctx>
+	$(HELMFILE) list
+	$(KUBECTL) get pods --all-namespaces --field-selector=status.phase!=Running,status.phase!=Succeeded
+	$(KUBECTL) -n shogun get jobs -l app.kubernetes.io/component=backup --sort-by=.metadata.creationTimestamp
 
-deploy-test: ## tests and lint for the deploy CLI in scripts/deploy
-	cd scripts/deploy && uv run pytest && uv run ruff check . && uv run ruff format --check .
+backup-now: deploy-check ## run the Postgres backup now and wait for it: make backup-now ENV=staging CONTEXT=<ctx>
+	@job=backup-now-$$(date -u +%Y%m%d%H%M%S); \
+	$(KUBECTL) -n shogun create job --from=cronjob/postgres-backup "$$job" && \
+	$(KUBECTL) -n shogun wait --for=condition=complete "job/$$job" --timeout=$(BACKUP_TIMEOUT) && \
+	$(KUBECTL) -n shogun logs "job/$$job"
+
+seal-cert: deploy-check ## fetch the sealing certificate and back up the key: make seal-cert ENV=staging CONTEXT=<ctx>
+	scripts/seal-secrets.sh --fetch-cert --env "$(ENV)" --context "$(CONTEXT)"
+	scripts/seal-secrets.sh --backup-key --env "$(ENV)" --context "$(CONTEXT)"
+
+seal: ## seal a cluster's Secrets offline from .secrets/<env>.env: make seal ENV=staging [ARGS="--only torii"]
+	scripts/seal-secrets.sh --env "$(ENV)" $(ARGS)
+
+deploy-test: ## tests for the deploy scripts
+	scripts/seal-secrets_test.sh

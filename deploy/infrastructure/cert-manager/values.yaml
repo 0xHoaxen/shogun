@@ -1,5 +1,5 @@
 # cert-manager (jetstack), release cert-manager in namespace cert-manager,
-# phase platform. The ClusterIssuers in issuers/ are applied after it, because
+# phase platform. Release cluster-issuers (issuers/) needs it, because
 # they need its CRDs and its webhook.
 crds:
   enabled: true

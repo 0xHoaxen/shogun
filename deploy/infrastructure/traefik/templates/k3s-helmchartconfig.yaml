@@ -1,6 +1,7 @@
 # k3s bundles Traefik and installs it from a HelmChart in kube-system; this
-# HelmChartConfig is merged into that chart's values. Applied in phase platform.
-# Only on k3s: the HelmChartConfig CRD exists nowhere else.
+# HelmChartConfig is merged into that chart's values. Release traefik-config (phase ingress).
+# Only on k3s: the HelmChartConfig CRD exists nowhere else, so on any other
+# cluster (kind) this renders nothing and the release is empty.
 #
 # A permanent redirect of every request on :80 to :443. Let's Encrypt follows the
 # redirect for HTTP-01 challenges, and k3s routes an Ingress on both ports. The
@@ -8,6 +9,7 @@
 #   kubectl -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'
 # No access log: it records the full request path, and the OAuth callback
 # carries its code in the query string.
+{{- if .Capabilities.APIVersions.Has "helm.cattle.io/v1/HelmChartConfig" }}
 apiVersion: helm.cattle.io/v1
 kind: HelmChartConfig
 metadata:
@@ -25,3 +27,4 @@ spec:
               to: websecure
               scheme: https
               permanent: true
+{{- end }}

@@ -19,9 +19,9 @@ web/.next/
 deploy/charts/**/charts/
 deploy/charts/**/Chart.lock
 
-# Deploy CLI (scripts/deploy): its virtualenv and caches, and one log per run
+# Logs written by the removed Python deploy CLI; never commit them.
 .deploy-logs/
-scripts/deploy/.venv/
+# Python caches from the helper scripts in scripts/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
