@@ -28,3 +28,11 @@ regexes = ['''^Ag[A-Za-z0-9+/]{300,}={0,2}$''']
 description = "the proto package name, which looks like a key to the entropy check"
 targetRules = ["generic-api-key"]
 regexes = ['''^shogun\.api\.v1$''']
+
+[[allowlists]]
+description = "truncated kubeseal ciphertext shown as an example in the deploy guide"
+targetRules = ["generic-api-key"]
+# Both must match: only a value cut short with "..." passes, a full key still fails.
+condition = "AND"
+paths = ['''^deploy-guide\.md$''']
+regexes = ['''^Ag[A-Za-z0-9+/]+\.\.\.$''']
