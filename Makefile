@@ -83,7 +83,8 @@ rename-service: ## rename a service everywhere: make rename-service OLD=a NEW=b
 # CONTEXT=<kube context> are required; the current kubectl context is never
 # assumed. ARGS passes extra helmfile flags, e.g. ARGS="-l name=kagami" or
 # ARGS="--state-values-set tags.kagami=1.2.3". YES=1 skips the questions (CI).
-HELMFILE = helmfile --environment "$(ENV)" --kube-context "$(CONTEXT)"
+# kubeContext lets the helmfile template ask the same cluster which CRDs exist.
+HELMFILE = helmfile --environment "$(ENV)" --kube-context "$(CONTEXT)" --state-values-set kubeContext="$(CONTEXT)"
 KUBECTL = kubectl --context "$(CONTEXT)"
 SEALED_DIR = deploy/infrastructure/sealed-secrets/secrets/$(ENV)
 BACKUP_TIMEOUT := 15m

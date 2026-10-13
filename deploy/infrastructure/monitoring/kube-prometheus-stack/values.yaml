@@ -69,8 +69,8 @@ prometheus:
     storageSpec:
       volumeClaimTemplate:
         spec:
-          # k3s's default provisioner.
-          storageClassName: local-path
+          # No storageClassName: the cluster default (k3s "local-path", kind
+          # "standard"), as for the Postgres volumes.
           accessModes: [ReadWriteOnce]
           resources:
             requests:
@@ -96,12 +96,13 @@ grafana:
   admin:
     existingSecret: grafana-admin
   defaultDashboardsTimezone: browser
+  # Grafana 13 keeps its search index in memory and was OOMKilled at 256Mi.
   resources:
     requests:
       cpu: 50m
-      memory: 128Mi
-    limits:
       memory: 256Mi
+    limits:
+      memory: 512Mi
   # TODO(owner): once DNS points the host at the VM, enable it and set the host
   # in all three places:
   #   ingress.enabled: true, ingress.hosts: [grafana.example.com],

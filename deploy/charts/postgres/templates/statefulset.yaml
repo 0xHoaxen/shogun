@@ -72,11 +72,25 @@ spec:
             # init.sql and service.sql, read through SHOGUN_INIT_DIR.
             - name: init
               mountPath: /opt/shogun/postgres
+            {{- if .Values.backup.enabled }}
+            # Read-only here; the backup CronJob writes it. Mounting it binds the
+            # claim at install (WaitForFirstConsumer) on the database's node, so
+            # the release wait does not block until the first nightly run.
+            - name: backups
+              mountPath: /backups
+              readOnly: true
+            {{- end }}
       volumes:
         - name: init
           configMap:
             name: {{ include "shogunPostgres.fullname" . }}-init
             defaultMode: 0555
+        {{- if .Values.backup.enabled }}
+        - name: backups
+          persistentVolumeClaim:
+            claimName: {{ include "shogunPostgres.fullname" . }}-backups
+            readOnly: true
+        {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: data
