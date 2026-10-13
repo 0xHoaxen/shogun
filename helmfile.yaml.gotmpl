@@ -4,7 +4,7 @@
 #   bootstrap  namespaces, sealed-secrets controller
 #   secrets    the sealed Secrets committed for the environment
 #   platform   cert-manager, monitoring (kube-prometheus-stack), monitoring-extras
-#   ingress    ClusterIssuers, the k3s Traefik redirect
+#   ingress    ClusterIssuers, Traefik (kind) or the k3s Traefik redirect
 #   data       postgres
 #   apps       soroban, then the other services and web
 #
@@ -28,6 +28,9 @@ repositories:
     oci: true
   - name: prometheus-community
     url: ghcr.io/prometheus-community/charts
+    oci: true
+  - name: traefik
+    url: ghcr.io/traefik/helm
     oci: true
 
 environments:
@@ -57,6 +60,9 @@ helmDefaults:
 {{- $adoptSealed := contains "/sealedsecrets.bitnami.com" $crds }}
 {{- $adoptIssuers := contains "/clusterissuers.cert-manager.io" $crds }}
 {{- $adoptTraefik := contains "/helmchartconfigs.helm.cattle.io" $crds }}
+{{- /* k3s ships Traefik and the HelmChartConfig CRD; any other cluster (kind)
+       gets Traefik from the release below. */}}
+{{- $k3s := $adoptTraefik }}
 {{- $sealed := printf "deploy/infrastructure/sealed-secrets/secrets/%s" $env }}
 
 releases:
@@ -159,11 +165,23 @@ releases:
 
   - name: traefik-config
     namespace: kube-system
-    chart: ./deploy/infrastructure/traefik
+    chart: ./deploy/infrastructure/traefik/k3s-config
     takeOwnership: {{ $adoptTraefik }}
     forceConflicts: {{ $adoptTraefik }}
     labels:
       phase: ingress
+
+  # Traefik itself where k3s does not bundle it (kind): hostPort 80 and 443 on
+  # the control-plane node, where kind maps the host's ports.
+  - name: traefik
+    namespace: kube-system
+    chart: traefik/traefik
+    version: 41.7.1
+    installed: {{ not $k3s }}
+    labels:
+      phase: ingress
+    values:
+      - deploy/infrastructure/traefik/values.yaml
 
   # ---- data ------------------------------------------------------------------
   - name: postgres

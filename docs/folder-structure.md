@@ -84,7 +84,7 @@ shogun/
 │   │   ├── common.yaml          # peers and pull secret for every app
 │   │   └── <app>/values{,-staging,-production}.yaml
 │   └── infrastructure/          # values for third-party charts, plus plain manifests
-│       ├── namespaces/  postgres/  cert-manager/ (+ issuers/)  traefik/
+│       ├── namespaces/  postgres/  cert-manager/ (+ issuers/)  traefik/ (+ k3s-config/)
 │       ├── sealed-secrets/      # controller values, certs/<env>-pub-cert.pem, secrets/<env>/ (sealed)
 │       └── monitoring/kube-prometheus-stack/
 │

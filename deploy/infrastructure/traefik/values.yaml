@@ -1,0 +1,59 @@
+# Traefik (upstream chart), release traefik in namespace kube-system, phase
+# ingress. Installed only on clusters without k3s's bundled Traefik (kind); on
+# k3s the release k3s-config/ tunes the bundled one instead.
+#
+# kind maps the host's ports 80 and 443 to the control-plane node container
+# (extraPortMappings), so Traefik binds 80 and 443 on that node with hostPort
+# and must run there. Behind Cloudflare, only Cloudflare reaches those ports.
+
+# The control-plane node, where kind's port mappings land.
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+
+# A second pod cannot bind the same host ports on the one node, so an upgrade
+# replaces the pod instead of surging.
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
+
+ports:
+  web:
+    hostPort: 80
+    # Same permanent HTTP to HTTPS redirect as k3s-config/.
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    hostPort: 443
+
+# Traffic arrives through the host ports; no cloud load balancer exists on kind.
+service:
+  spec:
+    type: ClusterIP
+
+# The web Ingress names ingressClassName traefik (deploy/charts/microservice).
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+
+# No access log: it records the full request path, and the OAuth callback
+# carries its code in the query string.
+accessLog:
+  enabled: false
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi

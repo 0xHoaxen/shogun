@@ -8,7 +8,7 @@ Everything that builds, runs or ships Shogun. Pick the folder by the question yo
 | `compose/` | the local stack, its observability profile, the Postgres bootstrap SQL and the backup script | `make up`, e2e tests |
 | `charts/` | the charts we maintain: `microservice` (every app), `postgres` (with the nightly backup), `namespaces` (quotas, limits), `monitoring-extras` (Shogun's alert rules and dashboard) | `helmfile.yaml.gotmpl` |
 | `apps/<name>/` | per-app values only: `values.yaml` (what the app is), `values-staging.yaml`, `values-production.yaml` (`image.tag`, bumped by `deploy.yml`); `common.yaml` for every app (peers, pull secret) | the `apps` phase |
-| `infrastructure/<component>/` | values for everything that is not an app: `namespaces`, `postgres`, `sealed-secrets` (with the per-env certificates and sealed Secrets), `cert-manager` (with the ClusterIssuers), `traefik` (the k3s redirect), `monitoring/kube-prometheus-stack` | the other phases |
+| `infrastructure/<component>/` | values for everything that is not an app: `namespaces`, `postgres`, `sealed-secrets` (with the per-env certificates and sealed Secrets), `cert-manager` (with the ClusterIssuers), `traefik` (Traefik's values for kind, and `k3s-config/`, the k3s redirect), `monitoring/kube-prometheus-stack` | the other phases |
 
 `helmfile.yaml.gotmpl` at the repo root declares every release, its values and its install order (`needs`). The `make deploy*` targets run `helmfile` with the environment and context you give them; nothing else sits in between.
 
@@ -29,7 +29,7 @@ Staging and production are separate clusters, each with its own sealing key. Eve
 | `bootstrap` | namespaces, quotas and limits; the sealed-secrets controller |
 | `secrets` | release `secrets`: the sealed Secrets in `infrastructure/sealed-secrets/secrets/<env>/` |
 | `platform` | cert-manager; kube-prometheus-stack (release `monitoring`); `monitoring-extras` |
-| `ingress` | releases `cluster-issuers` and `traefik-config` |
+| `ingress` | releases `cluster-issuers`, `traefik-config` (k3s) and `traefik` (kind) |
 | `data` | Postgres and its backup CronJob |
 | `apps` | `soroban`, then the other nine services, then web |
 
