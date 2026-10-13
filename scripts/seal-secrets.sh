@@ -4,7 +4,9 @@
 # (read by the Helm chart with envFrom), in namespace shogun, and grafana-admin
 # (Grafana's login, read by the monitoring chart) in namespace monitoring. With
 # GHCR_USER and GHCR_TOKEN set it also seals the pull secret "ghcr" (a token with
-# read:packages) for private ghcr.io images.
+# read:packages) for private ghcr.io images. With CLOUDFLARE_API_TOKEN set it
+# seals cloudflare-api-token in namespace cert-manager, which the ClusterIssuers
+# use for DNS-01.
 #
 # Usage:
 #   scripts/seal-secrets.sh --fetch-cert  --context <ctx> --env <env>
@@ -34,6 +36,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SEALED_DIR="$ROOT/deploy/infrastructure/sealed-secrets"
 APP_NAMESPACE="shogun"
 MONITORING_NAMESPACE="monitoring"
+CERT_MANAGER_NAMESPACE="cert-manager"
 # kubeseal's own defaults; deploy/infrastructure/sealed-secrets/values.yaml keeps them.
 CONTROLLER_NAME="sealed-secrets-controller"
 CONTROLLER_NAMESPACE="kube-system"
@@ -127,6 +130,9 @@ warn_unset() {
 	fi
 	if [ -z "$(env_get "$file" GHCR_TOKEN)" ]; then
 		echo "seal-secrets: GHCR_TOKEN is not set; no pull secret is created, so private ghcr.io images cannot be pulled" >&2
+	fi
+	if [ -z "$(env_get "$file" CLOUDFLARE_API_TOKEN)" ]; then
+		echo "seal-secrets: CLOUDFLARE_API_TOKEN is not set; no cloudflare-api-token is created, so no certificate is issued for the web host" >&2
 	fi
 	for key in ANTHROPIC_API_KEY KATANA_GITHUB_USER KATANA_GITHUB_TOKEN; do
 		if [ -z "$(env_get "$file" "$key")" ]; then
@@ -250,6 +256,10 @@ seal_all() {
 	ghcr_token=$(env_get "$env_file" GHCR_TOKEN)
 	if wanted ghcr && [ -n "$ghcr_user" ] && [ -n "$ghcr_token" ]; then
 		seal_pull_secret "$cert" "$outdir" "$ghcr_user" "$ghcr_token" "$tmp"
+	fi
+	if wanted cloudflare-api-token && [ -n "$(env_get "$env_file" CLOUDFLARE_API_TOKEN)" ]; then
+		printf 'api-token=%s\n' "$(env_get "$env_file" CLOUDFLARE_API_TOKEN)" >"$tmp/cloudflare-api-token.env"
+		seal_secret "$cert" "$outdir" "$CERT_MANAGER_NAMESPACE" cloudflare-api-token "$tmp/cloudflare-api-token.env"
 	fi
 	# Older runs wrote one; helmfile would then need kustomize to read the directory.
 	rm -f "$outdir/kustomization.yaml"

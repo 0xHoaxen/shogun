@@ -11,7 +11,7 @@ This is the runbook for deploying Shogun to a Kubernetes cluster (k3s on a VM, o
 | App values | `deploy/apps/<name>/values.yaml` and `values-<env>.yaml`; `image.tag` is bumped by `deploy.yml` pull requests |
 | Postgres 17 + pgvector, nightly backup | `deploy/charts/postgres`, values in `deploy/infrastructure/postgres/` |
 | Everything else in the cluster | upstream charts with values in `deploy/infrastructure/<component>/`, versions pinned in `helmfile.yaml.gotmpl` |
-| Secrets `postgres`, `<name>`, `grafana-admin`, `ghcr` | sealed with `make seal` (`scripts/seal-secrets.sh`), committed in `deploy/infrastructure/sealed-secrets/secrets/<env>/`; no chart creates them |
+| Secrets `postgres`, `<name>`, `grafana-admin`, `ghcr`, `cloudflare-api-token` | sealed with `make seal` (`scripts/seal-secrets.sh`), committed in `deploy/infrastructure/sealed-secrets/secrets/<env>/`; no chart creates them |
 
 Each app release creates `<name>` (Deployment, Service, optional HPA, PDB and ServiceMonitor) plus, for the Go services, a `<name>-migrate` Job that runs as a `pre-install,pre-upgrade` hook. Services reach each other at `<peer>:9090` (`<PEER>_ADDR`). The web app is the only thing exposed, through Traefik.
 
@@ -36,10 +36,10 @@ make deploy ENV=staging CONTEXT="$CTX"     # helmfile apply --interactive --conc
 
 It shows the diff and asks before applying (production also asks you to type the context name first; `YES=1` skips both, for CI). Releases install one at a time, in the order their `needs` give. The phases, in order:
 
-1. `bootstrap`: namespaces `shogun` and `monitoring`, a LimitRange (50m CPU and 64Mi request, 256Mi memory limit per container by default) and a ResourceQuota on `shogun` sized for a 2 vCPU / 4 GiB VM; the sealed-secrets controller. Production does not fit that quota yet: `scripts/k8s_test.sh` prints how far over it is.
+1. `bootstrap`: namespaces `shogun`, `monitoring` and `cert-manager` (it holds the sealed Cloudflare token, so it must exist before the secrets phase), a LimitRange (50m CPU and 64Mi request, 256Mi memory limit per container by default) and a ResourceQuota on `shogun` sized for a 2 vCPU / 4 GiB VM; the sealed-secrets controller. Production does not fit that quota yet: `scripts/k8s_test.sh` prints how far over it is.
 2. `secrets`: release `secrets`, the sealed files in `deploy/infrastructure/sealed-secrets/secrets/<env>/`. On a new cluster none are committed yet, so the helmfile declares only `bootstrap`; `make deploy` installs that, prints the next commands and exits 3. Seal (section 1), commit and run `make deploy` again.
 3. `platform`: cert-manager with its CRDs; kube-prometheus-stack as release `monitoring` (Prometheus 7 days on 5Gi `local-path`, Alertmanager, Grafana); `monitoring-extras` with Shogun's six alert rules and the "Shogun overview" dashboard, linked from `deploy/compose/observability/` so Compose and the cluster share one copy.
-4. `ingress`: release `cluster-issuers` (`letsencrypt-staging` and `letsencrypt-prod`) and release `traefik-config`, the k3s Traefik redirect from HTTP to HTTPS (needs Traefik chart 34 or newer: `kubectl -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'`). On a cluster that is not k3s (kind) the HelmChartConfig kind does not exist, so the chart renders nothing there and the release stays empty.
+4. `ingress`: release `cluster-issuers` (`letsencrypt-staging` and `letsencrypt-prod`, DNS-01 through Cloudflare with `cloudflare-api-token`) and release `traefik-config`, the k3s Traefik redirect from HTTP to HTTPS (needs Traefik chart 34 or newer: `kubectl -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'`). On a cluster that is not k3s (kind) the HelmChartConfig kind does not exist, so the chart renders nothing there and the release stays empty.
 5. `data`: Postgres and its nightly backup CronJob. The init script creates the ten schemas and roles on the first start of an empty volume only; the migration Jobs need them.
 6. `apps`: `soroban` first (every Claude call reserves budget through it), then the other nine services, then web. Each Go service runs its migration Job before its pods start.
 
@@ -69,7 +69,17 @@ Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*
 
 ## 2. Exposing the web app and Grafana
 
-Point a DNS record for the host at the VM (ports 80 and 443 open), then set `ingress.enabled: true` and `ingress.host` in `deploy/apps/web/values-<env>.yaml` (see the commented block in the staging file) and run `make deploy ENV=<env> CONTEXT="$CTX" ARGS="-l name=web"`. Start with `clusterIssuer: letsencrypt-staging`; once `kubectl -n shogun get certificate web-tls` is Ready, switch to `letsencrypt-prod`. Set `TORII_PUBLIC_URL`, `TSUBAME_GMAIL_REDIRECT_URL` and the Google redirect URIs to `https://<host>`, re-seal with `ARGS="--only torii --only tsubame"`, commit, and run `make deploy`. Traefik's access log stays off: it would record the OAuth callback's code.
+The web app is served at `https://shogun.sboy99.xyz` behind Cloudflare: its proxy hides the VM, and Cloudflare Access lets only the owner's Google account reach the login page. Because Access and the firewall below keep Let's Encrypt from reaching the VM over HTTP, the ClusterIssuers prove the domain with DNS-01: cert-manager writes a TXT record through the Cloudflare API.
+
+In Cloudflare, for the zone `sboy99.xyz`:
+
+1. **API token** (My Profile > API Tokens > Create, template "Edit zone DNS"): permission Zone > DNS > Edit, zone resources only `sboy99.xyz`. Put it in `.secrets/<env>.env` as `CLOUDFLARE_API_TOKEN`, run `make seal ENV=<env> ARGS="--only cloudflare-api-token"`, commit, and `make deploy`.
+2. **DNS**: an `A` record `shogun` to the VM's public IP, proxied (orange cloud). `dig +short shogun.sboy99.xyz` then answers with Cloudflare addresses, not the VM's.
+3. **SSL/TLS**: encryption mode Full (strict); Edge Certificates > Always Use HTTPS on.
+4. **Access** (Zero Trust > Access > Applications > Add, self-hosted): domain `shogun.sboy99.xyz`, one Allow policy with your email (or Google as the login method). Both OAuth callbacks then run inside the Access session.
+5. **VM firewall**: allow 80 and 443 only from [Cloudflare's ranges](https://www.cloudflare.com/ips/), so nobody can skip Access by connecting to the IP directly. Keep SSH as it is.
+
+In the repo, `deploy/apps/web/values-staging.yaml` turns the Ingress on for that host with `clusterIssuer: letsencrypt-staging`. Run `make deploy ENV=<env> CONTEXT="$CTX" ARGS="-l name=web"` and wait for `kubectl -n shogun get certificate web-tls` to be Ready (`kubectl -n shogun describe challenge` shows a DNS-01 that is stuck). A staging certificate is not trusted, so Full (strict) answers 526 until you switch to `letsencrypt-prod` and deploy again. Then set `TORII_PUBLIC_URL=https://shogun.sboy99.xyz` and `TSUBAME_GMAIL_REDIRECT_URL=https://shogun.sboy99.xyz/mail/callback`, add `https://shogun.sboy99.xyz/auth/callback` and `.../mail/callback` as redirect URIs in the Google console, re-seal with `ARGS="--only torii --only tsubame"`, commit, and run `make deploy`. Traefik's access log stays off: it would record the OAuth callback's code.
 
 Grafana is reached through Traefik once its host is set (the `TODO(owner)` block under `grafana:` in `deploy/infrastructure/monitoring/kube-prometheus-stack/values.yaml`). Until then, port-forward. Sign in as `admin` with `GRAFANA_ADMIN_PASSWORD` from `.secrets/<env>.env`. Prometheus and Alertmanager are never exposed:
 

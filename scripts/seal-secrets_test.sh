@@ -141,6 +141,16 @@ check "the pull secret is a dockerconfigjson for ghcr.io" 'grep -q "\"ghcr.io\""
 check "the token is never printed or written sealed in the clear" '! echo "$out" | grep -q "$sentinel" && ! grep -rq "$sentinel" "$secrets_dir"'
 check "the directory now holds 13 sealed files" '[ "$(ls "$secrets_dir"/*.yaml | wc -l | tr -d " ")" -eq 13 ]'
 
+check "no Cloudflare token Secret without a token" '[ ! -e "$secrets_dir/cloudflare-api-token.yaml" ]'
+check "warns when the Cloudflare token is missing" 'echo "$out" | grep -q "CLOUDFLARE_API_TOKEN is not set"'
+printf 'CLOUDFLARE_API_TOKEN=%s\n' "$sentinel" >>"$env_file"
+run --env staging --env-file "$env_file"
+check "a Cloudflare token seals cloudflare-api-token" '[ "$code" -eq 0 ] && [ -s "$secrets_dir/cloudflare-api-token.yaml" ]'
+check "cloudflare-api-token holds the key the ClusterIssuers read, in cert-manager" \
+	'[ "$(keys cloudflare-api-token)" = "api-token " ] && [ "$(cat "$work/fake/cloudflare-api-token.ns")" = cert-manager ]'
+check "the Cloudflare token is never printed or written sealed in the clear" '! echo "$out" | grep -q "$sentinel" && ! grep -rq "$sentinel" "$secrets_dir"'
+check "the directory now holds 14 sealed files" '[ "$(ls "$secrets_dir"/*.yaml | wc -l | tr -d " ")" -eq 14 ]'
+
 before=$(cksum <"$env_file")
 run --env staging --env-file "$env_file"
 check "a second run changes nothing in the env file" '[ "$before" = "$(cksum <"$env_file")" ]'
@@ -150,7 +160,7 @@ torii_before=$(cksum <"$secrets_dir/torii.yaml")
 run --env staging --env-file "$env_file" --only torii
 check "--only reseals just that Secret" \
 	'[ "$code" -eq 0 ] && [ "$kagami_before" = "$(cksum <"$secrets_dir/kagami.yaml")" ] && [ "$torii_before" != "$(cksum <"$secrets_dir/torii.yaml")" ]'
-check "--only keeps every other sealed file" '[ "$(ls "$secrets_dir"/*.yaml | wc -l | tr -d " ")" -eq 13 ]'
+check "--only keeps every other sealed file" '[ "$(ls "$secrets_dir"/*.yaml | wc -l | tr -d " ")" -eq 14 ]'
 
 printf 'kind: Kustomization\n' >"$secrets_dir/kustomization.yaml"
 run --env staging --env-file "$env_file" --only kagami
