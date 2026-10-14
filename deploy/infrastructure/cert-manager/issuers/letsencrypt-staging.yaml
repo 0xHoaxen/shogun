@@ -14,7 +14,13 @@ spec:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-staging-account
+    # DNS-01 through Cloudflare: the web host sits behind Cloudflare's proxy and
+    # Access, and the VM accepts 80/443 from Cloudflare only, so Let's Encrypt
+    # cannot reach an HTTP-01 challenge. The token (Zone DNS Edit on this zone)
+    # is sealed by make seal from CLOUDFLARE_API_TOKEN.
     solvers:
-      - http01:
-          ingress:
-            ingressClassName: traefik
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token

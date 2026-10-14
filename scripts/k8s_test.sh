@@ -146,9 +146,10 @@ sys.exit(1 if over else 0)
 '
 }
 
-check "staging renders a quota, a limit range and both namespaces" \
+check "staging renders a quota, a limit range and the shogun, monitoring and cert-manager namespaces" \
 	'out=$(namespaces staging) &&
-	 [ "$(echo "$out" | grep -c "^kind: Namespace")" -eq 2 ] &&
+	 [ "$(echo "$out" | grep -c "^kind: Namespace")" -eq 3 ] &&
+	 echo "$out" | grep -q "^  name: cert-manager$" &&
 	 echo "$out" | grep -q "^kind: ResourceQuota" && echo "$out" | grep -q "^kind: LimitRange"'
 check "production renders" 'namespaces production >/dev/null'
 check "staging requests, limits, pods and volumes fit the quota with a migration Job and the backup on top" \

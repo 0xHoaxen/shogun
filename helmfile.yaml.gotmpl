@@ -4,7 +4,7 @@
 #   bootstrap  namespaces, sealed-secrets controller
 #   secrets    the sealed Secrets committed for the environment
 #   platform   cert-manager, monitoring (kube-prometheus-stack), monitoring-extras
-#   ingress    ClusterIssuers, the k3s Traefik redirect
+#   ingress    ClusterIssuers, Traefik (kind) or the k3s Traefik redirect
 #   data       postgres
 #   apps       soroban, then the other services and web
 #
@@ -28,6 +28,9 @@ repositories:
     oci: true
   - name: prometheus-community
     url: ghcr.io/prometheus-community/charts
+    oci: true
+  - name: traefik
+    url: ghcr.io/traefik/helm
     oci: true
 
 environments:
@@ -57,6 +60,9 @@ helmDefaults:
 {{- $adoptSealed := contains "/sealedsecrets.bitnami.com" $crds }}
 {{- $adoptIssuers := contains "/clusterissuers.cert-manager.io" $crds }}
 {{- $adoptTraefik := contains "/helmchartconfigs.helm.cattle.io" $crds }}
+{{- /* k3s ships Traefik and the HelmChartConfig CRD; any other cluster (kind)
+       gets Traefik from the release below. */}}
+{{- $k3s := $adoptTraefik }}
 {{- $sealed := printf "deploy/infrastructure/sealed-secrets/secrets/%s" $env }}
 
 releases:
@@ -65,6 +71,9 @@ releases:
   - name: namespaces
     namespace: kube-system
     chart: ./deploy/charts/namespaces
+    # cert-manager was created by its own release's createNamespace before it
+    # moved here; adopt it (a no-op on a fresh cluster).
+    takeOwnership: true
     labels:
       phase: bootstrap
     values:
@@ -101,11 +110,12 @@ releases:
   # ---- platform --------------------------------------------------------------
   - name: cert-manager
     namespace: cert-manager
-    createNamespace: true
     chart: jetstack/cert-manager
     version: v1.21.2
     labels:
       phase: platform
+    needs:
+      - kube-system/namespaces
     values:
       - deploy/infrastructure/cert-manager/values.yaml
 
@@ -150,14 +160,28 @@ releases:
       phase: ingress
     needs:
       - cert-manager/cert-manager
+      # cloudflare-api-token for DNS-01.
+      - kube-system/secrets
 
   - name: traefik-config
     namespace: kube-system
-    chart: ./deploy/infrastructure/traefik
+    chart: ./deploy/infrastructure/traefik/k3s-config
     takeOwnership: {{ $adoptTraefik }}
     forceConflicts: {{ $adoptTraefik }}
     labels:
       phase: ingress
+
+  # Traefik itself where k3s does not bundle it (kind): hostPort 80 and 443 on
+  # the control-plane node, where kind maps the host's ports.
+  - name: traefik
+    namespace: kube-system
+    chart: traefik/traefik
+    version: 41.7.1
+    installed: {{ not $k3s }}
+    labels:
+      phase: ingress
+    values:
+      - deploy/infrastructure/traefik/values.yaml
 
   # ---- data ------------------------------------------------------------------
   - name: postgres

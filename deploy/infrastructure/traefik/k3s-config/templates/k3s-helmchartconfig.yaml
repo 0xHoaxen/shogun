@@ -3,8 +3,8 @@
 # Only on k3s: the HelmChartConfig CRD exists nowhere else, so on any other
 # cluster (kind) this renders nothing and the release is empty.
 #
-# A permanent redirect of every request on :80 to :443. Let's Encrypt follows the
-# redirect for HTTP-01 challenges, and k3s routes an Ingress on both ports. The
+# A permanent redirect of every request on :80 to :443 (k3s routes an Ingress on
+# both ports). Certificates use DNS-01, so no challenge needs plain HTTP. The
 # redirections key needs Traefik chart 34 or newer:
 #   kubectl -n kube-system get helmchart traefik -o jsonpath='{.spec.chart}'
 # No access log: it records the full request path, and the OAuth callback

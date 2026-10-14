@@ -1,6 +1,6 @@
-# The two namespaces every cluster has, installed first (phase bootstrap) so no
+# The namespaces every cluster has, installed first (phase bootstrap) so no
 # other release needs --create-namespace for them. Helm replaces lists whole, so
-# a values-<env>.yaml that sets namespaces: must repeat both entries.
+# a values-<env>.yaml that sets namespaces: must repeat every entry.
 namespaces:
   - name: shogun
     # What the shogun namespace may ask for in total, sized for a 2 vCPU / 4 GiB
@@ -31,3 +31,6 @@ namespaces:
         memory: 1Gi
   # No quota on purpose: the stack's own requests are explicit in its values.
   - name: monitoring
+  # Before the secrets phase: the sealed cloudflare-api-token for the
+  # ClusterIssuers' DNS-01 lives here, ahead of cert-manager itself.
+  - name: cert-manager
