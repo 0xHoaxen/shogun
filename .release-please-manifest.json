@@ -11,5 +11,5 @@
   "services/shinobi": "1.0.0",
   "services/sensei": "1.0.0",
   "services/soroban": "1.0.0",
-  "web": "1.0.0"
+  "web": "1.1.0"
 }
