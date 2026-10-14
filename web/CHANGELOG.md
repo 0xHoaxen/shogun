@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/web/v1.0.0...web/v1.1.0) (2026-10-14)
+
+
+### Features
+
+* **deploy:** serve web at shogun.sboy99.xyz behind Cloudflare, Traefik on kind ([10f8d65](https://github.com/0xHoaxen/shogun/commit/10f8d656b199922c876e7ab4b43beeb46949b8d0))
+* **web:** add privacy policy and terms for Google verification ([707feac](https://github.com/0xHoaxen/shogun/commit/707feac0348c05811e94cb0dabbe3383d19e9114))
+* **web:** add privacy policy and terms for Google verification ([d40a587](https://github.com/0xHoaxen/shogun/commit/d40a58716f15f01609ffb61e7c4622ad4b6f0ad9))
+
+
+### Bug Fixes
+
+* **web:** self-host fonts so the build never fetches from Google Fonts ([0101e3e](https://github.com/0xHoaxen/shogun/commit/0101e3e264cf8846a94ce14e27088ccb6943e289))
+* **web:** self-host fonts so the build never fetches from Google Fonts ([e8734c6](https://github.com/0xHoaxen/shogun/commit/e8734c6f68a0172e044128d0d455607a199e9f23))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/web/v0.0.1...web/v1.0.0) (2026-10-10)
 
 
