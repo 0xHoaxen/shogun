@@ -743,6 +743,11 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: `helmfile -e staging template --skip-deps` renders a Traefik Deployment on the control-plane node with hostPort 80 and 443, the HTTP to HTTPS redirect, a ClusterIP Service and IngressClass `traefik`; with a cluster that reports the HelmChartConfig CRD it renders no Traefik; `helmfile lint` passes for both environments; `scripts/k8s_test.sh` passes.
   Status: all checks pass, against stub `kubectl`s for the kind and k3s cases. Chart `41.7.1` (Traefik v3.7.14). Judgement calls: hostPort on the control-plane node (with a toleration for its taint) rather than NodePort, because kind's port mappings land on that node's 80 and 443; `maxSurge: 0`, because a second pod cannot bind the same host ports; access log off, as on k3s. Not run on the cluster. `TODO(owner)`: `make deploy ENV=staging CONTEXT=kind-vortex` on the VM, then `curl -vk --resolve shogun.sboy99.xyz:443:127.0.0.1 https://shogun.sboy99.xyz/` there.
 
+- [x] **P10.12 Privacy policy and terms for Google verification** (S) Needs: P10.10
+  Do: public `/privacy` and `/terms` pages in `web`, linked from `/login`, so the OAuth consent screen can list them for the restricted Gmail scopes (`gmail.readonly`, `gmail.send`). The policy states only what the code does: metadata-only reads, sender, subject and snippet to Claude for classification, encrypted refresh token, no ads or training, the Limited Use statement, revocation and deletion.
+  Done when: `npm run typecheck` and `eslint` pass in `web`; `npx playwright test e2e/legal.spec.ts e2e/auth.spec.ts` passes.
+  Status: all pass (10 tests). `TODO(owner)`: set `LEGAL_CONTACT_EMAIL` in `web/src/components/legal/legal-page.tsx` to a real mailbox; make Cloudflare Access bypass `/login`, `/privacy`, `/terms` and their assets so Google's reviewers can reach them; put the homepage, privacy and terms URLs on the consent screen and verify `sboy99.xyz` in Search Console.
+
 ---
 
 ## Later (not scheduled)
