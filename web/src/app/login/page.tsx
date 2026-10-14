@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/components/legal/legal-page";
 import { Rail } from "@/components/shell/rail";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -40,6 +41,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Sign in with Google
           </a>
         </div>
+        <LegalLinks />
       </main>
     </div>
   );
