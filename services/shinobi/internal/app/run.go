@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/0xHoaxen/shogun/pkg/owners"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
@@ -175,15 +177,17 @@ type DueRun struct {
 	Slot string
 }
 
-// DueSources returns the enabled sources that are due at now, read on their
-// schedules in loc. A source with an unreadable schedule is skipped and logged.
-func (s *Service) DueSources(ctx context.Context, now time.Time, loc *time.Location) ([]DueRun, error) {
+// DueSources returns the enabled sources that are due at now, each read on its
+// schedule in its owner's own time zone. A source with an unreadable schedule is
+// skipped and logged.
+func (s *Service) DueSources(ctx context.Context, now time.Time) ([]DueRun, error) {
 	sources, err := store.New(s.pool).EnabledSources(ctx)
 	if err != nil {
 		return nil, err
 	}
 	var due []DueRun
 	for _, src := range sources {
+		loc := owners.Owner{Timezone: src.Timezone}.Location()
 		slot, isDue, err := domain.Due(src.Schedule, src.LastRunAt, now, loc)
 		if err != nil {
 			s.log.Warn("source has an unreadable schedule", "source_id", src.ID.String())

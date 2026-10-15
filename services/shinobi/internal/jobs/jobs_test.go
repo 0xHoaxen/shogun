@@ -27,11 +27,10 @@ type fakeScheduler struct {
 	due []app.DueRun
 	err error
 	now time.Time
-	loc *time.Location
 }
 
-func (f *fakeScheduler) DueSources(_ context.Context, now time.Time, loc *time.Location) ([]app.DueRun, error) {
-	f.now, f.loc = now, loc
+func (f *fakeScheduler) DueSources(_ context.Context, now time.Time) ([]app.DueRun, error) {
+	f.now = now
 	return f.due, f.err
 }
 
@@ -64,24 +63,13 @@ func (f *fakeRunner) RunSourceFor(_ context.Context, owner, id uuid.UUID) (app.R
 
 var jobNow = time.Date(2026, 10, 7, 4, 0, 0, 0, time.UTC)
 
-func istLocation(t *testing.T) *time.Location {
-	t.Helper()
-	loc, err := jobs.Location()
-	if err != nil {
-		t.Fatalf("location: %v", err)
-	}
-	return loc
-}
-
 func clock() time.Time { return jobNow }
 
 func TestSetupSchedulesTheMinutelyCheckAndSizesItsQueue(t *testing.T) {
-	loc, _ := jobs.Location()
+	got := jobs.NewSetup(&fakeScheduler{}, &fakeRunner{}, &fakeScorer{}, &fakeEnqueuer{}, func() time.Time { return jobNow }, slog.New(slog.DiscardHandler))
 
-	got := jobs.NewSetup(&fakeScheduler{}, &fakeRunner{}, &fakeScorer{}, &fakeEnqueuer{}, loc, func() time.Time { return jobNow }, slog.New(slog.DiscardHandler))
-
-	if len(got.PeriodicJobs) != 1 || got.Queues[jobs.Queue].MaxWorkers < 1 || loc.String() != "Asia/Kolkata" {
-		t.Fatalf("setup = %+v, location %s", got, loc)
+	if len(got.PeriodicJobs) != 1 || got.Queues[jobs.Queue].MaxWorkers < 1 {
+		t.Fatalf("setup = %+v", got)
 	}
 }
 
@@ -90,18 +78,18 @@ func TestTheDueCheckQueuesEveryDueSourceAndKeepsGoingAfterAFailure(t *testing.T)
 	due := []app.DueRun{{SourceID: uuid.New(), Slot: "a"}, {SourceID: bad, Slot: "b"}, {SourceID: uuid.New(), Slot: "c"}}
 	sched, queue := &fakeScheduler{due: due}, &fakeEnqueuer{failA: bad}
 
-	err := jobs.WorkDue(context.Background(), sched, queue, istLocation(t), clock, jobs.DueSourcesArgs{Minute: "2026-10-07T04:00"})
+	err := jobs.WorkDue(context.Background(), sched, queue, clock, jobs.DueSourcesArgs{Minute: "2026-10-07T04:00"})
 
 	if err == nil || len(queue.runs) != 2 || queue.runs[0].Slot != "a" || queue.runs[1].Slot != "c" {
 		t.Fatalf("err %v, queued %+v; want the failure reported and the other two queued", err, queue.runs)
 	}
-	if !sched.now.Equal(jobNow) || sched.loc.String() != "Asia/Kolkata" {
-		t.Fatalf("scheduler asked at %v in %v", sched.now, sched.loc)
+	if !sched.now.Equal(jobNow) {
+		t.Fatalf("scheduler asked at %v, want %v: it reads each owner's zone itself", sched.now, jobNow)
 	}
 }
 
 func TestTheDueCheckReportsAFailureToFindSources(t *testing.T) {
-	err := jobs.WorkDue(context.Background(), &fakeScheduler{err: errors.New("db down")}, &fakeEnqueuer{}, istLocation(t), clock, jobs.DueSourcesArgs{})
+	err := jobs.WorkDue(context.Background(), &fakeScheduler{err: errors.New("db down")}, &fakeEnqueuer{}, clock, jobs.DueSourcesArgs{})
 
 	if err == nil {
 		t.Fatal("want the failure returned")

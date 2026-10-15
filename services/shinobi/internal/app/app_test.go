@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/app"
@@ -291,11 +292,20 @@ func TestListSourcesIsPerOwner(t *testing.T) {
 	}
 }
 
+// know makes shinobi aware of an owner in a time zone, as torii's user.activated would.
+func know(t *testing.T, pool *pgxpool.Pool, owner uuid.UUID, timezone, status string) {
+	t.Helper()
+	if err := owners.Upsert(context.Background(), pool, owners.Owner{ID: owner, Timezone: timezone, Status: status, Version: 1}); err != nil {
+		t.Fatalf("know owner: %v", err)
+	}
+}
+
 func TestDueSourcesOffersEachDueEnabledSourceWithItsSlot(t *testing.T) {
 	svc, pool := newService(t, &fakeFetcher{docs: map[string]string{feedURL: feedXML}})
 	ist, _ := time.LoadLocation("Asia/Kolkata")
 	repo := store.New(pool)
 	owner := uuid.New()
+	know(t, pool, owner, "Asia/Kolkata", owners.StatusActive)
 	never, _ := svc.UpsertSource(asOwner(owner), nil, rssInput("never run"))
 	ranToday, _ := svc.UpsertSource(asOwner(owner), nil, rssInput("ran today"))
 	ranYesterday, _ := svc.UpsertSource(asOwner(owner), nil, rssInput("ran yesterday"))
@@ -306,7 +316,7 @@ func TestDueSourcesOffersEachDueEnabledSourceWithItsSlot(t *testing.T) {
 	_ = repo.MarkSourceRun(context.Background(), ranToday.ID, time.Date(2026, 10, 7, 7, 5, 0, 0, ist), "")
 	_ = repo.MarkSourceRun(context.Background(), ranYesterday.ID, time.Date(2026, 10, 6, 7, 5, 0, 0, ist), "")
 
-	due, err := svc.DueSources(context.Background(), testNow, ist)
+	due, err := svc.DueSources(context.Background(), testNow)
 
 	bySource := map[uuid.UUID]app.DueRun{}
 	for _, d := range due {
@@ -321,5 +331,50 @@ func TestDueSourcesOffersEachDueEnabledSourceWithItsSlot(t *testing.T) {
 	}
 	if _, ok := bySource[ranToday.ID]; ok {
 		t.Fatal("a source that already ran today is not due")
+	}
+}
+
+func TestDueSourcesFollowEachOwnersOwnClock(t *testing.T) {
+	// Arrange: testNow is 09:30 in India and 13:00 in Tokyo. A daily source is read at 07:00 local,
+	// so both are past it; but a source last read at 07:05 Tokyo time today has run, while the
+	// same instant is 03:35 in India, before India's 07:00, so the Indian one is not yet due again.
+	svc, pool := newService(t, &fakeFetcher{docs: map[string]string{feedURL: feedXML}})
+	repo := store.New(pool)
+	tokyo, kolkata := uuid.New(), uuid.New()
+	know(t, pool, tokyo, "Asia/Tokyo", owners.StatusActive)
+	know(t, pool, kolkata, "Asia/Kolkata", owners.StatusActive)
+	tokyoSource, _ := svc.UpsertSource(asOwner(tokyo), nil, rssInput("tokyo"))
+	kolkataSource, _ := svc.UpsertSource(asOwner(kolkata), nil, rssInput("kolkata"))
+	jst, _ := time.LoadLocation("Asia/Tokyo")
+	ranAt := time.Date(2026, 10, 7, 7, 5, 0, 0, jst) // 03:35 in India on the same day
+	_ = repo.MarkSourceRun(context.Background(), tokyoSource.ID, ranAt, "")
+	_ = repo.MarkSourceRun(context.Background(), kolkataSource.ID, ranAt, "")
+
+	// Act
+	due, err := svc.DueSources(context.Background(), testNow)
+
+	// Assert
+	got := map[uuid.UUID]bool{}
+	for _, d := range due {
+		got[d.SourceID] = true
+	}
+	if err != nil || got[tokyoSource.ID] || !got[kolkataSource.ID] {
+		t.Fatalf("due = %+v, %v; want India's source due (its 07:00 today is after that run) and Tokyo's not", due, err)
+	}
+}
+
+func TestSourcesOfOwnersWhoAreNotActiveOrNotAnnouncedAreNotDue(t *testing.T) {
+	svc, pool := newService(t, &fakeFetcher{docs: map[string]string{feedURL: feedXML}})
+	disabled, deleted, unknown := uuid.New(), uuid.New(), uuid.New()
+	know(t, pool, disabled, "Asia/Kolkata", owners.StatusDisabled)
+	know(t, pool, deleted, "Asia/Kolkata", owners.StatusDeleted)
+	for _, owner := range []uuid.UUID{disabled, deleted, unknown} {
+		_, _ = svc.UpsertSource(asOwner(owner), nil, rssInput("never run"))
+	}
+
+	due, err := svc.DueSources(context.Background(), testNow)
+
+	if err != nil || len(due) != 0 {
+		t.Fatalf("due = %+v, %v; want none", due, err)
 	}
 }

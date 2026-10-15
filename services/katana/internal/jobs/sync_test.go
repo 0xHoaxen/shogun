@@ -134,8 +134,8 @@ func TestWorkerRetriesOtherFailures(t *testing.T) {
 }
 
 func TestTickQueuesOneSyncPerOwnerWhoseClockHasReachedTwoInTheNight(t *testing.T) {
-	// 21:00 UTC on the 6th: 02:30 on the 7th in Kolkata (past 02:00), 06:00 on the 7th in Tokyo,
-	// 17:00 on the 6th in New York (too early).
+	// 21:00 UTC on the 6th is 02:30 on the 7th in Kolkata, 06:00 on the 7th in Tokyo and
+	// 17:00 on the 6th in New York. All three are past 02:00 on their own day, each with its own date.
 	now := time.Date(2026, 10, 6, 21, 0, 0, 0, time.UTC)
 	kolkata := owners.Owner{ID: uuid.New(), Timezone: "Asia/Kolkata"}
 	tokyo := owners.Owner{ID: uuid.New(), Timezone: "Asia/Tokyo"}
@@ -144,7 +144,6 @@ func TestTickQueuesOneSyncPerOwnerWhoseClockHasReachedTwoInTheNight(t *testing.T
 
 	err := tick([]owners.Owner{kolkata, tokyo, newYork}, enq, now)
 
-	// New York's local time is 17:00, which is past 02:00 as well, so it is due for the 6th.
 	want := []queued{{kolkata.ID, "2026-10-07"}, {tokyo.ID, "2026-10-07"}, {newYork.ID, "2026-10-06"}}
 	if err != nil || len(enq.got) != 3 || enq.got[0] != want[0] || enq.got[1] != want[1] || enq.got[2] != want[2] {
 		t.Fatalf("err %v, queued %+v, want %+v", err, enq.got, want)

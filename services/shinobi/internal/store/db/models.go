@@ -26,6 +26,14 @@ type Outbox struct {
 	DeliveredAt *time.Time
 }
 
+type Owner struct {
+	ID        uuid.UUID
+	Timezone  string
+	Status    string
+	Version   int32
+	UpdatedAt time.Time
+}
+
 type Posting struct {
 	ID         uuid.UUID
 	OwnerID    uuid.UUID

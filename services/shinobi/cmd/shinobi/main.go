@@ -145,11 +145,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}()
 	svc := app.NewService(pool, fetch.New(), nil, log,
 		app.WithScoring(queue, model.completer), app.WithTracker(kagamiv1.NewKagamiServiceClient(kagamiConn)))
-	loc, err := jobs.Location()
-	if err != nil {
-		return err
-	}
-	scheduled := jobs.NewSetup(svc, svc, svc, queue, loc, time.Now, log)
+	scheduled := jobs.NewSetup(svc, svc, svc, queue, time.Now, log)
 
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
