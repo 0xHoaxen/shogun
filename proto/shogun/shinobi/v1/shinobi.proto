@@ -13,6 +13,9 @@ service ShinobiService {
   rpc ListSources(ListSourcesRequest) returns (ListSourcesResponse);
   // RunSource reads a source now, outside its schedule.
   rpc RunSource(RunSourceRequest) returns (RunSourceResponse);
+  // DeleteSource removes a source with its postings and their scores. Jobs
+  // already saved to kagami stay there.
+  rpc DeleteSource(DeleteSourceRequest) returns (DeleteSourceResponse);
   rpc GetPreferences(GetPreferencesRequest) returns (GetPreferencesResponse);
   rpc SetPreferences(SetPreferencesRequest) returns (SetPreferencesResponse);
   // ListPostings returns postings best score first; unscored ones come last.
@@ -91,6 +94,12 @@ message RunSourceResponse {
   int32 fetched = 1;
   int32 added = 2;
 }
+
+message DeleteSourceRequest {
+  string id = 1;
+}
+
+message DeleteSourceResponse {}
 
 message Preferences {
   repeated string roles = 1;

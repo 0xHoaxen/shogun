@@ -24,6 +24,7 @@ const (
 	DiscoveryService_ListDiscoverySources_FullMethodName    = "/shogun.api.v1.DiscoveryService/ListDiscoverySources"
 	DiscoveryService_SaveDiscoverySource_FullMethodName     = "/shogun.api.v1.DiscoveryService/SaveDiscoverySource"
 	DiscoveryService_RunDiscoverySource_FullMethodName      = "/shogun.api.v1.DiscoveryService/RunDiscoverySource"
+	DiscoveryService_DeleteDiscoverySource_FullMethodName   = "/shogun.api.v1.DiscoveryService/DeleteDiscoverySource"
 	DiscoveryService_GetDiscoveryPreferences_FullMethodName = "/shogun.api.v1.DiscoveryService/GetDiscoveryPreferences"
 	DiscoveryService_SetDiscoveryPreferences_FullMethodName = "/shogun.api.v1.DiscoveryService/SetDiscoveryPreferences"
 )
@@ -46,6 +47,9 @@ type DiscoveryServiceClient interface {
 	// RunDiscoverySource reads a source now. A source that cannot be read is
 	// FailedPrecondition with a reason such as SOURCE_ROBOTS_DISALLOWED.
 	RunDiscoverySource(ctx context.Context, in *RunDiscoverySourceRequest, opts ...grpc.CallOption) (*RunDiscoverySourceResponse, error)
+	// DeleteDiscoverySource removes a source with the postings it found. Jobs
+	// already saved to the tracker stay there.
+	DeleteDiscoverySource(ctx context.Context, in *DeleteDiscoverySourceRequest, opts ...grpc.CallOption) (*DeleteDiscoverySourceResponse, error)
 	GetDiscoveryPreferences(ctx context.Context, in *GetDiscoveryPreferencesRequest, opts ...grpc.CallOption) (*GetDiscoveryPreferencesResponse, error)
 	SetDiscoveryPreferences(ctx context.Context, in *SetDiscoveryPreferencesRequest, opts ...grpc.CallOption) (*SetDiscoveryPreferencesResponse, error)
 }
@@ -108,6 +112,16 @@ func (c *discoveryServiceClient) RunDiscoverySource(ctx context.Context, in *Run
 	return out, nil
 }
 
+func (c *discoveryServiceClient) DeleteDiscoverySource(ctx context.Context, in *DeleteDiscoverySourceRequest, opts ...grpc.CallOption) (*DeleteDiscoverySourceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteDiscoverySourceResponse)
+	err := c.cc.Invoke(ctx, DiscoveryService_DeleteDiscoverySource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *discoveryServiceClient) GetDiscoveryPreferences(ctx context.Context, in *GetDiscoveryPreferencesRequest, opts ...grpc.CallOption) (*GetDiscoveryPreferencesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetDiscoveryPreferencesResponse)
@@ -146,6 +160,9 @@ type DiscoveryServiceServer interface {
 	// RunDiscoverySource reads a source now. A source that cannot be read is
 	// FailedPrecondition with a reason such as SOURCE_ROBOTS_DISALLOWED.
 	RunDiscoverySource(context.Context, *RunDiscoverySourceRequest) (*RunDiscoverySourceResponse, error)
+	// DeleteDiscoverySource removes a source with the postings it found. Jobs
+	// already saved to the tracker stay there.
+	DeleteDiscoverySource(context.Context, *DeleteDiscoverySourceRequest) (*DeleteDiscoverySourceResponse, error)
 	GetDiscoveryPreferences(context.Context, *GetDiscoveryPreferencesRequest) (*GetDiscoveryPreferencesResponse, error)
 	SetDiscoveryPreferences(context.Context, *SetDiscoveryPreferencesRequest) (*SetDiscoveryPreferencesResponse, error)
 	mustEmbedUnimplementedDiscoveryServiceServer()
@@ -172,6 +189,9 @@ func (UnimplementedDiscoveryServiceServer) SaveDiscoverySource(context.Context, 
 }
 func (UnimplementedDiscoveryServiceServer) RunDiscoverySource(context.Context, *RunDiscoverySourceRequest) (*RunDiscoverySourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunDiscoverySource not implemented")
+}
+func (UnimplementedDiscoveryServiceServer) DeleteDiscoverySource(context.Context, *DeleteDiscoverySourceRequest) (*DeleteDiscoverySourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDiscoverySource not implemented")
 }
 func (UnimplementedDiscoveryServiceServer) GetDiscoveryPreferences(context.Context, *GetDiscoveryPreferencesRequest) (*GetDiscoveryPreferencesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetDiscoveryPreferences not implemented")
@@ -290,6 +310,24 @@ func _DiscoveryService_RunDiscoverySource_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DiscoveryService_DeleteDiscoverySource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDiscoverySourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DiscoveryServiceServer).DeleteDiscoverySource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DiscoveryService_DeleteDiscoverySource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DiscoveryServiceServer).DeleteDiscoverySource(ctx, req.(*DeleteDiscoverySourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _DiscoveryService_GetDiscoveryPreferences_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetDiscoveryPreferencesRequest)
 	if err := dec(in); err != nil {
@@ -352,6 +390,10 @@ var DiscoveryService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RunDiscoverySource",
 			Handler:    _DiscoveryService_RunDiscoverySource_Handler,
+		},
+		{
+			MethodName: "DeleteDiscoverySource",
+			Handler:    _DiscoveryService_DeleteDiscoverySource_Handler,
 		},
 		{
 			MethodName: "GetDiscoveryPreferences",

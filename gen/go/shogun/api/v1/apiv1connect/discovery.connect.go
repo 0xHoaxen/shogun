@@ -48,6 +48,9 @@ const (
 	// DiscoveryServiceRunDiscoverySourceProcedure is the fully-qualified name of the DiscoveryService's
 	// RunDiscoverySource RPC.
 	DiscoveryServiceRunDiscoverySourceProcedure = "/shogun.api.v1.DiscoveryService/RunDiscoverySource"
+	// DiscoveryServiceDeleteDiscoverySourceProcedure is the fully-qualified name of the
+	// DiscoveryService's DeleteDiscoverySource RPC.
+	DiscoveryServiceDeleteDiscoverySourceProcedure = "/shogun.api.v1.DiscoveryService/DeleteDiscoverySource"
 	// DiscoveryServiceGetDiscoveryPreferencesProcedure is the fully-qualified name of the
 	// DiscoveryService's GetDiscoveryPreferences RPC.
 	DiscoveryServiceGetDiscoveryPreferencesProcedure = "/shogun.api.v1.DiscoveryService/GetDiscoveryPreferences"
@@ -69,6 +72,9 @@ type DiscoveryServiceClient interface {
 	// RunDiscoverySource reads a source now. A source that cannot be read is
 	// FailedPrecondition with a reason such as SOURCE_ROBOTS_DISALLOWED.
 	RunDiscoverySource(context.Context, *connect.Request[v1.RunDiscoverySourceRequest]) (*connect.Response[v1.RunDiscoverySourceResponse], error)
+	// DeleteDiscoverySource removes a source with the postings it found. Jobs
+	// already saved to the tracker stay there.
+	DeleteDiscoverySource(context.Context, *connect.Request[v1.DeleteDiscoverySourceRequest]) (*connect.Response[v1.DeleteDiscoverySourceResponse], error)
 	GetDiscoveryPreferences(context.Context, *connect.Request[v1.GetDiscoveryPreferencesRequest]) (*connect.Response[v1.GetDiscoveryPreferencesResponse], error)
 	SetDiscoveryPreferences(context.Context, *connect.Request[v1.SetDiscoveryPreferencesRequest]) (*connect.Response[v1.SetDiscoveryPreferencesResponse], error)
 }
@@ -114,6 +120,12 @@ func NewDiscoveryServiceClient(httpClient connect.HTTPClient, baseURL string, op
 			connect.WithSchema(discoveryServiceMethods.ByName("RunDiscoverySource")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteDiscoverySource: connect.NewClient[v1.DeleteDiscoverySourceRequest, v1.DeleteDiscoverySourceResponse](
+			httpClient,
+			baseURL+DiscoveryServiceDeleteDiscoverySourceProcedure,
+			connect.WithSchema(discoveryServiceMethods.ByName("DeleteDiscoverySource")),
+			connect.WithClientOptions(opts...),
+		),
 		getDiscoveryPreferences: connect.NewClient[v1.GetDiscoveryPreferencesRequest, v1.GetDiscoveryPreferencesResponse](
 			httpClient,
 			baseURL+DiscoveryServiceGetDiscoveryPreferencesProcedure,
@@ -136,6 +148,7 @@ type discoveryServiceClient struct {
 	listDiscoverySources    *connect.Client[v1.ListDiscoverySourcesRequest, v1.ListDiscoverySourcesResponse]
 	saveDiscoverySource     *connect.Client[v1.SaveDiscoverySourceRequest, v1.SaveDiscoverySourceResponse]
 	runDiscoverySource      *connect.Client[v1.RunDiscoverySourceRequest, v1.RunDiscoverySourceResponse]
+	deleteDiscoverySource   *connect.Client[v1.DeleteDiscoverySourceRequest, v1.DeleteDiscoverySourceResponse]
 	getDiscoveryPreferences *connect.Client[v1.GetDiscoveryPreferencesRequest, v1.GetDiscoveryPreferencesResponse]
 	setDiscoveryPreferences *connect.Client[v1.SetDiscoveryPreferencesRequest, v1.SetDiscoveryPreferencesResponse]
 }
@@ -165,6 +178,11 @@ func (c *discoveryServiceClient) RunDiscoverySource(ctx context.Context, req *co
 	return c.runDiscoverySource.CallUnary(ctx, req)
 }
 
+// DeleteDiscoverySource calls shogun.api.v1.DiscoveryService.DeleteDiscoverySource.
+func (c *discoveryServiceClient) DeleteDiscoverySource(ctx context.Context, req *connect.Request[v1.DeleteDiscoverySourceRequest]) (*connect.Response[v1.DeleteDiscoverySourceResponse], error) {
+	return c.deleteDiscoverySource.CallUnary(ctx, req)
+}
+
 // GetDiscoveryPreferences calls shogun.api.v1.DiscoveryService.GetDiscoveryPreferences.
 func (c *discoveryServiceClient) GetDiscoveryPreferences(ctx context.Context, req *connect.Request[v1.GetDiscoveryPreferencesRequest]) (*connect.Response[v1.GetDiscoveryPreferencesResponse], error) {
 	return c.getDiscoveryPreferences.CallUnary(ctx, req)
@@ -188,6 +206,9 @@ type DiscoveryServiceHandler interface {
 	// RunDiscoverySource reads a source now. A source that cannot be read is
 	// FailedPrecondition with a reason such as SOURCE_ROBOTS_DISALLOWED.
 	RunDiscoverySource(context.Context, *connect.Request[v1.RunDiscoverySourceRequest]) (*connect.Response[v1.RunDiscoverySourceResponse], error)
+	// DeleteDiscoverySource removes a source with the postings it found. Jobs
+	// already saved to the tracker stay there.
+	DeleteDiscoverySource(context.Context, *connect.Request[v1.DeleteDiscoverySourceRequest]) (*connect.Response[v1.DeleteDiscoverySourceResponse], error)
 	GetDiscoveryPreferences(context.Context, *connect.Request[v1.GetDiscoveryPreferencesRequest]) (*connect.Response[v1.GetDiscoveryPreferencesResponse], error)
 	SetDiscoveryPreferences(context.Context, *connect.Request[v1.SetDiscoveryPreferencesRequest]) (*connect.Response[v1.SetDiscoveryPreferencesResponse], error)
 }
@@ -229,6 +250,12 @@ func NewDiscoveryServiceHandler(svc DiscoveryServiceHandler, opts ...connect.Han
 		connect.WithSchema(discoveryServiceMethods.ByName("RunDiscoverySource")),
 		connect.WithHandlerOptions(opts...),
 	)
+	discoveryServiceDeleteDiscoverySourceHandler := connect.NewUnaryHandler(
+		DiscoveryServiceDeleteDiscoverySourceProcedure,
+		svc.DeleteDiscoverySource,
+		connect.WithSchema(discoveryServiceMethods.ByName("DeleteDiscoverySource")),
+		connect.WithHandlerOptions(opts...),
+	)
 	discoveryServiceGetDiscoveryPreferencesHandler := connect.NewUnaryHandler(
 		DiscoveryServiceGetDiscoveryPreferencesProcedure,
 		svc.GetDiscoveryPreferences,
@@ -253,6 +280,8 @@ func NewDiscoveryServiceHandler(svc DiscoveryServiceHandler, opts ...connect.Han
 			discoveryServiceSaveDiscoverySourceHandler.ServeHTTP(w, r)
 		case DiscoveryServiceRunDiscoverySourceProcedure:
 			discoveryServiceRunDiscoverySourceHandler.ServeHTTP(w, r)
+		case DiscoveryServiceDeleteDiscoverySourceProcedure:
+			discoveryServiceDeleteDiscoverySourceHandler.ServeHTTP(w, r)
 		case DiscoveryServiceGetDiscoveryPreferencesProcedure:
 			discoveryServiceGetDiscoveryPreferencesHandler.ServeHTTP(w, r)
 		case DiscoveryServiceSetDiscoveryPreferencesProcedure:
@@ -284,6 +313,10 @@ func (UnimplementedDiscoveryServiceHandler) SaveDiscoverySource(context.Context,
 
 func (UnimplementedDiscoveryServiceHandler) RunDiscoverySource(context.Context, *connect.Request[v1.RunDiscoverySourceRequest]) (*connect.Response[v1.RunDiscoverySourceResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.DiscoveryService.RunDiscoverySource is not implemented"))
+}
+
+func (UnimplementedDiscoveryServiceHandler) DeleteDiscoverySource(context.Context, *connect.Request[v1.DeleteDiscoverySourceRequest]) (*connect.Response[v1.DeleteDiscoverySourceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.DiscoveryService.DeleteDiscoverySource is not implemented"))
 }
 
 func (UnimplementedDiscoveryServiceHandler) GetDiscoveryPreferences(context.Context, *connect.Request[v1.GetDiscoveryPreferencesRequest]) (*connect.Response[v1.GetDiscoveryPreferencesResponse], error) {

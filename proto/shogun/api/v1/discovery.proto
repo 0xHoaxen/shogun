@@ -18,6 +18,9 @@ service DiscoveryService {
   // RunDiscoverySource reads a source now. A source that cannot be read is
   // FailedPrecondition with a reason such as SOURCE_ROBOTS_DISALLOWED.
   rpc RunDiscoverySource(RunDiscoverySourceRequest) returns (RunDiscoverySourceResponse);
+  // DeleteDiscoverySource removes a source with the postings it found. Jobs
+  // already saved to the tracker stay there.
+  rpc DeleteDiscoverySource(DeleteDiscoverySourceRequest) returns (DeleteDiscoverySourceResponse);
   rpc GetDiscoveryPreferences(GetDiscoveryPreferencesRequest) returns (GetDiscoveryPreferencesResponse);
   rpc SetDiscoveryPreferences(SetDiscoveryPreferencesRequest) returns (SetDiscoveryPreferencesResponse);
 }
@@ -135,6 +138,12 @@ message RunDiscoverySourceResponse {
   int32 fetched = 1;
   int32 added = 2;
 }
+
+message DeleteDiscoverySourceRequest {
+  string id = 1;
+}
+
+message DeleteDiscoverySourceResponse {}
 
 message GetDiscoveryPreferencesRequest {}
 

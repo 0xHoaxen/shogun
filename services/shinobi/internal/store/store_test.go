@@ -158,6 +158,39 @@ func TestMarkSourceRunRecordsTheTimeAndTheFailure(t *testing.T) {
 	}
 }
 
+func TestDeleteSourceRemovesItsPostingsAndScoresOnly(t *testing.T) {
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	owner := uuid.New()
+	gone, kept := addSource(t, repo, owner, "gone"), addSource(t, repo, owner, "kept")
+	scored := addPosting(t, repo, owner, gone, "a", "scored")
+	addPosting(t, repo, owner, gone, "b", "unscored")
+	keptPosting := addPosting(t, repo, owner, kept, "a", "kept")
+	for _, id := range []uuid.UUID{scored, keptPosting} {
+		if err := repo.SaveScore(ctx, id, score(0.5), "rule", base); err != nil {
+			t.Fatalf("save score: %v", err)
+		}
+	}
+
+	foreignErr := repo.DeleteSource(ctx, uuid.New(), gone)
+	err := repo.DeleteSource(ctx, owner, gone)
+	againErr := repo.DeleteSource(ctx, owner, gone)
+
+	if !errors.Is(foreignErr, store.ErrNotFound) || err != nil || !errors.Is(againErr, store.ErrNotFound) {
+		t.Fatalf("foreign %v, delete %v, again %v", foreignErr, err, againErr)
+	}
+	if _, err := repo.GetSource(ctx, owner, gone); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("deleted source still there: %v", err)
+	}
+	if _, err := repo.GetScore(ctx, scored); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("deleted posting's score still there: %v", err)
+	}
+	rows, _, _ := repo.ListPostings(ctx, owner, store.PostingFilter{}, store.Page{})
+	if len(rows) != 1 || rows[0].ID != keptPosting || rows[0].Score == nil {
+		t.Fatalf("postings left = %+v; want only the other source's, with its score", rows)
+	}
+}
+
 func TestUpsertPostingInsertsOnceThenRefreshes(t *testing.T) {
 	repo, _ := newRepo(t)
 	ctx := context.Background()

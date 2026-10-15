@@ -209,6 +209,7 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | katana | `SyncGitHub` | none | Snapshot | torii, scheduler |
 | katana | `ListSuggestions` / `AcceptSuggestion` / `DismissSuggestion` | target, state / id | Suggestion(s) | torii |
 | shinobi | `UpsertSource` / `ListSources` / `RunSource` | kind, config, schedule | Source / RunResult | torii |
+| shinobi | `DeleteSource` | id | none (removes the source with its postings and scores) | torii |
 | shinobi | `SetPreferences` / `GetPreferences` | roles, locations, keywords, min\_score | Preferences | torii |
 | shinobi | `ListPostings` / `SaveToTracker` | min\_score / posting\_id | Postings / Job | torii |
 | sensei | `GetFunnel` | from, to, group\_by (source, month) | stage counts and rates | torii |
