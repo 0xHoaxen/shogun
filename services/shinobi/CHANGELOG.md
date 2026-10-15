@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/shinobi/v1.0.0...services/shinobi/v1.1.0) (2026-10-15)
+
+
+### Features
+
+* **shinobi:** delete a discovery source ([e5407bd](https://github.com/0xHoaxen/shogun/commit/e5407bd71030c254cf50bdd9c00585ea05f64475))
+* **shinobi:** delete a discovery source ([ac6101d](https://github.com/0xHoaxen/shogun/commit/ac6101d08d9d34f92e1740711c603a81c95474bf))
+* **shinobi:** say when a source's address is a web page ([41640cf](https://github.com/0xHoaxen/shogun/commit/41640cf2e59fcd2194610cf9fe8048ce3fbafd37))
+* **shinobi:** say when a source's address is a web page ([820af84](https://github.com/0xHoaxen/shogun/commit/820af84f925ba0fc649730bfaf16749953a94dda))
+
+
+### Bug Fixes
+
+* **web:** draw select chevron inside the field padding ([7d6333a](https://github.com/0xHoaxen/shogun/commit/7d6333aa89a88d52556ccc0190a107495b8d5197))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/services/shinobi/v0.0.1...services/shinobi/v1.0.0) (2026-10-10)
 
 
