@@ -610,6 +610,86 @@ func (x *RunSourceResponse) GetAdded() int32 {
 	return 0
 }
 
+type DeleteSourceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSourceRequest) Reset() {
+	*x = DeleteSourceRequest{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSourceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSourceRequest) ProtoMessage() {}
+
+func (x *DeleteSourceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSourceRequest.ProtoReflect.Descriptor instead.
+func (*DeleteSourceRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeleteSourceRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteSourceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteSourceResponse) Reset() {
+	*x = DeleteSourceResponse{}
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteSourceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteSourceResponse) ProtoMessage() {}
+
+func (x *DeleteSourceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteSourceResponse.ProtoReflect.Descriptor instead.
+func (*DeleteSourceResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{10}
+}
+
 type Preferences struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	Roles      []string               `protobuf:"bytes,1,rep,name=roles,proto3" json:"roles,omitempty"`
@@ -625,7 +705,7 @@ type Preferences struct {
 
 func (x *Preferences) Reset() {
 	*x = Preferences{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[9]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -637,7 +717,7 @@ func (x *Preferences) String() string {
 func (*Preferences) ProtoMessage() {}
 
 func (x *Preferences) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[9]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -650,7 +730,7 @@ func (x *Preferences) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Preferences.ProtoReflect.Descriptor instead.
 func (*Preferences) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{9}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Preferences) GetRoles() []string {
@@ -703,7 +783,7 @@ type GetPreferencesRequest struct {
 
 func (x *GetPreferencesRequest) Reset() {
 	*x = GetPreferencesRequest{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[10]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -715,7 +795,7 @@ func (x *GetPreferencesRequest) String() string {
 func (*GetPreferencesRequest) ProtoMessage() {}
 
 func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[10]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -728,7 +808,7 @@ func (x *GetPreferencesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPreferencesRequest.ProtoReflect.Descriptor instead.
 func (*GetPreferencesRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{10}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{12}
 }
 
 type GetPreferencesResponse struct {
@@ -740,7 +820,7 @@ type GetPreferencesResponse struct {
 
 func (x *GetPreferencesResponse) Reset() {
 	*x = GetPreferencesResponse{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[11]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -752,7 +832,7 @@ func (x *GetPreferencesResponse) String() string {
 func (*GetPreferencesResponse) ProtoMessage() {}
 
 func (x *GetPreferencesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[11]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -765,7 +845,7 @@ func (x *GetPreferencesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPreferencesResponse.ProtoReflect.Descriptor instead.
 func (*GetPreferencesResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{11}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetPreferencesResponse) GetPreferences() *Preferences {
@@ -784,7 +864,7 @@ type SetPreferencesRequest struct {
 
 func (x *SetPreferencesRequest) Reset() {
 	*x = SetPreferencesRequest{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[12]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -796,7 +876,7 @@ func (x *SetPreferencesRequest) String() string {
 func (*SetPreferencesRequest) ProtoMessage() {}
 
 func (x *SetPreferencesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[12]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -809,7 +889,7 @@ func (x *SetPreferencesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPreferencesRequest.ProtoReflect.Descriptor instead.
 func (*SetPreferencesRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{12}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SetPreferencesRequest) GetPreferences() *Preferences {
@@ -828,7 +908,7 @@ type SetPreferencesResponse struct {
 
 func (x *SetPreferencesResponse) Reset() {
 	*x = SetPreferencesResponse{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[13]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -840,7 +920,7 @@ func (x *SetPreferencesResponse) String() string {
 func (*SetPreferencesResponse) ProtoMessage() {}
 
 func (x *SetPreferencesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[13]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -853,7 +933,7 @@ func (x *SetPreferencesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPreferencesResponse.ProtoReflect.Descriptor instead.
 func (*SetPreferencesResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{13}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *SetPreferencesResponse) GetPreferences() *Preferences {
@@ -887,7 +967,7 @@ type Posting struct {
 
 func (x *Posting) Reset() {
 	*x = Posting{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[14]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -899,7 +979,7 @@ func (x *Posting) String() string {
 func (*Posting) ProtoMessage() {}
 
 func (x *Posting) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[14]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -912,7 +992,7 @@ func (x *Posting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Posting.ProtoReflect.Descriptor instead.
 func (*Posting) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{14}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Posting) GetId() string {
@@ -1020,7 +1100,7 @@ type ListPostingsRequest struct {
 
 func (x *ListPostingsRequest) Reset() {
 	*x = ListPostingsRequest{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[15]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1032,7 +1112,7 @@ func (x *ListPostingsRequest) String() string {
 func (*ListPostingsRequest) ProtoMessage() {}
 
 func (x *ListPostingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[15]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1045,7 +1125,7 @@ func (x *ListPostingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPostingsRequest.ProtoReflect.Descriptor instead.
 func (*ListPostingsRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{15}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ListPostingsRequest) GetMinScore() float32 {
@@ -1086,7 +1166,7 @@ type ListPostingsResponse struct {
 
 func (x *ListPostingsResponse) Reset() {
 	*x = ListPostingsResponse{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[16]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1098,7 +1178,7 @@ func (x *ListPostingsResponse) String() string {
 func (*ListPostingsResponse) ProtoMessage() {}
 
 func (x *ListPostingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[16]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1111,7 +1191,7 @@ func (x *ListPostingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPostingsResponse.ProtoReflect.Descriptor instead.
 func (*ListPostingsResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{16}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListPostingsResponse) GetPostings() []*Posting {
@@ -1137,7 +1217,7 @@ type SaveToTrackerRequest struct {
 
 func (x *SaveToTrackerRequest) Reset() {
 	*x = SaveToTrackerRequest{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[17]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1149,7 +1229,7 @@ func (x *SaveToTrackerRequest) String() string {
 func (*SaveToTrackerRequest) ProtoMessage() {}
 
 func (x *SaveToTrackerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[17]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1162,7 +1242,7 @@ func (x *SaveToTrackerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveToTrackerRequest.ProtoReflect.Descriptor instead.
 func (*SaveToTrackerRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{17}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SaveToTrackerRequest) GetPostingId() string {
@@ -1181,7 +1261,7 @@ type SaveToTrackerResponse struct {
 
 func (x *SaveToTrackerResponse) Reset() {
 	*x = SaveToTrackerResponse{}
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[18]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1193,7 +1273,7 @@ func (x *SaveToTrackerResponse) String() string {
 func (*SaveToTrackerResponse) ProtoMessage() {}
 
 func (x *SaveToTrackerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[18]
+	mi := &file_shogun_shinobi_v1_shinobi_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1206,7 +1286,7 @@ func (x *SaveToTrackerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SaveToTrackerResponse.ProtoReflect.Descriptor instead.
 func (*SaveToTrackerResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{18}
+	return file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SaveToTrackerResponse) GetJobId() string {
@@ -1256,7 +1336,10 @@ const file_shogun_shinobi_v1_shinobi_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"C\n" +
 	"\x11RunSourceResponse\x12\x18\n" +
 	"\afetched\x18\x01 \x01(\x05R\afetched\x12\x14\n" +
-	"\x05added\x18\x02 \x01(\x05R\x05added\"\xb7\x01\n" +
+	"\x05added\x18\x02 \x01(\x05R\x05added\"%\n" +
+	"\x13DeleteSourceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
+	"\x14DeleteSourceResponse\"\xb7\x01\n" +
 	"\vPreferences\x12\x14\n" +
 	"\x05roles\x18\x01 \x03(\tR\x05roles\x12\x1c\n" +
 	"\tlocations\x18\x02 \x03(\tR\tlocations\x12\x1b\n" +
@@ -1308,11 +1391,12 @@ const file_shogun_shinobi_v1_shinobi_proto_rawDesc = "" +
 	"\x17SOURCE_KIND_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fSOURCE_KIND_RSS\x10\x01\x12\x13\n" +
 	"\x0fSOURCE_KIND_API\x10\x02\x12\x14\n" +
-	"\x10SOURCE_KIND_FILE\x10\x032\xba\x05\n" +
+	"\x10SOURCE_KIND_FILE\x10\x032\x9b\x06\n" +
 	"\x0eShinobiService\x12_\n" +
 	"\fUpsertSource\x12&.shogun.shinobi.v1.UpsertSourceRequest\x1a'.shogun.shinobi.v1.UpsertSourceResponse\x12\\\n" +
 	"\vListSources\x12%.shogun.shinobi.v1.ListSourcesRequest\x1a&.shogun.shinobi.v1.ListSourcesResponse\x12V\n" +
-	"\tRunSource\x12#.shogun.shinobi.v1.RunSourceRequest\x1a$.shogun.shinobi.v1.RunSourceResponse\x12e\n" +
+	"\tRunSource\x12#.shogun.shinobi.v1.RunSourceRequest\x1a$.shogun.shinobi.v1.RunSourceResponse\x12_\n" +
+	"\fDeleteSource\x12&.shogun.shinobi.v1.DeleteSourceRequest\x1a'.shogun.shinobi.v1.DeleteSourceResponse\x12e\n" +
 	"\x0eGetPreferences\x12(.shogun.shinobi.v1.GetPreferencesRequest\x1a).shogun.shinobi.v1.GetPreferencesResponse\x12e\n" +
 	"\x0eSetPreferences\x12(.shogun.shinobi.v1.SetPreferencesRequest\x1a).shogun.shinobi.v1.SetPreferencesResponse\x12_\n" +
 	"\fListPostings\x12&.shogun.shinobi.v1.ListPostingsRequest\x1a'.shogun.shinobi.v1.ListPostingsResponse\x12b\n" +
@@ -1332,7 +1416,7 @@ func file_shogun_shinobi_v1_shinobi_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_shinobi_v1_shinobi_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_shinobi_v1_shinobi_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_shogun_shinobi_v1_shinobi_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_shogun_shinobi_v1_shinobi_proto_goTypes = []any{
 	(SourceKind)(0),                // 0: shogun.shinobi.v1.SourceKind
 	(*FieldMapping)(nil),           // 1: shogun.shinobi.v1.FieldMapping
@@ -1344,48 +1428,52 @@ var file_shogun_shinobi_v1_shinobi_proto_goTypes = []any{
 	(*ListSourcesResponse)(nil),    // 7: shogun.shinobi.v1.ListSourcesResponse
 	(*RunSourceRequest)(nil),       // 8: shogun.shinobi.v1.RunSourceRequest
 	(*RunSourceResponse)(nil),      // 9: shogun.shinobi.v1.RunSourceResponse
-	(*Preferences)(nil),            // 10: shogun.shinobi.v1.Preferences
-	(*GetPreferencesRequest)(nil),  // 11: shogun.shinobi.v1.GetPreferencesRequest
-	(*GetPreferencesResponse)(nil), // 12: shogun.shinobi.v1.GetPreferencesResponse
-	(*SetPreferencesRequest)(nil),  // 13: shogun.shinobi.v1.SetPreferencesRequest
-	(*SetPreferencesResponse)(nil), // 14: shogun.shinobi.v1.SetPreferencesResponse
-	(*Posting)(nil),                // 15: shogun.shinobi.v1.Posting
-	(*ListPostingsRequest)(nil),    // 16: shogun.shinobi.v1.ListPostingsRequest
-	(*ListPostingsResponse)(nil),   // 17: shogun.shinobi.v1.ListPostingsResponse
-	(*SaveToTrackerRequest)(nil),   // 18: shogun.shinobi.v1.SaveToTrackerRequest
-	(*SaveToTrackerResponse)(nil),  // 19: shogun.shinobi.v1.SaveToTrackerResponse
-	(*timestamppb.Timestamp)(nil),  // 20: google.protobuf.Timestamp
+	(*DeleteSourceRequest)(nil),    // 10: shogun.shinobi.v1.DeleteSourceRequest
+	(*DeleteSourceResponse)(nil),   // 11: shogun.shinobi.v1.DeleteSourceResponse
+	(*Preferences)(nil),            // 12: shogun.shinobi.v1.Preferences
+	(*GetPreferencesRequest)(nil),  // 13: shogun.shinobi.v1.GetPreferencesRequest
+	(*GetPreferencesResponse)(nil), // 14: shogun.shinobi.v1.GetPreferencesResponse
+	(*SetPreferencesRequest)(nil),  // 15: shogun.shinobi.v1.SetPreferencesRequest
+	(*SetPreferencesResponse)(nil), // 16: shogun.shinobi.v1.SetPreferencesResponse
+	(*Posting)(nil),                // 17: shogun.shinobi.v1.Posting
+	(*ListPostingsRequest)(nil),    // 18: shogun.shinobi.v1.ListPostingsRequest
+	(*ListPostingsResponse)(nil),   // 19: shogun.shinobi.v1.ListPostingsResponse
+	(*SaveToTrackerRequest)(nil),   // 20: shogun.shinobi.v1.SaveToTrackerRequest
+	(*SaveToTrackerResponse)(nil),  // 21: shogun.shinobi.v1.SaveToTrackerResponse
+	(*timestamppb.Timestamp)(nil),  // 22: google.protobuf.Timestamp
 }
 var file_shogun_shinobi_v1_shinobi_proto_depIdxs = []int32{
 	1,  // 0: shogun.shinobi.v1.SourceConfig.mapping:type_name -> shogun.shinobi.v1.FieldMapping
 	0,  // 1: shogun.shinobi.v1.Source.kind:type_name -> shogun.shinobi.v1.SourceKind
 	2,  // 2: shogun.shinobi.v1.Source.config:type_name -> shogun.shinobi.v1.SourceConfig
-	20, // 3: shogun.shinobi.v1.Source.last_run_at:type_name -> google.protobuf.Timestamp
+	22, // 3: shogun.shinobi.v1.Source.last_run_at:type_name -> google.protobuf.Timestamp
 	3,  // 4: shogun.shinobi.v1.UpsertSourceRequest.source:type_name -> shogun.shinobi.v1.Source
 	3,  // 5: shogun.shinobi.v1.UpsertSourceResponse.source:type_name -> shogun.shinobi.v1.Source
 	3,  // 6: shogun.shinobi.v1.ListSourcesResponse.sources:type_name -> shogun.shinobi.v1.Source
-	10, // 7: shogun.shinobi.v1.GetPreferencesResponse.preferences:type_name -> shogun.shinobi.v1.Preferences
-	10, // 8: shogun.shinobi.v1.SetPreferencesRequest.preferences:type_name -> shogun.shinobi.v1.Preferences
-	10, // 9: shogun.shinobi.v1.SetPreferencesResponse.preferences:type_name -> shogun.shinobi.v1.Preferences
-	20, // 10: shogun.shinobi.v1.Posting.posted_at:type_name -> google.protobuf.Timestamp
-	20, // 11: shogun.shinobi.v1.Posting.created_at:type_name -> google.protobuf.Timestamp
-	15, // 12: shogun.shinobi.v1.ListPostingsResponse.postings:type_name -> shogun.shinobi.v1.Posting
+	12, // 7: shogun.shinobi.v1.GetPreferencesResponse.preferences:type_name -> shogun.shinobi.v1.Preferences
+	12, // 8: shogun.shinobi.v1.SetPreferencesRequest.preferences:type_name -> shogun.shinobi.v1.Preferences
+	12, // 9: shogun.shinobi.v1.SetPreferencesResponse.preferences:type_name -> shogun.shinobi.v1.Preferences
+	22, // 10: shogun.shinobi.v1.Posting.posted_at:type_name -> google.protobuf.Timestamp
+	22, // 11: shogun.shinobi.v1.Posting.created_at:type_name -> google.protobuf.Timestamp
+	17, // 12: shogun.shinobi.v1.ListPostingsResponse.postings:type_name -> shogun.shinobi.v1.Posting
 	4,  // 13: shogun.shinobi.v1.ShinobiService.UpsertSource:input_type -> shogun.shinobi.v1.UpsertSourceRequest
 	6,  // 14: shogun.shinobi.v1.ShinobiService.ListSources:input_type -> shogun.shinobi.v1.ListSourcesRequest
 	8,  // 15: shogun.shinobi.v1.ShinobiService.RunSource:input_type -> shogun.shinobi.v1.RunSourceRequest
-	11, // 16: shogun.shinobi.v1.ShinobiService.GetPreferences:input_type -> shogun.shinobi.v1.GetPreferencesRequest
-	13, // 17: shogun.shinobi.v1.ShinobiService.SetPreferences:input_type -> shogun.shinobi.v1.SetPreferencesRequest
-	16, // 18: shogun.shinobi.v1.ShinobiService.ListPostings:input_type -> shogun.shinobi.v1.ListPostingsRequest
-	18, // 19: shogun.shinobi.v1.ShinobiService.SaveToTracker:input_type -> shogun.shinobi.v1.SaveToTrackerRequest
-	5,  // 20: shogun.shinobi.v1.ShinobiService.UpsertSource:output_type -> shogun.shinobi.v1.UpsertSourceResponse
-	7,  // 21: shogun.shinobi.v1.ShinobiService.ListSources:output_type -> shogun.shinobi.v1.ListSourcesResponse
-	9,  // 22: shogun.shinobi.v1.ShinobiService.RunSource:output_type -> shogun.shinobi.v1.RunSourceResponse
-	12, // 23: shogun.shinobi.v1.ShinobiService.GetPreferences:output_type -> shogun.shinobi.v1.GetPreferencesResponse
-	14, // 24: shogun.shinobi.v1.ShinobiService.SetPreferences:output_type -> shogun.shinobi.v1.SetPreferencesResponse
-	17, // 25: shogun.shinobi.v1.ShinobiService.ListPostings:output_type -> shogun.shinobi.v1.ListPostingsResponse
-	19, // 26: shogun.shinobi.v1.ShinobiService.SaveToTracker:output_type -> shogun.shinobi.v1.SaveToTrackerResponse
-	20, // [20:27] is the sub-list for method output_type
-	13, // [13:20] is the sub-list for method input_type
+	10, // 16: shogun.shinobi.v1.ShinobiService.DeleteSource:input_type -> shogun.shinobi.v1.DeleteSourceRequest
+	13, // 17: shogun.shinobi.v1.ShinobiService.GetPreferences:input_type -> shogun.shinobi.v1.GetPreferencesRequest
+	15, // 18: shogun.shinobi.v1.ShinobiService.SetPreferences:input_type -> shogun.shinobi.v1.SetPreferencesRequest
+	18, // 19: shogun.shinobi.v1.ShinobiService.ListPostings:input_type -> shogun.shinobi.v1.ListPostingsRequest
+	20, // 20: shogun.shinobi.v1.ShinobiService.SaveToTracker:input_type -> shogun.shinobi.v1.SaveToTrackerRequest
+	5,  // 21: shogun.shinobi.v1.ShinobiService.UpsertSource:output_type -> shogun.shinobi.v1.UpsertSourceResponse
+	7,  // 22: shogun.shinobi.v1.ShinobiService.ListSources:output_type -> shogun.shinobi.v1.ListSourcesResponse
+	9,  // 23: shogun.shinobi.v1.ShinobiService.RunSource:output_type -> shogun.shinobi.v1.RunSourceResponse
+	11, // 24: shogun.shinobi.v1.ShinobiService.DeleteSource:output_type -> shogun.shinobi.v1.DeleteSourceResponse
+	14, // 25: shogun.shinobi.v1.ShinobiService.GetPreferences:output_type -> shogun.shinobi.v1.GetPreferencesResponse
+	16, // 26: shogun.shinobi.v1.ShinobiService.SetPreferences:output_type -> shogun.shinobi.v1.SetPreferencesResponse
+	19, // 27: shogun.shinobi.v1.ShinobiService.ListPostings:output_type -> shogun.shinobi.v1.ListPostingsResponse
+	21, // 28: shogun.shinobi.v1.ShinobiService.SaveToTracker:output_type -> shogun.shinobi.v1.SaveToTrackerResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
 	13, // [13:13] is the sub-list for extension extendee
 	0,  // [0:13] is the sub-list for field type_name
@@ -1402,7 +1490,7 @@ func file_shogun_shinobi_v1_shinobi_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_shinobi_v1_shinobi_proto_rawDesc), len(file_shogun_shinobi_v1_shinobi_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

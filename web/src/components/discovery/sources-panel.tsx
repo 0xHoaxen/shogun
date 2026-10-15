@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { postingsKey, sourcesKey } from "@/components/discovery/discovery-key";
+import { DeleteSourceDialog } from "@/components/discovery/delete-source-dialog";
 import { discoveryErrorText, lastErrorText } from "@/components/discovery/errors";
 import { sourceKindLabel } from "@/components/discovery/labels";
 import { SourceDialog } from "@/components/discovery/source-dialog";
@@ -19,6 +20,7 @@ export function SourcesPanel() {
   const sources = useQuery(DiscoveryService.method.listDiscoverySources, {});
   const [editing, setEditing] = useState<DiscoverySource | null>(null);
   const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState<DiscoverySource | null>(null);
   const [note, setNote] = useState("");
 
   const run = useMutation({
@@ -110,6 +112,9 @@ export function SourcesPanel() {
                 >
                   {source.enabled ? "Turn off" : "Turn on"}
                 </Button>
+                <Button aria-label={`Delete ${source.name}`} onClick={() => setDeleting(source)}>
+                  Delete
+                </Button>
               </div>
             </article>
           ))}
@@ -122,6 +127,17 @@ export function SourcesPanel() {
       {adding ? <SourceDialog key="add" open onOpenChange={setAdding} /> : null}
       {editing ? (
         <SourceDialog key={editing.id} open source={editing} onOpenChange={(open) => !open && setEditing(null)} />
+      ) : null}
+      {deleting ? (
+        <DeleteSourceDialog
+          key={deleting.id}
+          source={deleting}
+          onOpenChange={(open) => !open && setDeleting(null)}
+          onDeleted={() => {
+            setNote(`Deleted ${deleting.name}.`);
+            setDeleting(null);
+          }}
+        />
       ) : null}
     </>
   );

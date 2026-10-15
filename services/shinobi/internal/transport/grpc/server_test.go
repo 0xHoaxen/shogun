@@ -279,6 +279,31 @@ func TestRunSourceRefusesUnknownForeignAndMalformedIDs(t *testing.T) {
 	requireStatus(t, bad, codes.InvalidArgument, "INVALID_ID")
 }
 
+func TestDeleteSourceRemovesItWithItsPostings(t *testing.T) {
+	h := newHarness(t)
+	src := h.add(t, rssSource("Feed"))
+	if _, err := h.client.RunSource(h.ctx(t), &shinobiv1.RunSourceRequest{Id: src.GetId()}); err != nil {
+		t.Fatalf("run: %v", err)
+	}
+
+	_, foreign := h.client.DeleteSource(h.ctxFor(t, uuid.NewString()), &shinobiv1.DeleteSourceRequest{Id: src.GetId()})
+	_, bad := h.client.DeleteSource(h.ctx(t), &shinobiv1.DeleteSourceRequest{Id: "nope"})
+	_, err := h.client.DeleteSource(h.ctx(t), &shinobiv1.DeleteSourceRequest{Id: src.GetId()})
+	_, again := h.client.DeleteSource(h.ctx(t), &shinobiv1.DeleteSourceRequest{Id: src.GetId()})
+
+	requireStatus(t, foreign, codes.NotFound, "SOURCE_NOT_FOUND")
+	requireStatus(t, bad, codes.InvalidArgument, "INVALID_ID")
+	if err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	requireStatus(t, again, codes.NotFound, "SOURCE_NOT_FOUND")
+	sources, _ := h.client.ListSources(h.ctx(t), &shinobiv1.ListSourcesRequest{})
+	postings, _ := h.client.ListPostings(h.ctx(t), &shinobiv1.ListPostingsRequest{})
+	if len(sources.GetSources()) != 0 || len(postings.GetPostings()) != 0 {
+		t.Fatalf("sources %d, postings %d; want none", len(sources.GetSources()), len(postings.GetPostings()))
+	}
+}
+
 func TestSourceCallsRequireAnIdentity(t *testing.T) {
 	h := newHarness(t)
 

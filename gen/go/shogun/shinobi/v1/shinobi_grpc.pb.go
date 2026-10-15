@@ -22,6 +22,7 @@ const (
 	ShinobiService_UpsertSource_FullMethodName   = "/shogun.shinobi.v1.ShinobiService/UpsertSource"
 	ShinobiService_ListSources_FullMethodName    = "/shogun.shinobi.v1.ShinobiService/ListSources"
 	ShinobiService_RunSource_FullMethodName      = "/shogun.shinobi.v1.ShinobiService/RunSource"
+	ShinobiService_DeleteSource_FullMethodName   = "/shogun.shinobi.v1.ShinobiService/DeleteSource"
 	ShinobiService_GetPreferences_FullMethodName = "/shogun.shinobi.v1.ShinobiService/GetPreferences"
 	ShinobiService_SetPreferences_FullMethodName = "/shogun.shinobi.v1.ShinobiService/SetPreferences"
 	ShinobiService_ListPostings_FullMethodName   = "/shogun.shinobi.v1.ShinobiService/ListPostings"
@@ -41,6 +42,9 @@ type ShinobiServiceClient interface {
 	ListSources(ctx context.Context, in *ListSourcesRequest, opts ...grpc.CallOption) (*ListSourcesResponse, error)
 	// RunSource reads a source now, outside its schedule.
 	RunSource(ctx context.Context, in *RunSourceRequest, opts ...grpc.CallOption) (*RunSourceResponse, error)
+	// DeleteSource removes a source with its postings and their scores. Jobs
+	// already saved to kagami stay there.
+	DeleteSource(ctx context.Context, in *DeleteSourceRequest, opts ...grpc.CallOption) (*DeleteSourceResponse, error)
 	GetPreferences(ctx context.Context, in *GetPreferencesRequest, opts ...grpc.CallOption) (*GetPreferencesResponse, error)
 	SetPreferences(ctx context.Context, in *SetPreferencesRequest, opts ...grpc.CallOption) (*SetPreferencesResponse, error)
 	// ListPostings returns postings best score first; unscored ones come last.
@@ -82,6 +86,16 @@ func (c *shinobiServiceClient) RunSource(ctx context.Context, in *RunSourceReque
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RunSourceResponse)
 	err := c.cc.Invoke(ctx, ShinobiService_RunSource_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *shinobiServiceClient) DeleteSource(ctx context.Context, in *DeleteSourceRequest, opts ...grpc.CallOption) (*DeleteSourceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteSourceResponse)
+	err := c.cc.Invoke(ctx, ShinobiService_DeleteSource_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -141,6 +155,9 @@ type ShinobiServiceServer interface {
 	ListSources(context.Context, *ListSourcesRequest) (*ListSourcesResponse, error)
 	// RunSource reads a source now, outside its schedule.
 	RunSource(context.Context, *RunSourceRequest) (*RunSourceResponse, error)
+	// DeleteSource removes a source with its postings and their scores. Jobs
+	// already saved to kagami stay there.
+	DeleteSource(context.Context, *DeleteSourceRequest) (*DeleteSourceResponse, error)
 	GetPreferences(context.Context, *GetPreferencesRequest) (*GetPreferencesResponse, error)
 	SetPreferences(context.Context, *SetPreferencesRequest) (*SetPreferencesResponse, error)
 	// ListPostings returns postings best score first; unscored ones come last.
@@ -166,6 +183,9 @@ func (UnimplementedShinobiServiceServer) ListSources(context.Context, *ListSourc
 }
 func (UnimplementedShinobiServiceServer) RunSource(context.Context, *RunSourceRequest) (*RunSourceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RunSource not implemented")
+}
+func (UnimplementedShinobiServiceServer) DeleteSource(context.Context, *DeleteSourceRequest) (*DeleteSourceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteSource not implemented")
 }
 func (UnimplementedShinobiServiceServer) GetPreferences(context.Context, *GetPreferencesRequest) (*GetPreferencesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPreferences not implemented")
@@ -250,6 +270,24 @@ func _ShinobiService_RunSource_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ShinobiServiceServer).RunSource(ctx, req.(*RunSourceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ShinobiService_DeleteSource_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteSourceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ShinobiServiceServer).DeleteSource(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ShinobiService_DeleteSource_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ShinobiServiceServer).DeleteSource(ctx, req.(*DeleteSourceRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -344,6 +382,10 @@ var ShinobiService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RunSource",
 			Handler:    _ShinobiService_RunSource_Handler,
+		},
+		{
+			MethodName: "DeleteSource",
+			Handler:    _ShinobiService_DeleteSource_Handler,
 		},
 		{
 			MethodName: "GetPreferences",

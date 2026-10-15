@@ -69,6 +69,18 @@ func (s *Server) RunSource(ctx context.Context, req *shinobiv1.RunSourceRequest)
 	return &shinobiv1.RunSourceResponse{Fetched: int32(res.Fetched), Added: int32(res.Added)}, nil //nolint:gosec // bounded by fetch.MaxItems
 }
 
+// DeleteSource implements shinobi.v1.ShinobiService.
+func (s *Server) DeleteSource(ctx context.Context, req *shinobiv1.DeleteSourceRequest) (*shinobiv1.DeleteSourceResponse, error) {
+	id, err := parseID("id", req.GetId())
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	if err := s.svc.DeleteSource(ctx, id); err != nil {
+		return nil, toStatus(err)
+	}
+	return &shinobiv1.DeleteSourceResponse{}, nil
+}
+
 // GetPreferences implements shinobi.v1.ShinobiService.
 func (s *Server) GetPreferences(ctx context.Context, _ *shinobiv1.GetPreferencesRequest) (*shinobiv1.GetPreferencesResponse, error) {
 	p, err := s.svc.GetPreferences(ctx)

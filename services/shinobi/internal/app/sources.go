@@ -63,3 +63,17 @@ func (s *Service) ListSources(ctx context.Context) ([]db.Source, error) {
 	rows, err := store.New(s.pool).ListSources(ctx, owner)
 	return rows, wrap("list sources", err)
 }
+
+// DeleteSource removes one of the calling owner's sources with the postings it
+// found. Jobs already saved to the tracker live in kagami and stay.
+func (s *Service) DeleteSource(ctx context.Context, id uuid.UUID) error {
+	owner, err := ownerFrom(ctx)
+	if err != nil {
+		return err
+	}
+	err = store.New(s.pool).DeleteSource(ctx, owner, id)
+	if errors.Is(err, store.ErrNotFound) {
+		return ErrSourceNotFound
+	}
+	return wrap("delete source", err)
+}

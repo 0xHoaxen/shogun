@@ -32,6 +32,7 @@ type fakeShinobi struct {
 	save    *shinobiv1.SaveToTrackerRequest
 	upsert  *shinobiv1.UpsertSourceRequest
 	run     *shinobiv1.RunSourceRequest
+	del     *shinobiv1.DeleteSourceRequest
 	setPref *shinobiv1.SetPreferencesRequest
 }
 
@@ -70,6 +71,11 @@ func (f *fakeShinobi) UpsertSource(_ context.Context, in *shinobiv1.UpsertSource
 func (f *fakeShinobi) RunSource(_ context.Context, in *shinobiv1.RunSourceRequest, _ ...grpc.CallOption) (*shinobiv1.RunSourceResponse, error) {
 	f.run = in
 	return &shinobiv1.RunSourceResponse{Fetched: 12, Added: 5}, f.err
+}
+
+func (f *fakeShinobi) DeleteSource(_ context.Context, in *shinobiv1.DeleteSourceRequest, _ ...grpc.CallOption) (*shinobiv1.DeleteSourceResponse, error) {
+	f.del = in
+	return &shinobiv1.DeleteSourceResponse{}, f.err
 }
 
 func (f *fakeShinobi) GetPreferences(context.Context, *shinobiv1.GetPreferencesRequest, ...grpc.CallOption) (*shinobiv1.GetPreferencesResponse, error) {
@@ -173,6 +179,22 @@ func TestRunDiscoverySourceReturnsTheCounts(t *testing.T) {
 
 	if err != nil || resp.Msg.GetFetched() != 12 || resp.Msg.GetAdded() != 5 || fake.run.GetId() != "src1" {
 		t.Fatalf("got %v, %v", resp, err)
+	}
+}
+
+func TestDeleteDiscoverySourcePassesTheIDAndKeepsNotFound(t *testing.T) {
+	fake, client, token := newDiscoveryHarness(t)
+
+	_, err := client.DeleteDiscoverySource(context.Background(), withCookie(connect.NewRequest(&apiv1.DeleteDiscoverySourceRequest{Id: "src1"}), token))
+	sent := fake.del
+	fake.err = withInfo(codes.NotFound, "SOURCE_NOT_FOUND")
+	_, missing := client.DeleteDiscoverySource(context.Background(), withCookie(connect.NewRequest(&apiv1.DeleteDiscoverySourceRequest{Id: "src1"}), token))
+
+	if err != nil || sent.GetId() != "src1" {
+		t.Fatalf("delete sent %+v, err %v", sent, err)
+	}
+	if code, reason := codeAndReason(t, missing); code != connect.CodeNotFound || reason != "SOURCE_NOT_FOUND" {
+		t.Fatalf("missing = %s %q", code, reason)
 	}
 }
 
