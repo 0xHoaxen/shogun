@@ -23,6 +23,17 @@ const (
 // was set up to be.
 var ErrBadDocument = errors.New("fetch: document cannot be read as postings")
 
+// ErrWebPage is the bad document most often met: the address serves a web page
+// for people, not a feed or an API. It is also an ErrBadDocument.
+var ErrWebPage = fmt.Errorf("%w: answer is a web page", ErrBadDocument)
+
+// isWebPage says whether a document begins as an HTML page does.
+func isWebPage(doc []byte) bool {
+	head := bytes.TrimLeft(bytes.TrimPrefix(doc, []byte("\ufeff")), " \t\r\n")
+	head = bytes.ToLower(head[:min(len(head), len("<!doctype html"))])
+	return bytes.HasPrefix(head, []byte("<!doctype html")) || bytes.HasPrefix(head, []byte("<html"))
+}
+
 // Item is one posting as a source listed it, with the item as received.
 type Item struct {
 	Candidate domain.Candidate
@@ -61,6 +72,9 @@ func ParseJSON(doc []byte, m domain.FieldMapping) ([]Item, error) {
 	dec.UseNumber()
 	var root any
 	if err := dec.Decode(&root); err != nil {
+		if isWebPage(doc) {
+			return nil, ErrWebPage
+		}
 		return nil, fmt.Errorf("%w: not JSON", ErrBadDocument)
 	}
 	list, ok := path(root, m.ItemsPath).([]any)

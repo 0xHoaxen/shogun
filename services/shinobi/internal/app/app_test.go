@@ -162,6 +162,7 @@ func TestAFailedRunIsRecordedWithAShortCodeAndStoresNothing(t *testing.T) {
 		{"unreachable", errors.Join(errors.New("dial"), fetch.ErrFailed), "", app.CodeFetchFailed},
 		{"timeout", context.DeadlineExceeded, "", app.CodeFetchFailed},
 		{"not a feed", nil, `{"json":true}`, app.CodeBadDocument},
+		{"web page", nil, `<!DOCTYPE html><html><title>Jobs</title></html>`, app.CodeWebPage},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

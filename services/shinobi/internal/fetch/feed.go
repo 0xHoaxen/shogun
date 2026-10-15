@@ -41,6 +41,9 @@ type atomEntry struct {
 
 // ParseFeed reads postings from an RSS 2.0 or Atom document.
 func ParseFeed(doc []byte) ([]Item, error) {
+	if isWebPage(doc) {
+		return nil, ErrWebPage
+	}
 	dec := xml.NewDecoder(bytes.NewReader(doc))
 	dec.Strict = false
 	var items []Item

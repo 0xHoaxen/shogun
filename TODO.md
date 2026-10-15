@@ -528,6 +528,13 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
   Done when: torii handler tests and mocked-API Playwright tests pass.
   Status: `DiscoveryService` (postings, save to tracker, sources with run-now, preferences) over shinobi; torii now requires `SHINOBI_ADDR` (compose already sets it; `TODO(owner)`: add it to the helm values). `/discovery` has three views: Postings (best score first, minimum-score filter, reasons, "Save to tracker" then a link to the board), Sources (add, edit, turn on or off, read now, last failure in plain words; kind is locked when editing) and What you want (comma-separated lists and the match threshold as a percentage; saving scores postings again). Posting links are shown only if http or https. 11 mocked-API Playwright tests; no compose spec, as the stack has no job source to read.
 
+- [x] **P9.3f Say when a source's address is a web page** (S) Needs: P9.3e
+  Do: a source whose answer is an HTML page fails with its own code `web_page` (gRPC reason `SOURCE_WEB_PAGE`) instead of the generic `bad_document`, and the Sources panel says the address is a web page, not a feed or an API.
+  Done when: `cd services/shinobi && go test -race ./...` passes; in `web`, `npm run typecheck`, `eslint` and `npx playwright test e2e/discovery.spec.ts` pass.
+  Status: `fetch.ErrWebPage` wraps `ErrBadDocument`, so anything matching the old error still matches; both RSS and API sources detect a page by a leading `<!doctype html` or `<html` (after a BOM or whitespace). Found when a Wellfound jobs page added as an RSS source showed only "not in the expected shape".
+- [ ] **P9.3g Delete a discovery source** (M) Needs: P9.3f
+  Do: `DeleteSource` in shinobi and `DeleteDiscoverySource` in torii, plus a Delete button with confirmation on each source in `/discovery`.
+  Done when: shinobi store, app and handler tests, a torii handler test and a Playwright test pass.
 - [x] **P9.4a sensei facts** (M) Needs: P7.7
   Do: migration for `facts` and `daily_rollups`; inbox handlers for `job.*`, `contact.*`, `mail.*`, `draft.approved`, `draft.sent` and `cost.threshold_reached`, one fact per event id; routes to sensei.
   Done when: consumer tests including a duplicate delivery.

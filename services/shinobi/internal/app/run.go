@@ -22,6 +22,7 @@ const (
 	CodeAddressNotPublic = "address_not_public"
 	CodeTooLarge         = "too_large"
 	CodeBadDocument      = "bad_document"
+	CodeWebPage          = "web_page"
 	CodeFetchFailed      = "fetch_failed"
 	CodeInternal         = "internal"
 )
@@ -155,6 +156,8 @@ func failureCode(err error) string {
 		return CodeAddressNotPublic
 	case errors.Is(err, fetch.ErrTooLarge):
 		return CodeTooLarge
+	case errors.Is(err, fetch.ErrWebPage):
+		return CodeWebPage
 	case errors.Is(err, fetch.ErrBadDocument):
 		return CodeBadDocument
 	case errors.Is(err, fetch.ErrFailed), errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):

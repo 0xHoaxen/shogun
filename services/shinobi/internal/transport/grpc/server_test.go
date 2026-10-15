@@ -247,6 +247,7 @@ func TestRunSourceFailuresHaveStableReasonsAndAreKeptWithTheSource(t *testing.T)
 		{"private", fetch.ErrNotPublic, "SOURCE_ADDRESS_NOT_PUBLIC", "address_not_public"},
 		{"too large", fetch.ErrTooLarge, "SOURCE_TOO_LARGE", "too_large"},
 		{"unreachable", fetch.ErrFailed, "SOURCE_FETCH_FAILED", "fetch_failed"},
+		{"web page", fetch.ErrWebPage, "SOURCE_WEB_PAGE", "web_page"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

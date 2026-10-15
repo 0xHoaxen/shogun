@@ -93,6 +93,28 @@ func TestParseFeedRefusesWhatIsNotAFeedAndAcceptsAnEmptyOne(t *testing.T) {
 	}
 }
 
+func TestAWebPageIsToldApartFromOtherBadDocuments(t *testing.T) {
+	pages := []string{
+		"<!DOCTYPE html><html><head><title>Jobs</title></head></html>",
+		"\ufeff\n  <!doctype HTML>\n<html></html>",
+		"<html lang=\"en\"><body>hi</body></html>",
+	}
+	for _, page := range pages {
+		_, feedErr := fetch.ParseFeed([]byte(page))
+		_, jsonErr := fetch.ParseJSON([]byte(page), domain.FieldMapping{})
+
+		if !errors.Is(feedErr, fetch.ErrWebPage) || !errors.Is(feedErr, fetch.ErrBadDocument) {
+			t.Errorf("feed %q: err = %v, want ErrWebPage", page, feedErr)
+		}
+		if !errors.Is(jsonErr, fetch.ErrWebPage) {
+			t.Errorf("json %q: err = %v, want ErrWebPage", page, jsonErr)
+		}
+	}
+	if _, err := fetch.ParseFeed([]byte(`{"json":true}`)); errors.Is(err, fetch.ErrWebPage) {
+		t.Fatalf("JSON taken for a web page: %v", err)
+	}
+}
+
 func TestParseFeedCapsTheItemCount(t *testing.T) {
 	var b strings.Builder
 	b.WriteString(`<rss><channel>`)

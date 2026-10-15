@@ -107,6 +107,20 @@ test("sources show their last failure and can be read now", async ({ page }) => 
   expect(runs[0].body).toMatchObject({ id: "s1" });
 });
 
+test("a source whose address is a web page says so", async ({ page }) => {
+  await signIn(page);
+  await mockRpc(page, DiscoveryService.method.listDiscoverySources, { sources: [source({ lastError: "web_page" })] });
+  await mockRpcError(page, DiscoveryService.method.runDiscoverySource, "failed_precondition", "x", "SOURCE_WEB_PAGE");
+  await page.goto("/discovery");
+  await page.getByRole("button", { name: "Sources" }).click();
+
+  const card = page.getByRole("article", { name: "Acme feed" });
+  await expect(card).toContainText("its address is a web page, not a feed or an API");
+  await card.getByRole("button", { name: "Read Acme feed now" }).click();
+
+  await expect(page.locator("p[role=alert]")).toContainText("That address is a web page for people");
+});
+
 test("a source that cannot be read explains it", async ({ page }) => {
   await signIn(page);
   await mockRpc(page, DiscoveryService.method.listDiscoverySources, { sources: [source()] });
