@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 
 	"github.com/0xHoaxen/shogun/services/katana/internal/store"
@@ -31,27 +31,38 @@ func (s *Service) SyncGitHub(ctx context.Context) (SyncResult, error) {
 	return s.syncOwner(ctx, owner)
 }
 
-// SyncAll reads GitHub for every owner who has synced before, which is what the
-// daily job runs. One owner failing does not stop the others; the failures come
-// back joined so the job is retried.
-func (s *Service) SyncAll(ctx context.Context, log *slog.Logger) error {
+// SyncFor reads GitHub for one owner, which is what the daily job runs for each
+// owner on their own clock.
+func (s *Service) SyncFor(ctx context.Context, owner uuid.UUID) (SyncResult, error) {
+	return s.syncOwner(ctx, owner)
+}
+
+// SyncableOwners lists the active owners whose GitHub the daily job may read:
+// those with a GitHub connection. Until each user connects their own account,
+// that is whoever has synced the account katana is configured with.
+func (s *Service) SyncableOwners(ctx context.Context) ([]owners.Owner, error) {
 	if s.github == nil {
-		return ErrGitHubNotConfigured
+		return nil, nil
 	}
-	owners, err := store.New(s.pool).SnapshotOwners(ctx)
+	active, err := owners.ListActive(ctx, s.pool)
 	if err != nil {
-		return fmt.Errorf("list owners: %w", err)
+		return nil, err
 	}
-	var errs []error
-	for _, owner := range owners {
-		res, err := s.syncOwner(ctx, owner)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("sync owner %s: %w", owner, err))
-			continue
+	connected, err := store.New(s.pool).SnapshotOwners(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list connected owners: %w", err)
+	}
+	has := make(map[uuid.UUID]struct{}, len(connected))
+	for _, id := range connected {
+		has[id] = struct{}{}
+	}
+	var out []owners.Owner
+	for _, o := range active {
+		if _, ok := has[o.ID]; ok {
+			out = append(out, o)
 		}
-		log.Info("github sync done", slog.String("owner_id", owner.String()), slog.Bool("changed", res.Changed))
 	}
-	return errors.Join(errs...)
+	return out, nil
 }
 
 func (s *Service) syncOwner(ctx context.Context, owner uuid.UUID) (SyncResult, error) {
@@ -62,6 +73,12 @@ func (s *Service) syncOwner(ctx context.Context, owner uuid.UUID) (SyncResult, e
 	latest, err := repo.LatestSnapshots(ctx, owner, 1)
 	if err != nil {
 		return SyncResult{}, err
+	}
+	// The one GitHub account katana is configured with belongs to whoever has
+	// synced it before. Anyone else would be handed that person's repositories,
+	// so they wait for a connection of their own.
+	if len(latest) == 0 {
+		return SyncResult{}, ErrGitHubNotConnected
 	}
 	etag := ""
 	if len(latest) > 0 && latest[0].Etag != nil {

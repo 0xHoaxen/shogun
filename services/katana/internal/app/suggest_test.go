@@ -297,6 +297,7 @@ func TestSuggestIsOffWithoutAModel(t *testing.T) {
 
 func TestSyncStartsOneRunForTheSnapshotInTheSameTransaction(t *testing.T) {
 	pool, owner := newPool(t), uuid.New()
+	connect(t, pool, owner)
 	queue := &fakeQueue{}
 	gh := &fakeGitHub{snap: snapshot(`W/"a"`)}
 	svc := app.NewService(pool, gh, func() time.Time { return testNow }, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))

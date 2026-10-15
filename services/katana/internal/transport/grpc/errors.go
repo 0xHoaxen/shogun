@@ -19,6 +19,7 @@ const errorDomain = "katana.shogun"
 const (
 	reasonOwnerRequired      = "OWNER_REQUIRED"
 	reasonGitHubNotSet       = "GITHUB_NOT_CONFIGURED"
+	reasonGitHubNotConnected = "GITHUB_NOT_CONNECTED"
 	reasonGitHubUnauthorized = "GITHUB_UNAUTHORIZED"
 	reasonGitHubRateLimited  = "GITHUB_RATE_LIMITED"
 	reasonGitHubUnavailable  = "GITHUB_UNAVAILABLE"
@@ -53,6 +54,8 @@ func toStatus(err error) error {
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner")
 	case errors.Is(err, app.ErrGitHubNotConfigured):
 		return withReason(codes.FailedPrecondition, reasonGitHubNotSet, "no GitHub user or token is configured")
+	case errors.Is(err, app.ErrGitHubNotConnected):
+		return withReason(codes.FailedPrecondition, reasonGitHubNotConnected, "connect your GitHub account first")
 	case errors.Is(err, app.ErrGitHubUnauthorized):
 		return withReason(codes.FailedPrecondition, reasonGitHubUnauthorized, "GitHub refused the token")
 	case errors.As(err, &limit):

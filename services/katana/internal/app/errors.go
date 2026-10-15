@@ -9,6 +9,7 @@ import (
 // Errors from reading GitHub, re-exported so transport depends on app only.
 var (
 	ErrGitHubNotConfigured = domain.ErrNotConfigured
+	ErrGitHubNotConnected  = domain.ErrNotConnected
 	ErrGitHubUnauthorized  = domain.ErrUnauthorized
 	ErrGitHubUnavailable   = domain.ErrUnavailable
 

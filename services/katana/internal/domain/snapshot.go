@@ -12,6 +12,8 @@ var (
 	ErrNotModified = errors.New("github: not modified")
 	// ErrNotConfigured means no GitHub user or token is set.
 	ErrNotConfigured = errors.New("github: user or token not configured")
+	// ErrNotConnected means the owner has not connected a GitHub account of their own.
+	ErrNotConnected = errors.New("github: not connected for this owner")
 	// ErrUnauthorized means GitHub refused the token.
 	ErrUnauthorized = errors.New("github: token refused")
 	// ErrUnavailable means GitHub could not be reached or failed.
