@@ -3,7 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { AuthService } from "../src/gen/shogun/api/v1/auth_pb";
 import { ContactStatus, ContactsService } from "../src/gen/shogun/api/v1/contacts_pb";
-import { mockRpc } from "./fixtures";
+import { mockRpc, mockRpcError } from "./fixtures";
 
 interface ContactInit {
   id: string;
@@ -249,4 +249,46 @@ test("a file over 3 MB is refused before it is sent", async ({ page }) => {
   // Assert
   await expect(importDialog(page).getByRole("alert")).toHaveText("That file is larger than 3 MB.");
   expect(importCalls).toHaveLength(0);
+});
+
+test("the import dialog shows the expected columns and offers a template", async ({ page }) => {
+  // Arrange
+  await signIn(page);
+  await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
+  await page.goto("/contacts");
+
+  // Act
+  await page.getByRole("button", { name: "Import CSV" }).click();
+
+  // Assert
+  const dialog = importDialog(page);
+  const columns = dialog.getByRole("list", { name: "Columns" }).getByRole("listitem");
+  await expect(columns).toHaveCount(17);
+  await expect(columns.first()).toHaveText("full_name");
+  await expect(columns.last()).toHaveText("notes");
+  const template = dialog.getByRole("link", { name: "Download template" });
+  await expect(template).toHaveAttribute("download", "contacts-template.csv");
+  const href = decodeURIComponent((await template.getAttribute("href")) ?? "");
+  expect(href).toContain("full_name,company,role,email,");
+});
+
+test("a wrong header keeps the error inside the dialog", async ({ page }) => {
+  // Arrange
+  await signIn(page);
+  await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
+  const message =
+    "header must be exactly: full_name,company,role,email,linkedin_url,x_handle,phone,relationship,how_we_met,status,preferred_channel,last_contacted,next_follow_up,target_role,job_link,tags,notes";
+  const method = ContactsService.method.importContacts;
+  await mockRpcError(page, method, "invalid_argument", message, "INVALID_HEADER");
+  await page.goto("/contacts");
+
+  // Act
+  await chooseFile(page, "wrong.csv", CSV);
+
+  // Assert
+  const dialog = importDialog(page);
+  await expect(dialog.getByRole("alert")).toHaveText(message);
+  await expect(dialog.getByRole("link", { name: "Download template" })).toBeVisible();
+  const fits = await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth);
+  expect(fits).toBe(true);
 });
