@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { budgetName, modeLabel, periodLabel } from "@/components/spend/labels";
 import { Button } from "@/components/ui/button";
-import { TextField } from "@/components/ui/field";
+import { Select, TextField } from "@/components/ui/field";
 import { BudgetMode, CostsService, type Budget } from "@/gen/shogun/api/v1/costs_pb";
 import { REASON_VERSION_CONFLICT, reasonOf } from "@/lib/errors";
 import { dollarsInput, formatMicros, parseDollars } from "@/lib/money";
@@ -80,15 +80,14 @@ function EditRow({ budget, onDone }: EditRowProps) {
             <label htmlFor={`mode-${budget.id}`} className="label mb-1.5 block text-[11px] font-medium">
               Mode
             </label>
-            <select
+            <Select
               id={`mode-${budget.id}`}
-              className="min-h-10 border border-ink bg-field px-2.5 text-xs text-ink"
               value={mode}
               onChange={(event) => setMode(Number(event.target.value) as BudgetMode)}
             >
               <option value={BudgetMode.HARD}>Hard: blocks calls at the limit</option>
               <option value={BudgetMode.SOFT}>Soft: only notifies</option>
-            </select>
+            </Select>
           </div>
           <label className="label flex min-h-10 items-center gap-2 text-[11px] font-medium">
             <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />

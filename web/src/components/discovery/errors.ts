@@ -11,6 +11,8 @@ const REASONS: Record<string, string> = {
   SOURCE_ADDRESS_NOT_PUBLIC: "That address is not a public one, so Shogun will not read it.",
   SOURCE_TOO_LARGE: "That source's answer is too large to read.",
   SOURCE_FETCH_FAILED: "Shogun could not read that source. Check the address and try again.",
+  SOURCE_WEB_PAGE:
+    "That address is a web page for people, not a feed or an API. Use the site's RSS feed or job API address, if it has one.",
   SOURCE_BAD_DOCUMENT: "That source did not give postings in the shape it was set up for. Check its kind and field mapping.",
   SOURCE_INTERNAL: "Something went wrong reading that source. Try again.",
   SOURCE_NOT_FOUND: "That source no longer exists, so the list has been reloaded.",
@@ -27,6 +29,7 @@ const LAST_ERRORS: Record<string, string> = {
   robots_disallowed: "its robots.txt does not allow reading it",
   address_not_public: "its address is not a public one",
   too_large: "its answer was too large",
+  web_page: "its address is a web page, not a feed or an API",
   bad_document: "its answer was not in the expected shape",
   fetch_failed: "it could not be reached",
   internal: "something went wrong",

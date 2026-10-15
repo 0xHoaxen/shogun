@@ -19,6 +19,7 @@ type DiscoveryBackend interface {
 	ListSources(ctx context.Context, in *shinobiv1.ListSourcesRequest, opts ...grpc.CallOption) (*shinobiv1.ListSourcesResponse, error)
 	UpsertSource(ctx context.Context, in *shinobiv1.UpsertSourceRequest, opts ...grpc.CallOption) (*shinobiv1.UpsertSourceResponse, error)
 	RunSource(ctx context.Context, in *shinobiv1.RunSourceRequest, opts ...grpc.CallOption) (*shinobiv1.RunSourceResponse, error)
+	DeleteSource(ctx context.Context, in *shinobiv1.DeleteSourceRequest, opts ...grpc.CallOption) (*shinobiv1.DeleteSourceResponse, error)
 	GetPreferences(ctx context.Context, in *shinobiv1.GetPreferencesRequest, opts ...grpc.CallOption) (*shinobiv1.GetPreferencesResponse, error)
 	SetPreferences(ctx context.Context, in *shinobiv1.SetPreferencesRequest, opts ...grpc.CallOption) (*shinobiv1.SetPreferencesResponse, error)
 }
@@ -100,6 +101,16 @@ func (s *DiscoveryServer) RunDiscoverySource(
 		return nil, fromGRPC(ctx, s.log, err)
 	}
 	return connect.NewResponse(&apiv1.RunDiscoverySourceResponse{Fetched: resp.GetFetched(), Added: resp.GetAdded()}), nil
+}
+
+// DeleteDiscoverySource removes a source with the postings it found.
+func (s *DiscoveryServer) DeleteDiscoverySource(
+	ctx context.Context, req *connect.Request[apiv1.DeleteDiscoverySourceRequest],
+) (*connect.Response[apiv1.DeleteDiscoverySourceResponse], error) {
+	if _, err := s.shinobi.DeleteSource(ctx, &shinobiv1.DeleteSourceRequest{Id: req.Msg.GetId()}); err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.DeleteDiscoverySourceResponse{}), nil
 }
 
 // GetDiscoveryPreferences returns what the owner is looking for.

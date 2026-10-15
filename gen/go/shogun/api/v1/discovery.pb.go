@@ -1041,6 +1041,86 @@ func (x *RunDiscoverySourceResponse) GetAdded() int32 {
 	return 0
 }
 
+type DeleteDiscoverySourceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDiscoverySourceRequest) Reset() {
+	*x = DeleteDiscoverySourceRequest{}
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDiscoverySourceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDiscoverySourceRequest) ProtoMessage() {}
+
+func (x *DeleteDiscoverySourceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDiscoverySourceRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDiscoverySourceRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DeleteDiscoverySourceRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteDiscoverySourceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDiscoverySourceResponse) Reset() {
+	*x = DeleteDiscoverySourceResponse{}
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDiscoverySourceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDiscoverySourceResponse) ProtoMessage() {}
+
+func (x *DeleteDiscoverySourceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDiscoverySourceResponse.ProtoReflect.Descriptor instead.
+func (*DeleteDiscoverySourceResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{16}
+}
+
 type GetDiscoveryPreferencesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -1049,7 +1129,7 @@ type GetDiscoveryPreferencesRequest struct {
 
 func (x *GetDiscoveryPreferencesRequest) Reset() {
 	*x = GetDiscoveryPreferencesRequest{}
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[15]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1061,7 +1141,7 @@ func (x *GetDiscoveryPreferencesRequest) String() string {
 func (*GetDiscoveryPreferencesRequest) ProtoMessage() {}
 
 func (x *GetDiscoveryPreferencesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[15]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1074,7 +1154,7 @@ func (x *GetDiscoveryPreferencesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDiscoveryPreferencesRequest.ProtoReflect.Descriptor instead.
 func (*GetDiscoveryPreferencesRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{15}
+	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{17}
 }
 
 type GetDiscoveryPreferencesResponse struct {
@@ -1086,7 +1166,7 @@ type GetDiscoveryPreferencesResponse struct {
 
 func (x *GetDiscoveryPreferencesResponse) Reset() {
 	*x = GetDiscoveryPreferencesResponse{}
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[16]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1098,7 +1178,7 @@ func (x *GetDiscoveryPreferencesResponse) String() string {
 func (*GetDiscoveryPreferencesResponse) ProtoMessage() {}
 
 func (x *GetDiscoveryPreferencesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[16]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1111,7 +1191,7 @@ func (x *GetDiscoveryPreferencesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDiscoveryPreferencesResponse.ProtoReflect.Descriptor instead.
 func (*GetDiscoveryPreferencesResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{16}
+	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetDiscoveryPreferencesResponse) GetPreferences() *DiscoveryPreferences {
@@ -1130,7 +1210,7 @@ type SetDiscoveryPreferencesRequest struct {
 
 func (x *SetDiscoveryPreferencesRequest) Reset() {
 	*x = SetDiscoveryPreferencesRequest{}
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[17]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1142,7 +1222,7 @@ func (x *SetDiscoveryPreferencesRequest) String() string {
 func (*SetDiscoveryPreferencesRequest) ProtoMessage() {}
 
 func (x *SetDiscoveryPreferencesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[17]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1155,7 +1235,7 @@ func (x *SetDiscoveryPreferencesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetDiscoveryPreferencesRequest.ProtoReflect.Descriptor instead.
 func (*SetDiscoveryPreferencesRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{17}
+	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SetDiscoveryPreferencesRequest) GetPreferences() *DiscoveryPreferences {
@@ -1174,7 +1254,7 @@ type SetDiscoveryPreferencesResponse struct {
 
 func (x *SetDiscoveryPreferencesResponse) Reset() {
 	*x = SetDiscoveryPreferencesResponse{}
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[18]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1186,7 +1266,7 @@ func (x *SetDiscoveryPreferencesResponse) String() string {
 func (*SetDiscoveryPreferencesResponse) ProtoMessage() {}
 
 func (x *SetDiscoveryPreferencesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_discovery_proto_msgTypes[18]
+	mi := &file_shogun_api_v1_discovery_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1199,7 +1279,7 @@ func (x *SetDiscoveryPreferencesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetDiscoveryPreferencesResponse.ProtoReflect.Descriptor instead.
 func (*SetDiscoveryPreferencesResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{18}
+	return file_shogun_api_v1_discovery_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SetDiscoveryPreferencesResponse) GetPreferences() *DiscoveryPreferences {
@@ -1288,7 +1368,10 @@ const file_shogun_api_v1_discovery_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"L\n" +
 	"\x1aRunDiscoverySourceResponse\x12\x18\n" +
 	"\afetched\x18\x01 \x01(\x05R\afetched\x12\x14\n" +
-	"\x05added\x18\x02 \x01(\x05R\x05added\" \n" +
+	"\x05added\x18\x02 \x01(\x05R\x05added\".\n" +
+	"\x1cDeleteDiscoverySourceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x1f\n" +
+	"\x1dDeleteDiscoverySourceResponse\" \n" +
 	"\x1eGetDiscoveryPreferencesRequest\"h\n" +
 	"\x1fGetDiscoveryPreferencesResponse\x12E\n" +
 	"\vpreferences\x18\x01 \x01(\v2#.shogun.api.v1.DiscoveryPreferencesR\vpreferences\"g\n" +
@@ -1300,13 +1383,14 @@ const file_shogun_api_v1_discovery_proto_rawDesc = "" +
 	"!DISCOVERY_SOURCE_KIND_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19DISCOVERY_SOURCE_KIND_RSS\x10\x01\x12\x1d\n" +
 	"\x19DISCOVERY_SOURCE_KIND_API\x10\x02\x12\x1e\n" +
-	"\x1aDISCOVERY_SOURCE_KIND_FILE\x10\x032\xb5\x06\n" +
+	"\x1aDISCOVERY_SOURCE_KIND_FILE\x10\x032\xa9\a\n" +
 	"\x10DiscoveryService\x12r\n" +
 	"\x15ListDiscoveryPostings\x12+.shogun.api.v1.ListDiscoveryPostingsRequest\x1a,.shogun.api.v1.ListDiscoveryPostingsResponse\x12o\n" +
 	"\x14SaveDiscoveryPosting\x12*.shogun.api.v1.SaveDiscoveryPostingRequest\x1a+.shogun.api.v1.SaveDiscoveryPostingResponse\x12o\n" +
 	"\x14ListDiscoverySources\x12*.shogun.api.v1.ListDiscoverySourcesRequest\x1a+.shogun.api.v1.ListDiscoverySourcesResponse\x12l\n" +
 	"\x13SaveDiscoverySource\x12).shogun.api.v1.SaveDiscoverySourceRequest\x1a*.shogun.api.v1.SaveDiscoverySourceResponse\x12i\n" +
-	"\x12RunDiscoverySource\x12(.shogun.api.v1.RunDiscoverySourceRequest\x1a).shogun.api.v1.RunDiscoverySourceResponse\x12x\n" +
+	"\x12RunDiscoverySource\x12(.shogun.api.v1.RunDiscoverySourceRequest\x1a).shogun.api.v1.RunDiscoverySourceResponse\x12r\n" +
+	"\x15DeleteDiscoverySource\x12+.shogun.api.v1.DeleteDiscoverySourceRequest\x1a,.shogun.api.v1.DeleteDiscoverySourceResponse\x12x\n" +
 	"\x17GetDiscoveryPreferences\x12-.shogun.api.v1.GetDiscoveryPreferencesRequest\x1a..shogun.api.v1.GetDiscoveryPreferencesResponse\x12x\n" +
 	"\x17SetDiscoveryPreferences\x12-.shogun.api.v1.SetDiscoveryPreferencesRequest\x1a..shogun.api.v1.SetDiscoveryPreferencesResponseB\xb0\x01\n" +
 	"\x11com.shogun.api.v1B\x0eDiscoveryProtoP\x01Z5github.com/0xHoaxen/shogun/gen/go/shogun/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\rShogun.Api.V1\xca\x02\rShogun\\Api\\V1\xe2\x02\x19Shogun\\Api\\V1\\GPBMetadata\xea\x02\x0fShogun::Api::V1b\x06proto3"
@@ -1324,7 +1408,7 @@ func file_shogun_api_v1_discovery_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_api_v1_discovery_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_api_v1_discovery_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_shogun_api_v1_discovery_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_shogun_api_v1_discovery_proto_goTypes = []any{
 	(DiscoverySourceKind)(0),                // 0: shogun.api.v1.DiscoverySourceKind
 	(*DiscoveryFieldMapping)(nil),           // 1: shogun.api.v1.DiscoveryFieldMapping
@@ -1342,19 +1426,21 @@ var file_shogun_api_v1_discovery_proto_goTypes = []any{
 	(*SaveDiscoverySourceResponse)(nil),     // 13: shogun.api.v1.SaveDiscoverySourceResponse
 	(*RunDiscoverySourceRequest)(nil),       // 14: shogun.api.v1.RunDiscoverySourceRequest
 	(*RunDiscoverySourceResponse)(nil),      // 15: shogun.api.v1.RunDiscoverySourceResponse
-	(*GetDiscoveryPreferencesRequest)(nil),  // 16: shogun.api.v1.GetDiscoveryPreferencesRequest
-	(*GetDiscoveryPreferencesResponse)(nil), // 17: shogun.api.v1.GetDiscoveryPreferencesResponse
-	(*SetDiscoveryPreferencesRequest)(nil),  // 18: shogun.api.v1.SetDiscoveryPreferencesRequest
-	(*SetDiscoveryPreferencesResponse)(nil), // 19: shogun.api.v1.SetDiscoveryPreferencesResponse
-	(*timestamppb.Timestamp)(nil),           // 20: google.protobuf.Timestamp
+	(*DeleteDiscoverySourceRequest)(nil),    // 16: shogun.api.v1.DeleteDiscoverySourceRequest
+	(*DeleteDiscoverySourceResponse)(nil),   // 17: shogun.api.v1.DeleteDiscoverySourceResponse
+	(*GetDiscoveryPreferencesRequest)(nil),  // 18: shogun.api.v1.GetDiscoveryPreferencesRequest
+	(*GetDiscoveryPreferencesResponse)(nil), // 19: shogun.api.v1.GetDiscoveryPreferencesResponse
+	(*SetDiscoveryPreferencesRequest)(nil),  // 20: shogun.api.v1.SetDiscoveryPreferencesRequest
+	(*SetDiscoveryPreferencesResponse)(nil), // 21: shogun.api.v1.SetDiscoveryPreferencesResponse
+	(*timestamppb.Timestamp)(nil),           // 22: google.protobuf.Timestamp
 }
 var file_shogun_api_v1_discovery_proto_depIdxs = []int32{
 	1,  // 0: shogun.api.v1.DiscoverySourceConfig.mapping:type_name -> shogun.api.v1.DiscoveryFieldMapping
 	0,  // 1: shogun.api.v1.DiscoverySource.kind:type_name -> shogun.api.v1.DiscoverySourceKind
 	2,  // 2: shogun.api.v1.DiscoverySource.config:type_name -> shogun.api.v1.DiscoverySourceConfig
-	20, // 3: shogun.api.v1.DiscoverySource.last_run_at:type_name -> google.protobuf.Timestamp
-	20, // 4: shogun.api.v1.DiscoveryPosting.posted_at:type_name -> google.protobuf.Timestamp
-	20, // 5: shogun.api.v1.DiscoveryPosting.created_at:type_name -> google.protobuf.Timestamp
+	22, // 3: shogun.api.v1.DiscoverySource.last_run_at:type_name -> google.protobuf.Timestamp
+	22, // 4: shogun.api.v1.DiscoveryPosting.posted_at:type_name -> google.protobuf.Timestamp
+	22, // 5: shogun.api.v1.DiscoveryPosting.created_at:type_name -> google.protobuf.Timestamp
 	5,  // 6: shogun.api.v1.ListDiscoveryPostingsResponse.postings:type_name -> shogun.api.v1.DiscoveryPosting
 	3,  // 7: shogun.api.v1.ListDiscoverySourcesResponse.sources:type_name -> shogun.api.v1.DiscoverySource
 	3,  // 8: shogun.api.v1.SaveDiscoverySourceRequest.source:type_name -> shogun.api.v1.DiscoverySource
@@ -1367,17 +1453,19 @@ var file_shogun_api_v1_discovery_proto_depIdxs = []int32{
 	10, // 15: shogun.api.v1.DiscoveryService.ListDiscoverySources:input_type -> shogun.api.v1.ListDiscoverySourcesRequest
 	12, // 16: shogun.api.v1.DiscoveryService.SaveDiscoverySource:input_type -> shogun.api.v1.SaveDiscoverySourceRequest
 	14, // 17: shogun.api.v1.DiscoveryService.RunDiscoverySource:input_type -> shogun.api.v1.RunDiscoverySourceRequest
-	16, // 18: shogun.api.v1.DiscoveryService.GetDiscoveryPreferences:input_type -> shogun.api.v1.GetDiscoveryPreferencesRequest
-	18, // 19: shogun.api.v1.DiscoveryService.SetDiscoveryPreferences:input_type -> shogun.api.v1.SetDiscoveryPreferencesRequest
-	7,  // 20: shogun.api.v1.DiscoveryService.ListDiscoveryPostings:output_type -> shogun.api.v1.ListDiscoveryPostingsResponse
-	9,  // 21: shogun.api.v1.DiscoveryService.SaveDiscoveryPosting:output_type -> shogun.api.v1.SaveDiscoveryPostingResponse
-	11, // 22: shogun.api.v1.DiscoveryService.ListDiscoverySources:output_type -> shogun.api.v1.ListDiscoverySourcesResponse
-	13, // 23: shogun.api.v1.DiscoveryService.SaveDiscoverySource:output_type -> shogun.api.v1.SaveDiscoverySourceResponse
-	15, // 24: shogun.api.v1.DiscoveryService.RunDiscoverySource:output_type -> shogun.api.v1.RunDiscoverySourceResponse
-	17, // 25: shogun.api.v1.DiscoveryService.GetDiscoveryPreferences:output_type -> shogun.api.v1.GetDiscoveryPreferencesResponse
-	19, // 26: shogun.api.v1.DiscoveryService.SetDiscoveryPreferences:output_type -> shogun.api.v1.SetDiscoveryPreferencesResponse
-	20, // [20:27] is the sub-list for method output_type
-	13, // [13:20] is the sub-list for method input_type
+	16, // 18: shogun.api.v1.DiscoveryService.DeleteDiscoverySource:input_type -> shogun.api.v1.DeleteDiscoverySourceRequest
+	18, // 19: shogun.api.v1.DiscoveryService.GetDiscoveryPreferences:input_type -> shogun.api.v1.GetDiscoveryPreferencesRequest
+	20, // 20: shogun.api.v1.DiscoveryService.SetDiscoveryPreferences:input_type -> shogun.api.v1.SetDiscoveryPreferencesRequest
+	7,  // 21: shogun.api.v1.DiscoveryService.ListDiscoveryPostings:output_type -> shogun.api.v1.ListDiscoveryPostingsResponse
+	9,  // 22: shogun.api.v1.DiscoveryService.SaveDiscoveryPosting:output_type -> shogun.api.v1.SaveDiscoveryPostingResponse
+	11, // 23: shogun.api.v1.DiscoveryService.ListDiscoverySources:output_type -> shogun.api.v1.ListDiscoverySourcesResponse
+	13, // 24: shogun.api.v1.DiscoveryService.SaveDiscoverySource:output_type -> shogun.api.v1.SaveDiscoverySourceResponse
+	15, // 25: shogun.api.v1.DiscoveryService.RunDiscoverySource:output_type -> shogun.api.v1.RunDiscoverySourceResponse
+	17, // 26: shogun.api.v1.DiscoveryService.DeleteDiscoverySource:output_type -> shogun.api.v1.DeleteDiscoverySourceResponse
+	19, // 27: shogun.api.v1.DiscoveryService.GetDiscoveryPreferences:output_type -> shogun.api.v1.GetDiscoveryPreferencesResponse
+	21, // 28: shogun.api.v1.DiscoveryService.SetDiscoveryPreferences:output_type -> shogun.api.v1.SetDiscoveryPreferencesResponse
+	21, // [21:29] is the sub-list for method output_type
+	13, // [13:21] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
 	13, // [13:13] is the sub-list for extension extendee
 	0,  // [0:13] is the sub-list for field type_name
@@ -1394,7 +1482,7 @@ func file_shogun_api_v1_discovery_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_api_v1_discovery_proto_rawDesc), len(file_shogun_api_v1_discovery_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

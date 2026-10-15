@@ -162,6 +162,7 @@ func TestAFailedRunIsRecordedWithAShortCodeAndStoresNothing(t *testing.T) {
 		{"unreachable", errors.Join(errors.New("dial"), fetch.ErrFailed), "", app.CodeFetchFailed},
 		{"timeout", context.DeadlineExceeded, "", app.CodeFetchFailed},
 		{"not a feed", nil, `{"json":true}`, app.CodeBadDocument},
+		{"web page", nil, `<!DOCTYPE html><html><title>Jobs</title></html>`, app.CodeWebPage},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -253,6 +254,27 @@ func TestAnOwnerCannotHaveMoreThanTheMostSources(t *testing.T) {
 
 	if !errors.Is(err, app.ErrTooManySources) || other != nil {
 		t.Fatalf("err %v, other owner %v", err, other)
+	}
+}
+
+func TestDeleteSourceRemovesItWithItsPostingsAndIsPerOwner(t *testing.T) {
+	svc, pool := newService(t, &fakeFetcher{docs: map[string]string{feedURL: feedXML}})
+	owner := uuid.New()
+	src, _ := svc.UpsertSource(asOwner(owner), nil, rssInput("feed"))
+	if _, err := svc.RunSource(asOwner(owner), src.ID); err != nil {
+		t.Fatalf("run: %v", err)
+	}
+
+	foreign := svc.DeleteSource(asOwner(uuid.New()), src.ID)
+	noOwner := svc.DeleteSource(context.Background(), src.ID)
+	err := svc.DeleteSource(asOwner(owner), src.ID)
+	again := svc.DeleteSource(asOwner(owner), src.ID)
+
+	if !errors.Is(foreign, app.ErrSourceNotFound) || !errors.Is(noOwner, app.ErrNoOwner) || err != nil || !errors.Is(again, app.ErrSourceNotFound) {
+		t.Fatalf("foreign %v, no owner %v, delete %v, again %v", foreign, noOwner, err, again)
+	}
+	if count(t, pool, "sources") != 0 || count(t, pool, "postings") != 0 {
+		t.Fatalf("sources %d, postings %d; want both gone", count(t, pool, "sources"), count(t, pool, "postings"))
 	}
 }
 

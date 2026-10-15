@@ -12,6 +12,33 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteSource = `-- name: DeleteSource :one
+WITH doomed AS (
+    SELECT p.id FROM postings p WHERE p.owner_id = $1 AND p.source_id = $2
+), gone_scores AS (
+    DELETE FROM scores WHERE posting_id IN (SELECT doomed.id FROM doomed)
+), gone_postings AS (
+    DELETE FROM postings WHERE postings.id IN (SELECT doomed.id FROM doomed)
+)
+DELETE FROM sources WHERE sources.owner_id = $1 AND sources.id = $2
+RETURNING sources.id
+`
+
+type DeleteSourceParams struct {
+	OwnerID uuid.UUID
+	ID      uuid.UUID
+}
+
+// Removes a source with its postings and their scores in one statement; the
+// foreign keys are checked once it ends. No row means the owner has no such
+// source.
+func (q *Queries) DeleteSource(ctx context.Context, arg DeleteSourceParams) (uuid.UUID, error) {
+	row := q.db.QueryRow(ctx, deleteSource, arg.OwnerID, arg.ID)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getSource = `-- name: GetSource :one
 SELECT id, owner_id, name, kind, config, schedule, enabled, last_run_at, last_error FROM sources WHERE owner_id = $1 AND id = $2
 `

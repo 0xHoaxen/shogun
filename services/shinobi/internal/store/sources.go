@@ -57,6 +57,13 @@ func (r *Repo) UpdateSource(ctx context.Context, owner, id uuid.UUID, in domain.
 	return row, wrap("update source", err)
 }
 
+// DeleteSource removes one of the owner's sources with its postings and their
+// scores. It returns ErrNotFound when the owner has no such source.
+func (r *Repo) DeleteSource(ctx context.Context, owner, id uuid.UUID) error {
+	_, err := r.q.DeleteSource(ctx, db.DeleteSourceParams{OwnerID: owner, ID: id})
+	return wrap("delete source", err)
+}
+
 // EnabledSources returns every owner's enabled sources, for the scheduler.
 func (r *Repo) EnabledSources(ctx context.Context) ([]db.Source, error) {
 	rows, err := r.q.ListEnabledSources(ctx)

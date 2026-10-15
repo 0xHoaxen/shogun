@@ -107,6 +107,20 @@ test("sources show their last failure and can be read now", async ({ page }) => 
   expect(runs[0].body).toMatchObject({ id: "s1" });
 });
 
+test("a source whose address is a web page says so", async ({ page }) => {
+  await signIn(page);
+  await mockRpc(page, DiscoveryService.method.listDiscoverySources, { sources: [source({ lastError: "web_page" })] });
+  await mockRpcError(page, DiscoveryService.method.runDiscoverySource, "failed_precondition", "x", "SOURCE_WEB_PAGE");
+  await page.goto("/discovery");
+  await page.getByRole("button", { name: "Sources" }).click();
+
+  const card = page.getByRole("article", { name: "Acme feed" });
+  await expect(card).toContainText("its address is a web page, not a feed or an API");
+  await card.getByRole("button", { name: "Read Acme feed now" }).click();
+
+  await expect(page.locator("p[role=alert]")).toContainText("That address is a web page for people");
+});
+
 test("a source that cannot be read explains it", async ({ page }) => {
   await signIn(page);
   await mockRpc(page, DiscoveryService.method.listDiscoverySources, { sources: [source()] });
@@ -117,6 +131,53 @@ test("a source that cannot be read explains it", async ({ page }) => {
   await page.getByRole("button", { name: "Read Acme feed now" }).click();
 
   await expect(page.locator("p[role=alert]")).toContainText("not a public one");
+});
+
+test("deleting a source asks first, then removes it and reloads the postings", async ({ page }) => {
+  await signIn(page);
+  let stored = [source(), source({ id: "s2", name: "Other feed" })];
+  await mockRpc(page, DiscoveryService.method.listDiscoverySources, () => ({ sources: stored }));
+  const postingLoads = await mockRpc(page, DiscoveryService.method.listDiscoveryPostings, { postings: [] });
+  const deletes = await mockRpc(page, DiscoveryService.method.deleteDiscoverySource, (body) => {
+    stored = stored.filter((s) => s.id !== body.id);
+    return {};
+  });
+  await page.goto("/discovery");
+  await page.getByRole("button", { name: "Sources" }).click();
+
+  await page.getByRole("button", { name: "Delete Acme feed" }).click();
+  const dialog = page.getByRole("dialog", { name: "Delete Acme feed?" });
+  await expect(dialog).toContainText("postings it found");
+  await dialog.getByRole("button", { name: "Keep it" }).click();
+  await expect(dialog).toBeHidden();
+  expect(deletes).toHaveLength(0);
+
+  const loadsBefore = postingLoads.length;
+  await page.getByRole("button", { name: "Delete Acme feed" }).click();
+  await page.getByRole("dialog", { name: "Delete Acme feed?" }).getByRole("button", { name: "Delete source" }).click();
+
+  await expect(page.getByRole("article", { name: "Acme feed" })).toHaveCount(0);
+  await expect(page.getByRole("article", { name: "Other feed" })).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Deleted Acme feed.");
+  expect(deletes[0].body).toMatchObject({ id: "s1" });
+  await page.getByRole("button", { name: "Postings" }).click();
+  await expect.poll(() => postingLoads.length).toBeGreaterThan(loadsBefore);
+});
+
+test("a source that cannot be deleted says so in the dialog", async ({ page }) => {
+  await signIn(page);
+  await mockRpc(page, DiscoveryService.method.listDiscoverySources, { sources: [source()] });
+  await mockRpcError(page, DiscoveryService.method.deleteDiscoverySource, "unavailable", "x", "UNAVAILABLE");
+  await page.goto("/discovery");
+  await page.getByRole("button", { name: "Sources" }).click();
+
+  await page.getByRole("button", { name: "Delete Acme feed" }).click();
+  const dialog = page.getByRole("dialog", { name: "Delete Acme feed?" });
+  await dialog.getByRole("button", { name: "Delete source" }).click();
+
+  await expect(dialog.getByRole("alert")).toContainText("Shogun is busy right now");
+  await dialog.getByRole("button", { name: "Keep it" }).click();
+  await expect(page.getByRole("article", { name: "Acme feed" })).toBeVisible();
 });
 
 test("adding an API source sends its address, schedule and field mapping", async ({ page }) => {

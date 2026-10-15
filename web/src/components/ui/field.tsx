@@ -57,6 +57,28 @@ export function TextAreaField({ label, id, className, ...textareaProps }: TextAr
   );
 }
 
+// A native select with the platform arrow replaced by a ruled chevron, so it
+// sits inside the field's padding instead of against the border.
+export function Select({ className, children, ...selectProps }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className={cn("relative", className)}>
+      <select
+        className="min-h-10 w-full cursor-pointer appearance-none border border-ink bg-field py-2 pr-9 pl-2.5 text-xs text-ink disabled:cursor-not-allowed disabled:text-muted-ink"
+        {...selectProps}
+      >
+        {children}
+      </select>
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 10 6"
+        className="pointer-events-none absolute top-1/2 right-3 h-1.5 w-2.5 -translate-y-1/2 text-ink"
+      >
+        <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
+      </svg>
+    </div>
+  );
+}
+
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
 }
@@ -70,13 +92,9 @@ export function SelectField({ label, id, className, children, ...selectProps }: 
       <label htmlFor={fieldId} className="label mb-1.5 block text-[11px] font-medium">
         {label}
       </label>
-      <select
-        id={fieldId}
-        className={cn("min-h-10 w-full border border-ink bg-field px-2.5 py-2 text-xs text-ink", className)}
-        {...selectProps}
-      >
+      <Select id={fieldId} className={className} {...selectProps}>
         {children}
-      </select>
+      </Select>
     </div>
   );
 }
