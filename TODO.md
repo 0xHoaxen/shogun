@@ -768,8 +768,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: update README, AGENTS.md, DDL and deploy docs for users, providers, github_accounts, roles; add this phase.
   Done when: `grep -rn "single-user" README.md AGENTS.md` returns nothing.
 
-- [ ] **P11.1 torii users table** (M) Needs: P11.0
-  Do: `users` migration, sqlc queries, store, upsert on login, `user.activated` event.
+- [x] **P11.1 torii users table** (M) Needs: P11.0
+  Do: `users` migration, sqlc queries, `domain.User`, `store.Users` (upsert, get, list, role, status, Gmail approval, timezone). Login upsert and the `user.activated` event land in P11.2.
   Done when: `cd services/torii && go test -race ./...` passes.
 
 - [ ] **P11.2 Open sign-up** (M) Needs: P11.1

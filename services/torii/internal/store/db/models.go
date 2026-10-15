@@ -36,3 +36,18 @@ type Session struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+type User struct {
+	ID           uuid.UUID
+	GoogleSub    string
+	Email        string
+	DisplayName  string
+	Role         string
+	Status       string
+	GmailAllowed bool
+	Timezone     string
+	Version      int32
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	ArchivedAt   *time.Time
+}
