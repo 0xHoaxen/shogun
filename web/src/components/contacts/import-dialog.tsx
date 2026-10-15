@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ChangeEvent } from "react";
 
 import { contactsQueryKey } from "@/components/contacts/contacts-key";
+import { ImportFormat } from "@/components/contacts/import-format";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import {
@@ -142,7 +143,8 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
       title="Import CSV"
       description="Pick your contacts sheet. You see what would change before anything is saved."
     >
-      <div className="grid gap-4 p-[22px]">
+      {/* minmax(0, 1fr) keeps a long unbroken server message from widening the dialog. */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-[22px]">
         {stage.kind === "choose" ? (
           <div>
             <label htmlFor="contacts-csv" className="label mb-1.5 block text-[11px] font-medium">
@@ -154,10 +156,12 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
               accept=".csv,text/csv"
               disabled={run.isPending}
               onChange={handleFile}
-              className="block w-full border border-ink bg-field p-2 text-xs"
+              className="block w-full min-w-0 border border-ink bg-field p-2 text-xs"
             />
           </div>
         ) : null}
+
+        {stage.kind === "choose" ? <ImportFormat /> : null}
 
         {stage.kind === "preview" ? (
           <>
@@ -173,7 +177,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
         ) : null}
 
         {problem ? (
-          <p role="alert" className="border border-ink bg-strip px-3 py-2">
+          <p role="alert" className="border border-ink bg-strip px-3 py-2 wrap-anywhere">
             {problem}
           </p>
         ) : null}
