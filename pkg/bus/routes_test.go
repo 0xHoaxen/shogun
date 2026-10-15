@@ -74,3 +74,12 @@ func TestConsumersRoutesNotificationEventsToTaiko(t *testing.T) {
 		}
 	}
 }
+
+func TestConsumersRoutesUserEventsToEveryServiceWithAPerUserSchedule(t *testing.T) {
+	want := []string{"kagami", "katana", "sensei", "shinobi", "taiko"}
+	for _, eventType := range []string{"user.activated", "user.updated", "user.deleted"} {
+		if got := Consumers(eventType); !slices.Equal(got, want) {
+			t.Errorf("Consumers(%q) = %v, want %v", eventType, got, want)
+		}
+	}
+}

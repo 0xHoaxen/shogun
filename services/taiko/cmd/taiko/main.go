@@ -24,6 +24,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/logger"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
@@ -119,7 +120,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 
 	svc := app.NewService(pool, nil)
-	sink, err := bus.NewSinkServer(pool, events.Handlers(svc, log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log), log), log)
 	if err != nil {
 		return err
 	}
