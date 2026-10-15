@@ -1,8 +1,8 @@
 # Shogun
 
-A private, single-user web app that manages a professional life: job tracker, contacts and outreach, Gmail job-mail detection, AI-drafted messages and posts in the owner's voice, a learning log, GitHub-driven resume suggestions, job discovery, analytics, notifications and cost control.
+A multi-user web app (sign in with Google; every user's data is fully isolated) that manages a professional life: job tracker, contacts and outreach, Gmail job-mail detection, AI-drafted messages and posts in each user's voice, a learning log, GitHub-driven resume suggestions, job discovery, analytics, notifications and cost control.
 
-**Hard product rule:** nothing leaves the system (email, DM, post) without the owner approving that exact draft version.
+**Hard product rule:** nothing leaves the system (email, DM, post) without that user approving that exact draft version.
 
 Ten Go services over gRPC behind one gateway (`torii`), one Postgres 17 database with a schema per service, events through a transactional outbox, and a Next.js web UI.
 
