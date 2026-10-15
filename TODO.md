@@ -808,7 +808,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: read source schedules in the owner's zone (`DueSources` takes each owner's location).
   Done when: `cd services/shinobi && go test -race ./...`.
 
-- [ ] **P11.5a soroban providers** (M) Needs: P11.4
+- [ ] **P11.5a soroban providers** (M) Needs: P11.4a
   Do: `providers` table, encrypted key, Set/Get/Delete/Test RPCs, SSRF-safe base URL validation.
   Done when: `cd services/soroban && go test -race ./...`.
 
@@ -828,7 +828,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: Settings AI provider form and "add your provider" prompts.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
-- [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4, P11.10
+- [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4a, P11.10
   Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.
   Done when: `cd services/katana && go test -race ./...`.
 
@@ -836,7 +836,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: audited every sqlc query without `owner_id`; each is now annotated `-- owner-scope: child|internal|global <why>` and `scripts/check-owner-scope.sh` (tested by `scripts/check-owner-scope_test.sh`, wired into `make lint` and `make deploy-test`) fails any new query that has neither. Removed shinobi's unused `GetPostingByID`, which returned a posting whatever its owner. Added cross-owner tests for sensei rollups and taiko notifications; kagami, fude, tsubame, dojo, katana, shinobi and soroban already had them. Moved ahead of P11.4 because open sign-up (P11.2) made cross-tenant reads reachable.
   Done when: `make lint` and `make test`.
 
-- [ ] **P11.8 Account settings** (M) Needs: P11.10, P11.4
+- [ ] **P11.8 Account settings** (M) Needs: P11.10, P11.4a
   Do: timezone picker, sign out everywhere, delete my data via `user.deleted`.
   Done when: `make test`.
 
