@@ -25,7 +25,6 @@ func TestUpsertCreatesActiveMember(t *testing.T) {
 
 	// Act
 	got, err := users.Upsert(context.Background(), newUser("a"))
-
 	// Assert
 	if err != nil {
 		t.Fatalf("Upsert: %v", err)
@@ -56,7 +55,6 @@ func TestUpsertRefreshesProfileButKeepsAdminSettings(t *testing.T) {
 
 	// Act
 	got, err := users.Upsert(ctx, again)
-
 	// Assert
 	if err != nil {
 		t.Fatalf("Upsert again: %v", err)
