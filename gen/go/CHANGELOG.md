@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/gen/go/v1.0.0...gen/go/v1.1.0) (2026-10-15)
+
+
+### Features
+
+* **shinobi:** delete a discovery source ([e5407bd](https://github.com/0xHoaxen/shogun/commit/e5407bd71030c254cf50bdd9c00585ea05f64475))
+* **shinobi:** delete a discovery source ([ac6101d](https://github.com/0xHoaxen/shogun/commit/ac6101d08d9d34f92e1740711c603a81c95474bf))
+* **shinobi:** say when a source's address is a web page ([41640cf](https://github.com/0xHoaxen/shogun/commit/41640cf2e59fcd2194610cf9fe8048ce3fbafd37))
+
+
+### Bug Fixes
+
+* **web:** draw select chevron inside the field padding ([7d6333a](https://github.com/0xHoaxen/shogun/commit/7d6333aa89a88d52556ccc0190a107495b8d5197))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/gen/go/v0.0.1...gen/go/v1.0.0) (2026-10-10)
 
 
