@@ -6,6 +6,7 @@ VALUES (@id, @owner_id, @reservation_id, @service, @feature, @model, @input_toke
 RETURNING *;
 
 -- name: GetLedgerEntryByReservation :one
+-- owner-scope: child reservation already locked with the owner
 SELECT * FROM ledger WHERE reservation_id = @reservation_id;
 
 -- name: SumSpend :many

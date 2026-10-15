@@ -207,6 +207,7 @@ const listBudgetsByID = `-- name: ListBudgetsByID :many
 SELECT id, owner_id, scope_type, scope_value, period, limit_micros, mode, thresholds, enabled, version, updated_at FROM budgets WHERE id = ANY ($1::uuid[])
 `
 
+// owner-scope: internal ids come from a reservation locked with the owner
 func (q *Queries) ListBudgetsByID(ctx context.Context, ids []uuid.UUID) ([]Budget, error) {
 	rows, err := q.db.Query(ctx, listBudgetsByID, ids)
 	if err != nil {

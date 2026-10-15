@@ -92,14 +92,17 @@ ORDER BY next_follow_up, id
 LIMIT @row_limit;
 
 -- name: InsertContactEvent :one
+-- owner-scope: child contact already loaded with the owner
 INSERT INTO contact_events (id, contact_id, kind, channel, from_status, to_status, source_event_id, payload, occurred_at)
 VALUES (@id, @contact_id, @kind, @channel, @from_status, @to_status, @source_event_id, @payload, @occurred_at)
 RETURNING *;
 
 -- name: ListContactEvents :many
+-- owner-scope: child only after GetContact(owner, id)
 SELECT * FROM contact_events WHERE contact_id = @contact_id ORDER BY occurred_at DESC, id DESC;
 
 -- name: LatestContactStatusAnchor :one
+-- owner-scope: child contact already loaded with the owner
 -- See LatestJobStatusAnchor.
 SELECT COALESCE((payload->>'event_at')::timestamptz, occurred_at)::timestamptz AS anchor
 FROM contact_events

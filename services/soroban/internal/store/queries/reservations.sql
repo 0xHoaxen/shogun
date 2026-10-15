@@ -7,13 +7,16 @@ RETURNING *;
 SELECT * FROM reservations WHERE id = @id AND owner_id = @owner_id FOR UPDATE;
 
 -- name: LockReservationByID :one
+-- owner-scope: internal expiry sweep; the id comes from ListExpiredReservationIDs
 -- For the sweeper, which acts for no owner.
 SELECT * FROM reservations WHERE id = @id FOR UPDATE;
 
 -- name: SetReservationStatus :exec
+-- owner-scope: child reservation already locked with the owner
 UPDATE reservations SET status = @status WHERE id = @id;
 
 -- name: ListExpiredReservationIDs :many
+-- owner-scope: internal expiry sweep across all owners
 SELECT id FROM reservations
 WHERE status = 'open' AND expires_at <= @now
 ORDER BY expires_at

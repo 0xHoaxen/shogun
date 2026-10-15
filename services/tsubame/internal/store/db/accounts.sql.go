@@ -80,6 +80,7 @@ const listActiveAccounts = `-- name: ListActiveAccounts :many
 SELECT id, owner_id, provider, address, token_ciphertext, token_key_id, history_id, status, last_synced_at, created_at, updated_at FROM accounts WHERE status = 'active' ORDER BY id
 `
 
+// owner-scope: internal sync job polls every owner's account
 // Every owner's accounts that can be synced.
 func (q *Queries) ListActiveAccounts(ctx context.Context) ([]Account, error) {
 	rows, err := q.db.Query(ctx, listActiveAccounts)
@@ -124,6 +125,7 @@ type SetAccountCursorParams struct {
 	ID        uuid.UUID
 }
 
+// owner-scope: child account already loaded by the sync job
 func (q *Queries) SetAccountCursor(ctx context.Context, arg SetAccountCursorParams) (int64, error) {
 	result, err := q.db.Exec(ctx, setAccountCursor, arg.HistoryID, arg.SyncedAt, arg.ID)
 	if err != nil {

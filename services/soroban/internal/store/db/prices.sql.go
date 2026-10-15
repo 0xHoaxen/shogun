@@ -22,6 +22,7 @@ type GetPriceOnParams struct {
 	OnDate time.Time
 }
 
+// owner-scope: global model prices are not user data
 // The price in force on a date: the latest one effective on or before it.
 func (q *Queries) GetPriceOn(ctx context.Context, arg GetPriceOnParams) (Price, error) {
 	row := q.db.QueryRow(ctx, getPriceOn, arg.Model, arg.OnDate)
@@ -41,6 +42,7 @@ const listPrices = `-- name: ListPrices :many
 SELECT model, effective_from, input_micros_per_mtok, output_micros_per_mtok, cache_read_micros_per_mtok, cache_write_micros_per_mtok FROM prices ORDER BY model, effective_from DESC
 `
 
+// owner-scope: global model prices are not user data
 func (q *Queries) ListPrices(ctx context.Context) ([]Price, error) {
 	rows, err := q.db.Query(ctx, listPrices)
 	if err != nil {
@@ -90,6 +92,7 @@ type UpsertPriceParams struct {
 	CacheWriteMicrosPerMtok int64
 }
 
+// owner-scope: global model prices are not user data
 func (q *Queries) UpsertPrice(ctx context.Context, arg UpsertPriceParams) (Price, error) {
 	row := q.db.QueryRow(ctx, upsertPrice,
 		arg.Model,

@@ -1,4 +1,5 @@
 -- name: UpsertUser :one
+-- owner-scope: global users are the tenants; the id is derived from the Google subject at login
 -- Creates the user, or refreshes email and display name on a later login.
 -- Role, status, gmail_allowed and timezone are only changed by their setters.
 INSERT INTO users (id, google_sub, email, display_name)
@@ -13,9 +14,11 @@ SET email = EXCLUDED.email,
 RETURNING *;
 
 -- name: GetUser :one
+-- owner-scope: global users are the tenants; their id is the owner id; admin calls are role-checked in torii
 SELECT * FROM users WHERE id = @id AND archived_at IS NULL;
 
 -- name: ListUsers :many
+-- owner-scope: global users are the tenants; only admin RPCs list them, role-checked in torii
 SELECT * FROM users
 WHERE archived_at IS NULL
   AND (created_at, id) > (@after_created_at::timestamptz, @after_id::uuid)
@@ -23,21 +26,25 @@ ORDER BY created_at, id
 LIMIT @page_size;
 
 -- name: SetUserRole :one
+-- owner-scope: global users are the tenants; only the admin bootstrap changes it
 UPDATE users SET role = @role, version = version + 1, updated_at = now()
 WHERE id = @id AND archived_at IS NULL
 RETURNING *;
 
 -- name: SetUserStatus :one
+-- owner-scope: global users are the tenants; only admin RPCs change it, role-checked in torii
 UPDATE users SET status = @status, version = version + 1, updated_at = now()
 WHERE id = @id AND archived_at IS NULL
 RETURNING *;
 
 -- name: SetUserGmailAllowed :one
+-- owner-scope: global users are the tenants; only admin RPCs change it, role-checked in torii
 UPDATE users SET gmail_allowed = @gmail_allowed, version = version + 1, updated_at = now()
 WHERE id = @id AND archived_at IS NULL
 RETURNING *;
 
 -- name: SetUserTimezone :one
+-- owner-scope: global users are the tenants; a user changes only their own, by session id
 UPDATE users SET timezone = @timezone, version = version + 1, updated_at = now()
 WHERE id = @id AND archived_at IS NULL
 RETURNING *;

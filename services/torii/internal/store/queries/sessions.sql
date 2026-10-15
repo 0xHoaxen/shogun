@@ -8,12 +8,15 @@ FROM sessions
 WHERE token_hash = @token_hash;
 
 -- name: ExtendSession :execrows
+-- owner-scope: global session id comes from a session just resolved by its token hash
 UPDATE sessions
 SET expires_at = @expires_at, updated_at = now()
 WHERE id = @id;
 
 -- name: DeleteSessionByTokenHash :exec
+-- owner-scope: global the secret token hash identifies the session
 DELETE FROM sessions WHERE token_hash = @token_hash;
 
 -- name: DeleteExpiredSessions :execrows
+-- owner-scope: global housekeeping over expired sessions
 DELETE FROM sessions WHERE expires_at <= @now;

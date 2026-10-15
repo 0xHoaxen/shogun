@@ -41,35 +41,11 @@ func (q *Queries) GetPosting(ctx context.Context, arg GetPostingParams) (Posting
 	return i, err
 }
 
-const getPostingByID = `-- name: GetPostingByID :one
-SELECT id, owner_id, source_id, external_id, title, company, url, location, posted_at, raw, saved_job_id, created_at FROM postings WHERE id = $1
-`
-
-// For a job that works for an owner it already knows.
-func (q *Queries) GetPostingByID(ctx context.Context, id uuid.UUID) (Posting, error) {
-	row := q.db.QueryRow(ctx, getPostingByID, id)
-	var i Posting
-	err := row.Scan(
-		&i.ID,
-		&i.OwnerID,
-		&i.SourceID,
-		&i.ExternalID,
-		&i.Title,
-		&i.Company,
-		&i.Url,
-		&i.Location,
-		&i.PostedAt,
-		&i.Raw,
-		&i.SavedJobID,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const getScore = `-- name: GetScore :one
 SELECT posting_id, score, reasons, scored_by, created_at, matched_at FROM scores WHERE posting_id = $1
 `
 
+// owner-scope: child posting already loaded with the owner
 func (q *Queries) GetScore(ctx context.Context, postingID uuid.UUID) (Score, error) {
 	row := q.db.QueryRow(ctx, getScore, postingID)
 	var i Score
@@ -177,6 +153,7 @@ WHERE p.source_id = $1 AND s.posting_id IS NULL
 ORDER BY p.id
 `
 
+// owner-scope: internal scoring job; the source id comes from the owner's own run
 func (q *Queries) ListUnscoredPostingIDs(ctx context.Context, sourceID uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, listUnscoredPostingIDs, sourceID)
 	if err != nil {
@@ -208,6 +185,7 @@ type MarkMatchedParams struct {
 	PostingID uuid.UUID
 }
 
+// owner-scope: child posting already loaded with the owner by ScorePosting
 // Sets matched_at once. It returns a row only the first time, so the caller
 // emits the match event exactly then.
 func (q *Queries) MarkMatched(ctx context.Context, arg MarkMatchedParams) (uuid.UUID, error) {
@@ -339,6 +317,7 @@ type UpsertScoreParams struct {
 	CreatedAt time.Time
 }
 
+// owner-scope: child posting already loaded with the owner by ScorePosting
 func (q *Queries) UpsertScore(ctx context.Context, arg UpsertScoreParams) error {
 	_, err := q.db.Exec(ctx, upsertScore,
 		arg.PostingID,

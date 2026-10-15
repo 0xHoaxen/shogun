@@ -23,6 +23,7 @@ WHERE owner_id = @owner_id
 ORDER BY id;
 
 -- name: ListBudgetsByID :many
+-- owner-scope: internal ids come from a reservation locked with the owner
 SELECT * FROM budgets WHERE id = ANY (@ids::uuid[]);
 
 -- name: ListBudgets :many
