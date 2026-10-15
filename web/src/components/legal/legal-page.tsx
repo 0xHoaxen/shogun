@@ -6,7 +6,7 @@ import { Rail } from "@/components/shell/rail";
 // Where privacy and terms questions go. Google's verification reviewers check
 // that this address answers.
 // TODO(owner): replace with a mailbox you read before submitting verification.
-export const LEGAL_CONTACT_EMAIL = "privacy@sboy99.xyz";
+export const LEGAL_CONTACT_EMAIL = "dev.sboy99@gmail.com";
 
 // The date both documents last changed. Bump it with any edit to their text.
 export const LEGAL_EFFECTIVE_DATE = "13 October 2026";
