@@ -114,11 +114,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 
 	svc := app.NewService(pool, nil)
-	loc, err := jobs.Location()
-	if err != nil {
-		return err
-	}
-	scheduled := jobs.NewSetup(svc, loc, time.Now, log)
+	scheduled := jobs.NewSetup(svc, svc, jobs.ContextEnqueuer{}, time.Now, log)
 	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log, nil), log), log)
 	if err != nil {
 		return err
