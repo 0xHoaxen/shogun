@@ -80,10 +80,10 @@ WHERE id = @id AND owner_id = @owner_id AND version = @version
 RETURNING *;
 
 -- name: ListContactsDueOn :many
--- Every owner's contacts with a follow-up on exactly this date.
+-- The owner's contacts with a follow-up on exactly this date.
 SELECT * FROM contacts
-WHERE next_follow_up = @due_on::date AND archived_at IS NULL
-ORDER BY owner_id, id;
+WHERE owner_id = @owner_id AND next_follow_up = @due_on::date AND archived_at IS NULL
+ORDER BY id;
 
 -- name: ListDueContacts :many
 SELECT * FROM contacts

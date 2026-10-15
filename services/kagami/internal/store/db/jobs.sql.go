@@ -483,14 +483,19 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, erro
 
 const listJobsDueOn = `-- name: ListJobsDueOn :many
 SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
-WHERE next_follow_up = $1::date AND archived_at IS NULL AND status <> 'rejected'
-ORDER BY owner_id, id
+WHERE owner_id = $1 AND next_follow_up = $2::date AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY id
 `
 
-// Every owner's open jobs with a follow-up on exactly this date; the daily scan
+type ListJobsDueOnParams struct {
+	OwnerID uuid.UUID
+	DueOn   time.Time
+}
+
+// The owner's open jobs with a follow-up on exactly this date; the daily scan
 // emits one event for each. Rejected jobs need no follow-up.
-func (q *Queries) ListJobsDueOn(ctx context.Context, dueOn time.Time) ([]Job, error) {
-	rows, err := q.db.Query(ctx, listJobsDueOn, dueOn)
+func (q *Queries) ListJobsDueOn(ctx context.Context, arg ListJobsDueOnParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listJobsDueOn, arg.OwnerID, arg.DueOn)
 	if err != nil {
 		return nil, err
 	}
@@ -529,15 +534,20 @@ func (q *Queries) ListJobsDueOn(ctx context.Context, dueOn time.Time) ([]Job, er
 
 const listStaleAppliedJobs = `-- name: ListStaleAppliedJobs :many
 SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
-WHERE status = 'applied' AND applied_on <= $1::date
+WHERE owner_id = $1 AND status = 'applied' AND applied_on <= $2::date
   AND next_follow_up IS NULL AND archived_at IS NULL
-ORDER BY owner_id, id
+ORDER BY id
 `
 
-// Applied jobs with no follow-up planned that were applied for on or before
-// applied_by.
-func (q *Queries) ListStaleAppliedJobs(ctx context.Context, appliedBy time.Time) ([]Job, error) {
-	rows, err := q.db.Query(ctx, listStaleAppliedJobs, appliedBy)
+type ListStaleAppliedJobsParams struct {
+	OwnerID   uuid.UUID
+	AppliedBy time.Time
+}
+
+// The owner's applied jobs with no follow-up planned that were applied for on
+// or before applied_by.
+func (q *Queries) ListStaleAppliedJobs(ctx context.Context, arg ListStaleAppliedJobsParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listStaleAppliedJobs, arg.OwnerID, arg.AppliedBy)
 	if err != nil {
 		return nil, err
 	}

@@ -17,6 +17,7 @@ WHERE owner_id = @owner_id AND id = @id
 RETURNING *;
 
 -- name: ListEnabledSources :many
+-- owner-scope: internal schedule scan across all owners; made per-owner in P11.4f
 -- Every owner's enabled sources, for the scheduler.
 SELECT * FROM sources WHERE enabled ORDER BY owner_id, id;
 

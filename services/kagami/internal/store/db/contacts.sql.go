@@ -454,13 +454,18 @@ func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]C
 
 const listContactsDueOn = `-- name: ListContactsDueOn :many
 SELECT id, owner_id, full_name, company_id, role, email, linkedin_url, x_handle, phone, relationship, how_we_met, status, preferred_channel, last_contacted, next_follow_up, target_role, job_id, tags, notes, idempotency_key, version, created_at, updated_at, archived_at FROM contacts
-WHERE next_follow_up = $1::date AND archived_at IS NULL
-ORDER BY owner_id, id
+WHERE owner_id = $1 AND next_follow_up = $2::date AND archived_at IS NULL
+ORDER BY id
 `
 
-// Every owner's contacts with a follow-up on exactly this date.
-func (q *Queries) ListContactsDueOn(ctx context.Context, dueOn time.Time) ([]Contact, error) {
-	rows, err := q.db.Query(ctx, listContactsDueOn, dueOn)
+type ListContactsDueOnParams struct {
+	OwnerID uuid.UUID
+	DueOn   time.Time
+}
+
+// The owner's contacts with a follow-up on exactly this date.
+func (q *Queries) ListContactsDueOn(ctx context.Context, arg ListContactsDueOnParams) ([]Contact, error) {
+	rows, err := q.db.Query(ctx, listContactsDueOn, arg.OwnerID, arg.DueOn)
 	if err != nil {
 		return nil, err
 	}

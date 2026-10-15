@@ -56,8 +56,11 @@ func TestFollowUpDueEventsNameTheirOwners(t *testing.T) {
 		t.Fatalf("add contact: %v", err)
 	}
 
-	if _, err := env.svc.ScanDueFollowUps(context.Background(), time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)); err != nil {
-		t.Fatalf("scan: %v", err)
+	day := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
+	for _, owner := range []uuid.UUID{jobOwner, contactOwner} {
+		if _, err := env.svc.ScanDueFollowUps(context.Background(), owner, day); err != nil {
+			t.Fatalf("scan: %v", err)
+		}
 	}
 
 	jobEvents := env.payloads(t, "job.follow_up_due", func() proto.Message { return &kagamiv1.JobFollowUpDue{} })
