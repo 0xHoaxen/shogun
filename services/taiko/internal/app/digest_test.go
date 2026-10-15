@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/app"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/store"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/store/db"
@@ -24,6 +25,9 @@ var (
 	// atDigestTime is when the digest job fires: 08:30 on the digest's day.
 	atDigestTime = time.Date(2026, 10, 7, 8, 30, 0, 0, ist)
 )
+
+// digestDate is digestDay as the job carries it.
+const digestDate = "2026-10-07"
 
 // fakeSources answers from the fields a test sets and records how it was asked.
 type fakeSources struct {
@@ -78,16 +82,25 @@ func newDigestEnv(t *testing.T, at time.Time) *digestEnv {
 	sources := &fakeSources{}
 	clock := func() time.Time { return at }
 	return &digestEnv{
-		digester: app.NewDigester(svc, sources, ist, clock, slog.New(slog.DiscardHandler)),
+		digester: app.NewDigester(svc, sources, clock, slog.New(slog.DiscardHandler)),
 		sources:  sources, pool: pool, repo: store.New(pool),
 	}
 }
 
-// owner makes taiko know a new owner, as a first notification would.
+// owner makes taiko know a new active owner in India time, as torii's
+// user.activated would.
 func (e *digestEnv) owner(t *testing.T) uuid.UUID {
 	t.Helper()
+	return e.ownerIn(t, "Asia/Kolkata", owners.StatusActive)
+}
+
+// ownerIn makes taiko know a new owner with the given zone and status.
+func (e *digestEnv) ownerIn(t *testing.T, timezone, status string) uuid.UUID {
+	t.Helper()
 	owner := uuid.New()
-	e.save(t, store.ChannelSettingInput{OwnerID: owner, Channel: store.ChannelEmailDigest, Enabled: true})
+	if err := owners.Upsert(context.Background(), e.pool, owners.Owner{ID: owner, Timezone: timezone, Status: status, Version: 1}); err != nil {
+		t.Fatalf("upsert owner: %v", err)
+	}
 	return owner
 }
 
@@ -139,7 +152,7 @@ func TestDigestWritesOneNotificationWithTheCounts(t *testing.T) {
 	owner := e.owner(t)
 	e.sources.followUps, e.sources.drafts, e.sources.spend = 2, 3, 6_400_000
 
-	wait, err := e.digester.Run(context.Background(), digestDay)
+	wait, err := e.digester.RunFor(context.Background(), owner, digestDate)
 
 	got := e.digests(t, owner)
 	if err != nil || wait != 0 || len(got) != 1 {
@@ -154,7 +167,7 @@ func TestDigestOfNothingIsSkipped(t *testing.T) {
 	e := newDigestEnv(t, atDigestTime)
 	owner := e.owner(t)
 
-	wait, err := e.digester.Run(context.Background(), digestDay)
+	wait, err := e.digester.RunFor(context.Background(), owner, digestDate)
 
 	if err != nil || wait != 0 || len(e.digests(t, owner)) != 0 {
 		t.Fatalf("wait %s, err %v, digests %d; want none", wait, err, len(e.digests(t, owner)))
@@ -166,8 +179,8 @@ func TestDigestRunTwiceForTheSameDateStoresOnce(t *testing.T) {
 	owner := e.owner(t)
 	e.sources.followUps = 1
 
-	_, first := e.digester.Run(context.Background(), digestDay)
-	_, again := e.digester.Run(context.Background(), digestDay)
+	_, first := e.digester.RunFor(context.Background(), owner, digestDate)
+	_, again := e.digester.RunFor(context.Background(), owner, digestDate)
 
 	if first != nil || again != nil || len(e.digests(t, owner)) != 1 {
 		t.Fatalf("errs %v %v, digests %d; want one", first, again, len(e.digests(t, owner)))
@@ -178,11 +191,11 @@ func TestDigestOnAnotherDayIsAnotherDigest(t *testing.T) {
 	e := newDigestEnv(t, atDigestTime)
 	owner := e.owner(t)
 	e.sources.followUps = 1
-	_, _ = e.digester.Run(context.Background(), digestDay)
-	next := app.NewDigester(newServiceOn(t, e.pool), e.sources, ist,
+	_, _ = e.digester.RunFor(context.Background(), owner, digestDate)
+	next := app.NewDigester(newServiceOn(t, e.pool), e.sources,
 		func() time.Time { return atDigestTime.AddDate(0, 0, 1) }, slog.New(slog.DiscardHandler))
 
-	_, err := next.Run(context.Background(), digestDay.AddDate(0, 0, 1))
+	_, err := next.RunFor(context.Background(), owner, "2026-10-08")
 
 	if err != nil || len(e.digests(t, owner)) != 2 {
 		t.Fatalf("err %v, digests %d; want one per day", err, len(e.digests(t, owner)))
@@ -199,7 +212,7 @@ func TestDigestAsksForTheOwnersDayInTheOwnersZone(t *testing.T) {
 	owner := e.owner(t)
 	e.sources.followUps = 1
 
-	_, err := e.digester.Run(context.Background(), digestDay)
+	_, err := e.digester.RunFor(context.Background(), owner, digestDate)
 	if err != nil {
 		t.Fatalf("run: %v", err)
 	}
@@ -233,7 +246,7 @@ func TestQuietHoursHoldTheDigestBackAndSayForHowLong(t *testing.T) {
 			e.sources.followUps = 1
 			e.setInApp(t, owner, true, tt.from, tt.to)
 
-			wait, err := e.digester.Run(context.Background(), digestDay)
+			wait, err := e.digester.RunFor(context.Background(), owner, digestDate)
 
 			held := tt.wantWait > 0
 			if err != nil || wait != tt.wantWait {
@@ -254,11 +267,11 @@ func TestADigestHeldBackIsWrittenOnceQuietHoursEnd(t *testing.T) {
 	owner := held.owner(t)
 	held.sources.followUps = 1
 	held.setInApp(t, owner, true, hours(8, 0), hours(9, 0))
-	wait, _ := held.digester.Run(context.Background(), digestDay)
-	later := app.NewDigester(newServiceOn(t, held.pool), held.sources, ist,
+	wait, _ := held.digester.RunFor(context.Background(), owner, digestDate)
+	later := app.NewDigester(newServiceOn(t, held.pool), held.sources,
 		func() time.Time { return atDigestTime.Add(wait) }, slog.New(slog.DiscardHandler))
 
-	rerun, err := later.Run(context.Background(), digestDay)
+	rerun, err := later.RunFor(context.Background(), owner, digestDate)
 
 	if err != nil || rerun != 0 || len(held.digests(t, owner)) != 1 {
 		t.Fatalf("wait %s, err %v, digests %d; want one after the window", rerun, err, len(held.digests(t, owner)))
@@ -271,7 +284,7 @@ func TestADisabledInAppChannelGetsNoDigest(t *testing.T) {
 	e.sources.followUps = 5
 	e.setInApp(t, owner, false, 0, 0)
 
-	wait, err := e.digester.Run(context.Background(), digestDay)
+	wait, err := e.digester.RunFor(context.Background(), owner, digestDate)
 
 	if err != nil || wait != 0 || len(e.digests(t, owner)) != 0 || len(e.sources.owners) != 0 {
 		t.Fatalf("wait %s, err %v, digests %d, calls %d; want nothing", wait, err, len(e.digests(t, owner)), len(e.sources.owners))
@@ -283,48 +296,89 @@ func TestADigestForADayThatIsOverIsSkipped(t *testing.T) {
 	owner := e.owner(t)
 	e.sources.followUps = 1
 
-	wait, err := e.digester.Run(context.Background(), digestDay)
+	wait, err := e.digester.RunFor(context.Background(), owner, digestDate)
 
 	if err != nil || wait != 0 || len(e.digests(t, owner)) != 0 {
 		t.Fatalf("wait %s, err %v, digests %d; want a stale digest dropped", wait, err, len(e.digests(t, owner)))
 	}
 }
 
-func TestEachOwnerGetsTheirOwnDigest(t *testing.T) {
-	e := newDigestEnv(t, atDigestTime)
-	first, second := e.owner(t), e.owner(t)
+func TestOwnersGetTheirOwnDigestEachInTheirOwnZone(t *testing.T) {
+	// Arrange: at 03:00 UTC it is 08:30 in Kolkata and 12:00 in Tokyo.
+	at := time.Date(2026, 10, 7, 3, 0, 0, 0, time.UTC)
+	e := newDigestEnv(t, at)
+	kolkata := e.ownerIn(t, "Asia/Kolkata", owners.StatusActive)
+	tokyo := e.ownerIn(t, "Asia/Tokyo", owners.StatusActive)
 	e.sources.followUps = 1
 
-	_, err := e.digester.Run(context.Background(), digestDay)
+	// Act
+	_, errKolkata := e.digester.RunFor(context.Background(), kolkata, digestDate)
+	_, errTokyo := e.digester.RunFor(context.Background(), tokyo, digestDate)
 
-	if err != nil || len(e.digests(t, first)) != 1 || len(e.digests(t, second)) != 1 {
-		t.Fatalf("err %v, digests %d and %d; want one each", err, len(e.digests(t, first)), len(e.digests(t, second)))
+	// Assert
+	if errKolkata != nil || errTokyo != nil || len(e.digests(t, kolkata)) != 1 || len(e.digests(t, tokyo)) != 1 {
+		t.Fatalf("errs %v %v, digests %d and %d; want one each", errKolkata, errTokyo, len(e.digests(t, kolkata)), len(e.digests(t, tokyo)))
+	}
+	tokyoDay := time.Date(2026, 10, 7, 0, 0, 0, 0, time.FixedZone("JST", 9*3600))
+	if !e.sources.spendFrom.Equal(tokyoDay) {
+		t.Fatalf("the last spend window starts %s, want the start of the Tokyo day %s", e.sources.spendFrom, tokyoDay)
 	}
 }
 
-func TestOneOwnersFailureDoesNotStopTheOthersAndIsReported(t *testing.T) {
+func TestADayThatIsOverInTheOwnersZoneIsSkippedEvenIfItIsStillTodayElsewhere(t *testing.T) {
+	// Arrange: at 20:00 UTC on the 7th it is already the 8th in Tokyo.
+	e := newDigestEnv(t, time.Date(2026, 10, 7, 20, 0, 0, 0, time.UTC))
+	tokyo := e.ownerIn(t, "Asia/Tokyo", owners.StatusActive)
+	e.sources.followUps = 1
+
+	// Act
+	wait, err := e.digester.RunFor(context.Background(), tokyo, digestDate)
+
+	// Assert
+	if err != nil || wait != 0 || len(e.digests(t, tokyo)) != 0 {
+		t.Fatalf("wait %s, err %v, digests %d; want the 7th dropped in Tokyo", wait, err, len(e.digests(t, tokyo)))
+	}
+}
+
+func TestAnOwnerTheServiceDoesNotKnowOrWhoIsNotActiveGetsNoDigest(t *testing.T) {
 	e := newDigestEnv(t, atDigestTime)
-	broken, fine := e.owner(t), e.owner(t)
+	e.sources.followUps = 1
+	tests := map[string]uuid.UUID{
+		"unknown":  uuid.New(),
+		"disabled": e.ownerIn(t, "Asia/Kolkata", owners.StatusDisabled),
+		"deleted":  e.ownerIn(t, "Asia/Kolkata", owners.StatusDeleted),
+	}
+	for name, owner := range tests {
+		t.Run(name, func(t *testing.T) {
+			wait, err := e.digester.RunFor(context.Background(), owner, digestDate)
+
+			if err != nil || wait != 0 || len(e.digests(t, owner)) != 0 || len(e.sources.owners) != 0 {
+				t.Fatalf("wait %s, err %v, digests %d, calls %d; want nothing", wait, err, len(e.digests(t, owner)), len(e.sources.owners))
+			}
+		})
+	}
+}
+
+func TestAFailingSourceIsReportedSoTheJobRetries(t *testing.T) {
+	e := newDigestEnv(t, atDigestTime)
+	owner := e.owner(t)
 	boom := errors.New("kagami is down")
-	e.sources.failFor = map[uuid.UUID]error{broken: boom}
-	e.sources.followUps = 1
+	e.sources.failFor = map[uuid.UUID]error{owner: boom}
 
-	_, err := e.digester.Run(context.Background(), digestDay)
+	_, err := e.digester.RunFor(context.Background(), owner, digestDate)
 
-	if !errors.Is(err, boom) {
-		t.Fatalf("got %v, want the failure reported so the job retries", err)
-	}
-	if len(e.digests(t, fine)) != 1 || len(e.digests(t, broken)) != 0 {
-		t.Fatalf("digests %d for the working owner and %d for the broken one; want 1 and 0", len(e.digests(t, fine)), len(e.digests(t, broken)))
+	if !errors.Is(err, boom) || len(e.digests(t, owner)) != 0 {
+		t.Fatalf("err %v, digests %d; want the failure reported and no digest", err, len(e.digests(t, owner)))
 	}
 }
 
-func TestDigestWithNoKnownOwnersDoesNothing(t *testing.T) {
+func TestADateThatIsNotADateIsRefused(t *testing.T) {
 	e := newDigestEnv(t, atDigestTime)
+	owner := e.owner(t)
 
-	wait, err := e.digester.Run(context.Background(), digestDay)
+	_, err := e.digester.RunFor(context.Background(), owner, "07/10/2026")
 
-	if err != nil || wait != 0 || len(e.sources.owners) != 0 {
-		t.Fatalf("wait %s, err %v, calls %d", wait, err, len(e.sources.owners))
+	if !errors.Is(err, app.ErrBadDigestDate) {
+		t.Fatalf("err = %v, want ErrBadDigestDate", err)
 	}
 }

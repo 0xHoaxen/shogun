@@ -19,9 +19,3 @@ UPDATE channel_settings SET
     updated_at = now()
 WHERE owner_id = @owner_id AND channel = @channel AND version = @version
 RETURNING *;
-
--- name: ListOwners :many
--- Every owner taiko has heard of: one with a notification or a setting.
-SELECT owner_id FROM notifications
-UNION
-SELECT owner_id FROM channel_settings;

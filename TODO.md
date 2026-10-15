@@ -788,8 +788,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: `shogun.torii.v1` `UserActivated`, `UserUpdated`, `UserDeleted` events (routes in `pkg/bus/routes.go` to kagami, katana, sensei, shinobi, taiko); torii writes `user.activated` on first login and `user.updated` on a status or time zone change, in the same transaction as the change (`store.Users`); new `pkg/owners` holds the `owners(id, timezone, status, version)` migration snippet, the store (`Upsert` ignores old versions, `ListActive`, `Get`), `Owner.Location/LocalDate/ReachedLocalTime`, and `WithHandlers`, which the five consumers add to their sink with a copy of the snippet as a migration. `user.deleted` is produced by P11.8. A user's row reaches a service the next time they log in, since existing users have no `users` row until then.
   Done when: `cd pkg && go test -race ./owners/... ./bus/...`, `cd services/torii && go test -race ./...`, and each consumer's `go test -race ./...` pass.
 
-- [ ] **P11.4b taiko daily digest per owner** (M) Needs: P11.4a
-  Do: replace the single daily periodic job with a 15-minute tick that, for each active owner whose local clock has reached the digest time, enqueues `daily_digest` for `(owner_id, local date)` (unique by args); the digester runs for that owner only, in their zone. Remove the hard-coded `Asia/Kolkata`.
+- [x] **P11.4b taiko daily digest per owner** (M) Needs: P11.4a
+  Do: a 15-minute `digest_tick` finds active owners whose local clock has reached 08:30 (`owners.DueAt`, new in `pkg/owners`) and enqueues `daily_digest` for `(owner_id, local date)`, unique by args; `Digester.RunFor` loads the owner's zone from the owners table and treats a day that is over in that zone as stale. Removed the hard-coded `Asia/Kolkata` and the now-unused `ListOwners` query. The other services reuse `owners.DueAt`.
   Done when: `cd services/taiko && go test -race ./...`.
 
 - [ ] **P11.4c kagami scans per owner** (M) Needs: P11.4a

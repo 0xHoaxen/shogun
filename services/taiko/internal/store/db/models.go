@@ -48,3 +48,11 @@ type Outbox struct {
 	CreatedAt   time.Time
 	DeliveredAt *time.Time
 }
+
+type Owner struct {
+	ID        uuid.UUID
+	Timezone  string
+	Status    string
+	Version   int32
+	UpdatedAt time.Time
+}
