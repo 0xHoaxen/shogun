@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/auth.proto.
  */
 export const file_shogun_api_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChhzaG9ndW4vYXBpL3YxL2F1dGgucHJvdG8SDXNob2d1bi5hcGkudjEiXgoHU2Vzc2lvbhINCgVlbWFpbBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSLgoKZXhwaXJlc19hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiEwoRR2V0U2Vzc2lvblJlcXVlc3QiPQoSR2V0U2Vzc2lvblJlc3BvbnNlEicKB3Nlc3Npb24YASABKAsyFi5zaG9ndW4uYXBpLnYxLlNlc3Npb24iDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZTKnAQoLQXV0aFNlcnZpY2USUQoKR2V0U2Vzc2lvbhIgLnNob2d1bi5hcGkudjEuR2V0U2Vzc2lvblJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkdldFNlc3Npb25SZXNwb25zZRJFCgZMb2dvdXQSHC5zaG9ndW4uYXBpLnYxLkxvZ291dFJlcXVlc3QaHS5zaG9ndW4uYXBpLnYxLkxvZ291dFJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChhzaG9ndW4vYXBpL3YxL2F1dGgucHJvdG8SDXNob2d1bi5hcGkudjEigwEKB1Nlc3Npb24SDQoFZW1haWwYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEi4KCmV4cGlyZXNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBHJvbGUYBCABKAkSFQoNZ21haWxfYWxsb3dlZBgFIAEoCCITChFHZXRTZXNzaW9uUmVxdWVzdCI9ChJHZXRTZXNzaW9uUmVzcG9uc2USJwoHc2Vzc2lvbhgBIAEoCzIWLnNob2d1bi5hcGkudjEuU2Vzc2lvbiIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlMqcBCgtBdXRoU2VydmljZRJRCgpHZXRTZXNzaW9uEiAuc2hvZ3VuLmFwaS52MS5HZXRTZXNzaW9uUmVxdWVzdBohLnNob2d1bi5hcGkudjEuR2V0U2Vzc2lvblJlc3BvbnNlEkUKBkxvZ291dBIcLnNob2d1bi5hcGkudjEuTG9nb3V0UmVxdWVzdBodLnNob2d1bi5hcGkudjEuTG9nb3V0UmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message shogun.api.v1.Session
@@ -32,6 +32,20 @@ export type Session = Message<"shogun.api.v1.Session"> & {
    * @generated from field: google.protobuf.Timestamp expires_at = 3;
    */
   expiresAt?: Timestamp | undefined;
+
+  /**
+   * role is "admin" or "member".
+   *
+   * @generated from field: string role = 4;
+   */
+  role: string;
+
+  /**
+   * gmail_allowed is whether an admin approved this user to connect Gmail.
+   *
+   * @generated from field: bool gmail_allowed = 5;
+   */
+  gmailAllowed: boolean;
 };
 
 /**

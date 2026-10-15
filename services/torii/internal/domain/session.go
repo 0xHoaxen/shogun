@@ -13,8 +13,10 @@ type Session struct {
 	Email       string
 	DisplayName string
 	// Role is the user's current role. It is not stored on the session row; Authenticate fills it in.
-	Role      Role
-	ExpiresAt time.Time
+	Role Role
+	// GmailAllowed is whether an admin approved this user to connect Gmail. Authenticate fills it in.
+	GmailAllowed bool
+	ExpiresAt    time.Time
 }
 
 // Expired reports whether the session is no longer valid at now.

@@ -136,12 +136,13 @@ func (a *Auth) StartSession(ctx context.Context, claims Claims) (string, domain.
 		return "", domain.Session{}, err
 	}
 	session := domain.Session{
-		ID:          store.NewID(),
-		OwnerID:     user.ID,
-		Email:       user.Email,
-		DisplayName: user.DisplayName,
-		Role:        user.Role,
-		ExpiresAt:   a.now().Add(a.ttl),
+		ID:           store.NewID(),
+		OwnerID:      user.ID,
+		Email:        user.Email,
+		DisplayName:  user.DisplayName,
+		Role:         user.Role,
+		GmailAllowed: user.GmailAllowed,
+		ExpiresAt:    a.now().Add(a.ttl),
 	}
 	if err := a.store.Insert(ctx, session, hashToken(token)); err != nil {
 		return "", domain.Session{}, err
@@ -198,6 +199,7 @@ func (a *Auth) Authenticate(ctx context.Context, token string) (domain.Session, 
 		return domain.Session{}, false, err
 	}
 	session.Role = user.Role
+	session.GmailAllowed = user.GmailAllowed
 	renewed, ok := session.Renewed(now, a.ttl)
 	if !ok {
 		return session, false, nil

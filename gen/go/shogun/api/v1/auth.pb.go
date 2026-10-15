@@ -23,10 +23,14 @@ const (
 )
 
 type Session struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
-	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Email       string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
+	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// role is "admin" or "member".
+	Role string `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	// gmail_allowed is whether an admin approved this user to connect Gmail.
+	GmailAllowed  bool `protobuf:"varint,5,opt,name=gmail_allowed,json=gmailAllowed,proto3" json:"gmail_allowed,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -80,6 +84,20 @@ func (x *Session) GetExpiresAt() *timestamppb.Timestamp {
 		return x.ExpiresAt
 	}
 	return nil
+}
+
+func (x *Session) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *Session) GetGmailAllowed() bool {
+	if x != nil {
+		return x.GmailAllowed
+	}
+	return false
 }
 
 type GetSessionRequest struct {
@@ -238,12 +256,14 @@ var File_shogun_api_v1_auth_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_auth_proto_rawDesc = "" +
 	"\n" +
-	"\x18shogun/api/v1/auth.proto\x12\rshogun.api.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"}\n" +
+	"\x18shogun/api/v1/auth.proto\x12\rshogun.api.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xb6\x01\n" +
 	"\aSession\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12!\n" +
 	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x129\n" +
 	"\n" +
-	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x13\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\x12#\n" +
+	"\rgmail_allowed\x18\x05 \x01(\bR\fgmailAllowed\"\x13\n" +
 	"\x11GetSessionRequest\"F\n" +
 	"\x12GetSessionResponse\x120\n" +
 	"\asession\x18\x01 \x01(\v2\x16.shogun.api.v1.SessionR\asession\"\x0f\n" +

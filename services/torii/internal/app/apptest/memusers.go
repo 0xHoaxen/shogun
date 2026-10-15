@@ -2,6 +2,7 @@ package apptest
 
 import (
 	"context"
+	"strconv"
 	"sync"
 
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 // MemUsers is an in-memory app.UserStore keyed by Google subject.
 type MemUsers struct {
 	mu    sync.Mutex
+	order []uuid.UUID
 	byID  map[uuid.UUID]domain.User
 	bySub map[string]uuid.UUID
 }
@@ -38,6 +40,7 @@ func (m *MemUsers) Upsert(_ context.Context, user domain.User) (domain.User, err
 	user.Status = domain.StatusActive
 	user.Timezone = domain.DefaultTimezone
 	user.Version = 1
+	m.order = append(m.order, user.ID)
 	m.byID[user.ID] = user
 	m.bySub[user.GoogleSub] = user.ID
 	return user, nil
@@ -80,4 +83,29 @@ func (m *MemUsers) update(id uuid.UUID, change func(domain.User) domain.User) (d
 	user.Version++
 	m.byID[id] = user
 	return user, nil
+}
+
+// List pages through users in creation order. The page token is the offset of
+// the next user; any other token is store.ErrBadPageToken.
+func (m *MemUsers) List(_ context.Context, pageSize int32, pageToken string) ([]domain.User, string, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	start := 0
+	if pageToken != "" {
+		n, err := strconv.Atoi(pageToken)
+		if err != nil || n < 0 || n > len(m.order) {
+			return nil, "", store.ErrBadPageToken
+		}
+		start = n
+	}
+	end := min(start+int(pageSize), len(m.order))
+	users := make([]domain.User, 0, end-start)
+	for _, id := range m.order[start:end] {
+		users = append(users, m.byID[id])
+	}
+	next := ""
+	if end < len(m.order) {
+		next = strconv.Itoa(end)
+	}
+	return users, next, nil
 }

@@ -43,7 +43,7 @@ test("the login page explains why a sign-in was refused", async ({ page }) => {
 
   // Assert
   await expect(page.getByRole("main").getByRole("alert")).toHaveText(
-    "This Google account is not allowed to sign in.",
+    "This account has been disabled. Ask an admin to enable it.",
   );
 });
 
