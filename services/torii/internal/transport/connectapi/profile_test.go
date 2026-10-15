@@ -65,8 +65,8 @@ func (f *fakeKatana) DismissSuggestion(_ context.Context, in *katanav1.DismissSu
 func newProfileHarness(t *testing.T) (*fakeKatana, apiv1connect.ProfileServiceClient, string) {
 	t.Helper()
 	now := time.Date(2026, 10, 7, 9, 0, 0, 0, time.UTC)
-	auth, err := app.NewAuth(apptest.NewMemSessions(),
-		app.AuthConfig{AllowedEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
+	auth, err := app.NewAuth(apptest.NewMemSessions(), apptest.NewMemUsers(),
+		app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
 		app.WithClock(func() time.Time { return now }))
 	if err != nil {
 		t.Fatalf("NewAuth: %v", err)

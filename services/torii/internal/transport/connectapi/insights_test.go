@@ -49,8 +49,8 @@ func (f *fakeSensei) GetOutreachStats(_ context.Context, in *senseiv1.GetOutreac
 func newInsightsHarness(t *testing.T) (*fakeSensei, apiv1connect.InsightsServiceClient, string) {
 	t.Helper()
 	now := time.Date(2026, 10, 7, 9, 0, 0, 0, time.UTC)
-	auth, err := app.NewAuth(apptest.NewMemSessions(),
-		app.AuthConfig{AllowedEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
+	auth, err := app.NewAuth(apptest.NewMemSessions(), apptest.NewMemUsers(),
+		app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
 		app.WithClock(func() time.Time { return now }))
 	if err != nil {
 		t.Fatalf("NewAuth: %v", err)

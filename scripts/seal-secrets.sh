@@ -87,7 +87,7 @@ hanko_public_key() {
 # IDENTITY_SIGNING_KEY (see .env.example).
 service_keys() {
 	case $1 in
-	torii) echo "TORII_PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TORII_ALLOWED_EMAILS" ;;
+	torii) echo "TORII_PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TORII_ADMIN_EMAILS" ;;
 	fude) echo "FUDE_HANKO_SIGNING_KEY FUDE_HANKO_KEY_ID ANTHROPIC_API_KEY" ;;
 	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS ANTHROPIC_API_KEY" ;;
 	katana) echo "KATANA_GITHUB_USER KATANA_GITHUB_TOKEN ANTHROPIC_API_KEY" ;;
@@ -113,7 +113,7 @@ fill_env() {
 	env_set_default "$file" TSUBAME_GMAIL_REDIRECT_URL http://localhost:3000/mail/callback
 	env_set_default "$file" GOOGLE_CLIENT_ID "$PLACEHOLDER_ID"
 	env_set_default "$file" GOOGLE_CLIENT_SECRET "$PLACEHOLDER_SECRET"
-	env_set_default "$file" TORII_ALLOWED_EMAILS "$PLACEHOLDER_EMAIL"
+	env_set_default "$file" TORII_ADMIN_EMAILS "$PLACEHOLDER_EMAIL"
 	env_set_default "$file" TSUBAME_GMAIL_CLIENT_ID "$PLACEHOLDER_ID"
 	env_set_default "$file" TSUBAME_GMAIL_CLIENT_SECRET "$PLACEHOLDER_SECRET"
 }
@@ -125,8 +125,8 @@ warn_unset() {
 		replace-me*) echo "seal-secrets: $key is a placeholder; the service starts but Google sign-in or Gmail will not work" >&2 ;;
 		esac
 	done
-	if [ "$(env_get "$file" TORII_ALLOWED_EMAILS)" = "$PLACEHOLDER_EMAIL" ]; then
-		echo "seal-secrets: TORII_ALLOWED_EMAILS is a placeholder; nobody can sign in" >&2
+	if [ "$(env_get "$file" TORII_ADMIN_EMAILS)" = "$PLACEHOLDER_EMAIL" ]; then
+		echo "seal-secrets: TORII_ADMIN_EMAILS is a placeholder; nobody will be an admin" >&2
 	fi
 	if [ -z "$(env_get "$file" GHCR_TOKEN)" ]; then
 		echo "seal-secrets: GHCR_TOKEN is not set; no pull secret is created, so private ghcr.io images cannot be pulled" >&2

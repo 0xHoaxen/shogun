@@ -106,7 +106,7 @@ check "writes plain manifests helmfile can install, no kustomization" '[ ! -e "$
 
 keys() { sed 's/=.*//' "$work/fake/$1.env" | sort | tr '\n' ' '; }
 check "postgres holds eleven passwords" '[ "$(keys postgres | wc -w | tr -d " ")" -eq 11 ]'
-check "torii keys" '[ "$(keys torii)" = "DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET IDENTITY_SIGNING_KEY TORII_ALLOWED_EMAILS TORII_PUBLIC_URL " ]'
+check "torii keys" '[ "$(keys torii)" = "DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET IDENTITY_SIGNING_KEY TORII_ADMIN_EMAILS TORII_PUBLIC_URL " ]'
 check "fude keys" '[ "$(keys fude)" = "ANTHROPIC_API_KEY DATABASE_URL FUDE_HANKO_KEY_ID FUDE_HANKO_SIGNING_KEY IDENTITY_SIGNING_KEY " ]'
 check "tsubame keys" '[ "$(keys tsubame)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS TSUBAME_TOKEN_KEY_ID TSUBAME_TOKEN_MASTER_KEY " ]'
 check "katana keys" '[ "$(keys katana)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY KATANA_GITHUB_TOKEN KATANA_GITHUB_USER " ]'

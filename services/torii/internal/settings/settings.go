@@ -1,5 +1,5 @@
 // Package settings reads the environment variables only torii uses: the public
-// API listener, Google login, the owner allowlist and request limits. The
+// API listener, Google login, the admin list and request limits. The
 // variables every service shares live in pkg/config.
 package settings
 
@@ -34,7 +34,9 @@ type Settings struct {
 	GoogleClientSecret string
 	// GoogleIssuerURL is Google's issuer; tests point it at a fake provider.
 	GoogleIssuerURL string
-	AllowedEmails   []string
+	// AdminEmails become admins when they sign in. Anyone else with a verified
+	// Google account may sign up as a member.
+	AdminEmails []string
 	// KagamiAddr is the gRPC address of kagami, which owns jobs and contacts.
 	KagamiAddr string
 	// FudeAddr is the gRPC address of fude, which owns drafts and approvals.
@@ -81,7 +83,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	clientSecret, err := config.Required(lookup, "GOOGLE_CLIENT_SECRET")
 	collect(err)
-	emails, err := config.Required(lookup, "TORII_ALLOWED_EMAILS")
+	emails, err := config.Required(lookup, "TORII_ADMIN_EMAILS")
 	collect(err)
 	kagamiAddr, err := config.Required(lookup, "KAGAMI_ADDR")
 	collect(err)
@@ -116,7 +118,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		GoogleClientID:     clientID,
 		GoogleClientSecret: clientSecret,
 		GoogleIssuerURL:    config.String(lookup, "GOOGLE_ISSUER_URL", defaultIssuer),
-		AllowedEmails:      splitList(emails),
+		AdminEmails:        splitList(emails),
 		KagamiAddr:         kagamiAddr,
 		FudeAddr:           fudeAddr,
 		TsubameAddr:        tsubameAddr,
@@ -147,8 +149,8 @@ func (s Settings) validate() error {
 	if u, err := url.Parse(s.PublicURL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		errs = append(errs, fmt.Errorf("settings: TORII_PUBLIC_URL %q must be an http(s) URL", s.PublicURL))
 	}
-	if len(s.AllowedEmails) == 0 && s.GoogleClientID != "" {
-		errs = append(errs, errors.New("settings: TORII_ALLOWED_EMAILS has no addresses"))
+	if len(s.AdminEmails) == 0 && s.GoogleClientID != "" {
+		errs = append(errs, errors.New("settings: TORII_ADMIN_EMAILS has no addresses"))
 	}
 	if s.SessionTTL <= 0 {
 		errs = append(errs, errors.New("settings: SESSION_TTL must be positive"))

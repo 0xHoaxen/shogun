@@ -62,9 +62,9 @@ func newPublicServer(
 	if err != nil {
 		return nil, nil, err
 	}
-	auth, err := app.NewAuth(store.NewSessions(pool), app.AuthConfig{
-		AllowedEmails: s.AllowedEmails,
-		SessionTTL:    s.SessionTTL,
+	auth, err := app.NewAuth(store.NewSessions(pool), store.NewUsers(pool), app.AuthConfig{
+		AdminEmails: s.AdminEmails,
+		SessionTTL:  s.SessionTTL,
 	})
 	if err != nil {
 		return nil, nil, err
