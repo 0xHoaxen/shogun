@@ -7,6 +7,7 @@ import Link from "next/link";
 import { notificationTag } from "@/components/notifications/labels";
 import { notificationsKey } from "@/components/notifications/notifications-key";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { NotificationsService, type Notification } from "@/gen/shogun/api/v1/notifications_pb";
 import { groupByDay, notificationTime, unreadHeadline } from "@/lib/notifications";
@@ -33,7 +34,7 @@ export function NotificationsScreen() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.notifications}
         title={unreadHeadline(count)}
         description="Things that are ready, due, or close to a limit."
       >

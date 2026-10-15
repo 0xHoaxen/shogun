@@ -10,6 +10,7 @@ import { suggestionsKey } from "@/components/profile/profile-key";
 import { SuggestionCard } from "@/components/profile/suggestion-card";
 import { useProfileClient } from "@/components/profile/use-profile-client";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { ProfileService, SuggestionState } from "@/gen/shogun/api/v1/profile_pb";
 import { cn } from "@/lib/utils";
@@ -55,7 +56,7 @@ export function ProfileScreen() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.profile}
         title="Your profile."
         description="Edits to your resume and LinkedIn that Shogun found in your GitHub activity and what you finished learning. You make the edits; accepting only records your choice."
       >
