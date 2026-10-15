@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 
 import { NOTIFICATIONS_PATH, NotificationBell } from "@/components/notifications/notification-bell";
 import { Rail } from "@/components/shell/rail";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { AuthService } from "@/gen/shogun/api/v1/auth_pb";
 import { LOGIN_PATH } from "@/lib/transport";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ interface NavItem {
   // The strip's section code and the rail's rotated name for the page.
   section: string;
   railLabel: string;
-  adminOnly?: boolean;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
@@ -31,13 +30,19 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/profile", label: "Profile", section: "S6 / Profile", railLabel: "PROFILE EDITS" },
   { href: "/discovery", label: "Discovery", section: "S7 / Discovery", railLabel: "JOB DISCOVERY" },
   { href: "/insights", label: "Insights", section: "S8 / Insights", railLabel: "INSIGHTS" },
-  { href: "/settings/mail", label: "Mail", section: "S9 / Settings", railLabel: "MAIL ACCOUNT" },
-  { href: "/settings/spend", label: "Spend", section: "S9 / Settings", railLabel: "SPEND LEDGER" },
-  { href: "/settings/notifications", label: "Alerts", section: "S9 / Settings", railLabel: "NOTIFICATION SETTINGS" },
-  { href: "/settings/users", label: "Users", section: "S9 / Settings", railLabel: "USER ADMIN", adminOnly: true },
 ];
 
 // The bell is not a tab, but its page still names itself in the strip and rail.
+const SETTINGS_PATH = "/settings";
+
+// Settings is not a tab: it opens from the footer and holds keys and integrations.
+const SETTINGS_PAGE: NavItem = {
+  href: SETTINGS_PATH,
+  label: "Settings",
+  section: "S9 / Settings",
+  railLabel: "SETTINGS",
+};
+
 const BELL_PAGE: NavItem = {
   href: NOTIFICATIONS_PATH,
   label: "Bell",
@@ -81,12 +86,13 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   const onBellPage = pathname.startsWith(NOTIFICATIONS_PATH);
+  const onSettingsPage = pathname.startsWith(SETTINGS_PATH);
   const current = onBellPage
     ? BELL_PAGE
-    : NAV_ITEMS.find((item) => pathname.startsWith(item.href));
+    : onSettingsPage
+      ? SETTINGS_PAGE
+      : NAV_ITEMS.find((item) => pathname.startsWith(item.href));
   const email = session.data.session?.email ?? "";
-  const isAdmin = session.data.session?.role === "admin";
-  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <div className="grid min-h-screen grid-cols-[104px_minmax(0,1fr)] border border-ink bg-paper max-[860px]:grid-cols-1">
@@ -97,7 +103,7 @@ export function AppShell({ children }: AppShellProps) {
           <span>Shogun / Systems for career</span>
         </div>
         <nav aria-label="Shogun" className="flex flex-wrap border-b border-ink">
-          {visibleItems.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const active = item === current;
             return (
               <Link
@@ -117,11 +123,20 @@ export function AppShell({ children }: AppShellProps) {
         <main className="min-w-0 grow">{children}</main>
         <footer
           aria-label="Utility"
-          className="flex min-h-11 flex-wrap items-center justify-end gap-3 border-t border-ink px-[22px]"
+          className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-t border-ink px-[22px]"
         >
-          <NotificationBell active={onBellPage} />
-          <span data-testid="owner-email">{email}</span>
-          <Button onClick={() => logout.mutate({})}>Logout</Button>
+          <Link
+            href={SETTINGS_PATH}
+            aria-current={onSettingsPage ? "page" : undefined}
+            className={cn(buttonVariants(), onSettingsPage && "bg-ink text-paper")}
+          >
+            Settings
+          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <NotificationBell active={onBellPage} />
+            <span data-testid="owner-email">{email}</span>
+            <Button onClick={() => logout.mutate({})}>Logout</Button>
+          </div>
         </footer>
       </div>
     </div>
