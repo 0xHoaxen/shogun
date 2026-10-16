@@ -459,3 +459,31 @@ func TestDifferentRequestsDoNotShareACacheEntry(t *testing.T) {
 		t.Errorf("%d model calls, want 2", len(api.Created))
 	}
 }
+
+func TestATokenCapRefusalWaitsForTheMonthLikeABudgetDoes(t *testing.T) {
+	// Arrange: soroban's refusal carries only when the month ends, not a budget id.
+	st, err := status.New(codes.ResourceExhausted, "cap").WithDetails(&errdetails.ErrorInfo{
+		Reason:   "TOKEN_CAP_EXHAUSTED",
+		Metadata: map[string]string{"resets_at": "2026-10-31T18:30:00Z"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	api, meter := okAPI(), &llmtest.Meter{ReserveErr: st.Err()}
+	c := newClient(t, api, meter)
+
+	// Act
+	_, callErr := c.Complete(context.Background(), feature, userRequest("hi"))
+
+	// Assert
+	var refusal *llm.BudgetError
+	if !errors.Is(callErr, llm.ErrBudgetExhausted) || !errors.As(callErr, &refusal) {
+		t.Fatalf("got %v, want a refusal callers can wait out", callErr)
+	}
+	if want := time.Date(2026, 10, 31, 18, 30, 0, 0, time.UTC); !refusal.ResetsAt.Equal(want) || refusal.BudgetID != "" {
+		t.Errorf("refusal = %+v, want it to reset at %s with no budget id", refusal, want)
+	}
+	if len(api.Created) != 0 {
+		t.Errorf("the model was called %d times after a refusal", len(api.Created))
+	}
+}

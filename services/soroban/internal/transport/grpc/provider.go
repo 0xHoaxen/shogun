@@ -19,6 +19,7 @@ func (s *Server) SetProvider(ctx context.Context, req *sorobanv1.SetProviderRequ
 		APIKey:              req.GetApiKey(),
 		InputMicrosPerMTok:  req.InputMicrosPerMtok,
 		OutputMicrosPerMTok: req.OutputMicrosPerMtok,
+		MonthlyTokenCap:     req.MonthlyTokenCap,
 		Version:             req.GetVersion(),
 	})
 	if err != nil {
@@ -37,7 +38,11 @@ func (s *Server) GetProvider(ctx context.Context, _ *sorobanv1.GetProviderReques
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &sorobanv1.GetProviderResponse{Provider: toProvider(view)}, nil
+	tokens, err := s.svc.TokensThisMonth(ctx)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &sorobanv1.GetProviderResponse{Provider: toProvider(view), TokensThisMonth: tokens}, nil
 }
 
 // DeleteProvider implements soroban.v1.SorobanService.
@@ -56,6 +61,7 @@ func toProvider(v app.ProviderView) *sorobanv1.Provider {
 		KeyLast4:            v.KeyLast4,
 		InputMicrosPerMtok:  v.InputMicrosPerMTok,
 		OutputMicrosPerMtok: v.OutputMicrosPerMTok,
+		MonthlyTokenCap:     v.MonthlyTokenCap,
 		Version:             v.Version,
 		UpdatedAt:           timestamppb.New(v.UpdatedAt),
 	}

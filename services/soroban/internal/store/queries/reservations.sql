@@ -1,6 +1,6 @@
 -- name: InsertReservation :one
-INSERT INTO reservations (id, owner_id, service, feature, model, est_micros, budget_period_ids, created_at, expires_at)
-VALUES (@id, @owner_id, @service, @feature, @model, @est_micros, @budget_period_ids, @created_at, @expires_at)
+INSERT INTO reservations (id, owner_id, service, feature, model, est_micros, est_tokens, budget_period_ids, created_at, expires_at)
+VALUES (@id, @owner_id, @service, @feature, @model, @est_micros, @est_tokens, @budget_period_ids, @created_at, @expires_at)
 RETURNING *;
 
 -- name: LockReservation :one
@@ -21,3 +21,9 @@ SELECT id FROM reservations
 WHERE status = 'open' AND expires_at <= @now
 ORDER BY expires_at
 LIMIT @batch_size;
+
+-- name: SumOpenReservedTokens :one
+-- Tokens held by the owner's calls that are still in flight.
+SELECT COALESCE(sum(est_tokens), 0)::bigint AS tokens
+FROM reservations
+WHERE owner_id = @owner_id AND status = 'open' AND expires_at > @now;

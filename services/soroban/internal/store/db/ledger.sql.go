@@ -97,6 +97,26 @@ func (q *Queries) InsertLedgerEntry(ctx context.Context, arg InsertLedgerEntryPa
 	return i, err
 }
 
+const sumLedgerTokens = `-- name: SumLedgerTokens :one
+SELECT COALESCE(sum(input_tokens + output_tokens + cache_read_tokens + cache_write_tokens), 0)::bigint AS tokens
+FROM ledger
+WHERE owner_id = $1 AND occurred_at >= $2 AND occurred_at < $3
+`
+
+type SumLedgerTokensParams struct {
+	OwnerID  uuid.UUID
+	FromTime time.Time
+	ToTime   time.Time
+}
+
+// Every token the owner used in a period: input, output and both cache kinds.
+func (q *Queries) SumLedgerTokens(ctx context.Context, arg SumLedgerTokensParams) (int64, error) {
+	row := q.db.QueryRow(ctx, sumLedgerTokens, arg.OwnerID, arg.FromTime, arg.ToTime)
+	var tokens int64
+	err := row.Scan(&tokens)
+	return tokens, err
+}
+
 const sumSpend = `-- name: SumSpend :many
 SELECT (CASE $1::text
           WHEN 'service' THEN service

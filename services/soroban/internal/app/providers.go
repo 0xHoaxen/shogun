@@ -27,6 +27,8 @@ type ProviderInput struct {
 	APIKey              string
 	InputMicrosPerMTok  *int64
 	OutputMicrosPerMTok *int64
+	// MonthlyTokenCap, when set, caps the user's tokens per month; nil is unlimited.
+	MonthlyTokenCap *int64
 	// Version is 0 to create, otherwise the version being updated.
 	Version int32
 }
@@ -38,6 +40,7 @@ type ProviderView struct {
 	KeyLast4            string
 	InputMicrosPerMTok  *int64
 	OutputMicrosPerMTok *int64
+	MonthlyTokenCap     *int64
 	Version             int32
 	UpdatedAt           time.Time
 }
@@ -50,13 +53,14 @@ type ProviderSecret struct {
 	APIKey              string
 	InputMicrosPerMTok  *int64
 	OutputMicrosPerMTok *int64
+	MonthlyTokenCap     *int64
 }
 
 func viewOf(row db.Provider) ProviderView {
 	return ProviderView{
 		BaseURL: row.BaseUrl, Model: row.Model, KeyLast4: row.KeyLast4,
 		InputMicrosPerMTok: row.InputMicrosPerMtok, OutputMicrosPerMTok: row.OutputMicrosPerMtok,
-		Version: row.Version, UpdatedAt: row.UpdatedAt,
+		MonthlyTokenCap: row.MonthlyTokenCap, Version: row.Version, UpdatedAt: row.UpdatedAt,
 	}
 }
 
@@ -108,6 +112,9 @@ func (s *Service) checkProvider(in ProviderInput) (normalized string, err error)
 	if err := domain.ValidateProviderPrices(in.InputMicrosPerMTok, in.OutputMicrosPerMTok); err != nil {
 		return "", invalid(ReasonInvalidPrice, "set both prices, each between 0 and 1000000000000")
 	}
+	if err := domain.ValidateTokenCap(in.MonthlyTokenCap); err != nil {
+		return "", invalid(ReasonInvalidTokenCap, "the monthly token cap must be above 0, or left out for no cap")
+	}
 	return baseURL, nil
 }
 
@@ -122,6 +129,7 @@ func (s *Service) createProvider(ctx context.Context, repo *store.Repo, owner uu
 	row, err := repo.InsertProvider(ctx, db.InsertProviderParams{
 		OwnerID: owner, BaseUrl: baseURL, Model: in.Model, ApiKeyCiphertext: sealed, KeyID: keyID,
 		KeyLast4: domain.KeyLast4(in.APIKey), InputMicrosPerMtok: in.InputMicrosPerMTok, OutputMicrosPerMtok: in.OutputMicrosPerMTok,
+		MonthlyTokenCap: in.MonthlyTokenCap,
 	})
 	if errors.Is(err, store.ErrDuplicate) {
 		return store.ErrVersionConflict // one already exists: the caller read an older state
@@ -151,6 +159,7 @@ func (s *Service) updateProvider(ctx context.Context, repo *store.Repo, owner uu
 	row, err := repo.UpdateProvider(ctx, db.UpdateProviderParams{
 		OwnerID: owner, Version: in.Version, BaseUrl: baseURL, Model: in.Model, ApiKeyCiphertext: ciphertext,
 		KeyID: keyID, KeyLast4: last4, InputMicrosPerMtok: in.InputMicrosPerMTok, OutputMicrosPerMtok: in.OutputMicrosPerMTok,
+		MonthlyTokenCap: in.MonthlyTokenCap,
 	})
 	if err != nil {
 		return err
@@ -206,6 +215,11 @@ func (s *Service) providerSecretFor(ctx context.Context, repo *store.Repo, owner
 	if err != nil {
 		return ProviderSecret{}, err
 	}
+	return s.openProvider(row, owner)
+}
+
+// openProvider opens a stored provider's key.
+func (s *Service) openProvider(row db.Provider, owner uuid.UUID) (ProviderSecret, error) {
 	key, err := s.keys.Open(row.ApiKeyCiphertext, row.KeyID, providerAAD(owner))
 	if err != nil {
 		return ProviderSecret{}, fmt.Errorf("open api key: %w", err)
@@ -213,5 +227,45 @@ func (s *Service) providerSecretFor(ctx context.Context, repo *store.Repo, owner
 	return ProviderSecret{
 		BaseURL: row.BaseUrl, Model: row.Model, APIKey: string(key),
 		InputMicrosPerMTok: row.InputMicrosPerMtok, OutputMicrosPerMTok: row.OutputMicrosPerMtok,
+		MonthlyTokenCap: row.MonthlyTokenCap,
 	}, nil
+}
+
+// TokensThisMonth returns every token the caller used so far this month,
+// whether or not their model has a price.
+func (s *Service) TokensThisMonth(ctx context.Context) (int64, error) {
+	owner, err := ownerFrom(ctx)
+	if err != nil {
+		return 0, err
+	}
+	start, end, err := domain.PeriodBounds(s.now(), domain.PeriodMonthly, s.loc)
+	if err != nil {
+		return 0, err
+	}
+	return store.New(s.pool).TokensUsed(ctx, owner, start, end)
+}
+
+// checkTokenCap refuses a call that would take the owner past their monthly
+// token cap. Tokens already used count, and so do those held by calls still in
+// flight; the provider row is locked, so concurrent calls are checked one by one.
+func (s *Service) checkTokenCap(ctx context.Context, repo *store.Repo, owner uuid.UUID, capTokens *int64, est int64, now time.Time) error {
+	if capTokens == nil {
+		return nil
+	}
+	start, end, err := domain.PeriodBounds(now, domain.PeriodMonthly, s.loc)
+	if err != nil {
+		return err
+	}
+	used, err := repo.TokensUsed(ctx, owner, start, end)
+	if err != nil {
+		return err
+	}
+	inFlight, err := repo.TokensInFlight(ctx, owner, now)
+	if err != nil {
+		return err
+	}
+	if used+inFlight+est > *capTokens {
+		return &domain.TokenCapExhaustedError{Cap: *capTokens, Used: used + inFlight, ResetsAt: end}
+	}
+	return nil
 }

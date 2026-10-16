@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -18,6 +19,35 @@ func (r *Repo) GetProvider(ctx context.Context, owner uuid.UUID) (db.Provider, e
 		return db.Provider{}, mapErr(err)
 	}
 	return row, nil
+}
+
+// GetProviderForUpdate returns the owner's provider and locks its row until the
+// transaction ends, so one owner's reservations are checked one at a time.
+func (r *Repo) GetProviderForUpdate(ctx context.Context, owner uuid.UUID) (db.Provider, error) {
+	row, err := r.q.GetProviderForUpdate(ctx, owner)
+	if err != nil {
+		return db.Provider{}, mapErr(err)
+	}
+	return row, nil
+}
+
+// TokensUsed returns every token the owner used in [from, to).
+func (r *Repo) TokensUsed(ctx context.Context, owner uuid.UUID, from, to time.Time) (int64, error) {
+	n, err := r.q.SumLedgerTokens(ctx, db.SumLedgerTokensParams{OwnerID: owner, FromTime: from, ToTime: to})
+	if err != nil {
+		return 0, fmt.Errorf("sum tokens used: %w", err)
+	}
+	return n, nil
+}
+
+// TokensInFlight returns the tokens held by the owner's calls that have not
+// finished at now.
+func (r *Repo) TokensInFlight(ctx context.Context, owner uuid.UUID, now time.Time) (int64, error) {
+	n, err := r.q.SumOpenReservedTokens(ctx, db.SumOpenReservedTokensParams{OwnerID: owner, Now: now})
+	if err != nil {
+		return 0, fmt.Errorf("sum tokens in flight: %w", err)
+	}
+	return n, nil
 }
 
 // InsertProvider stores the owner's first provider. A second one is ErrDuplicate.

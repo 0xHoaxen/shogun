@@ -1600,8 +1600,14 @@ type Provider struct {
 	OutputMicrosPerMtok *int64                 `protobuf:"varint,5,opt,name=output_micros_per_mtok,json=outputMicrosPerMtok,proto3,oneof" json:"output_micros_per_mtok,omitempty"`
 	Version             int32                  `protobuf:"varint,6,opt,name=version,proto3" json:"version,omitempty"`
 	UpdatedAt           *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// monthly_token_cap, when set, stops this user's AI calls once their input and
+	// output tokens for the month, counting calls still in flight, would pass it.
+	// Unset means unlimited. It counts tokens, so it works for a model with no
+	// price. A refused call is ResourceExhausted with reason TOKEN_CAP_EXHAUSTED
+	// and metadata resets_at.
+	MonthlyTokenCap *int64 `protobuf:"varint,8,opt,name=monthly_token_cap,json=monthlyTokenCap,proto3,oneof" json:"monthly_token_cap,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Provider) Reset() {
@@ -1683,6 +1689,13 @@ func (x *Provider) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Provider) GetMonthlyTokenCap() int64 {
+	if x != nil && x.MonthlyTokenCap != nil {
+		return *x.MonthlyTokenCap
+	}
+	return 0
+}
+
 type SetProviderRequest struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	BaseUrl             string                 `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
@@ -1691,8 +1704,11 @@ type SetProviderRequest struct {
 	InputMicrosPerMtok  *int64                 `protobuf:"varint,4,opt,name=input_micros_per_mtok,json=inputMicrosPerMtok,proto3,oneof" json:"input_micros_per_mtok,omitempty"`
 	OutputMicrosPerMtok *int64                 `protobuf:"varint,5,opt,name=output_micros_per_mtok,json=outputMicrosPerMtok,proto3,oneof" json:"output_micros_per_mtok,omitempty"`
 	Version             int32                  `protobuf:"varint,6,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// monthly_token_cap must be above 0 when set (INVALID_TOKEN_CAP). Leaving it
+	// unset removes any cap.
+	MonthlyTokenCap *int64 `protobuf:"varint,7,opt,name=monthly_token_cap,json=monthlyTokenCap,proto3,oneof" json:"monthly_token_cap,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *SetProviderRequest) Reset() {
@@ -1763,6 +1779,13 @@ func (x *SetProviderRequest) GetOutputMicrosPerMtok() int64 {
 func (x *SetProviderRequest) GetVersion() int32 {
 	if x != nil {
 		return x.Version
+	}
+	return 0
+}
+
+func (x *SetProviderRequest) GetMonthlyTokenCap() int64 {
+	if x != nil && x.MonthlyTokenCap != nil {
+		return *x.MonthlyTokenCap
 	}
 	return 0
 }
@@ -1850,9 +1873,12 @@ func (*GetProviderRequest) Descriptor() ([]byte, []int) {
 type GetProviderResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// provider is unset when the caller has none.
-	Provider      *Provider `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Provider *Provider `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	// tokens_this_month is the caller's input, output and cache tokens so far this
+	// month, whether or not their model has a price.
+	TokensThisMonth int64 `protobuf:"varint,2,opt,name=tokens_this_month,json=tokensThisMonth,proto3" json:"tokens_this_month,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetProviderResponse) Reset() {
@@ -1890,6 +1916,13 @@ func (x *GetProviderResponse) GetProvider() *Provider {
 		return x.Provider
 	}
 	return nil
+}
+
+func (x *GetProviderResponse) GetTokensThisMonth() int64 {
+	if x != nil {
+		return x.TokensThisMonth
+	}
+	return 0
 }
 
 type DeleteProviderRequest struct {
@@ -2074,7 +2107,7 @@ const file_shogun_soroban_v1_soroban_proto_rawDesc = "" +
 	"\x05price\x18\x01 \x01(\v2\x18.shogun.soroban.v1.PriceR\x05price\"\x13\n" +
 	"\x11ListPricesRequest\"F\n" +
 	"\x12ListPricesResponse\x120\n" +
-	"\x06prices\x18\x01 \x03(\v2\x18.shogun.soroban.v1.PriceR\x06prices\"\xd4\x02\n" +
+	"\x06prices\x18\x01 \x03(\v2\x18.shogun.soroban.v1.PriceR\x06prices\"\x9b\x03\n" +
 	"\bProvider\x12\x19\n" +
 	"\bbase_url\x18\x01 \x01(\tR\abaseUrl\x12\x14\n" +
 	"\x05model\x18\x02 \x01(\tR\x05model\x12\x1b\n" +
@@ -2083,23 +2116,28 @@ const file_shogun_soroban_v1_soroban_proto_rawDesc = "" +
 	"\x16output_micros_per_mtok\x18\x05 \x01(\x03H\x01R\x13outputMicrosPerMtok\x88\x01\x01\x12\x18\n" +
 	"\aversion\x18\x06 \x01(\x05R\aversion\x129\n" +
 	"\n" +
-	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\x18\n" +
+	"updated_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x12/\n" +
+	"\x11monthly_token_cap\x18\b \x01(\x03H\x02R\x0fmonthlyTokenCap\x88\x01\x01B\x18\n" +
 	"\x16_input_micros_per_mtokB\x19\n" +
-	"\x17_output_micros_per_mtok\"\x9f\x02\n" +
+	"\x17_output_micros_per_mtokB\x14\n" +
+	"\x12_monthly_token_cap\"\xe6\x02\n" +
 	"\x12SetProviderRequest\x12\x19\n" +
 	"\bbase_url\x18\x01 \x01(\tR\abaseUrl\x12\x14\n" +
 	"\x05model\x18\x02 \x01(\tR\x05model\x12\x17\n" +
 	"\aapi_key\x18\x03 \x01(\tR\x06apiKey\x126\n" +
 	"\x15input_micros_per_mtok\x18\x04 \x01(\x03H\x00R\x12inputMicrosPerMtok\x88\x01\x01\x128\n" +
 	"\x16output_micros_per_mtok\x18\x05 \x01(\x03H\x01R\x13outputMicrosPerMtok\x88\x01\x01\x12\x18\n" +
-	"\aversion\x18\x06 \x01(\x05R\aversionB\x18\n" +
+	"\aversion\x18\x06 \x01(\x05R\aversion\x12/\n" +
+	"\x11monthly_token_cap\x18\a \x01(\x03H\x02R\x0fmonthlyTokenCap\x88\x01\x01B\x18\n" +
 	"\x16_input_micros_per_mtokB\x19\n" +
-	"\x17_output_micros_per_mtok\"N\n" +
+	"\x17_output_micros_per_mtokB\x14\n" +
+	"\x12_monthly_token_cap\"N\n" +
 	"\x13SetProviderResponse\x127\n" +
 	"\bprovider\x18\x01 \x01(\v2\x1b.shogun.soroban.v1.ProviderR\bprovider\"\x14\n" +
-	"\x12GetProviderRequest\"N\n" +
+	"\x12GetProviderRequest\"z\n" +
 	"\x13GetProviderResponse\x127\n" +
-	"\bprovider\x18\x01 \x01(\v2\x1b.shogun.soroban.v1.ProviderR\bprovider\"\x17\n" +
+	"\bprovider\x18\x01 \x01(\v2\x1b.shogun.soroban.v1.ProviderR\bprovider\x12*\n" +
+	"\x11tokens_this_month\x18\x02 \x01(\x03R\x0ftokensThisMonth\"\x17\n" +
 	"\x15DeleteProviderRequest\"\x18\n" +
 	"\x16DeleteProviderResponse*n\n" +
 	"\tScopeType\x12\x1a\n" +

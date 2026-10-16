@@ -37,8 +37,13 @@ func toStatus(err error) error {
 		return nil
 	}
 	var exhausted *domain.BudgetExhaustedError
+	var capped *domain.TokenCapExhaustedError
 	var ia *app.InvalidArgumentError
 	switch {
+	case errors.As(err, &capped):
+		return withReason(codes.ResourceExhausted, domain.ReasonTokenCapExhausted, capped.Error(), map[string]string{
+			"resets_at": capped.ResetsAt.UTC().Format(time.RFC3339),
+		})
 	case errors.As(err, &exhausted):
 		return withReason(codes.ResourceExhausted, domain.ReasonBudgetExhausted, exhausted.Error(), map[string]string{
 			"budget_id": exhausted.BudgetID.String(),

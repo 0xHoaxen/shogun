@@ -52,6 +52,7 @@ const (
 	ReasonInvalidProviderModel = "INVALID_PROVIDER_MODEL"
 	ReasonInvalidAPIKey        = "INVALID_API_KEY"
 	ReasonAPIKeyRequired       = "API_KEY_REQUIRED"
+	ReasonInvalidTokenCap      = "INVALID_TOKEN_CAP"
 )
 
 // Reasons of the InvalidArgumentError the admin use cases return.
