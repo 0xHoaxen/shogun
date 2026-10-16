@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -216,5 +217,88 @@ func TestPrivateAddressesAreAllowedOnlyInLocalDevelopmentAndTests(t *testing.T) 
 				t.Fatalf("err = %v in %q, want ErrNotPublic and no request", err, environment)
 			}
 		})
+	}
+}
+
+// replyWith is a provider that always answers with the given status.
+func replyWith(t *testing.T, status int) llm.Access {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, _ = io.WriteString(w, `{"type":"error","error":{"type":"x","message":"secret detail from the provider"}}`)
+	}))
+	t.Cleanup(srv.Close)
+	return accessFor(srv, "k")
+}
+
+func TestClassifyFailureNamesWhatWentWrongWithoutTheProvidersWords(t *testing.T) {
+	call := llm.CallRequest{MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}}}
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.MaxRetries(0))
+	tests := []struct {
+		status int
+		want   llm.FailureKind
+	}{
+		{http.StatusUnauthorized, llm.FailureRejected},
+		{http.StatusForbidden, llm.FailureRejected},
+		{http.StatusTooManyRequests, llm.FailureRateLimited},
+		{http.StatusNotFound, llm.FailureNotFound},
+		{http.StatusBadRequest, llm.FailureNotFound},
+		{http.StatusInternalServerError, llm.FailureProviderError},
+		{http.StatusBadGateway, llm.FailureProviderError},
+	}
+	for _, tt := range tests {
+		t.Run(http.StatusText(tt.status), func(t *testing.T) {
+			_, err := api.Create(context.Background(), replyWith(t, tt.status), call)
+
+			if got := llm.ClassifyFailure(err); got != tt.want {
+				t.Fatalf("ClassifyFailure = %q for status %d (err %v), want %q", got, tt.status, err, tt.want)
+			}
+		})
+	}
+}
+
+func TestClassifyFailureSeesThroughTheClientsWrapping(t *testing.T) {
+	// Complete wraps the provider's error, and a draft job wraps that again.
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.MaxRetries(0))
+	_, err := api.Create(context.Background(), replyWith(t, http.StatusUnauthorized), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+
+	wrapped := fmt.Errorf("draft job: %w", fmt.Errorf("claude call: %w", err))
+
+	if got := llm.ClassifyFailure(wrapped); got != llm.FailureRejected {
+		t.Fatalf("ClassifyFailure = %q, want rejected", got)
+	}
+}
+
+func TestClassifyFailureForNetworkProblems(t *testing.T) {
+	// Not public: the guard refused the address.
+	srv, _ := fakeAnthropic(t, "end_turn")
+	_, notPublic := llm.NewAnthropicAPI().Create(context.Background(), accessFor(srv, "k"), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+	// Unreachable: nothing listens there.
+	closed := httptest.NewServer(http.NotFoundHandler())
+	access := accessFor(closed, "k")
+	closed.Close()
+	_, unreachable := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.MaxRetries(0)).Create(context.Background(), access, llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+
+	if got := llm.ClassifyFailure(notPublic); got != llm.FailureNotPublic {
+		t.Errorf("a guarded address = %q, want not_public", got)
+	}
+	if got := llm.ClassifyFailure(unreachable); got != llm.FailureUnreachable {
+		t.Errorf("a closed port = %q (err %v), want unreachable", got, unreachable)
+	}
+	if got := llm.ClassifyFailure(context.DeadlineExceeded); got != llm.FailureUnreachable {
+		t.Errorf("a timeout = %q, want unreachable", got)
+	}
+	if got := llm.ClassifyFailure(errors.New("something else")); got != llm.FailureOther {
+		t.Errorf("an unknown error = %q, want other", got)
+	}
+	if got := llm.ClassifyFailure(nil); got != "" {
+		t.Errorf("no error = %q, want empty", got)
 	}
 }

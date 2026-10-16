@@ -300,6 +300,76 @@ func (VersionAuthor) EnumDescriptor() ([]byte, []int) {
 	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{4}
 }
 
+// ProviderFailure says why a call to a user's provider failed.
+type ProviderFailure int32
+
+const (
+	ProviderFailure_PROVIDER_FAILURE_UNSPECIFIED ProviderFailure = 0
+	// The provider refused the key.
+	ProviderFailure_PROVIDER_FAILURE_REJECTED     ProviderFailure = 1
+	ProviderFailure_PROVIDER_FAILURE_RATE_LIMITED ProviderFailure = 2
+	// The provider does not know the model, or the address path is wrong.
+	ProviderFailure_PROVIDER_FAILURE_NOT_FOUND ProviderFailure = 3
+	// No answer came: refused, no route, or too slow.
+	ProviderFailure_PROVIDER_FAILURE_UNREACHABLE ProviderFailure = 4
+	// The address names this machine or a private network, which is never called.
+	ProviderFailure_PROVIDER_FAILURE_NOT_PUBLIC ProviderFailure = 5
+	// The provider failed on its side.
+	ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR ProviderFailure = 6
+	ProviderFailure_PROVIDER_FAILURE_OTHER          ProviderFailure = 7
+)
+
+// Enum value maps for ProviderFailure.
+var (
+	ProviderFailure_name = map[int32]string{
+		0: "PROVIDER_FAILURE_UNSPECIFIED",
+		1: "PROVIDER_FAILURE_REJECTED",
+		2: "PROVIDER_FAILURE_RATE_LIMITED",
+		3: "PROVIDER_FAILURE_NOT_FOUND",
+		4: "PROVIDER_FAILURE_UNREACHABLE",
+		5: "PROVIDER_FAILURE_NOT_PUBLIC",
+		6: "PROVIDER_FAILURE_PROVIDER_ERROR",
+		7: "PROVIDER_FAILURE_OTHER",
+	}
+	ProviderFailure_value = map[string]int32{
+		"PROVIDER_FAILURE_UNSPECIFIED":    0,
+		"PROVIDER_FAILURE_REJECTED":       1,
+		"PROVIDER_FAILURE_RATE_LIMITED":   2,
+		"PROVIDER_FAILURE_NOT_FOUND":      3,
+		"PROVIDER_FAILURE_UNREACHABLE":    4,
+		"PROVIDER_FAILURE_NOT_PUBLIC":     5,
+		"PROVIDER_FAILURE_PROVIDER_ERROR": 6,
+		"PROVIDER_FAILURE_OTHER":          7,
+	}
+)
+
+func (x ProviderFailure) Enum() *ProviderFailure {
+	p := new(ProviderFailure)
+	*p = x
+	return p
+}
+
+func (x ProviderFailure) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ProviderFailure) Descriptor() protoreflect.EnumDescriptor {
+	return file_shogun_fude_v1_fude_proto_enumTypes[5].Descriptor()
+}
+
+func (ProviderFailure) Type() protoreflect.EnumType {
+	return &file_shogun_fude_v1_fude_proto_enumTypes[5]
+}
+
+func (x ProviderFailure) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ProviderFailure.Descriptor instead.
+func (ProviderFailure) EnumDescriptor() ([]byte, []int) {
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{5}
+}
+
 type Draft struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
 	Id         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1602,6 +1672,104 @@ func (x *AddVoiceSampleResponse) GetSample() *VoiceSample {
 	return nil
 }
 
+type TestProviderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestProviderRequest) Reset() {
+	*x = TestProviderRequest{}
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestProviderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestProviderRequest) ProtoMessage() {}
+
+func (x *TestProviderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestProviderRequest.ProtoReflect.Descriptor instead.
+func (*TestProviderRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{21}
+}
+
+type TestProviderResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Ok    bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
+	// failure is unspecified when ok.
+	Failure ProviderFailure `protobuf:"varint,2,opt,name=failure,proto3,enum=shogun.fude.v1.ProviderFailure" json:"failure,omitempty"`
+	// model is the model that answered, when ok.
+	Model         string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TestProviderResponse) Reset() {
+	*x = TestProviderResponse{}
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TestProviderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TestProviderResponse) ProtoMessage() {}
+
+func (x *TestProviderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_fude_v1_fude_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TestProviderResponse.ProtoReflect.Descriptor instead.
+func (*TestProviderResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *TestProviderResponse) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *TestProviderResponse) GetFailure() ProviderFailure {
+	if x != nil {
+		return x.Failure
+	}
+	return ProviderFailure_PROVIDER_FAILURE_UNSPECIFIED
+}
+
+func (x *TestProviderResponse) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
 var File_shogun_fude_v1_fude_proto protoreflect.FileDescriptor
 
 const file_shogun_fude_v1_fude_proto_rawDesc = "" +
@@ -1706,7 +1874,12 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\achannel\x18\x01 \x01(\x0e2\x17.shogun.fude.v1.ChannelR\achannel\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"M\n" +
 	"\x16AddVoiceSampleResponse\x123\n" +
-	"\x06sample\x18\x01 \x01(\v2\x1b.shogun.fude.v1.VoiceSampleR\x06sample*\xa4\x01\n" +
+	"\x06sample\x18\x01 \x01(\v2\x1b.shogun.fude.v1.VoiceSampleR\x06sample\"\x15\n" +
+	"\x13TestProviderRequest\"w\n" +
+	"\x14TestProviderResponse\x12\x0e\n" +
+	"\x02ok\x18\x01 \x01(\bR\x02ok\x129\n" +
+	"\afailure\x18\x02 \x01(\x0e2\x1f.shogun.fude.v1.ProviderFailureR\afailure\x12\x14\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model*\xa4\x01\n" +
 	"\tDraftKind\x12\x1a\n" +
 	"\x16DRAFT_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17DRAFT_KIND_COVER_LETTER\x10\x01\x12\x17\n" +
@@ -1739,7 +1912,16 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\rVersionAuthor\x12\x1e\n" +
 	"\x1aVERSION_AUTHOR_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11VERSION_AUTHOR_AI\x10\x01\x12\x17\n" +
-	"\x13VERSION_AUTHOR_USER\x10\x022\x81\x06\n" +
+	"\x13VERSION_AUTHOR_USER\x10\x02*\x99\x02\n" +
+	"\x0fProviderFailure\x12 \n" +
+	"\x1cPROVIDER_FAILURE_UNSPECIFIED\x10\x00\x12\x1d\n" +
+	"\x19PROVIDER_FAILURE_REJECTED\x10\x01\x12!\n" +
+	"\x1dPROVIDER_FAILURE_RATE_LIMITED\x10\x02\x12\x1e\n" +
+	"\x1aPROVIDER_FAILURE_NOT_FOUND\x10\x03\x12 \n" +
+	"\x1cPROVIDER_FAILURE_UNREACHABLE\x10\x04\x12\x1f\n" +
+	"\x1bPROVIDER_FAILURE_NOT_PUBLIC\x10\x05\x12#\n" +
+	"\x1fPROVIDER_FAILURE_PROVIDER_ERROR\x10\x06\x12\x1a\n" +
+	"\x16PROVIDER_FAILURE_OTHER\x10\a2\xdc\x06\n" +
 	"\vFudeService\x12\\\n" +
 	"\rGenerateDraft\x12$.shogun.fude.v1.GenerateDraftRequest\x1a%.shogun.fude.v1.GenerateDraftResponse\x12S\n" +
 	"\n" +
@@ -1751,7 +1933,8 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"MarkPosted\x12!.shogun.fude.v1.MarkPostedRequest\x1a\".shogun.fude.v1.MarkPostedResponse\x12P\n" +
 	"\tListQueue\x12 .shogun.fude.v1.ListQueueRequest\x1a!.shogun.fude.v1.ListQueueResponse\x12M\n" +
 	"\bGetDraft\x12\x1f.shogun.fude.v1.GetDraftRequest\x1a .shogun.fude.v1.GetDraftResponse\x12_\n" +
-	"\x0eAddVoiceSample\x12%.shogun.fude.v1.AddVoiceSampleRequest\x1a&.shogun.fude.v1.AddVoiceSampleResponseB\xb2\x01\n" +
+	"\x0eAddVoiceSample\x12%.shogun.fude.v1.AddVoiceSampleRequest\x1a&.shogun.fude.v1.AddVoiceSampleResponse\x12Y\n" +
+	"\fTestProvider\x12#.shogun.fude.v1.TestProviderRequest\x1a$.shogun.fude.v1.TestProviderResponseB\xb2\x01\n" +
 	"\x12com.shogun.fude.v1B\tFudeProtoP\x01Z7github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1;fudev1\xa2\x02\x03SFX\xaa\x02\x0eShogun.Fude.V1\xca\x02\x0eShogun\\Fude\\V1\xe2\x02\x1aShogun\\Fude\\V1\\GPBMetadata\xea\x02\x10Shogun::Fude::V1b\x06proto3"
 
 var (
@@ -1766,87 +1949,93 @@ func file_shogun_fude_v1_fude_proto_rawDescGZIP() []byte {
 	return file_shogun_fude_v1_fude_proto_rawDescData
 }
 
-var file_shogun_fude_v1_fude_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
-var file_shogun_fude_v1_fude_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_shogun_fude_v1_fude_proto_enumTypes = make([]protoimpl.EnumInfo, 6)
+var file_shogun_fude_v1_fude_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_shogun_fude_v1_fude_proto_goTypes = []any{
 	(DraftKind)(0),                 // 0: shogun.fude.v1.DraftKind
 	(TargetType)(0),                // 1: shogun.fude.v1.TargetType
 	(Channel)(0),                   // 2: shogun.fude.v1.Channel
 	(DraftState)(0),                // 3: shogun.fude.v1.DraftState
 	(VersionAuthor)(0),             // 4: shogun.fude.v1.VersionAuthor
-	(*Draft)(nil),                  // 5: shogun.fude.v1.Draft
-	(*DraftVersion)(nil),           // 6: shogun.fude.v1.DraftVersion
-	(*VoiceSample)(nil),            // 7: shogun.fude.v1.VoiceSample
-	(*GenerateDraftRequest)(nil),   // 8: shogun.fude.v1.GenerateDraftRequest
-	(*GenerateDraftResponse)(nil),  // 9: shogun.fude.v1.GenerateDraftResponse
-	(*RegenerateRequest)(nil),      // 10: shogun.fude.v1.RegenerateRequest
-	(*RegenerateResponse)(nil),     // 11: shogun.fude.v1.RegenerateResponse
-	(*EditDraftRequest)(nil),       // 12: shogun.fude.v1.EditDraftRequest
-	(*EditDraftResponse)(nil),      // 13: shogun.fude.v1.EditDraftResponse
-	(*ApproveRequest)(nil),         // 14: shogun.fude.v1.ApproveRequest
-	(*ApproveResponse)(nil),        // 15: shogun.fude.v1.ApproveResponse
-	(*DiscardRequest)(nil),         // 16: shogun.fude.v1.DiscardRequest
-	(*DiscardResponse)(nil),        // 17: shogun.fude.v1.DiscardResponse
-	(*MarkPostedRequest)(nil),      // 18: shogun.fude.v1.MarkPostedRequest
-	(*MarkPostedResponse)(nil),     // 19: shogun.fude.v1.MarkPostedResponse
-	(*ListQueueRequest)(nil),       // 20: shogun.fude.v1.ListQueueRequest
-	(*ListQueueResponse)(nil),      // 21: shogun.fude.v1.ListQueueResponse
-	(*GetDraftRequest)(nil),        // 22: shogun.fude.v1.GetDraftRequest
-	(*GetDraftResponse)(nil),       // 23: shogun.fude.v1.GetDraftResponse
-	(*AddVoiceSampleRequest)(nil),  // 24: shogun.fude.v1.AddVoiceSampleRequest
-	(*AddVoiceSampleResponse)(nil), // 25: shogun.fude.v1.AddVoiceSampleResponse
-	(*timestamppb.Timestamp)(nil),  // 26: google.protobuf.Timestamp
+	(ProviderFailure)(0),           // 5: shogun.fude.v1.ProviderFailure
+	(*Draft)(nil),                  // 6: shogun.fude.v1.Draft
+	(*DraftVersion)(nil),           // 7: shogun.fude.v1.DraftVersion
+	(*VoiceSample)(nil),            // 8: shogun.fude.v1.VoiceSample
+	(*GenerateDraftRequest)(nil),   // 9: shogun.fude.v1.GenerateDraftRequest
+	(*GenerateDraftResponse)(nil),  // 10: shogun.fude.v1.GenerateDraftResponse
+	(*RegenerateRequest)(nil),      // 11: shogun.fude.v1.RegenerateRequest
+	(*RegenerateResponse)(nil),     // 12: shogun.fude.v1.RegenerateResponse
+	(*EditDraftRequest)(nil),       // 13: shogun.fude.v1.EditDraftRequest
+	(*EditDraftResponse)(nil),      // 14: shogun.fude.v1.EditDraftResponse
+	(*ApproveRequest)(nil),         // 15: shogun.fude.v1.ApproveRequest
+	(*ApproveResponse)(nil),        // 16: shogun.fude.v1.ApproveResponse
+	(*DiscardRequest)(nil),         // 17: shogun.fude.v1.DiscardRequest
+	(*DiscardResponse)(nil),        // 18: shogun.fude.v1.DiscardResponse
+	(*MarkPostedRequest)(nil),      // 19: shogun.fude.v1.MarkPostedRequest
+	(*MarkPostedResponse)(nil),     // 20: shogun.fude.v1.MarkPostedResponse
+	(*ListQueueRequest)(nil),       // 21: shogun.fude.v1.ListQueueRequest
+	(*ListQueueResponse)(nil),      // 22: shogun.fude.v1.ListQueueResponse
+	(*GetDraftRequest)(nil),        // 23: shogun.fude.v1.GetDraftRequest
+	(*GetDraftResponse)(nil),       // 24: shogun.fude.v1.GetDraftResponse
+	(*AddVoiceSampleRequest)(nil),  // 25: shogun.fude.v1.AddVoiceSampleRequest
+	(*AddVoiceSampleResponse)(nil), // 26: shogun.fude.v1.AddVoiceSampleResponse
+	(*TestProviderRequest)(nil),    // 27: shogun.fude.v1.TestProviderRequest
+	(*TestProviderResponse)(nil),   // 28: shogun.fude.v1.TestProviderResponse
+	(*timestamppb.Timestamp)(nil),  // 29: google.protobuf.Timestamp
 }
 var file_shogun_fude_v1_fude_proto_depIdxs = []int32{
 	0,  // 0: shogun.fude.v1.Draft.kind:type_name -> shogun.fude.v1.DraftKind
 	1,  // 1: shogun.fude.v1.Draft.target_type:type_name -> shogun.fude.v1.TargetType
 	2,  // 2: shogun.fude.v1.Draft.channel:type_name -> shogun.fude.v1.Channel
 	3,  // 3: shogun.fude.v1.Draft.state:type_name -> shogun.fude.v1.DraftState
-	26, // 4: shogun.fude.v1.Draft.created_at:type_name -> google.protobuf.Timestamp
-	26, // 5: shogun.fude.v1.Draft.updated_at:type_name -> google.protobuf.Timestamp
+	29, // 4: shogun.fude.v1.Draft.created_at:type_name -> google.protobuf.Timestamp
+	29, // 5: shogun.fude.v1.Draft.updated_at:type_name -> google.protobuf.Timestamp
 	4,  // 6: shogun.fude.v1.DraftVersion.created_by:type_name -> shogun.fude.v1.VersionAuthor
-	26, // 7: shogun.fude.v1.DraftVersion.created_at:type_name -> google.protobuf.Timestamp
+	29, // 7: shogun.fude.v1.DraftVersion.created_at:type_name -> google.protobuf.Timestamp
 	2,  // 8: shogun.fude.v1.VoiceSample.channel:type_name -> shogun.fude.v1.Channel
-	26, // 9: shogun.fude.v1.VoiceSample.created_at:type_name -> google.protobuf.Timestamp
+	29, // 9: shogun.fude.v1.VoiceSample.created_at:type_name -> google.protobuf.Timestamp
 	0,  // 10: shogun.fude.v1.GenerateDraftRequest.kind:type_name -> shogun.fude.v1.DraftKind
 	1,  // 11: shogun.fude.v1.GenerateDraftRequest.target_type:type_name -> shogun.fude.v1.TargetType
 	2,  // 12: shogun.fude.v1.GenerateDraftRequest.channel:type_name -> shogun.fude.v1.Channel
-	5,  // 13: shogun.fude.v1.GenerateDraftResponse.draft:type_name -> shogun.fude.v1.Draft
-	5,  // 14: shogun.fude.v1.RegenerateResponse.draft:type_name -> shogun.fude.v1.Draft
-	5,  // 15: shogun.fude.v1.EditDraftResponse.draft:type_name -> shogun.fude.v1.Draft
-	6,  // 16: shogun.fude.v1.EditDraftResponse.draft_version:type_name -> shogun.fude.v1.DraftVersion
-	5,  // 17: shogun.fude.v1.ApproveResponse.draft:type_name -> shogun.fude.v1.Draft
-	5,  // 18: shogun.fude.v1.DiscardResponse.draft:type_name -> shogun.fude.v1.Draft
-	5,  // 19: shogun.fude.v1.MarkPostedResponse.draft:type_name -> shogun.fude.v1.Draft
+	6,  // 13: shogun.fude.v1.GenerateDraftResponse.draft:type_name -> shogun.fude.v1.Draft
+	6,  // 14: shogun.fude.v1.RegenerateResponse.draft:type_name -> shogun.fude.v1.Draft
+	6,  // 15: shogun.fude.v1.EditDraftResponse.draft:type_name -> shogun.fude.v1.Draft
+	7,  // 16: shogun.fude.v1.EditDraftResponse.draft_version:type_name -> shogun.fude.v1.DraftVersion
+	6,  // 17: shogun.fude.v1.ApproveResponse.draft:type_name -> shogun.fude.v1.Draft
+	6,  // 18: shogun.fude.v1.DiscardResponse.draft:type_name -> shogun.fude.v1.Draft
+	6,  // 19: shogun.fude.v1.MarkPostedResponse.draft:type_name -> shogun.fude.v1.Draft
 	3,  // 20: shogun.fude.v1.ListQueueRequest.state:type_name -> shogun.fude.v1.DraftState
-	5,  // 21: shogun.fude.v1.ListQueueResponse.drafts:type_name -> shogun.fude.v1.Draft
-	5,  // 22: shogun.fude.v1.GetDraftResponse.draft:type_name -> shogun.fude.v1.Draft
-	6,  // 23: shogun.fude.v1.GetDraftResponse.versions:type_name -> shogun.fude.v1.DraftVersion
+	6,  // 21: shogun.fude.v1.ListQueueResponse.drafts:type_name -> shogun.fude.v1.Draft
+	6,  // 22: shogun.fude.v1.GetDraftResponse.draft:type_name -> shogun.fude.v1.Draft
+	7,  // 23: shogun.fude.v1.GetDraftResponse.versions:type_name -> shogun.fude.v1.DraftVersion
 	2,  // 24: shogun.fude.v1.AddVoiceSampleRequest.channel:type_name -> shogun.fude.v1.Channel
-	7,  // 25: shogun.fude.v1.AddVoiceSampleResponse.sample:type_name -> shogun.fude.v1.VoiceSample
-	8,  // 26: shogun.fude.v1.FudeService.GenerateDraft:input_type -> shogun.fude.v1.GenerateDraftRequest
-	10, // 27: shogun.fude.v1.FudeService.Regenerate:input_type -> shogun.fude.v1.RegenerateRequest
-	12, // 28: shogun.fude.v1.FudeService.EditDraft:input_type -> shogun.fude.v1.EditDraftRequest
-	14, // 29: shogun.fude.v1.FudeService.Approve:input_type -> shogun.fude.v1.ApproveRequest
-	16, // 30: shogun.fude.v1.FudeService.Discard:input_type -> shogun.fude.v1.DiscardRequest
-	18, // 31: shogun.fude.v1.FudeService.MarkPosted:input_type -> shogun.fude.v1.MarkPostedRequest
-	20, // 32: shogun.fude.v1.FudeService.ListQueue:input_type -> shogun.fude.v1.ListQueueRequest
-	22, // 33: shogun.fude.v1.FudeService.GetDraft:input_type -> shogun.fude.v1.GetDraftRequest
-	24, // 34: shogun.fude.v1.FudeService.AddVoiceSample:input_type -> shogun.fude.v1.AddVoiceSampleRequest
-	9,  // 35: shogun.fude.v1.FudeService.GenerateDraft:output_type -> shogun.fude.v1.GenerateDraftResponse
-	11, // 36: shogun.fude.v1.FudeService.Regenerate:output_type -> shogun.fude.v1.RegenerateResponse
-	13, // 37: shogun.fude.v1.FudeService.EditDraft:output_type -> shogun.fude.v1.EditDraftResponse
-	15, // 38: shogun.fude.v1.FudeService.Approve:output_type -> shogun.fude.v1.ApproveResponse
-	17, // 39: shogun.fude.v1.FudeService.Discard:output_type -> shogun.fude.v1.DiscardResponse
-	19, // 40: shogun.fude.v1.FudeService.MarkPosted:output_type -> shogun.fude.v1.MarkPostedResponse
-	21, // 41: shogun.fude.v1.FudeService.ListQueue:output_type -> shogun.fude.v1.ListQueueResponse
-	23, // 42: shogun.fude.v1.FudeService.GetDraft:output_type -> shogun.fude.v1.GetDraftResponse
-	25, // 43: shogun.fude.v1.FudeService.AddVoiceSample:output_type -> shogun.fude.v1.AddVoiceSampleResponse
-	35, // [35:44] is the sub-list for method output_type
-	26, // [26:35] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	8,  // 25: shogun.fude.v1.AddVoiceSampleResponse.sample:type_name -> shogun.fude.v1.VoiceSample
+	5,  // 26: shogun.fude.v1.TestProviderResponse.failure:type_name -> shogun.fude.v1.ProviderFailure
+	9,  // 27: shogun.fude.v1.FudeService.GenerateDraft:input_type -> shogun.fude.v1.GenerateDraftRequest
+	11, // 28: shogun.fude.v1.FudeService.Regenerate:input_type -> shogun.fude.v1.RegenerateRequest
+	13, // 29: shogun.fude.v1.FudeService.EditDraft:input_type -> shogun.fude.v1.EditDraftRequest
+	15, // 30: shogun.fude.v1.FudeService.Approve:input_type -> shogun.fude.v1.ApproveRequest
+	17, // 31: shogun.fude.v1.FudeService.Discard:input_type -> shogun.fude.v1.DiscardRequest
+	19, // 32: shogun.fude.v1.FudeService.MarkPosted:input_type -> shogun.fude.v1.MarkPostedRequest
+	21, // 33: shogun.fude.v1.FudeService.ListQueue:input_type -> shogun.fude.v1.ListQueueRequest
+	23, // 34: shogun.fude.v1.FudeService.GetDraft:input_type -> shogun.fude.v1.GetDraftRequest
+	25, // 35: shogun.fude.v1.FudeService.AddVoiceSample:input_type -> shogun.fude.v1.AddVoiceSampleRequest
+	27, // 36: shogun.fude.v1.FudeService.TestProvider:input_type -> shogun.fude.v1.TestProviderRequest
+	10, // 37: shogun.fude.v1.FudeService.GenerateDraft:output_type -> shogun.fude.v1.GenerateDraftResponse
+	12, // 38: shogun.fude.v1.FudeService.Regenerate:output_type -> shogun.fude.v1.RegenerateResponse
+	14, // 39: shogun.fude.v1.FudeService.EditDraft:output_type -> shogun.fude.v1.EditDraftResponse
+	16, // 40: shogun.fude.v1.FudeService.Approve:output_type -> shogun.fude.v1.ApproveResponse
+	18, // 41: shogun.fude.v1.FudeService.Discard:output_type -> shogun.fude.v1.DiscardResponse
+	20, // 42: shogun.fude.v1.FudeService.MarkPosted:output_type -> shogun.fude.v1.MarkPostedResponse
+	22, // 43: shogun.fude.v1.FudeService.ListQueue:output_type -> shogun.fude.v1.ListQueueResponse
+	24, // 44: shogun.fude.v1.FudeService.GetDraft:output_type -> shogun.fude.v1.GetDraftResponse
+	26, // 45: shogun.fude.v1.FudeService.AddVoiceSample:output_type -> shogun.fude.v1.AddVoiceSampleResponse
+	28, // 46: shogun.fude.v1.FudeService.TestProvider:output_type -> shogun.fude.v1.TestProviderResponse
+	37, // [37:47] is the sub-list for method output_type
+	27, // [27:37] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_shogun_fude_v1_fude_proto_init() }
@@ -1859,8 +2048,8 @@ func file_shogun_fude_v1_fude_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_fude_v1_fude_proto_rawDesc), len(file_shogun_fude_v1_fude_proto_rawDesc)),
-			NumEnums:      5,
-			NumMessages:   21,
+			NumEnums:      6,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

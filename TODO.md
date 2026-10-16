@@ -828,8 +828,16 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: an optional monthly token cap on the user's provider (`monthly_token_cap`, unset means unlimited; migration `00005`), set through `SetProvider` and shown in `GetProvider` with `tokens_this_month`. `Reserve` refuses a call that would take the user past it, counting tokens already used this month and those held by calls still in flight (`reservations.est_tokens`), with `TOKEN_CAP_EXHAUSTED` and `resets_at`; the provider row is locked for the check, so racing calls cannot pass the cap (tested: 20 calls of 1000 against a 10000 cap give exactly 10). The cap counts tokens, so it works for a model with no price, and applies to priced models too. `pkg/llm` already turns the refusal into a `BudgetError` with a reset time, so workers wait out the month. Token counts per service, feature and model were already in `GetSpend`; the Spend screen shows them in P11.5e. Users already edit only their own budgets (`SetBudget`/`ListBudgets` are scoped to the caller; tested against editing another user's by id). The all-owners cap from the first plan is dropped: users pay for their own AI. Known limits: months are counted in India time for everyone, as budgets are, since soroban does not yet get the per-user time zone; a fude draft refused by the cap shows reason `budget_exhausted`.
   Done when: `cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`, `make test`.
 
-- [ ] **P11.5e AI provider settings UI** (M) Needs: P11.5d, P11.10
-  Do: Settings AI provider form and "add your provider" prompts.
+- [x] **P11.5e1 Test a provider** (M) Needs: P11.5d
+  Do: `llm.ClassifyFailure` names why a call to a provider failed (`rejected`, `rate_limited`, `not_found`, `unreachable`, `not_public`, `provider_error`, `other`), seeing through any wrapping and never passing on the provider's own words, which can echo the key; fude's new `TestProvider` RPC makes one tiny metered call (feature `fude.test_connection`, 16 output tokens, default soft daily budget row in soroban `00006`) with the caller's own provider. A provider that fails is a result (`ok=false` and a `ProviderFailure`); no provider, a spent budget or cap, and metering down are errors with their own reasons. fude's gRPC layer now maps `AI_PROVIDER_NOT_CONFIGURED`, `BUDGET_EXHAUSTED` (with `resets_at`) and `METERING_UNAVAILABLE`.
+  Done when: `cd pkg && go test -race ./llm/...`, `cd services/fude && go test -race ./...`, `cd services/soroban && go test -race ./...`, `make lint`.
+
+- [ ] **P11.5e2 AI provider API in torii** (M) Needs: P11.5e1
+  Do: `shogun.api.v1.ProviderService` (`GetProvider`, `SetProvider`, `DeleteProvider`, `TestProvider`) mapped onto soroban and fude; the key is write-only and never returned or logged; errors keep their reasons; a handler test per RPC.
+  Done when: `make proto`, `cd services/torii && go test -race ./...`.
+
+- [ ] **P11.5e3 AI provider settings screen** (M) Needs: P11.5e2, P11.10
+  Do: Settings > AI provider tab (address, model, write-only key with last four shown, optional prices and monthly token cap, Test connection, remove) with copy in `web/src/content/sections.ts`; Spend shows token counts for models with no price; every AI action explains "add your AI provider in Settings" for `AI_PROVIDER_NOT_CONFIGURED` and fude's `provider_not_configured`; `web/e2e-compose` seeds a provider for its test user (mock at `http://mock-apis:8090`).
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4a, P11.10

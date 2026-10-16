@@ -33,9 +33,9 @@ func TestMigrationsSeedPricesAndDefaultBudgets(t *testing.T) {
 		want  int
 	}{
 		{"seeded prices", `SELECT count(*) FROM prices`, 3},
-		{"default budgets", `SELECT count(*) FROM budgets`, 11},
+		{"default budgets", `SELECT count(*) FROM budgets`, 12},
 		{"global monthly hard budget is $20", `SELECT count(*) FROM budgets WHERE scope_type = 'global' AND period = 'monthly' AND mode = 'hard' AND limit_micros = 20000000`, 1},
-		{"every feature budget is daily soft", `SELECT count(*) FROM budgets WHERE scope_type = 'feature' AND period = 'daily' AND mode = 'soft'`, 6},
+		{"every feature budget is daily soft", `SELECT count(*) FROM budgets WHERE scope_type = 'feature' AND period = 'daily' AND mode = 'soft'`, 7},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
