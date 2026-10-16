@@ -45,7 +45,42 @@ type harness struct {
 	owner     string
 }
 
+// newHarness is a harness whose owner has set an AI provider, which is what a
+// caller of Reserve needs. The model is claude-opus-5-5, priced in the table.
 func newHarness(t *testing.T) *harness {
+	t.Helper()
+	h := newBareHarness(t)
+	h.useProvider(t, h.owner, "claude-opus-5-5")
+	return h
+}
+
+// useProvider gives owner a provider with that model, at a public address.
+func (h *harness) useProvider(t *testing.T, owner, model string) {
+	t.Helper()
+	_, err := h.svc.SetProvider(appCtx(owner), app.ProviderInput{BaseURL: "https://llm.example.com/v1", Model: model, APIKey: secretKey})
+	if err != nil {
+		t.Fatalf("useProvider: %v", err)
+	}
+}
+
+// switchModel changes the model of the harness owner's provider, keeping its
+// address and key, as a user would when they move to another model.
+func (h *harness) switchModel(t *testing.T, model string) {
+	t.Helper()
+	cur, err := h.svc.GetProvider(appCtx(h.owner))
+	if err != nil {
+		t.Fatalf("GetProvider: %v", err)
+	}
+	if _, err := h.svc.SetProvider(appCtx(h.owner), app.ProviderInput{
+		BaseURL: cur.BaseURL, Model: model, Version: cur.Version,
+		InputMicrosPerMTok: cur.InputMicrosPerMTok, OutputMicrosPerMTok: cur.OutputMicrosPerMTok,
+	}); err != nil {
+		t.Fatalf("switchModel: %v", err)
+	}
+}
+
+// newBareHarness is a harness whose owner has no AI provider.
+func newBareHarness(t *testing.T) *harness {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "soroban")

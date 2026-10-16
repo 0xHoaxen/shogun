@@ -300,7 +300,11 @@ type ReserveRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Service string                 `protobuf:"bytes,1,opt,name=service,proto3" json:"service,omitempty"`
 	// feature is service.name, for example fude.cover_letter.
-	Feature         string `protobuf:"bytes,2,opt,name=feature,proto3" json:"feature,omitempty"`
+	Feature string `protobuf:"bytes,2,opt,name=feature,proto3" json:"feature,omitempty"`
+	// model is ignored: the model is the one in the caller's provider. Kept so
+	// older callers still decode.
+	//
+	// Deprecated: Marked as deprecated in shogun/soroban/v1/soroban.proto.
 	Model           string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
 	EstInputTokens  int32  `protobuf:"varint,4,opt,name=est_input_tokens,json=estInputTokens,proto3" json:"est_input_tokens,omitempty"`
 	EstOutputTokens int32  `protobuf:"varint,5,opt,name=est_output_tokens,json=estOutputTokens,proto3" json:"est_output_tokens,omitempty"`
@@ -352,6 +356,7 @@ func (x *ReserveRequest) GetFeature() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in shogun/soroban/v1/soroban.proto.
 func (x *ReserveRequest) GetModel() string {
 	if x != nil {
 		return x.Model
@@ -378,6 +383,9 @@ type ReserveResponse struct {
 	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	EstMicros     int64                  `protobuf:"varint,3,opt,name=est_micros,json=estMicros,proto3" json:"est_micros,omitempty"`
+	// provider is what to make the call with: the caller's address, model and
+	// key. It is secret; callers use it for this call only and never log it.
+	Provider      *ProviderAccess `protobuf:"bytes,4,opt,name=provider,proto3" json:"provider,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -433,6 +441,74 @@ func (x *ReserveResponse) GetEstMicros() int64 {
 	return 0
 }
 
+func (x *ReserveResponse) GetProvider() *ProviderAccess {
+	if x != nil {
+		return x.Provider
+	}
+	return nil
+}
+
+// ProviderAccess is a provider with its key opened, for one call.
+type ProviderAccess struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BaseUrl       string                 `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3" json:"base_url,omitempty"`
+	Model         string                 `protobuf:"bytes,2,opt,name=model,proto3" json:"model,omitempty"`
+	ApiKey        string                 `protobuf:"bytes,3,opt,name=api_key,json=apiKey,proto3" json:"api_key,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProviderAccess) Reset() {
+	*x = ProviderAccess{}
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProviderAccess) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProviderAccess) ProtoMessage() {}
+
+func (x *ProviderAccess) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProviderAccess.ProtoReflect.Descriptor instead.
+func (*ProviderAccess) Descriptor() ([]byte, []int) {
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ProviderAccess) GetBaseUrl() string {
+	if x != nil {
+		return x.BaseUrl
+	}
+	return ""
+}
+
+func (x *ProviderAccess) GetModel() string {
+	if x != nil {
+		return x.Model
+	}
+	return ""
+}
+
+func (x *ProviderAccess) GetApiKey() string {
+	if x != nil {
+		return x.ApiKey
+	}
+	return ""
+}
+
 type CommitRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReservationId string                 `protobuf:"bytes,1,opt,name=reservation_id,json=reservationId,proto3" json:"reservation_id,omitempty"`
@@ -444,7 +520,7 @@ type CommitRequest struct {
 
 func (x *CommitRequest) Reset() {
 	*x = CommitRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[3]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +532,7 @@ func (x *CommitRequest) String() string {
 func (*CommitRequest) ProtoMessage() {}
 
 func (x *CommitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[3]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +545,7 @@ func (x *CommitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitRequest.ProtoReflect.Descriptor instead.
 func (*CommitRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{3}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *CommitRequest) GetReservationId() string {
@@ -509,7 +585,7 @@ type LedgerEntry struct {
 
 func (x *LedgerEntry) Reset() {
 	*x = LedgerEntry{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[4]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -521,7 +597,7 @@ func (x *LedgerEntry) String() string {
 func (*LedgerEntry) ProtoMessage() {}
 
 func (x *LedgerEntry) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[4]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -534,7 +610,7 @@ func (x *LedgerEntry) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LedgerEntry.ProtoReflect.Descriptor instead.
 func (*LedgerEntry) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{4}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *LedgerEntry) GetId() string {
@@ -602,7 +678,7 @@ type CommitResponse struct {
 
 func (x *CommitResponse) Reset() {
 	*x = CommitResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[5]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -614,7 +690,7 @@ func (x *CommitResponse) String() string {
 func (*CommitResponse) ProtoMessage() {}
 
 func (x *CommitResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[5]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -627,7 +703,7 @@ func (x *CommitResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitResponse.ProtoReflect.Descriptor instead.
 func (*CommitResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{5}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CommitResponse) GetEntry() *LedgerEntry {
@@ -646,7 +722,7 @@ type ReleaseRequest struct {
 
 func (x *ReleaseRequest) Reset() {
 	*x = ReleaseRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[6]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -658,7 +734,7 @@ func (x *ReleaseRequest) String() string {
 func (*ReleaseRequest) ProtoMessage() {}
 
 func (x *ReleaseRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[6]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -671,7 +747,7 @@ func (x *ReleaseRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseRequest.ProtoReflect.Descriptor instead.
 func (*ReleaseRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{6}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ReleaseRequest) GetReservationId() string {
@@ -689,7 +765,7 @@ type ReleaseResponse struct {
 
 func (x *ReleaseResponse) Reset() {
 	*x = ReleaseResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[7]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -701,7 +777,7 @@ func (x *ReleaseResponse) String() string {
 func (*ReleaseResponse) ProtoMessage() {}
 
 func (x *ReleaseResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[7]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -714,7 +790,7 @@ func (x *ReleaseResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReleaseResponse.ProtoReflect.Descriptor instead.
 func (*ReleaseResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{7}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{8}
 }
 
 type GetSpendRequest struct {
@@ -728,7 +804,7 @@ type GetSpendRequest struct {
 
 func (x *GetSpendRequest) Reset() {
 	*x = GetSpendRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[8]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -740,7 +816,7 @@ func (x *GetSpendRequest) String() string {
 func (*GetSpendRequest) ProtoMessage() {}
 
 func (x *GetSpendRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[8]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -753,7 +829,7 @@ func (x *GetSpendRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSpendRequest.ProtoReflect.Descriptor instead.
 func (*GetSpendRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{8}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetSpendRequest) GetFrom() *timestamppb.Timestamp {
@@ -789,7 +865,7 @@ type SpendRow struct {
 
 func (x *SpendRow) Reset() {
 	*x = SpendRow{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[9]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -801,7 +877,7 @@ func (x *SpendRow) String() string {
 func (*SpendRow) ProtoMessage() {}
 
 func (x *SpendRow) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[9]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -814,7 +890,7 @@ func (x *SpendRow) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SpendRow.ProtoReflect.Descriptor instead.
 func (*SpendRow) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{9}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SpendRow) GetKey() string {
@@ -848,7 +924,7 @@ type GetSpendResponse struct {
 
 func (x *GetSpendResponse) Reset() {
 	*x = GetSpendResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[10]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -860,7 +936,7 @@ func (x *GetSpendResponse) String() string {
 func (*GetSpendResponse) ProtoMessage() {}
 
 func (x *GetSpendResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[10]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -873,7 +949,7 @@ func (x *GetSpendResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSpendResponse.ProtoReflect.Descriptor instead.
 func (*GetSpendResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{10}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetSpendResponse) GetRows() []*SpendRow {
@@ -913,7 +989,7 @@ type Budget struct {
 
 func (x *Budget) Reset() {
 	*x = Budget{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[11]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -925,7 +1001,7 @@ func (x *Budget) String() string {
 func (*Budget) ProtoMessage() {}
 
 func (x *Budget) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[11]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -938,7 +1014,7 @@ func (x *Budget) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Budget.ProtoReflect.Descriptor instead.
 func (*Budget) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{11}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *Budget) GetId() string {
@@ -1043,7 +1119,7 @@ type SetBudgetRequest struct {
 
 func (x *SetBudgetRequest) Reset() {
 	*x = SetBudgetRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[12]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1055,7 +1131,7 @@ func (x *SetBudgetRequest) String() string {
 func (*SetBudgetRequest) ProtoMessage() {}
 
 func (x *SetBudgetRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[12]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1068,7 +1144,7 @@ func (x *SetBudgetRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetBudgetRequest.ProtoReflect.Descriptor instead.
 func (*SetBudgetRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{12}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SetBudgetRequest) GetId() string {
@@ -1143,7 +1219,7 @@ type SetBudgetResponse struct {
 
 func (x *SetBudgetResponse) Reset() {
 	*x = SetBudgetResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[13]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1155,7 +1231,7 @@ func (x *SetBudgetResponse) String() string {
 func (*SetBudgetResponse) ProtoMessage() {}
 
 func (x *SetBudgetResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[13]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1168,7 +1244,7 @@ func (x *SetBudgetResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetBudgetResponse.ProtoReflect.Descriptor instead.
 func (*SetBudgetResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{13}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *SetBudgetResponse) GetBudget() *Budget {
@@ -1186,7 +1262,7 @@ type ListBudgetsRequest struct {
 
 func (x *ListBudgetsRequest) Reset() {
 	*x = ListBudgetsRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[14]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1198,7 +1274,7 @@ func (x *ListBudgetsRequest) String() string {
 func (*ListBudgetsRequest) ProtoMessage() {}
 
 func (x *ListBudgetsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[14]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1211,7 +1287,7 @@ func (x *ListBudgetsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBudgetsRequest.ProtoReflect.Descriptor instead.
 func (*ListBudgetsRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{14}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{15}
 }
 
 type ListBudgetsResponse struct {
@@ -1223,7 +1299,7 @@ type ListBudgetsResponse struct {
 
 func (x *ListBudgetsResponse) Reset() {
 	*x = ListBudgetsResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[15]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1235,7 +1311,7 @@ func (x *ListBudgetsResponse) String() string {
 func (*ListBudgetsResponse) ProtoMessage() {}
 
 func (x *ListBudgetsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[15]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1248,7 +1324,7 @@ func (x *ListBudgetsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListBudgetsResponse.ProtoReflect.Descriptor instead.
 func (*ListBudgetsResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{15}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListBudgetsResponse) GetBudgets() []*Budget {
@@ -1273,7 +1349,7 @@ type Price struct {
 
 func (x *Price) Reset() {
 	*x = Price{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[16]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1285,7 +1361,7 @@ func (x *Price) String() string {
 func (*Price) ProtoMessage() {}
 
 func (x *Price) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[16]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1298,7 +1374,7 @@ func (x *Price) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Price.ProtoReflect.Descriptor instead.
 func (*Price) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{16}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Price) GetModel() string {
@@ -1352,7 +1428,7 @@ type SetPriceRequest struct {
 
 func (x *SetPriceRequest) Reset() {
 	*x = SetPriceRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[17]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1364,7 +1440,7 @@ func (x *SetPriceRequest) String() string {
 func (*SetPriceRequest) ProtoMessage() {}
 
 func (x *SetPriceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[17]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1377,7 +1453,7 @@ func (x *SetPriceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPriceRequest.ProtoReflect.Descriptor instead.
 func (*SetPriceRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{17}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SetPriceRequest) GetPrice() *Price {
@@ -1396,7 +1472,7 @@ type SetPriceResponse struct {
 
 func (x *SetPriceResponse) Reset() {
 	*x = SetPriceResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[18]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1408,7 +1484,7 @@ func (x *SetPriceResponse) String() string {
 func (*SetPriceResponse) ProtoMessage() {}
 
 func (x *SetPriceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[18]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1421,7 +1497,7 @@ func (x *SetPriceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetPriceResponse.ProtoReflect.Descriptor instead.
 func (*SetPriceResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{18}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *SetPriceResponse) GetPrice() *Price {
@@ -1439,7 +1515,7 @@ type ListPricesRequest struct {
 
 func (x *ListPricesRequest) Reset() {
 	*x = ListPricesRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[19]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1451,7 +1527,7 @@ func (x *ListPricesRequest) String() string {
 func (*ListPricesRequest) ProtoMessage() {}
 
 func (x *ListPricesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[19]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1464,7 +1540,7 @@ func (x *ListPricesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPricesRequest.ProtoReflect.Descriptor instead.
 func (*ListPricesRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{19}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{20}
 }
 
 type ListPricesResponse struct {
@@ -1476,7 +1552,7 @@ type ListPricesResponse struct {
 
 func (x *ListPricesResponse) Reset() {
 	*x = ListPricesResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[20]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1488,7 +1564,7 @@ func (x *ListPricesResponse) String() string {
 func (*ListPricesResponse) ProtoMessage() {}
 
 func (x *ListPricesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[20]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1501,7 +1577,7 @@ func (x *ListPricesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPricesResponse.ProtoReflect.Descriptor instead.
 func (*ListPricesResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{20}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *ListPricesResponse) GetPrices() []*Price {
@@ -1530,7 +1606,7 @@ type Provider struct {
 
 func (x *Provider) Reset() {
 	*x = Provider{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[21]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1542,7 +1618,7 @@ func (x *Provider) String() string {
 func (*Provider) ProtoMessage() {}
 
 func (x *Provider) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[21]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1555,7 +1631,7 @@ func (x *Provider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Provider.ProtoReflect.Descriptor instead.
 func (*Provider) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{21}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Provider) GetBaseUrl() string {
@@ -1621,7 +1697,7 @@ type SetProviderRequest struct {
 
 func (x *SetProviderRequest) Reset() {
 	*x = SetProviderRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[22]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1633,7 +1709,7 @@ func (x *SetProviderRequest) String() string {
 func (*SetProviderRequest) ProtoMessage() {}
 
 func (x *SetProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[22]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1646,7 +1722,7 @@ func (x *SetProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetProviderRequest.ProtoReflect.Descriptor instead.
 func (*SetProviderRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{22}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SetProviderRequest) GetBaseUrl() string {
@@ -1700,7 +1776,7 @@ type SetProviderResponse struct {
 
 func (x *SetProviderResponse) Reset() {
 	*x = SetProviderResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[23]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1712,7 +1788,7 @@ func (x *SetProviderResponse) String() string {
 func (*SetProviderResponse) ProtoMessage() {}
 
 func (x *SetProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[23]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1725,7 +1801,7 @@ func (x *SetProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetProviderResponse.ProtoReflect.Descriptor instead.
 func (*SetProviderResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{23}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *SetProviderResponse) GetProvider() *Provider {
@@ -1743,7 +1819,7 @@ type GetProviderRequest struct {
 
 func (x *GetProviderRequest) Reset() {
 	*x = GetProviderRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[24]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1755,7 +1831,7 @@ func (x *GetProviderRequest) String() string {
 func (*GetProviderRequest) ProtoMessage() {}
 
 func (x *GetProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[24]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1768,7 +1844,7 @@ func (x *GetProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProviderRequest.ProtoReflect.Descriptor instead.
 func (*GetProviderRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{24}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{25}
 }
 
 type GetProviderResponse struct {
@@ -1781,7 +1857,7 @@ type GetProviderResponse struct {
 
 func (x *GetProviderResponse) Reset() {
 	*x = GetProviderResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[25]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1793,7 +1869,7 @@ func (x *GetProviderResponse) String() string {
 func (*GetProviderResponse) ProtoMessage() {}
 
 func (x *GetProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[25]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1806,7 +1882,7 @@ func (x *GetProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProviderResponse.ProtoReflect.Descriptor instead.
 func (*GetProviderResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{25}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetProviderResponse) GetProvider() *Provider {
@@ -1824,7 +1900,7 @@ type DeleteProviderRequest struct {
 
 func (x *DeleteProviderRequest) Reset() {
 	*x = DeleteProviderRequest{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[26]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1836,7 +1912,7 @@ func (x *DeleteProviderRequest) String() string {
 func (*DeleteProviderRequest) ProtoMessage() {}
 
 func (x *DeleteProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[26]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1849,7 +1925,7 @@ func (x *DeleteProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProviderRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProviderRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{26}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{27}
 }
 
 type DeleteProviderResponse struct {
@@ -1860,7 +1936,7 @@ type DeleteProviderResponse struct {
 
 func (x *DeleteProviderResponse) Reset() {
 	*x = DeleteProviderResponse{}
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[27]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1872,7 +1948,7 @@ func (x *DeleteProviderResponse) String() string {
 func (*DeleteProviderResponse) ProtoMessage() {}
 
 func (x *DeleteProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[27]
+	mi := &file_shogun_soroban_v1_soroban_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1885,7 +1961,7 @@ func (x *DeleteProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProviderResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProviderResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{27}
+	return file_shogun_soroban_v1_soroban_proto_rawDescGZIP(), []int{28}
 }
 
 var File_shogun_soroban_v1_soroban_proto protoreflect.FileDescriptor
@@ -1897,19 +1973,24 @@ const file_shogun_soroban_v1_soroban_proto_rawDesc = "" +
 	"\finput_tokens\x18\x01 \x01(\x05R\vinputTokens\x12#\n" +
 	"\routput_tokens\x18\x02 \x01(\x05R\foutputTokens\x12*\n" +
 	"\x11cache_read_tokens\x18\x03 \x01(\x05R\x0fcacheReadTokens\x12,\n" +
-	"\x12cache_write_tokens\x18\x04 \x01(\x05R\x10cacheWriteTokens\"\xb0\x01\n" +
+	"\x12cache_write_tokens\x18\x04 \x01(\x05R\x10cacheWriteTokens\"\xb4\x01\n" +
 	"\x0eReserveRequest\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\x12\x18\n" +
-	"\afeature\x18\x02 \x01(\tR\afeature\x12\x14\n" +
-	"\x05model\x18\x03 \x01(\tR\x05model\x12(\n" +
+	"\afeature\x18\x02 \x01(\tR\afeature\x12\x18\n" +
+	"\x05model\x18\x03 \x01(\tB\x02\x18\x01R\x05model\x12(\n" +
 	"\x10est_input_tokens\x18\x04 \x01(\x05R\x0eestInputTokens\x12*\n" +
-	"\x11est_output_tokens\x18\x05 \x01(\x05R\x0festOutputTokens\"\x92\x01\n" +
+	"\x11est_output_tokens\x18\x05 \x01(\x05R\x0festOutputTokens\"\xd1\x01\n" +
 	"\x0fReserveResponse\x12%\n" +
 	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x129\n" +
 	"\n" +
 	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x1d\n" +
 	"\n" +
-	"est_micros\x18\x03 \x01(\x03R\testMicros\"\x85\x01\n" +
+	"est_micros\x18\x03 \x01(\x03R\testMicros\x12=\n" +
+	"\bprovider\x18\x04 \x01(\v2!.shogun.soroban.v1.ProviderAccessR\bprovider\"Z\n" +
+	"\x0eProviderAccess\x12\x19\n" +
+	"\bbase_url\x18\x01 \x01(\tR\abaseUrl\x12\x14\n" +
+	"\x05model\x18\x02 \x01(\tR\x05model\x12\x17\n" +
+	"\aapi_key\x18\x03 \x01(\tR\x06apiKey\"\x85\x01\n" +
 	"\rCommitRequest\x12%\n" +
 	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x12.\n" +
 	"\x05usage\x18\x02 \x01(\v2\x18.shogun.soroban.v1.UsageR\x05usage\x12\x1d\n" +
@@ -2070,7 +2151,7 @@ func file_shogun_soroban_v1_soroban_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_soroban_v1_soroban_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_shogun_soroban_v1_soroban_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_shogun_soroban_v1_soroban_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_shogun_soroban_v1_soroban_proto_goTypes = []any{
 	(ScopeType)(0),                 // 0: shogun.soroban.v1.ScopeType
 	(BudgetPeriod)(0),              // 1: shogun.soroban.v1.BudgetPeriod
@@ -2079,86 +2160,88 @@ var file_shogun_soroban_v1_soroban_proto_goTypes = []any{
 	(*Usage)(nil),                  // 4: shogun.soroban.v1.Usage
 	(*ReserveRequest)(nil),         // 5: shogun.soroban.v1.ReserveRequest
 	(*ReserveResponse)(nil),        // 6: shogun.soroban.v1.ReserveResponse
-	(*CommitRequest)(nil),          // 7: shogun.soroban.v1.CommitRequest
-	(*LedgerEntry)(nil),            // 8: shogun.soroban.v1.LedgerEntry
-	(*CommitResponse)(nil),         // 9: shogun.soroban.v1.CommitResponse
-	(*ReleaseRequest)(nil),         // 10: shogun.soroban.v1.ReleaseRequest
-	(*ReleaseResponse)(nil),        // 11: shogun.soroban.v1.ReleaseResponse
-	(*GetSpendRequest)(nil),        // 12: shogun.soroban.v1.GetSpendRequest
-	(*SpendRow)(nil),               // 13: shogun.soroban.v1.SpendRow
-	(*GetSpendResponse)(nil),       // 14: shogun.soroban.v1.GetSpendResponse
-	(*Budget)(nil),                 // 15: shogun.soroban.v1.Budget
-	(*SetBudgetRequest)(nil),       // 16: shogun.soroban.v1.SetBudgetRequest
-	(*SetBudgetResponse)(nil),      // 17: shogun.soroban.v1.SetBudgetResponse
-	(*ListBudgetsRequest)(nil),     // 18: shogun.soroban.v1.ListBudgetsRequest
-	(*ListBudgetsResponse)(nil),    // 19: shogun.soroban.v1.ListBudgetsResponse
-	(*Price)(nil),                  // 20: shogun.soroban.v1.Price
-	(*SetPriceRequest)(nil),        // 21: shogun.soroban.v1.SetPriceRequest
-	(*SetPriceResponse)(nil),       // 22: shogun.soroban.v1.SetPriceResponse
-	(*ListPricesRequest)(nil),      // 23: shogun.soroban.v1.ListPricesRequest
-	(*ListPricesResponse)(nil),     // 24: shogun.soroban.v1.ListPricesResponse
-	(*Provider)(nil),               // 25: shogun.soroban.v1.Provider
-	(*SetProviderRequest)(nil),     // 26: shogun.soroban.v1.SetProviderRequest
-	(*SetProviderResponse)(nil),    // 27: shogun.soroban.v1.SetProviderResponse
-	(*GetProviderRequest)(nil),     // 28: shogun.soroban.v1.GetProviderRequest
-	(*GetProviderResponse)(nil),    // 29: shogun.soroban.v1.GetProviderResponse
-	(*DeleteProviderRequest)(nil),  // 30: shogun.soroban.v1.DeleteProviderRequest
-	(*DeleteProviderResponse)(nil), // 31: shogun.soroban.v1.DeleteProviderResponse
-	(*timestamppb.Timestamp)(nil),  // 32: google.protobuf.Timestamp
+	(*ProviderAccess)(nil),         // 7: shogun.soroban.v1.ProviderAccess
+	(*CommitRequest)(nil),          // 8: shogun.soroban.v1.CommitRequest
+	(*LedgerEntry)(nil),            // 9: shogun.soroban.v1.LedgerEntry
+	(*CommitResponse)(nil),         // 10: shogun.soroban.v1.CommitResponse
+	(*ReleaseRequest)(nil),         // 11: shogun.soroban.v1.ReleaseRequest
+	(*ReleaseResponse)(nil),        // 12: shogun.soroban.v1.ReleaseResponse
+	(*GetSpendRequest)(nil),        // 13: shogun.soroban.v1.GetSpendRequest
+	(*SpendRow)(nil),               // 14: shogun.soroban.v1.SpendRow
+	(*GetSpendResponse)(nil),       // 15: shogun.soroban.v1.GetSpendResponse
+	(*Budget)(nil),                 // 16: shogun.soroban.v1.Budget
+	(*SetBudgetRequest)(nil),       // 17: shogun.soroban.v1.SetBudgetRequest
+	(*SetBudgetResponse)(nil),      // 18: shogun.soroban.v1.SetBudgetResponse
+	(*ListBudgetsRequest)(nil),     // 19: shogun.soroban.v1.ListBudgetsRequest
+	(*ListBudgetsResponse)(nil),    // 20: shogun.soroban.v1.ListBudgetsResponse
+	(*Price)(nil),                  // 21: shogun.soroban.v1.Price
+	(*SetPriceRequest)(nil),        // 22: shogun.soroban.v1.SetPriceRequest
+	(*SetPriceResponse)(nil),       // 23: shogun.soroban.v1.SetPriceResponse
+	(*ListPricesRequest)(nil),      // 24: shogun.soroban.v1.ListPricesRequest
+	(*ListPricesResponse)(nil),     // 25: shogun.soroban.v1.ListPricesResponse
+	(*Provider)(nil),               // 26: shogun.soroban.v1.Provider
+	(*SetProviderRequest)(nil),     // 27: shogun.soroban.v1.SetProviderRequest
+	(*SetProviderResponse)(nil),    // 28: shogun.soroban.v1.SetProviderResponse
+	(*GetProviderRequest)(nil),     // 29: shogun.soroban.v1.GetProviderRequest
+	(*GetProviderResponse)(nil),    // 30: shogun.soroban.v1.GetProviderResponse
+	(*DeleteProviderRequest)(nil),  // 31: shogun.soroban.v1.DeleteProviderRequest
+	(*DeleteProviderResponse)(nil), // 32: shogun.soroban.v1.DeleteProviderResponse
+	(*timestamppb.Timestamp)(nil),  // 33: google.protobuf.Timestamp
 }
 var file_shogun_soroban_v1_soroban_proto_depIdxs = []int32{
-	32, // 0: shogun.soroban.v1.ReserveResponse.expires_at:type_name -> google.protobuf.Timestamp
-	4,  // 1: shogun.soroban.v1.CommitRequest.usage:type_name -> shogun.soroban.v1.Usage
-	4,  // 2: shogun.soroban.v1.LedgerEntry.usage:type_name -> shogun.soroban.v1.Usage
-	32, // 3: shogun.soroban.v1.LedgerEntry.occurred_at:type_name -> google.protobuf.Timestamp
-	8,  // 4: shogun.soroban.v1.CommitResponse.entry:type_name -> shogun.soroban.v1.LedgerEntry
-	32, // 5: shogun.soroban.v1.GetSpendRequest.from:type_name -> google.protobuf.Timestamp
-	32, // 6: shogun.soroban.v1.GetSpendRequest.to:type_name -> google.protobuf.Timestamp
-	3,  // 7: shogun.soroban.v1.GetSpendRequest.group_by:type_name -> shogun.soroban.v1.SpendGroup
-	4,  // 8: shogun.soroban.v1.SpendRow.usage:type_name -> shogun.soroban.v1.Usage
-	13, // 9: shogun.soroban.v1.GetSpendResponse.rows:type_name -> shogun.soroban.v1.SpendRow
-	0,  // 10: shogun.soroban.v1.Budget.scope_type:type_name -> shogun.soroban.v1.ScopeType
-	1,  // 11: shogun.soroban.v1.Budget.period:type_name -> shogun.soroban.v1.BudgetPeriod
-	2,  // 12: shogun.soroban.v1.Budget.mode:type_name -> shogun.soroban.v1.BudgetMode
-	32, // 13: shogun.soroban.v1.Budget.resets_at:type_name -> google.protobuf.Timestamp
-	0,  // 14: shogun.soroban.v1.SetBudgetRequest.scope_type:type_name -> shogun.soroban.v1.ScopeType
-	1,  // 15: shogun.soroban.v1.SetBudgetRequest.period:type_name -> shogun.soroban.v1.BudgetPeriod
-	2,  // 16: shogun.soroban.v1.SetBudgetRequest.mode:type_name -> shogun.soroban.v1.BudgetMode
-	15, // 17: shogun.soroban.v1.SetBudgetResponse.budget:type_name -> shogun.soroban.v1.Budget
-	15, // 18: shogun.soroban.v1.ListBudgetsResponse.budgets:type_name -> shogun.soroban.v1.Budget
-	20, // 19: shogun.soroban.v1.SetPriceRequest.price:type_name -> shogun.soroban.v1.Price
-	20, // 20: shogun.soroban.v1.SetPriceResponse.price:type_name -> shogun.soroban.v1.Price
-	20, // 21: shogun.soroban.v1.ListPricesResponse.prices:type_name -> shogun.soroban.v1.Price
-	32, // 22: shogun.soroban.v1.Provider.updated_at:type_name -> google.protobuf.Timestamp
-	25, // 23: shogun.soroban.v1.SetProviderResponse.provider:type_name -> shogun.soroban.v1.Provider
-	25, // 24: shogun.soroban.v1.GetProviderResponse.provider:type_name -> shogun.soroban.v1.Provider
-	5,  // 25: shogun.soroban.v1.SorobanService.Reserve:input_type -> shogun.soroban.v1.ReserveRequest
-	7,  // 26: shogun.soroban.v1.SorobanService.Commit:input_type -> shogun.soroban.v1.CommitRequest
-	10, // 27: shogun.soroban.v1.SorobanService.Release:input_type -> shogun.soroban.v1.ReleaseRequest
-	12, // 28: shogun.soroban.v1.SorobanService.GetSpend:input_type -> shogun.soroban.v1.GetSpendRequest
-	16, // 29: shogun.soroban.v1.SorobanService.SetBudget:input_type -> shogun.soroban.v1.SetBudgetRequest
-	18, // 30: shogun.soroban.v1.SorobanService.ListBudgets:input_type -> shogun.soroban.v1.ListBudgetsRequest
-	21, // 31: shogun.soroban.v1.SorobanService.SetPrice:input_type -> shogun.soroban.v1.SetPriceRequest
-	23, // 32: shogun.soroban.v1.SorobanService.ListPrices:input_type -> shogun.soroban.v1.ListPricesRequest
-	26, // 33: shogun.soroban.v1.SorobanService.SetProvider:input_type -> shogun.soroban.v1.SetProviderRequest
-	28, // 34: shogun.soroban.v1.SorobanService.GetProvider:input_type -> shogun.soroban.v1.GetProviderRequest
-	30, // 35: shogun.soroban.v1.SorobanService.DeleteProvider:input_type -> shogun.soroban.v1.DeleteProviderRequest
-	6,  // 36: shogun.soroban.v1.SorobanService.Reserve:output_type -> shogun.soroban.v1.ReserveResponse
-	9,  // 37: shogun.soroban.v1.SorobanService.Commit:output_type -> shogun.soroban.v1.CommitResponse
-	11, // 38: shogun.soroban.v1.SorobanService.Release:output_type -> shogun.soroban.v1.ReleaseResponse
-	14, // 39: shogun.soroban.v1.SorobanService.GetSpend:output_type -> shogun.soroban.v1.GetSpendResponse
-	17, // 40: shogun.soroban.v1.SorobanService.SetBudget:output_type -> shogun.soroban.v1.SetBudgetResponse
-	19, // 41: shogun.soroban.v1.SorobanService.ListBudgets:output_type -> shogun.soroban.v1.ListBudgetsResponse
-	22, // 42: shogun.soroban.v1.SorobanService.SetPrice:output_type -> shogun.soroban.v1.SetPriceResponse
-	24, // 43: shogun.soroban.v1.SorobanService.ListPrices:output_type -> shogun.soroban.v1.ListPricesResponse
-	27, // 44: shogun.soroban.v1.SorobanService.SetProvider:output_type -> shogun.soroban.v1.SetProviderResponse
-	29, // 45: shogun.soroban.v1.SorobanService.GetProvider:output_type -> shogun.soroban.v1.GetProviderResponse
-	31, // 46: shogun.soroban.v1.SorobanService.DeleteProvider:output_type -> shogun.soroban.v1.DeleteProviderResponse
-	36, // [36:47] is the sub-list for method output_type
-	25, // [25:36] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	33, // 0: shogun.soroban.v1.ReserveResponse.expires_at:type_name -> google.protobuf.Timestamp
+	7,  // 1: shogun.soroban.v1.ReserveResponse.provider:type_name -> shogun.soroban.v1.ProviderAccess
+	4,  // 2: shogun.soroban.v1.CommitRequest.usage:type_name -> shogun.soroban.v1.Usage
+	4,  // 3: shogun.soroban.v1.LedgerEntry.usage:type_name -> shogun.soroban.v1.Usage
+	33, // 4: shogun.soroban.v1.LedgerEntry.occurred_at:type_name -> google.protobuf.Timestamp
+	9,  // 5: shogun.soroban.v1.CommitResponse.entry:type_name -> shogun.soroban.v1.LedgerEntry
+	33, // 6: shogun.soroban.v1.GetSpendRequest.from:type_name -> google.protobuf.Timestamp
+	33, // 7: shogun.soroban.v1.GetSpendRequest.to:type_name -> google.protobuf.Timestamp
+	3,  // 8: shogun.soroban.v1.GetSpendRequest.group_by:type_name -> shogun.soroban.v1.SpendGroup
+	4,  // 9: shogun.soroban.v1.SpendRow.usage:type_name -> shogun.soroban.v1.Usage
+	14, // 10: shogun.soroban.v1.GetSpendResponse.rows:type_name -> shogun.soroban.v1.SpendRow
+	0,  // 11: shogun.soroban.v1.Budget.scope_type:type_name -> shogun.soroban.v1.ScopeType
+	1,  // 12: shogun.soroban.v1.Budget.period:type_name -> shogun.soroban.v1.BudgetPeriod
+	2,  // 13: shogun.soroban.v1.Budget.mode:type_name -> shogun.soroban.v1.BudgetMode
+	33, // 14: shogun.soroban.v1.Budget.resets_at:type_name -> google.protobuf.Timestamp
+	0,  // 15: shogun.soroban.v1.SetBudgetRequest.scope_type:type_name -> shogun.soroban.v1.ScopeType
+	1,  // 16: shogun.soroban.v1.SetBudgetRequest.period:type_name -> shogun.soroban.v1.BudgetPeriod
+	2,  // 17: shogun.soroban.v1.SetBudgetRequest.mode:type_name -> shogun.soroban.v1.BudgetMode
+	16, // 18: shogun.soroban.v1.SetBudgetResponse.budget:type_name -> shogun.soroban.v1.Budget
+	16, // 19: shogun.soroban.v1.ListBudgetsResponse.budgets:type_name -> shogun.soroban.v1.Budget
+	21, // 20: shogun.soroban.v1.SetPriceRequest.price:type_name -> shogun.soroban.v1.Price
+	21, // 21: shogun.soroban.v1.SetPriceResponse.price:type_name -> shogun.soroban.v1.Price
+	21, // 22: shogun.soroban.v1.ListPricesResponse.prices:type_name -> shogun.soroban.v1.Price
+	33, // 23: shogun.soroban.v1.Provider.updated_at:type_name -> google.protobuf.Timestamp
+	26, // 24: shogun.soroban.v1.SetProviderResponse.provider:type_name -> shogun.soroban.v1.Provider
+	26, // 25: shogun.soroban.v1.GetProviderResponse.provider:type_name -> shogun.soroban.v1.Provider
+	5,  // 26: shogun.soroban.v1.SorobanService.Reserve:input_type -> shogun.soroban.v1.ReserveRequest
+	8,  // 27: shogun.soroban.v1.SorobanService.Commit:input_type -> shogun.soroban.v1.CommitRequest
+	11, // 28: shogun.soroban.v1.SorobanService.Release:input_type -> shogun.soroban.v1.ReleaseRequest
+	13, // 29: shogun.soroban.v1.SorobanService.GetSpend:input_type -> shogun.soroban.v1.GetSpendRequest
+	17, // 30: shogun.soroban.v1.SorobanService.SetBudget:input_type -> shogun.soroban.v1.SetBudgetRequest
+	19, // 31: shogun.soroban.v1.SorobanService.ListBudgets:input_type -> shogun.soroban.v1.ListBudgetsRequest
+	22, // 32: shogun.soroban.v1.SorobanService.SetPrice:input_type -> shogun.soroban.v1.SetPriceRequest
+	24, // 33: shogun.soroban.v1.SorobanService.ListPrices:input_type -> shogun.soroban.v1.ListPricesRequest
+	27, // 34: shogun.soroban.v1.SorobanService.SetProvider:input_type -> shogun.soroban.v1.SetProviderRequest
+	29, // 35: shogun.soroban.v1.SorobanService.GetProvider:input_type -> shogun.soroban.v1.GetProviderRequest
+	31, // 36: shogun.soroban.v1.SorobanService.DeleteProvider:input_type -> shogun.soroban.v1.DeleteProviderRequest
+	6,  // 37: shogun.soroban.v1.SorobanService.Reserve:output_type -> shogun.soroban.v1.ReserveResponse
+	10, // 38: shogun.soroban.v1.SorobanService.Commit:output_type -> shogun.soroban.v1.CommitResponse
+	12, // 39: shogun.soroban.v1.SorobanService.Release:output_type -> shogun.soroban.v1.ReleaseResponse
+	15, // 40: shogun.soroban.v1.SorobanService.GetSpend:output_type -> shogun.soroban.v1.GetSpendResponse
+	18, // 41: shogun.soroban.v1.SorobanService.SetBudget:output_type -> shogun.soroban.v1.SetBudgetResponse
+	20, // 42: shogun.soroban.v1.SorobanService.ListBudgets:output_type -> shogun.soroban.v1.ListBudgetsResponse
+	23, // 43: shogun.soroban.v1.SorobanService.SetPrice:output_type -> shogun.soroban.v1.SetPriceResponse
+	25, // 44: shogun.soroban.v1.SorobanService.ListPrices:output_type -> shogun.soroban.v1.ListPricesResponse
+	28, // 45: shogun.soroban.v1.SorobanService.SetProvider:output_type -> shogun.soroban.v1.SetProviderResponse
+	30, // 46: shogun.soroban.v1.SorobanService.GetProvider:output_type -> shogun.soroban.v1.GetProviderResponse
+	32, // 47: shogun.soroban.v1.SorobanService.DeleteProvider:output_type -> shogun.soroban.v1.DeleteProviderResponse
+	37, // [37:48] is the sub-list for method output_type
+	26, // [26:37] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_shogun_soroban_v1_soroban_proto_init() }
@@ -2166,15 +2249,15 @@ func file_shogun_soroban_v1_soroban_proto_init() {
 	if File_shogun_soroban_v1_soroban_proto != nil {
 		return
 	}
-	file_shogun_soroban_v1_soroban_proto_msgTypes[21].OneofWrappers = []any{}
 	file_shogun_soroban_v1_soroban_proto_msgTypes[22].OneofWrappers = []any{}
+	file_shogun_soroban_v1_soroban_proto_msgTypes[23].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_soroban_v1_soroban_proto_rawDesc), len(file_shogun_soroban_v1_soroban_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   28,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

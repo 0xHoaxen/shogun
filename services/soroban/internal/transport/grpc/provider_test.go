@@ -38,7 +38,7 @@ func (h *harness) setProvider(t *testing.T, owner string, req *sorobanv1.SetProv
 
 func TestSetProviderStoresItAndShowsEverythingButTheKey(t *testing.T) {
 	// Arrange
-	h := newHarness(t)
+	h := newBareHarness(t)
 
 	// Act
 	set := h.setProvider(t, h.owner, goodProvider())
@@ -59,7 +59,7 @@ func TestSetProviderStoresItAndShowsEverythingButTheKey(t *testing.T) {
 
 func TestTheKeyIsSealedAtRestAndOpensOnlyForItsOwner(t *testing.T) {
 	// Arrange
-	h := newHarness(t)
+	h := newBareHarness(t)
 	h.setProvider(t, h.owner, goodProvider())
 	var ciphertext []byte
 	if err := h.pool.QueryRow(context.Background(), `SELECT api_key_ciphertext FROM providers WHERE owner_id = $1`, h.owner).Scan(&ciphertext); err != nil {
@@ -87,7 +87,7 @@ func TestTheKeyIsSealedAtRestAndOpensOnlyForItsOwner(t *testing.T) {
 
 func TestUpdatingWithoutAKeyKeepsTheStoredOneAndANewKeyReplacesIt(t *testing.T) {
 	// Arrange
-	h := newHarness(t)
+	h := newBareHarness(t)
 	first := h.setProvider(t, h.owner, goodProvider())
 
 	// Act
@@ -110,7 +110,7 @@ func TestUpdatingWithoutAKeyKeepsTheStoredOneAndANewKeyReplacesIt(t *testing.T) 
 }
 
 func TestSettingTheFirstProviderNeedsAKeyAndAStaleVersionIsRefused(t *testing.T) {
-	h := newHarness(t)
+	h := newBareHarness(t)
 	noKey := goodProvider()
 	noKey.ApiKey = ""
 	_, missing := h.client.SetProvider(h.ctx(t), noKey)
@@ -146,7 +146,7 @@ func TestSetProviderRefusesWhatIsNotAProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			h := newHarness(t)
+			h := newBareHarness(t)
 			req := goodProvider()
 			tt.edit(req)
 
@@ -161,7 +161,7 @@ func TestSetProviderRefusesWhatIsNotAProvider(t *testing.T) {
 }
 
 func TestAPriceForAnUnpricedModelIsKeptWithTheProvider(t *testing.T) {
-	h := newHarness(t)
+	h := newBareHarness(t)
 	in, out := int64(3_000_000), int64(15_000_000)
 	req := goodProvider()
 	req.InputMicrosPerMtok, req.OutputMicrosPerMtok = &in, &out
@@ -179,7 +179,7 @@ func TestAPriceForAnUnpricedModelIsKeptWithTheProvider(t *testing.T) {
 
 func TestOwnersNeverSeeOrRemoveEachOthersProvider(t *testing.T) {
 	// Arrange
-	h := newHarness(t)
+	h := newBareHarness(t)
 	other := uuid.NewString()
 	h.setProvider(t, h.owner, goodProvider())
 
@@ -198,7 +198,7 @@ func TestOwnersNeverSeeOrRemoveEachOthersProvider(t *testing.T) {
 }
 
 func TestDeleteProviderRemovesItAndIsHarmlessTwice(t *testing.T) {
-	h := newHarness(t)
+	h := newBareHarness(t)
 	h.setProvider(t, h.owner, goodProvider())
 
 	_, first := h.client.DeleteProvider(h.ctx(t), &sorobanv1.DeleteProviderRequest{})
@@ -215,7 +215,7 @@ func TestDeleteProviderRemovesItAndIsHarmlessTwice(t *testing.T) {
 }
 
 func TestProviderCallsNeedAnIdentity(t *testing.T) {
-	h := newHarness(t)
+	h := newBareHarness(t)
 
 	_, err := h.client.GetProvider(context.Background(), &sorobanv1.GetProviderRequest{})
 
@@ -225,7 +225,7 @@ func TestProviderCallsNeedAnIdentity(t *testing.T) {
 }
 
 func TestWithoutAKeyringProvidersCannotBeStored(t *testing.T) {
-	h := newHarness(t)
+	h := newBareHarness(t)
 	noKeys := app.NewService(h.pool, nil)
 
 	_, err := noKeys.SetProvider(appCtx(h.owner), app.ProviderInput{BaseURL: "https://llm.example.com", Model: "m", APIKey: secretKey})
@@ -241,7 +241,7 @@ func TestWithoutAKeyringProvidersCannotBeStored(t *testing.T) {
 }
 
 func TestInsecureProvidersAreAllowedOnlyWhenTheServiceIsToldTo(t *testing.T) {
-	h := newHarness(t)
+	h := newBareHarness(t)
 	keys, _ := envelope.NewKeyring("k", map[string][]byte{"k": bytes.Repeat([]byte("m"), envelope.KeySize)})
 	local := app.NewService(h.pool, nil, app.WithKeyring(keys), app.WithInsecureProviders())
 	in := app.ProviderInput{BaseURL: "http://localhost:9999", Model: "fake-model", APIKey: secretKey}

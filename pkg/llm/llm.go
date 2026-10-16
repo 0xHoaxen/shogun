@@ -176,7 +176,6 @@ func (c *Client) reserve(ctx context.Context, feature string, call CallRequest) 
 	res, err := c.meter.Reserve(ctx, &sorobanv1.ReserveRequest{
 		Service:         c.cfg.Service,
 		Feature:         feature,
-		Model:           call.Model,
 		EstInputTokens:  estimate,
 		EstOutputTokens: call.MaxTokens,
 	})

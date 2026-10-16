@@ -15,7 +15,7 @@ import (
 // tokens and no output estimates n*4 micro-dollars.
 func reserveReq(inputTokens int32) *sorobanv1.ReserveRequest {
 	return &sorobanv1.ReserveRequest{
-		Service: "fude", Feature: "fude.cover_letter", Model: "claude-opus-5-5",
+		Service: "fude", Feature: "fude.cover_letter",
 		EstInputTokens: inputTokens,
 	}
 }
@@ -26,7 +26,7 @@ func TestReserveHoldsEstimateAgainstEveryBudgetInScope(t *testing.T) {
 
 	// Act
 	res, err := h.client.Reserve(h.ctx(t), &sorobanv1.ReserveRequest{
-		Service: "fude", Feature: "fude.cover_letter", Model: "claude-opus-5-5",
+		Service: "fude", Feature: "fude.cover_letter",
 		EstInputTokens: 1000, EstOutputTokens: 500,
 	})
 	// Assert
@@ -116,11 +116,9 @@ func TestReserveRejectsBadRequests(t *testing.T) {
 		req    *sorobanv1.ReserveRequest
 		reason string
 	}{
-		{"missing service", &sorobanv1.ReserveRequest{Feature: "fude.post", Model: "claude-opus-5-5"}, "INVALID_REQUEST"},
-		{"missing model", &sorobanv1.ReserveRequest{Service: "fude", Feature: "fude.post"}, "INVALID_REQUEST"},
-		{"feature of another service", &sorobanv1.ReserveRequest{Service: "fude", Feature: "katana.suggest", Model: "claude-opus-5-5"}, "FEATURE_SERVICE_MISMATCH"},
-		{"negative estimate", &sorobanv1.ReserveRequest{Service: "fude", Feature: "fude.post", Model: "claude-opus-5-5", EstInputTokens: -1}, "INVALID_TOKEN_COUNT"},
-		{"model without a price", &sorobanv1.ReserveRequest{Service: "fude", Feature: "fude.post", Model: "claude-unpriced"}, "MODEL_PRICE_UNKNOWN"},
+		{"missing service", &sorobanv1.ReserveRequest{Feature: "fude.post"}, "INVALID_REQUEST"},
+		{"feature of another service", &sorobanv1.ReserveRequest{Service: "fude", Feature: "katana.suggest"}, "FEATURE_SERVICE_MISMATCH"},
+		{"negative estimate", &sorobanv1.ReserveRequest{Service: "fude", Feature: "fude.post", EstInputTokens: -1}, "INVALID_TOKEN_COUNT"},
 	}
 	h := newHarness(t)
 	for _, tt := range tests {
