@@ -832,8 +832,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: `llm.ClassifyFailure` names why a call to a provider failed (`rejected`, `rate_limited`, `not_found`, `unreachable`, `not_public`, `provider_error`, `other`), seeing through any wrapping and never passing on the provider's own words, which can echo the key; fude's new `TestProvider` RPC makes one tiny metered call (feature `fude.test_connection`, 16 output tokens, default soft daily budget row in soroban `00006`) with the caller's own provider. A provider that fails is a result (`ok=false` and a `ProviderFailure`); no provider, a spent budget or cap, and metering down are errors with their own reasons. fude's gRPC layer now maps `AI_PROVIDER_NOT_CONFIGURED`, `BUDGET_EXHAUSTED` (with `resets_at`) and `METERING_UNAVAILABLE`.
   Done when: `cd pkg && go test -race ./llm/...`, `cd services/fude && go test -race ./...`, `cd services/soroban && go test -race ./...`, `make lint`.
 
-- [ ] **P11.5e2 AI provider API in torii** (M) Needs: P11.5e1
-  Do: `shogun.api.v1.ProviderService` (`GetProvider`, `SetProvider`, `DeleteProvider`, `TestProvider`) mapped onto soroban and fude; the key is write-only and never returned or logged; errors keep their reasons; a handler test per RPC.
+- [x] **P11.5e2 AI provider API in torii** (M) Needs: P11.5e1
+  Do: `shogun.api.v1.ProviderService` (`GetProvider`, `SetProvider`, `DeleteProvider`, `TestProvider`) mapped onto soroban and fude. The key is write-only: the API has no field that returns it, torii never logs a request, and any downstream error is scrubbed of the key before it is logged or returned (tested with a downstream that leaks it). Errors keep their reasons. Note for the screen: torii's error mapping drops ErrorInfo metadata, so `resets_at` of a spent budget or cap is only in the message text; show a generic "try again later" there, or add metadata pass-through later.
   Done when: `make proto`, `cd services/torii && go test -race ./...`.
 
 - [ ] **P11.5e3 AI provider settings screen** (M) Needs: P11.5e2, P11.10
