@@ -12,11 +12,11 @@ import (
 
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
-	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/jobs"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/mailtest"

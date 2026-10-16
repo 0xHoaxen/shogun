@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/store"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/store/db"
 )

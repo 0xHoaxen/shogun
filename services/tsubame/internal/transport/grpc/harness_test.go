@@ -28,10 +28,10 @@ import (
 
 	tsubamev1 "github.com/0xHoaxen/shogun/gen/go/shogun/tsubame/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
-	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/gmail"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/mailtest"
 	tsubamegrpc "github.com/0xHoaxen/shogun/services/tsubame/internal/transport/grpc"
