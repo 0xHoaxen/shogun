@@ -52,6 +52,15 @@ func TestSuggestWorkerCancelsWhenSuggestionsAreOff(t *testing.T) {
 	}
 }
 
+func TestSuggestWorkerCancelsForAUserWithoutAProvider(t *testing.T) {
+	err := workSuggest(t, &fakeSuggester{err: llm.ErrProviderNotConfigured})
+
+	var cancel *river.JobCancelError
+	if !errors.As(err, &cancel) {
+		t.Fatalf("err = %v, want a cancel: a retry cannot help until the user adds a provider", err)
+	}
+}
+
 func TestSuggestWorkerSnoozesUntilTheBudgetResets(t *testing.T) {
 	tests := []struct {
 		name     string

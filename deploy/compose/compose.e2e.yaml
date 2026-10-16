@@ -77,17 +77,12 @@ services:
     depends_on:
       mock-apis:
         condition: service_healthy
-    environment:
-      ANTHROPIC_API_KEY: e2e-key
-      ANTHROPIC_BASE_URL: http://mock-apis:8090
 
   tsubame:
     depends_on:
       mock-apis:
         condition: service_healthy
     environment:
-      ANTHROPIC_API_KEY: e2e-key
-      ANTHROPIC_BASE_URL: http://mock-apis:8090
       TSUBAME_GMAIL_API_BASE: http://mock-apis:8090
       TSUBAME_GMAIL_TOKEN_URL: http://mock-apis:8090/token
       # https because the web app follows nothing else; the spec intercepts it.

@@ -88,10 +88,9 @@ hanko_public_key() {
 service_keys() {
 	case $1 in
 	torii) echo "TORII_PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TORII_ADMIN_EMAILS" ;;
-	fude) echo "FUDE_HANKO_SIGNING_KEY FUDE_HANKO_KEY_ID ANTHROPIC_API_KEY" ;;
-	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS ANTHROPIC_API_KEY" ;;
-	katana) echo "KATANA_GITHUB_USER KATANA_GITHUB_TOKEN ANTHROPIC_API_KEY" ;;
-	shinobi) echo "ANTHROPIC_API_KEY" ;;
+	fude) echo "FUDE_HANKO_SIGNING_KEY FUDE_HANKO_KEY_ID" ;;
+	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS" ;;
+	katana) echo "KATANA_GITHUB_USER KATANA_GITHUB_TOKEN" ;;
 	soroban) echo "SOROBAN_SECRET_MASTER_KEY SOROBAN_SECRET_KEY_ID" ;;
 	*) echo "" ;;
 	esac
@@ -137,9 +136,9 @@ warn_unset() {
 	if [ -z "$(env_get "$file" CLOUDFLARE_API_TOKEN)" ]; then
 		echo "seal-secrets: CLOUDFLARE_API_TOKEN is not set; no cloudflare-api-token is created, so no certificate is issued for the web host" >&2
 	fi
-	for key in ANTHROPIC_API_KEY KATANA_GITHUB_USER KATANA_GITHUB_TOKEN; do
+	for key in KATANA_GITHUB_USER KATANA_GITHUB_TOKEN; do
 		if [ -z "$(env_get "$file" "$key")" ]; then
-			echo "seal-secrets: $key is not set; the services that use it start, but drafts or GitHub sync will fail" >&2
+			echo "seal-secrets: $key is not set; the service that uses it starts, but GitHub sync will fail" >&2
 		fi
 	done
 }

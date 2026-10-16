@@ -60,8 +60,8 @@ type suggestWorker struct {
 }
 
 // Work implements river.Worker. A refused budget snoozes the run until the
-// budget resets; a model that is not set up cancels it, since a retry cannot
-// help; anything else is retried.
+// budget resets; a model that is not set up, or a user with no AI provider,
+// cancels it, since a retry cannot help; anything else is retried.
 func (w *suggestWorker) Work(ctx context.Context, job *river.Job[SuggestArgs]) error {
 	// Metering calls are signed with the owner's identity.
 	ctx = authz.WithIdentity(ctx, authz.Identity{
@@ -73,7 +73,7 @@ func (w *suggestWorker) Work(ctx context.Context, job *river.Job[SuggestArgs]) e
 	case err == nil:
 		w.log.Info("suggestions written", slog.String("owner_id", job.Args.OwnerID.String()), slog.Int("count", n))
 		return nil
-	case errors.Is(err, app.ErrSuggestOff):
+	case errors.Is(err, app.ErrSuggestOff), errors.Is(err, llm.ErrProviderNotConfigured):
 		return river.JobCancel(err)
 	case errors.As(err, &budget):
 		wait := minBudgetSnooze

@@ -9,28 +9,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anthropics/anthropic-sdk-go/option"
-
+	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/pkg/llm/llmtest"
 )
 
 const drillCallTimeout = 200 * time.Millisecond
 
-// hangingAnthropic counts tokens at once but never answers a message until the
-// client gives up, like a model that has stopped responding.
+// hangingAnthropic never answers a message until the client gives up, like a
+// model that has stopped responding.
 func hangingAnthropic(t *testing.T) (*httptest.Server, *atomic.Int32) {
 	t.Helper()
 	var creates atomic.Int32
 	release := make(chan struct{})
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 		// The server only notices a closed connection once the body is read.
 		_, _ = io.Copy(io.Discard, r.Body)
-		if r.URL.Path == "/v1/messages/count_tokens" {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = io.WriteString(w, `{"input_tokens": 321}`)
-			return
-		}
 		creates.Add(1)
 		select {
 		case <-r.Context().Done():
@@ -47,10 +41,12 @@ func hangingAnthropic(t *testing.T) (*httptest.Server, *atomic.Int32) {
 func TestDrillClaudeTimeoutReleasesTheHoldAndSpendsNothing(t *testing.T) {
 	// Arrange: the real Anthropic adapter against a model that never answers.
 	srv, creates := hangingAnthropic(t)
-	api := llm.NewAnthropicAPI("test-key",
-		option.WithBaseURL(srv.URL), option.WithRequestTimeout(drillCallTimeout), option.WithMaxRetries(0))
-	meter := &llmtest.Meter{ReservationID: "res-timeout"}
-	cfg, err := llm.NewConfig("fude", noEnv)
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.CallTimeout(drillCallTimeout), llm.MaxRetries(0))
+	meter := &llmtest.Meter{
+		ReservationID: "res-timeout",
+		Provider:      &sorobanv1.ProviderAccess{BaseUrl: srv.URL, Model: "claude-opus-5-5", ApiKey: "test-key-12345"},
+	}
+	cfg, err := llm.NewConfig("fude")
 	if err != nil {
 		t.Fatalf("config: %v", err)
 	}

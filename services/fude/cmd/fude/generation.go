@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 
@@ -27,12 +26,7 @@ const (
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
 	dojoAddrEnv    = "DOJO_ADDR"
-	apiKeyEnv      = "ANTHROPIC_API_KEY"
-	baseURLEnv     = "ANTHROPIC_BASE_URL"
 )
-
-// errNoAPIKey is what every generation fails with while no API key is set.
-var errNoAPIKey = errors.New(apiKeyEnv + " is not set")
 
 // generation is what draft generation needs wired: the River worker for the
 // relay's client, the queue the use cases insert through, and a function that
@@ -45,8 +39,8 @@ type generation struct {
 }
 
 // newGeneration connects to soroban and kagami and builds the generator. The
-// API key is required in production; elsewhere a missing key is logged and
-// generation fails with a clear reason, so the local stack still starts.
+// model is each user's own: soroban hands back their provider when it reserves a
+// call, and a user with none gets a draft that fails with a clear reason.
 func newGeneration(
 	ctx context.Context,
 	lookup config.LookupFunc,
@@ -70,10 +64,6 @@ func newGeneration(
 	tsubameAddr, err := config.Required(lookup, tsubameAddrEnv)
 	if err != nil {
 		return nil, err
-	}
-	apiKey := config.String(lookup, apiKeyEnv, "")
-	if apiKey == "" && cfg.IsProduction() {
-		return nil, errNoAPIKey
 	}
 	// TODO(owner): choose the embedding provider. With none, voice samples are
 	// stored unembedded and drafts use the newest ones.
@@ -112,7 +102,7 @@ func newGeneration(
 		_ = tsubameConn.Close()
 	}
 
-	completer, err := newCompleter(lookup, apiKey, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
+	completer, err := newCompleter(cfg, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
 	if err != nil {
 		closeConns()
 		return nil, err
@@ -129,22 +119,12 @@ func newGeneration(
 	}, nil
 }
 
-// newCompleter returns the metered Claude client, or one that fails every call
-// when there is no API key.
-func newCompleter(lookup config.LookupFunc, apiKey string, meter llm.Meter, log *slog.Logger) (app.Completer, error) {
-	if apiKey == "" {
-		log.Warn("generation is off: " + errNoAPIKey.Error())
-		return noKeyCompleter{}, nil
-	}
-	cfg, err := llm.NewConfig(serviceName, lookup)
+// newCompleter returns the metered model client. It holds no credentials: every
+// call is made with the provider of the user it is for.
+func newCompleter(cfg config.Base, meter llm.Meter, log *slog.Logger) (app.Completer, error) {
+	llmCfg, err := llm.NewConfig(serviceName)
 	if err != nil {
 		return nil, err
 	}
-	return llm.New(cfg, llm.NewAnthropicAPI(apiKey, llm.AnthropicBaseURL(config.String(lookup, baseURLEnv, ""))), meter, llm.WithLogger(log))
-}
-
-type noKeyCompleter struct{}
-
-func (noKeyCompleter) Complete(context.Context, string, llm.Request) (llm.Response, error) {
-	return llm.Response{}, errNoAPIKey
+	return llm.New(llmCfg, llm.NewAnthropicAPI(llm.ForEnvironment(cfg.Environment)...), meter, llm.WithLogger(log))
 }

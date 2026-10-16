@@ -32,9 +32,17 @@ type Usage struct {
 	CacheWriteTokens int32
 }
 
+// Access is the provider a call is made with: the caller's own address, model
+// and key, handed back by soroban when it reserves the call. It is secret and
+// lives only as long as the call.
+type Access struct {
+	BaseURL string
+	Model   string
+	APIKey  string
+}
+
 // CallRequest is what is sent to the model once a call is allowed.
 type CallRequest struct {
-	Model     string    `json:"model"`
 	System    string    `json:"system"`
 	Messages  []Message `json:"messages"`
 	MaxTokens int32     `json:"max_tokens"`
@@ -51,12 +59,11 @@ type CallResult struct {
 }
 
 // API is the model behind Client. AnthropicAPI is the real one; llmtest has a
-// fake.
+// fake. It holds no credentials of its own: every call brings the Access of the
+// user it is made for.
 type API interface {
-	// CountTokens returns the prompt's input tokens.
-	CountTokens(ctx context.Context, req CallRequest) (int32, error)
-	// Create runs the request. The system prompt is cached.
-	Create(ctx context.Context, req CallRequest) (CallResult, error)
+	// Create runs the request with the given provider. The system prompt is cached.
+	Create(ctx context.Context, access Access, req CallRequest) (CallResult, error)
 }
 
 // Meter is the part of soroban's client Client needs. The generated

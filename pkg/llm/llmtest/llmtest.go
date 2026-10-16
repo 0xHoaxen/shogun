@@ -13,39 +13,38 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/llm"
 )
 
+// The provider a Meter hands back unless a test sets another.
+const (
+	DefaultBaseURL = "https://llm.example.com"
+	DefaultModel   = "claude-opus-5-5"
+	DefaultAPIKey  = "sk-test-key-0123"
+)
+
 // API is a fake llm.API.
 type API struct {
 	mu sync.Mutex
 
-	// Tokens is what CountTokens returns.
-	Tokens int32
 	// Result is what Create returns.
 	Result llm.CallResult
-	// CountErr and CreateErr make the matching call fail.
-	CountErr, CreateErr error
+	// CreateErr makes Create fail.
+	CreateErr error
 	// OnCreate, if set, runs at the start of Create.
 	OnCreate func(ctx context.Context)
 
-	// Counted and Created are the requests received.
-	Counted, Created []llm.CallRequest
-}
-
-// CountTokens implements llm.API.
-func (a *API) CountTokens(_ context.Context, req llm.CallRequest) (int32, error) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.Counted = append(a.Counted, req)
-	return a.Tokens, a.CountErr
+	// Created is the requests received, and Accesses the provider each was made with.
+	Created  []llm.CallRequest
+	Accesses []llm.Access
 }
 
 // Create implements llm.API.
-func (a *API) Create(ctx context.Context, req llm.CallRequest) (llm.CallResult, error) {
+func (a *API) Create(ctx context.Context, access llm.Access, req llm.CallRequest) (llm.CallResult, error) {
 	if a.OnCreate != nil {
 		a.OnCreate(ctx)
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.Created = append(a.Created, req)
+	a.Accesses = append(a.Accesses, access)
 	return a.Result, a.CreateErr
 }
 
@@ -55,6 +54,11 @@ type Meter struct {
 
 	// ReservationID is what Reserve returns; empty means "reservation-1".
 	ReservationID string
+	// Provider is the provider Reserve hands back; nil means the Default ones.
+	Provider *sorobanv1.ProviderAccess
+	// NoProvider makes Reserve hand back no provider at all, like a soroban that
+	// predates providers.
+	NoProvider bool
 	// ReserveErr makes Reserve fail.
 	ReserveErr error
 	// FailCommits makes the first n Commit calls fail.
@@ -83,7 +87,15 @@ func (m *Meter) Reserve(_ context.Context, in *sorobanv1.ReserveRequest, _ ...gr
 	if id == "" {
 		id = "reservation-1"
 	}
-	return &sorobanv1.ReserveResponse{ReservationId: id}, nil
+	resp := &sorobanv1.ReserveResponse{ReservationId: id}
+	switch {
+	case m.NoProvider:
+	case m.Provider != nil:
+		resp.Provider = m.Provider
+	default:
+		resp.Provider = &sorobanv1.ProviderAccess{BaseUrl: DefaultBaseURL, Model: DefaultModel, ApiKey: DefaultAPIKey}
+	}
+	return resp, nil
 }
 
 // Commit implements llm.Meter.

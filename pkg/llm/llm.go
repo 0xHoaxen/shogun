@@ -15,6 +15,7 @@ import (
 	"time"
 
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
+	"github.com/0xHoaxen/shogun/pkg/authz"
 )
 
 const (
@@ -40,6 +41,9 @@ var (
 	// ErrBudgetExhausted means a hard budget refused the call. The error is a
 	// *BudgetError with the reset time.
 	ErrBudgetExhausted = errors.New("llm: budget exhausted")
+	// ErrProviderNotConfigured means the user has not set an AI provider, so
+	// their AI features are off. Nothing was spent.
+	ErrProviderNotConfigured = errors.New("llm: no AI provider is configured")
 	// ErrMeteringUnavailable means soroban could not be reached or failed, so
 	// the call was not made.
 	ErrMeteringUnavailable = errors.New("llm: cost metering unavailable")
@@ -116,25 +120,31 @@ func (c *Client) Complete(ctx context.Context, feature string, req Request) (Res
 	if err := validate(req); err != nil {
 		return Response{}, err
 	}
-	call := CallRequest{Model: fc.Model, System: req.System, Messages: req.Messages, MaxTokens: fc.MaxTokens}
+	call := CallRequest{System: req.System, Messages: req.Messages, MaxTokens: fc.MaxTokens}
 	if req.MaxTokens > 0 {
 		call.MaxTokens = req.MaxTokens
 	}
 
+	// A cached answer belongs to the user who paid for it, and only to them. A
+	// call that does not say who it is for is never cached.
 	var key string
 	if req.Cache && c.cache != nil {
-		key = cacheKey(call)
+		if id, ok := authz.FromContext(ctx); ok && id.OwnerID != "" {
+			key = cacheKey(id.OwnerID, call)
+		}
+	}
+	if key != "" {
 		if hit, ok := c.cache.Get(key); ok {
 			hit.FromCache = true
 			return hit, nil
 		}
 	}
 
-	reservationID, err := c.reserve(ctx, feature, call)
+	reservationID, access, err := c.reserve(ctx, feature, call)
 	if err != nil {
 		return Response{}, err
 	}
-	result, err := c.api.Create(ctx, call)
+	result, err := c.api.Create(ctx, access, call)
 	if err != nil {
 		c.release(ctx, reservationID)
 		return Response{}, fmt.Errorf("claude call: %w", err)
@@ -144,7 +154,7 @@ func (c *Client) Complete(ctx context.Context, feature string, req Request) (Res
 		return Response{}, ErrRefused
 	}
 
-	resp := Response{Text: result.Text, Model: call.Model, StopReason: result.StopReason, Usage: result.Usage}
+	resp := Response{Text: result.Text, Model: access.Model, StopReason: result.StopReason, Usage: result.Usage}
 	if key != "" {
 		c.cache.Set(key, resp, c.cfg.CacheTTL)
 	}
@@ -163,15 +173,15 @@ func validate(req Request) error {
 	return nil
 }
 
-// reserve estimates the call and holds its cost, returning the reservation id.
-func (c *Client) reserve(ctx context.Context, feature string, call CallRequest) (string, error) {
-	inputTokens, err := c.api.CountTokens(ctx, call)
-	if err != nil {
-		return "", fmt.Errorf("count tokens: %w", err)
-	}
-	estimate := inputTokens
+// reserve estimates the call, holds its cost against the user's budgets and
+// returns the reservation id with the provider to make the call with. The
+// estimate is made here, not by the provider: counting tokens would need the
+// user's key before their budget has been checked, and many Anthropic-compatible
+// providers have no token-counting endpoint at all.
+func (c *Client) reserve(ctx context.Context, feature string, call CallRequest) (string, Access, error) {
+	estimate := EstimateInputTokens(call.System, call.Messages)
 	if call.System != "" {
-		estimate += inputTokens / cacheWriteSurchargeDivisor
+		estimate += estimate / cacheWriteSurchargeDivisor
 	}
 	res, err := c.meter.Reserve(ctx, &sorobanv1.ReserveRequest{
 		Service:         c.cfg.Service,
@@ -180,9 +190,16 @@ func (c *Client) reserve(ctx context.Context, feature string, call CallRequest) 
 		EstOutputTokens: call.MaxTokens,
 	})
 	if err != nil {
-		return "", reserveError(err)
+		return "", Access{}, reserveError(err)
 	}
-	return res.GetReservationId(), nil
+	provider := res.GetProvider()
+	access := Access{BaseURL: provider.GetBaseUrl(), Model: provider.GetModel(), APIKey: provider.GetApiKey()}
+	if access.BaseURL == "" || access.Model == "" || access.APIKey == "" {
+		// Never fall back to other credentials: give the hold back and stop.
+		c.release(ctx, res.GetReservationId())
+		return "", Access{}, ErrProviderNotConfigured
+	}
+	return res.GetReservationId(), access, nil
 }
 
 // release gives a hold back after a failed call. It runs even if ctx is done.
@@ -219,10 +236,14 @@ func (c *Client) commit(ctx context.Context, reservationID string, usage Usage) 
 		slog.Int("output_tokens", int(usage.OutputTokens)), slog.Any("error", err))
 }
 
-// cacheKey is the hash of everything that decides the answer.
-func cacheKey(call CallRequest) string {
+// cacheKey is the hash of everything that decides the answer, including whose
+// it is, so that no two users ever share an entry.
+func cacheKey(owner string, call CallRequest) string {
 	// A struct of strings, numbers and slices always marshals.
-	b, _ := json.Marshal(call)
+	b, _ := json.Marshal(struct {
+		Owner string
+		Call  CallRequest
+	}{owner, call})
 	sum := sha256.Sum256(b)
 	return hex.EncodeToString(sum[:])
 }
