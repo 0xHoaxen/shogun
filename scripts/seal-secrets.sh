@@ -92,6 +92,7 @@ service_keys() {
 	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS ANTHROPIC_API_KEY" ;;
 	katana) echo "KATANA_GITHUB_USER KATANA_GITHUB_TOKEN ANTHROPIC_API_KEY" ;;
 	shinobi) echo "ANTHROPIC_API_KEY" ;;
+	soroban) echo "SOROBAN_SECRET_MASTER_KEY SOROBAN_SECRET_KEY_ID" ;;
 	*) echo "" ;;
 	esac
 }
@@ -109,6 +110,8 @@ fill_env() {
 	env_set_default "$file" FUDE_HANKO_SIGNING_KEY "$(openssl rand -base64 32)"
 	env_set_default "$file" FUDE_HANKO_KEY_ID fude-1
 	env_set_default "$file" TSUBAME_TOKEN_KEY_ID tsubame-1
+	env_set_default "$file" SOROBAN_SECRET_MASTER_KEY "$(openssl rand -base64 32)"
+	env_set_default "$file" SOROBAN_SECRET_KEY_ID soroban-1
 	env_set_default "$file" TORII_PUBLIC_URL http://localhost:3000
 	env_set_default "$file" TSUBAME_GMAIL_REDIRECT_URL http://localhost:3000/mail/callback
 	env_set_default "$file" GOOGLE_CLIENT_ID "$PLACEHOLDER_ID"

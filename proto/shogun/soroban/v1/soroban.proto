@@ -27,6 +27,20 @@ service SorobanService {
   rpc ListBudgets(ListBudgetsRequest) returns (ListBudgetsResponse);
   rpc SetPrice(SetPriceRequest) returns (SetPriceResponse);
   rpc ListPrices(ListPricesRequest) returns (ListPricesResponse);
+  // SetProvider stores the caller's own AI provider: the Anthropic-compatible
+  // base URL, the model and the API key. The key is sealed at rest and never
+  // returned. Without a provider the caller's AI features are off. With version
+  // 0 it creates the provider (api_key is then required, reason API_KEY_REQUIRED);
+  // otherwise it updates it if version matches, and an empty api_key keeps the
+  // stored one. A bad address is INVALID_PROVIDER_URL, a bad model
+  // INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price INVALID_PRICE.
+  rpc SetProvider(SetProviderRequest) returns (SetProviderResponse);
+  // GetProvider returns the caller's provider without its key, or no provider
+  // when none is set.
+  rpc GetProvider(GetProviderRequest) returns (GetProviderResponse);
+  // DeleteProvider removes the caller's provider and key. It is not an error
+  // when there is none.
+  rpc DeleteProvider(DeleteProviderRequest) returns (DeleteProviderResponse);
 }
 
 enum ScopeType {
@@ -188,3 +202,41 @@ message ListPricesRequest {}
 message ListPricesResponse {
   repeated Price prices = 1;
 }
+
+// Provider is a caller's AI provider as it is shown back: everything except the
+// key, of which only the last four characters are kept for display.
+message Provider {
+  string base_url = 1;
+  string model = 2;
+  string key_last4 = 3;
+  // Prices in micro-dollars per million tokens, for a model soroban has no
+  // price for. Both are set or neither is.
+  optional int64 input_micros_per_mtok = 4;
+  optional int64 output_micros_per_mtok = 5;
+  int32 version = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+message SetProviderRequest {
+  string base_url = 1;
+  string model = 2;
+  string api_key = 3;
+  optional int64 input_micros_per_mtok = 4;
+  optional int64 output_micros_per_mtok = 5;
+  int32 version = 6;
+}
+
+message SetProviderResponse {
+  Provider provider = 1;
+}
+
+message GetProviderRequest {}
+
+message GetProviderResponse {
+  // provider is unset when the caller has none.
+  Provider provider = 1;
+}
+
+message DeleteProviderRequest {}
+
+message DeleteProviderResponse {}

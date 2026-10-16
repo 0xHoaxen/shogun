@@ -75,6 +75,20 @@ type Price struct {
 	CacheWriteMicrosPerMtok int64
 }
 
+type Provider struct {
+	OwnerID             uuid.UUID
+	BaseUrl             string
+	Model               string
+	ApiKeyCiphertext    []byte
+	KeyID               string
+	KeyLast4            string
+	InputMicrosPerMtok  *int64
+	OutputMicrosPerMtok *int64
+	Version             int32
+	CreatedAt           time.Time
+	UpdatedAt           time.Time
+}
+
 type Reservation struct {
 	ID              uuid.UUID
 	OwnerID         uuid.UUID
