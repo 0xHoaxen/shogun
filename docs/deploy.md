@@ -135,6 +135,15 @@ kubectl --context "$CTX" delete namespace shogun        # also deletes Postgres 
 
 `kind delete cluster --name shogun` removes everything.
 
+## Internal TLS
+
+Every Go service serves and dials gRPC over mutual TLS, because users' AI provider keys cross that network. The chart (`internalTLS` in `deploy/charts/microservice`, switched on for all services in `deploy/apps/common.yaml`) asks cert-manager for a certificate per service from the `shogun-internal` ClusterIssuer (`deploy/infrastructure/cert-manager/issuers/shogun-internal-ca.yaml`), mounts it at `/etc/shogun/tls` and sets `INTERNAL_TLS_CA_FILE`, `INTERNAL_TLS_CERT_FILE` and `INTERNAL_TLS_KEY_FILE`.
+
+- A server accepts only clients with a certificate from this CA, and a client accepts only a server whose certificate names the address it dialled (`kagami`, `kagami.shogun.svc`, and so on).
+- Certificates last 30 days and renew 10 days early. Services read the files on every handshake, so a renewal needs no restart. The CA bundle is read at startup; the CA lasts ten years, and rolling it means restarting every service.
+- `ENVIRONMENT=local` and `test` stay plaintext, so `make up` needs no certificates. Anything else refuses to start or dial without all three files, and a partly set configuration is always an error.
+- Apply `cluster-issuers` before the apps: `make deploy` orders it already, but a first install on an existing cluster needs `helmfile ... -l name=cluster-issuers apply` once.
+
 ## Security checklist before a real login
 
 - [ ] `.secrets/<env>.env` is mode 600, not in git, and backed up; so is the sealing key backup.
@@ -143,6 +152,7 @@ kubectl --context "$CTX" delete namespace shogun        # also deletes Postgres 
 - [ ] `TORII_ADMIN_EMAILS` lists only the people who should administer users.
 - [ ] Only the web app and Grafana are exposed outside the cluster; Postgres, Prometheus, Alertmanager and the service Services stay `ClusterIP`.
 - [ ] Hanko keys match (a test send succeeds; a tampered draft is refused).
+- [ ] Service-to-service gRPC runs over mutual TLS: `kubectl -n shogun get certificate` shows every Go service `READY`, and `kubectl -n shogun exec deploy/torii -- env | grep INTERNAL_TLS` lists the three files. A service without them refuses to start outside `local` and `test`.
 - [ ] The Google OAuth consent screen is limited to you.
 - [ ] A backup exists off the cluster and one restore has been checked.
 

@@ -13,6 +13,10 @@ ports:
   grpc: 0
   http: 3000
 serviceEnv: false
+
+# No gRPC, so no internal certificate.
+internalTLS:
+  enabled: false
 migrationJob:
   enabled: false
 secret:

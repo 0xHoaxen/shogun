@@ -1,0 +1,44 @@
+# The internal certificate authority for service-to-service mTLS. A self-signed
+# root signs a CA certificate that lives in the cert-manager namespace, and the
+# shogun-internal ClusterIssuer issues every service's certificate from it
+# (see internalTLS in deploy/charts/microservice). Nothing outside the cluster
+# trusts this CA; it is used only between Shogun's own pods.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: shogun-selfsigned
+  labels:
+    app.kubernetes.io/part-of: shogun
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: shogun-internal-ca
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/part-of: shogun
+spec:
+  isCA: true
+  commonName: shogun-internal-ca
+  secretName: shogun-internal-ca
+  duration: 87600h
+  renewBefore: 8760h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: shogun-selfsigned
+    kind: ClusterIssuer
+    group: cert-manager.io
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: shogun-internal
+  labels:
+    app.kubernetes.io/part-of: shogun
+spec:
+  ca:
+    secretName: shogun-internal-ca

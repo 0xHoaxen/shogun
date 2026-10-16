@@ -22,6 +22,8 @@ import (
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/grpcclient"
+	"github.com/0xHoaxen/shogun/pkg/internaltls/internaltlstest"
 )
 
 const testTimeout = 5 * time.Second
@@ -161,8 +163,22 @@ func TestReflectionOffInProduction(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.env, func(t *testing.T) {
+			conn := (*grpc.ClientConn)(nil)
+			if tt.env == config.EnvProduction {
+				// A production server only runs over mutual TLS, so the probe does too.
+				useTLS(t, internaltlstest.NewCA(t, "ca"), "127.0.0.1")
+			}
 			r := start(t, config.Base{Environment: tt.env}, nil)
-			conn := dial(t, r.grpcAddr)
+			if tt.env == config.EnvProduction {
+				c, err := grpcclient.Dial(t.Context(), r.grpcAddr)
+				if err != nil {
+					t.Fatalf("Dial: %v", err)
+				}
+				t.Cleanup(func() { _ = c.Close() })
+				conn = c
+			} else {
+				conn = dial(t, r.grpcAddr)
+			}
 			ctx, cancel := context.WithTimeout(t.Context(), testTimeout)
 			defer cancel()
 			err := listServices(ctx, conn)

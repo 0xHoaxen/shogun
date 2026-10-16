@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,11 +16,13 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/internaltls"
 )
 
 // Run serves gRPC (health, reflection outside production, recover and log
@@ -31,13 +34,17 @@ func Run(ctx context.Context, cfg config.Base, log *slog.Logger, register func(*
 	for _, opt := range opts {
 		s = opt(s)
 	}
+	tlsConfig, err := internaltls.Load(environmentOf(cfg))
+	if err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
 	grpcLis, httpLis, err := listeners(cfg, s)
 	if err != nil {
 		return err
 	}
 	defer registerCollectors(log, s.collectors)()
 
-	grpcSrv := newGRPCServer(cfg, log, s, register)
+	grpcSrv := newGRPCServer(cfg, log, s, tlsConfig, register)
 	httpSrv := newHTTPServer(s.readiness)
 
 	g, gctx := errgroup.WithContext(ctx)
@@ -62,7 +69,19 @@ func Run(ctx context.Context, cfg config.Base, log *slog.Logger, register func(*
 	return g.Wait()
 }
 
-func newGRPCServer(cfg config.Base, log *slog.Logger, s settings, register func(*grpc.Server)) *grpc.Server {
+// environmentOf reads the process environment, except that ENVIRONMENT is what
+// the service was configured with, so a test or a caller's config decides how
+// strict TLS is.
+func environmentOf(cfg config.Base) config.LookupFunc {
+	return func(key string) (string, bool) {
+		if key == "ENVIRONMENT" {
+			return cfg.Environment, true
+		}
+		return os.LookupEnv(key)
+	}
+}
+
+func newGRPCServer(cfg config.Base, log *slog.Logger, s settings, tlsConfig *internaltls.Config, register func(*grpc.Server)) *grpc.Server {
 	unary := []grpc.UnaryServerInterceptor{metricsUnary(), recoverUnary(log), logUnary(log)}
 	stream := []grpc.StreamServerInterceptor{metricsStream(), recoverStream(log), logStream(log)}
 	if s.authUnary != nil {
@@ -71,11 +90,15 @@ func newGRPCServer(cfg config.Base, log *slog.Logger, s settings, register func(
 	if s.authStream != nil {
 		stream = append(stream, s.authStream)
 	}
-	srv := grpc.NewServer(
+	serverOpts := []grpc.ServerOption{
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(unary...),
 		grpc.ChainStreamInterceptor(stream...),
-	)
+	}
+	if tlsConfig != nil {
+		serverOpts = append(serverOpts, grpc.Creds(credentials.NewTLS(tlsConfig.Server())))
+	}
+	srv := grpc.NewServer(serverOpts...)
 	healthpb.RegisterHealthServer(srv, health.NewServer())
 	if !cfg.IsProduction() {
 		reflection.Register(srv)
