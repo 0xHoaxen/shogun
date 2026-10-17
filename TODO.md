@@ -894,8 +894,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Adds dojo to the `user.deleted` route with the `owners` table and handler it lacks.
   Done when: `cd services/dojo && go test -race ./...`.
 
-- [ ] **P11.8c6 Purge: katana** (S) Needs: P11.8c0
-  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Also removes the sealed GitHub token (`github_accounts`).
+- [x] **P11.8c6 Purge: katana** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`; the sealed GitHub token (`github_accounts`) goes too.
   Done when: `cd services/katana && go test -race ./...`.
 
 - [ ] **P11.8c7 Purge: shinobi** (S) Needs: P11.8c0
