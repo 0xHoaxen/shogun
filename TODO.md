@@ -886,8 +886,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Adds fude to the `user.deleted` route with the `owners` table and handler it lacks.
   Done when: `cd services/fude && go test -race ./...`.
 
-- [ ] **P11.8c4 Purge: taiko** (S) Needs: P11.8c0
-  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check.
+- [x] **P11.8c4 Purge: taiko** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`.
   Done when: `cd services/taiko && go test -race ./...`.
 
 - [ ] **P11.8c5 Purge: dojo** (S) Needs: P11.8c0

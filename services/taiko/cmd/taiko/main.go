@@ -32,6 +32,7 @@ import (
 	"github.com/0xHoaxen/shogun/services/taiko/internal/events"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/jobs"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/live"
+	"github.com/0xHoaxen/shogun/services/taiko/internal/store"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/transport/downstream"
 	taikogrpc "github.com/0xHoaxen/shogun/services/taiko/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/taiko/migrations"
@@ -120,7 +121,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 
 	svc := app.NewService(pool, nil)
-	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log), log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}
