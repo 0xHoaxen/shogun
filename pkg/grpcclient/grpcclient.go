@@ -5,13 +5,16 @@ package grpcclient
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/internaltls"
 )
 
 // DefaultTimeout bounds unary calls whose context has no deadline.
@@ -86,10 +89,18 @@ func Dial(_ context.Context, target string, opts ...Option) (*grpc.ClientConn, e
 		stream = append(stream, identityStream(s.signer))
 	}
 
+	tlsConfig, err := internaltls.Load(os.LookupEnv)
+	if err != nil {
+		return nil, fmt.Errorf("grpcclient: dial %s: %w", target, err)
+	}
+	// Plaintext only in local development and tests, where nothing is configured.
+	transport := grpc.WithTransportCredentials(insecure.NewCredentials())
+	if tlsConfig != nil {
+		transport = grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig.Client()))
+	}
+
 	dialOpts := []grpc.DialOption{
-		// Plaintext is acceptable only inside the cluster network for now;
-		// P10.3 replaces this with mTLS.
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		transport,
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithDefaultServiceConfig(retryServiceConfig),
 		grpc.WithChainUnaryInterceptor(unary...),

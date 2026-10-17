@@ -43,11 +43,19 @@ spec:
             {{- toYaml .Values.probes.readiness | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
+          {{- $mounts := .Values.volumeMounts }}
+          {{- if .Values.internalTLS.enabled }}
+          {{- $mounts = concat $mounts (include "microservice.tlsVolumeMounts" . | fromYamlArray) }}
+          {{- end }}
+          {{- with $mounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- with .Values.volumes }}
+      {{- $volumes := .Values.volumes }}
+      {{- if .Values.internalTLS.enabled }}
+      {{- $volumes = concat $volumes (include "microservice.tlsVolumes" . | fromYamlArray) }}
+      {{- end }}
+      {{- with $volumes }}
       volumes:
         {{- toYaml . | nindent 8 }}
       {{- end }}

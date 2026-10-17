@@ -323,7 +323,7 @@ Torii is a backend-for-frontend: the web app speaks ConnectRPC to it, and it spe
 - **Web client.** `buf generate` also emits TypeScript with `@connectrpc/connect-web` into `web/src/gen`, so the UI is typed end to end. Connect speaks plain HTTP/1.1 JSON, so it is debuggable with `curl`.
 - **Login.** Google OAuth (the same Google account Gmail uses), with an allowlist of one email. On success torii stores a session in `torii.sessions` and sets an `HttpOnly`, `Secure`, `SameSite=Lax` cookie valid for 30 days with sliding renewal.
 - **CSRF.** Connect requires `Content-Type: application/json` or `application/proto` plus a `Connect-Protocol-Version` header, which a cross-site form cannot send; the cookie is also `SameSite`.
-- **Internal identity.** For each downstream call torii signs a 60-second token (HMAC, `owner_id`, `request_id`) into `x-shogun-identity`; `pkg/authz` verifies it on every RPC. In production, service-to-service traffic also runs over mTLS from the mesh or cluster.
+- **Internal identity.** For each downstream call torii signs a 60-second token (HMAC, `owner_id`, `request_id`) into `x-shogun-identity`; `pkg/authz` verifies it on every RPC. Service-to-service gRPC runs over mutual TLS in every environment except local and test (`pkg/internaltls`, certificates from cert-manager); a service refuses to start or dial without it.
 - **Live notifications.** `NotificationsService.Stream` is a Connect server stream that torii bridges from `taiko.Subscribe`; it reconnects with the last seen id.
 - **Limits.** Per-session rate limit (token bucket, 20 rps burst 50), 10 s deadline on unary calls, request body cap 5 MB (CSV import).
 

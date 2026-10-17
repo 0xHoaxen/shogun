@@ -808,7 +808,11 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: `DueSources` reads each source's schedule in its owner's own zone (`ListEnabledSources` joins the owners table, so a disabled, deleted or not-yet-announced owner's sources are not read). shinobi's fetcher already refuses non-public addresses at connect time, which matters now that many users add sources. Deploy note for P11.4a–f: sessions that predate the `users` table are ended once (no matching user), so each existing user signs in again, which creates their row and announces them to the services; their jobs resume from then.
   Done when: `cd services/shinobi && go test -race ./...`.
 
-- [ ] **P11.5a soroban providers** (M) Needs: P11.4a
+- [x] **P11.5pre Internal mTLS** (M) Needs: P11.4a
+  Do: `pkg/internaltls` (TLS 1.3, mutual, certificate and key re-read on every handshake) wired into `server.Run` and `grpcclient.Dial`; outside `local` and `test` both refuse to start or dial without `INTERNAL_TLS_CA_FILE`, `INTERNAL_TLS_CERT_FILE` and `INTERNAL_TLS_KEY_FILE`, and a half-set configuration is an error everywhere. The microservice chart gets a cert-manager `Certificate` per service, the mount and the env (`internalTLS`, on for every Go service in `deploy/apps/common.yaml`, off for web); a `shogun-internal` CA ClusterIssuer joins the issuers. Prerequisite for P11.5a–e, which sends users' API keys between services.
+  Done when: `cd pkg && go test -race ./internaltls/... ./server/... ./grpcclient/...`, `make lint`, `make test`, and `helm template` of torii shows the Certificate and `INTERNAL_TLS_*`, of web shows neither.
+
+- [ ] **P11.5a soroban providers** (M) Needs: P11.4a, P11.5pre
   Do: `providers` table, encrypted key, Set/Get/Delete/Test RPCs, SSRF-safe base URL validation.
   Done when: `cd services/soroban && go test -race ./...`.
 
