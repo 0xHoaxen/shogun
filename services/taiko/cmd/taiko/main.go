@@ -159,10 +159,6 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 func digestSetup(
 	ctx context.Context, svc *app.Service, lookup config.LookupFunc, signer grpcclient.Signer, log *slog.Logger,
 ) (jobs.Setup, func(), error) {
-	loc, err := jobs.Location()
-	if err != nil {
-		return jobs.Setup{}, nil, err
-	}
 	var conns []*grpc.ClientConn
 	closeAll := func() {
 		for _, conn := range conns {
@@ -200,8 +196,8 @@ func digestSetup(
 	}
 	sources := downstream.New(
 		kagamiv1.NewKagamiServiceClient(kagami), fudev1.NewFudeServiceClient(fude), sorobanv1.NewSorobanServiceClient(soroban))
-	digester := app.NewDigester(svc, sources, loc, time.Now, log)
-	return jobs.NewSetup(digester, loc, time.Now, log), closeAll, nil
+	digester := app.NewDigester(svc, sources, time.Now, log)
+	return jobs.NewSetup(digester, svc, jobs.ContextEnqueuer{}, time.Now, log), closeAll, nil
 }
 
 // migrate applies the service's own migrations, then the relay's River tables.

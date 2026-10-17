@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/domain"
 	"github.com/0xHoaxen/shogun/services/taiko/internal/store"
 )
@@ -34,58 +35,55 @@ type DigestSources interface {
 	Spend(ctx context.Context, start, end time.Time) (int64, error)
 }
 
+// ErrBadDigestDate means the date a digest job carries is not YYYY-MM-DD.
+var ErrBadDigestDate = errors.New("app: digest date is not YYYY-MM-DD")
+
 // Digester writes the daily digest notification.
 type Digester struct {
 	svc     *Service
 	sources DigestSources
-	loc     *time.Location
 	now     func() time.Time
 	log     *slog.Logger
 }
 
-// NewDigester returns a Digester. loc is the zone the owner's days are counted
-// in and now is the clock; a nil now means time.Now.
-func NewDigester(svc *Service, sources DigestSources, loc *time.Location, now func() time.Time, log *slog.Logger) *Digester {
+// NewDigester returns a Digester. now is the clock; a nil now means time.Now.
+func NewDigester(svc *Service, sources DigestSources, now func() time.Time, log *slog.Logger) *Digester {
 	if now == nil {
 		now = time.Now
 	}
-	return &Digester{svc: svc, sources: sources, loc: loc, now: now, log: log}
+	return &Digester{svc: svc, sources: sources, now: now, log: log}
 }
 
-// Run writes the digest of date (a day in the owner's zone) for every owner.
-// It returns how long to wait before running again when an owner's quiet hours
-// hold the digest back, and zero otherwise. A digest that is empty, switched
-// off, or for a day that is over is skipped. Running it again for the same date
-// never adds a second digest. When some owners fail, the others are still done
-// and the failures are returned together, so a retry fills the gaps.
-func (d *Digester) Run(ctx context.Context, date time.Time) (time.Duration, error) {
-	now := d.now().In(d.loc)
-	if !sameDay(now, date) {
-		d.log.Warn("daily digest skipped: its day is over", slog.String("date", date.Format(time.DateOnly)))
-		return 0, nil
+// RunFor writes the digest of date, a YYYY-MM-DD day in the owner's own time
+// zone. It returns how long to wait before running again when the owner's quiet
+// hours hold the digest back, and zero otherwise. A digest that is empty,
+// switched off, for an owner who is not active, or for a day that is over in
+// the owner's zone is skipped. Running it again for the same date never adds a
+// second digest.
+func (d *Digester) RunFor(ctx context.Context, ownerID uuid.UUID, date string) (time.Duration, error) {
+	owner, err := owners.Get(ctx, d.svc.pool, ownerID)
+	if errors.Is(err, owners.ErrNotFound) || (err == nil && owner.Status != owners.StatusActive) {
+		return 0, nil // not told about, disabled or deleted: nobody to write for
 	}
-	owners, err := store.New(d.svc.pool).Owners(ctx)
 	if err != nil {
 		return 0, err
 	}
-	var wait time.Duration
-	var errs []error
-	for _, owner := range owners {
-		held, err := d.digestFor(ctx, owner, date, now)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("owner %s: %w", owner, err))
-		}
-		wait = max(wait, held)
+	loc := owner.Location()
+	day, err := time.ParseInLocation(time.DateOnly, date, loc)
+	if err != nil {
+		return 0, fmt.Errorf("%w: %q", ErrBadDigestDate, date)
 	}
-	if err := errors.Join(errs...); err != nil {
-		return 0, err
+	now := d.now().In(loc)
+	if !sameDay(now, day) {
+		d.log.Warn("daily digest skipped: its day is over", slog.String("date", date))
+		return 0, nil
 	}
-	return wait, nil
+	return d.digestFor(ctx, ownerID, loc, day, now)
 }
 
 // digestFor writes one owner's digest, or returns how long their quiet hours
 // hold it back.
-func (d *Digester) digestFor(ctx context.Context, owner uuid.UUID, date, now time.Time) (time.Duration, error) {
+func (d *Digester) digestFor(ctx context.Context, owner uuid.UUID, loc *time.Location, date, now time.Time) (time.Duration, error) {
 	repo := store.New(d.svc.pool)
 	setting, err := repo.ChannelSetting(ctx, owner, store.ChannelInApp)
 	switch {
@@ -107,7 +105,7 @@ func (d *Digester) digestFor(ctx context.Context, owner uuid.UUID, date, now tim
 
 	digest, err := d.collect(authz.WithIdentity(ctx, authz.Identity{
 		OwnerID: owner.String(), RequestID: "daily-digest-" + date.Format(time.DateOnly),
-	}), date)
+	}), loc, date)
 	if err != nil {
 		return 0, err
 	}
@@ -123,7 +121,7 @@ func (d *Digester) digestFor(ctx context.Context, owner uuid.UUID, date, now tim
 }
 
 // collect reads the three parts of the digest as the owner in ctx.
-func (d *Digester) collect(ctx context.Context, date time.Time) (domain.Digest, error) {
+func (d *Digester) collect(ctx context.Context, loc *time.Location, date time.Time) (domain.Digest, error) {
 	followUps, err := d.sources.FollowUpsDue(ctx, date)
 	if err != nil {
 		return domain.Digest{}, fmt.Errorf("follow-ups: %w", err)
@@ -132,7 +130,7 @@ func (d *Digester) collect(ctx context.Context, date time.Time) (domain.Digest, 
 	if err != nil {
 		return domain.Digest{}, fmt.Errorf("drafts: %w", err)
 	}
-	start := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, d.loc)
+	start := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, loc)
 	spend, err := d.sources.Spend(ctx, start, start.AddDate(0, 0, 1))
 	if err != nil {
 		return domain.Digest{}, fmt.Errorf("spend: %w", err)
