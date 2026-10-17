@@ -10,8 +10,8 @@ import (
 )
 
 // WorkDue runs the due_sources worker on args.
-func WorkDue(ctx context.Context, s Scheduler, e Enqueuer, loc *time.Location, now func() time.Time, args DueSourcesArgs) error {
-	w := &dueWorker{scheduler: s, enqueuer: e, loc: loc, now: now, log: slog.New(slog.DiscardHandler)}
+func WorkDue(ctx context.Context, s Scheduler, e Enqueuer, now func() time.Time, args DueSourcesArgs) error {
+	w := &dueWorker{scheduler: s, enqueuer: e, now: now, log: slog.New(slog.DiscardHandler)}
 	return w.Work(ctx, &river.Job[DueSourcesArgs]{JobRow: &rivertype.JobRow{ID: 1}, Args: args})
 }
 

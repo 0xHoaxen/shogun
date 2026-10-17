@@ -804,8 +804,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: a 15-minute `rollup_tick` queues one `rollup` per active owner and local date once their clock reaches 01:00. `Service.Rollup(ctx, owner)` loads the owner's zone from the owners table (default zone if torii has not announced them yet; a deleted owner is skipped) and rebuilds only their rollups; the rollup SQL takes `@owner_id` and `@tz` instead of the hard-coded `'Asia/Kolkata'`. `GetFunnel` and `GetOutreachStats` default their range to the owner's today. Owners with facts but no owners row are rolled up only once they are announced, which happens at their next login.
   Done when: `cd services/sensei && go test -race ./...`.
 
-- [ ] **P11.4f shinobi source schedules per owner** (S) Needs: P11.4a
-  Do: read source schedules in the owner's zone (`DueSources` takes each owner's location).
+- [x] **P11.4f shinobi source schedules per owner** (S) Needs: P11.4a
+  Do: `DueSources` reads each source's schedule in its owner's own zone (`ListEnabledSources` joins the owners table, so a disabled, deleted or not-yet-announced owner's sources are not read). shinobi's fetcher already refuses non-public addresses at connect time, which matters now that many users add sources. Deploy note for P11.4a–f: sessions that predate the `users` table are ended once (no matching user), so each existing user signs in again, which creates their row and announces them to the services; their jobs resume from then.
   Done when: `cd services/shinobi && go test -race ./...`.
 
 - [ ] **P11.5a soroban providers** (M) Needs: P11.4a

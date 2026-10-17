@@ -64,10 +64,33 @@ func (r *Repo) DeleteSource(ctx context.Context, owner, id uuid.UUID) error {
 	return wrap("delete source", err)
 }
 
-// EnabledSources returns every owner's enabled sources, for the scheduler.
-func (r *Repo) EnabledSources(ctx context.Context) ([]db.Source, error) {
+// ScheduledSource is an enabled source with the time zone of its owner, which
+// its schedule is read in.
+type ScheduledSource struct {
+	db.Source
+	// Timezone is an IANA name.
+	Timezone string
+}
+
+// EnabledSources returns the enabled sources of every active owner, for the
+// scheduler. Sources of a disabled or deleted owner, or of an owner torii has
+// not announced yet, are not included.
+func (r *Repo) EnabledSources(ctx context.Context) ([]ScheduledSource, error) {
 	rows, err := r.q.ListEnabledSources(ctx)
-	return rows, wrap("list enabled sources", err)
+	if err != nil {
+		return nil, wrap("list enabled sources", err)
+	}
+	out := make([]ScheduledSource, len(rows))
+	for i, row := range rows {
+		out[i] = ScheduledSource{
+			Source: db.Source{
+				ID: row.ID, OwnerID: row.OwnerID, Name: row.Name, Kind: row.Kind, Config: row.Config,
+				Schedule: row.Schedule, Enabled: row.Enabled, LastRunAt: row.LastRunAt, LastError: row.LastError,
+			},
+			Timezone: row.OwnerTimezone,
+		}
+	}
+	return out, nil
 }
 
 // MarkSourceRun records when a source was last read and how it went. failure is
