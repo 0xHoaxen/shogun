@@ -8,9 +8,13 @@ import "google/protobuf/timestamp.proto";
 // before a call, then commits the real usage or releases the reservation.
 // Money is int64 micro-dollars.
 service SorobanService {
-  // Reserve holds est tokens' worth of cost against every budget in scope.
-  // A hard budget that would be passed is ResourceExhausted with reason
-  // BUDGET_EXHAUSTED and metadata budget_id and resets_at. Callers: pkg/llm.
+  // Reserve holds est tokens' worth of cost against every budget in scope, and
+  // hands back the caller's own AI provider to make the call with. A caller
+  // with no provider is FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED
+  // and nothing is held. A hard budget that would be passed is
+  // ResourceExhausted with reason BUDGET_EXHAUSTED and metadata budget_id and
+  // resets_at. The model is the provider's; a model it has no price for is
+  // metered in tokens and costs 0. Callers: pkg/llm.
   rpc Reserve(ReserveRequest) returns (ReserveResponse);
   // Commit prices the real usage, writes a ledger row and moves the amount
   // from reserved to spent. Committing twice returns the same entry.
@@ -82,7 +86,9 @@ message ReserveRequest {
   string service = 1;
   // feature is service.name, for example fude.cover_letter.
   string feature = 2;
-  string model = 3;
+  // model is ignored: the model is the one in the caller's provider. Kept so
+  // older callers still decode.
+  string model = 3 [deprecated = true];
   int32 est_input_tokens = 4;
   int32 est_output_tokens = 5;
 }
@@ -91,6 +97,16 @@ message ReserveResponse {
   string reservation_id = 1;
   google.protobuf.Timestamp expires_at = 2;
   int64 est_micros = 3;
+  // provider is what to make the call with: the caller's address, model and
+  // key. It is secret; callers use it for this call only and never log it.
+  ProviderAccess provider = 4;
+}
+
+// ProviderAccess is a provider with its key opened, for one call.
+message ProviderAccess {
+  string base_url = 1;
+  string model = 2;
+  string api_key = 3;
 }
 
 message CommitRequest {

@@ -72,7 +72,7 @@ func TestCompleteReservesCallsThenCommitsRealUsage(t *testing.T) {
 		t.Fatalf("calls: %d reserves, %d creates, %d commits, %d releases", len(meter.Reserved), len(api.Created), len(meter.Committed), len(meter.Released))
 	}
 	reserve := meter.Reserved[0]
-	if reserve.GetService() != "fude" || reserve.GetFeature() != feature || reserve.GetModel() != "claude-opus-5-5" {
+	if reserve.GetService() != "fude" || reserve.GetFeature() != feature {
 		t.Errorf("reserve = %v", reserve)
 	}
 	if reserve.GetEstOutputTokens() != 4096 {

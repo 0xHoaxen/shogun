@@ -56,7 +56,7 @@ func (s *Service) Commit(ctx context.Context, in CommitInput) (db.Ledger, error)
 		if !status.CanCommit() {
 			return ErrReservationNotOpen
 		}
-		cost, err := priceUsage(ctx, repo, res.Model, in.Usage, now)
+		cost, err := priceUsage(ctx, repo, owner, res.Model, in.Usage, now)
 		if err != nil {
 			return err
 		}

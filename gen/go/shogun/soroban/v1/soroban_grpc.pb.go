@@ -40,9 +40,13 @@ const (
 // before a call, then commits the real usage or releases the reservation.
 // Money is int64 micro-dollars.
 type SorobanServiceClient interface {
-	// Reserve holds est tokens' worth of cost against every budget in scope.
-	// A hard budget that would be passed is ResourceExhausted with reason
-	// BUDGET_EXHAUSTED and metadata budget_id and resets_at. Callers: pkg/llm.
+	// Reserve holds est tokens' worth of cost against every budget in scope, and
+	// hands back the caller's own AI provider to make the call with. A caller
+	// with no provider is FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED
+	// and nothing is held. A hard budget that would be passed is
+	// ResourceExhausted with reason BUDGET_EXHAUSTED and metadata budget_id and
+	// resets_at. The model is the provider's; a model it has no price for is
+	// metered in tokens and costs 0. Callers: pkg/llm.
 	Reserve(ctx context.Context, in *ReserveRequest, opts ...grpc.CallOption) (*ReserveResponse, error)
 	// Commit prices the real usage, writes a ledger row and moves the amount
 	// from reserved to spent. Committing twice returns the same entry.
@@ -201,9 +205,13 @@ func (c *sorobanServiceClient) DeleteProvider(ctx context.Context, in *DeletePro
 // before a call, then commits the real usage or releases the reservation.
 // Money is int64 micro-dollars.
 type SorobanServiceServer interface {
-	// Reserve holds est tokens' worth of cost against every budget in scope.
-	// A hard budget that would be passed is ResourceExhausted with reason
-	// BUDGET_EXHAUSTED and metadata budget_id and resets_at. Callers: pkg/llm.
+	// Reserve holds est tokens' worth of cost against every budget in scope, and
+	// hands back the caller's own AI provider to make the call with. A caller
+	// with no provider is FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED
+	// and nothing is held. A hard budget that would be passed is
+	// ResourceExhausted with reason BUDGET_EXHAUSTED and metadata budget_id and
+	// resets_at. The model is the provider's; a model it has no price for is
+	// metered in tokens and costs 0. Callers: pkg/llm.
 	Reserve(context.Context, *ReserveRequest) (*ReserveResponse, error)
 	// Commit prices the real usage, writes a ledger row and moves the amount
 	// from reserved to spent. Committing twice returns the same entry.

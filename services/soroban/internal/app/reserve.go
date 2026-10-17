@@ -34,7 +34,6 @@ const (
 type ReserveInput struct {
 	Service         string
 	Feature         string
-	Model           string
 	EstInputTokens  int32
 	EstOutputTokens int32
 }
@@ -44,6 +43,9 @@ type ReserveResult struct {
 	ReservationID uuid.UUID
 	ExpiresAt     time.Time
 	EstMicros     int64
+	// Provider is the caller's own AI provider, with its key opened, to make the
+	// call with.
+	Provider ProviderSecret
 }
 
 // lockedBudget is a budget with its current period, locked for update.
@@ -70,7 +72,13 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 		denial *domain.BudgetExhaustedError
 	)
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
-		est, err := priceUsage(ctx, repo, in.Model, domain.Usage{
+		// The provider comes first: a user with none has no AI features, and
+		// nothing may be written for them.
+		provider, err := s.providerSecretFor(ctx, repo, owner)
+		if err != nil {
+			return err
+		}
+		est, err := priceUsage(ctx, repo, owner, provider.Model, domain.Usage{
 			InputTokens: in.EstInputTokens, OutputTokens: in.EstOutputTokens,
 		}, now)
 		if err != nil {
@@ -88,7 +96,8 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 			denial, err = s.refuse(ctx, tx, repo, *blocked)
 			return err
 		}
-		result, err = hold(ctx, repo, owner, in, locked, est, now)
+		result, err = hold(ctx, repo, owner, in, provider.Model, locked, est, now)
+		result.Provider = provider
 		return err
 	})
 	if err != nil {
@@ -101,8 +110,8 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 }
 
 func validateReserve(in ReserveInput) error {
-	if in.Service == "" || in.Feature == "" || in.Model == "" {
-		return invalid(ReasonInvalidRequest, "service, feature and model are required")
+	if in.Service == "" || in.Feature == "" {
+		return invalid(ReasonInvalidRequest, "service and feature are required")
 	}
 	if !strings.HasPrefix(in.Feature, in.Service+".") {
 		return invalid(ReasonFeatureMismatch, "feature %q does not belong to service %q", in.Feature, in.Service)
@@ -113,26 +122,51 @@ func validateReserve(in ReserveInput) error {
 	return nil
 }
 
-// priceUsage prices usage of model at the price in force at now.
-func priceUsage(ctx context.Context, repo *store.Repo, model string, usage domain.Usage, now time.Time) (int64, error) {
-	y, m, d := now.UTC().Date()
-	price, err := repo.PriceOn(ctx, model, time.Date(y, m, d, 0, 0, 0, 0, time.UTC))
-	if errors.Is(err, store.ErrNotFound) {
-		return 0, invalid(ReasonModelUnpriced, "no price for model %q", model)
-	}
+// priceUsage prices usage of model for owner at the price in force at now. A
+// model nobody has a price for costs 0: its tokens are still metered and
+// recorded, it just has no money to count.
+func priceUsage(ctx context.Context, repo *store.Repo, owner uuid.UUID, model string, usage domain.Usage, now time.Time) (int64, error) {
+	price, priced, err := resolvePrice(ctx, repo, owner, model, now)
 	if err != nil {
-		return 0, fmt.Errorf("get price: %w", err)
+		return 0, err
 	}
-	cost, err := domain.Cost(domain.Price{
-		InputMicrosPerMtok:      price.InputMicrosPerMtok,
-		OutputMicrosPerMtok:     price.OutputMicrosPerMtok,
-		CacheReadMicrosPerMtok:  price.CacheReadMicrosPerMtok,
-		CacheWriteMicrosPerMtok: price.CacheWriteMicrosPerMtok,
-	}, usage)
+	if !priced {
+		price = domain.Price{}
+	}
+	cost, err := domain.Cost(price, usage)
 	if err != nil {
 		return 0, invalid(ReasonInvalidTokens, "%v", err)
 	}
 	return cost, nil
+}
+
+// resolvePrice finds the price of model for owner: the one the owner entered
+// with their provider if it is for this model, otherwise the shared price table.
+// priced is false when there is neither.
+func resolvePrice(ctx context.Context, repo *store.Repo, owner uuid.UUID, model string, now time.Time) (price domain.Price, priced bool, err error) {
+	provider, err := repo.GetProvider(ctx, owner)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return domain.Price{}, false, fmt.Errorf("get provider: %w", err)
+	}
+	if err == nil && provider.Model == model && provider.InputMicrosPerMtok != nil && provider.OutputMicrosPerMtok != nil {
+		in, out := *provider.InputMicrosPerMtok, *provider.OutputMicrosPerMtok
+		// A third-party provider publishes no cache prices; cache tokens count as input.
+		return domain.Price{
+			InputMicrosPerMtok: in, OutputMicrosPerMtok: out, CacheReadMicrosPerMtok: in, CacheWriteMicrosPerMtok: in,
+		}, true, nil
+	}
+	y, m, d := now.UTC().Date()
+	row, err := repo.PriceOn(ctx, model, time.Date(y, m, d, 0, 0, 0, 0, time.UTC))
+	if errors.Is(err, store.ErrNotFound) {
+		return domain.Price{}, false, nil
+	}
+	if err != nil {
+		return domain.Price{}, false, fmt.Errorf("get price: %w", err)
+	}
+	return domain.Price{
+		InputMicrosPerMtok: row.InputMicrosPerMtok, OutputMicrosPerMtok: row.OutputMicrosPerMtok,
+		CacheReadMicrosPerMtok: row.CacheReadMicrosPerMtok, CacheWriteMicrosPerMtok: row.CacheWriteMicrosPerMtok,
+	}, true, nil
 }
 
 // lockBudgets locks the current period of every budget in scope. Budgets come
@@ -203,7 +237,7 @@ func (s *Service) refuse(ctx context.Context, tx pgx.Tx, repo *store.Repo, l loc
 }
 
 // hold adds est to every locked period and records the reservation.
-func hold(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInput, locked []lockedBudget, est int64, now time.Time) (ReserveResult, error) {
+func hold(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInput, model string, locked []lockedBudget, est int64, now time.Time) (ReserveResult, error) {
 	periodIDs := make([]uuid.UUID, 0, len(locked))
 	for _, l := range locked {
 		if err := repo.AddReserved(ctx, l.period.ID, est); err != nil {
@@ -212,7 +246,7 @@ func hold(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInpu
 		periodIDs = append(periodIDs, l.period.ID)
 	}
 	res, err := repo.InsertReservation(ctx, db.InsertReservationParams{
-		ID: store.NewID(), OwnerID: owner, Service: in.Service, Feature: in.Feature, Model: in.Model,
+		ID: store.NewID(), OwnerID: owner, Service: in.Service, Feature: in.Feature, Model: model,
 		EstMicros: est, BudgetPeriodIds: periodIDs, CreatedAt: now, ExpiresAt: now.Add(reservationTTL),
 	})
 	if err != nil {
