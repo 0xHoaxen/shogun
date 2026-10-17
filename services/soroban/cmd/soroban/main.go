@@ -19,6 +19,7 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/logger"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
@@ -35,6 +36,11 @@ const (
 	migrateOnStartEnv  = "MIGRATE_ON_START"
 	migrateOnStartDflt = "true"
 	migrateCommand     = "migrate"
+
+	// secretKeyEnv is the master key that seals users' API keys: 32 bytes, base64.
+	secretKeyEnv    = "SOROBAN_SECRET_MASTER_KEY"
+	secretKeyIDEnv  = "SOROBAN_SECRET_KEY_ID"
+	secretKeyIDDflt = "soroban-1"
 )
 
 func main() {
@@ -100,6 +106,12 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 	defer flushTelemetry(log, cfg.ShutdownTimeout, shutdownTelemetry)
 
+	// Users' API keys are sealed with this key, so there is no starting without it.
+	keys, err := envelope.KeyringFromEnv(lookup, secretKeyEnv, secretKeyIDEnv, secretKeyIDDflt)
+	if err != nil {
+		return err
+	}
+
 	pool, err := postgres.Connect(ctx, cfg.DatabaseURL, serviceName)
 	if err != nil {
 		return err
@@ -117,7 +129,12 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	service := app.NewService(pool, nil)
+	serviceOpts := []app.Option{app.WithKeyring(keys)}
+	if cfg.Environment == config.EnvLocal || cfg.Environment == config.EnvTest {
+		// A fake provider on localhost is how the local stack and the end-to-end tests run.
+		serviceOpts = append(serviceOpts, app.WithInsecureProviders())
+	}
+	service := app.NewService(pool, nil, serviceOpts...)
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, jobs.NewSetup(service, log), overrides)
 	if err != nil {
 		return err

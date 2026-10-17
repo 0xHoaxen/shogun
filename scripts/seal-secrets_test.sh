@@ -110,9 +110,11 @@ check "torii keys" '[ "$(keys torii)" = "DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CL
 check "fude keys" '[ "$(keys fude)" = "ANTHROPIC_API_KEY DATABASE_URL FUDE_HANKO_KEY_ID FUDE_HANKO_SIGNING_KEY IDENTITY_SIGNING_KEY " ]'
 check "tsubame keys" '[ "$(keys tsubame)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS TSUBAME_TOKEN_KEY_ID TSUBAME_TOKEN_MASTER_KEY " ]'
 check "katana keys" '[ "$(keys katana)" = "ANTHROPIC_API_KEY DATABASE_URL IDENTITY_SIGNING_KEY KATANA_GITHUB_TOKEN KATANA_GITHUB_USER " ]'
+check "soroban keys" '[ "$(keys soroban)" = "DATABASE_URL IDENTITY_SIGNING_KEY SOROBAN_SECRET_KEY_ID SOROBAN_SECRET_MASTER_KEY " ]'
 check "kagami has only the common keys" '[ "$(keys kagami)" = "DATABASE_URL IDENTITY_SIGNING_KEY " ]'
 
 value() { sed -n "s/^$2=//p" "$work/fake/$1.env"; }
+check "the soroban master key is a fresh 32-byte base64 value" '[ "$(value soroban SOROBAN_SECRET_MASTER_KEY | base64 -d | wc -c | tr -d " ")" -eq 32 ] && [ "$(value soroban SOROBAN_SECRET_MASTER_KEY)" != "$(value tsubame TSUBAME_TOKEN_MASTER_KEY)" ]'
 check "every service shares one identity key" '[ "$(value torii IDENTITY_SIGNING_KEY)" = "$(value soroban IDENTITY_SIGNING_KEY)" ]'
 check "a DATABASE_URL uses its own role and password" '
 	pw=$(value postgres KAGAMI_DB_PASSWORD)

@@ -19,14 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SorobanService_Reserve_FullMethodName     = "/shogun.soroban.v1.SorobanService/Reserve"
-	SorobanService_Commit_FullMethodName      = "/shogun.soroban.v1.SorobanService/Commit"
-	SorobanService_Release_FullMethodName     = "/shogun.soroban.v1.SorobanService/Release"
-	SorobanService_GetSpend_FullMethodName    = "/shogun.soroban.v1.SorobanService/GetSpend"
-	SorobanService_SetBudget_FullMethodName   = "/shogun.soroban.v1.SorobanService/SetBudget"
-	SorobanService_ListBudgets_FullMethodName = "/shogun.soroban.v1.SorobanService/ListBudgets"
-	SorobanService_SetPrice_FullMethodName    = "/shogun.soroban.v1.SorobanService/SetPrice"
-	SorobanService_ListPrices_FullMethodName  = "/shogun.soroban.v1.SorobanService/ListPrices"
+	SorobanService_Reserve_FullMethodName        = "/shogun.soroban.v1.SorobanService/Reserve"
+	SorobanService_Commit_FullMethodName         = "/shogun.soroban.v1.SorobanService/Commit"
+	SorobanService_Release_FullMethodName        = "/shogun.soroban.v1.SorobanService/Release"
+	SorobanService_GetSpend_FullMethodName       = "/shogun.soroban.v1.SorobanService/GetSpend"
+	SorobanService_SetBudget_FullMethodName      = "/shogun.soroban.v1.SorobanService/SetBudget"
+	SorobanService_ListBudgets_FullMethodName    = "/shogun.soroban.v1.SorobanService/ListBudgets"
+	SorobanService_SetPrice_FullMethodName       = "/shogun.soroban.v1.SorobanService/SetPrice"
+	SorobanService_ListPrices_FullMethodName     = "/shogun.soroban.v1.SorobanService/ListPrices"
+	SorobanService_SetProvider_FullMethodName    = "/shogun.soroban.v1.SorobanService/SetProvider"
+	SorobanService_GetProvider_FullMethodName    = "/shogun.soroban.v1.SorobanService/GetProvider"
+	SorobanService_DeleteProvider_FullMethodName = "/shogun.soroban.v1.SorobanService/DeleteProvider"
 )
 
 // SorobanServiceClient is the client API for SorobanService service.
@@ -56,6 +59,20 @@ type SorobanServiceClient interface {
 	ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error)
 	SetPrice(ctx context.Context, in *SetPriceRequest, opts ...grpc.CallOption) (*SetPriceResponse, error)
 	ListPrices(ctx context.Context, in *ListPricesRequest, opts ...grpc.CallOption) (*ListPricesResponse, error)
+	// SetProvider stores the caller's own AI provider: the Anthropic-compatible
+	// base URL, the model and the API key. The key is sealed at rest and never
+	// returned. Without a provider the caller's AI features are off. With version
+	// 0 it creates the provider (api_key is then required, reason API_KEY_REQUIRED);
+	// otherwise it updates it if version matches, and an empty api_key keeps the
+	// stored one. A bad address is INVALID_PROVIDER_URL, a bad model
+	// INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price INVALID_PRICE.
+	SetProvider(ctx context.Context, in *SetProviderRequest, opts ...grpc.CallOption) (*SetProviderResponse, error)
+	// GetProvider returns the caller's provider without its key, or no provider
+	// when none is set.
+	GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error)
+	// DeleteProvider removes the caller's provider and key. It is not an error
+	// when there is none.
+	DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error)
 }
 
 type sorobanServiceClient struct {
@@ -146,6 +163,36 @@ func (c *sorobanServiceClient) ListPrices(ctx context.Context, in *ListPricesReq
 	return out, nil
 }
 
+func (c *sorobanServiceClient) SetProvider(ctx context.Context, in *SetProviderRequest, opts ...grpc.CallOption) (*SetProviderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetProviderResponse)
+	err := c.cc.Invoke(ctx, SorobanService_SetProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) GetProvider(ctx context.Context, in *GetProviderRequest, opts ...grpc.CallOption) (*GetProviderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetProviderResponse)
+	err := c.cc.Invoke(ctx, SorobanService_GetProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sorobanServiceClient) DeleteProvider(ctx context.Context, in *DeleteProviderRequest, opts ...grpc.CallOption) (*DeleteProviderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteProviderResponse)
+	err := c.cc.Invoke(ctx, SorobanService_DeleteProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SorobanServiceServer is the server API for SorobanService service.
 // All implementations must embed UnimplementedSorobanServiceServer
 // for forward compatibility.
@@ -173,6 +220,20 @@ type SorobanServiceServer interface {
 	ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error)
 	SetPrice(context.Context, *SetPriceRequest) (*SetPriceResponse, error)
 	ListPrices(context.Context, *ListPricesRequest) (*ListPricesResponse, error)
+	// SetProvider stores the caller's own AI provider: the Anthropic-compatible
+	// base URL, the model and the API key. The key is sealed at rest and never
+	// returned. Without a provider the caller's AI features are off. With version
+	// 0 it creates the provider (api_key is then required, reason API_KEY_REQUIRED);
+	// otherwise it updates it if version matches, and an empty api_key keeps the
+	// stored one. A bad address is INVALID_PROVIDER_URL, a bad model
+	// INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price INVALID_PRICE.
+	SetProvider(context.Context, *SetProviderRequest) (*SetProviderResponse, error)
+	// GetProvider returns the caller's provider without its key, or no provider
+	// when none is set.
+	GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error)
+	// DeleteProvider removes the caller's provider and key. It is not an error
+	// when there is none.
+	DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error)
 	mustEmbedUnimplementedSorobanServiceServer()
 }
 
@@ -206,6 +267,15 @@ func (UnimplementedSorobanServiceServer) SetPrice(context.Context, *SetPriceRequ
 }
 func (UnimplementedSorobanServiceServer) ListPrices(context.Context, *ListPricesRequest) (*ListPricesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPrices not implemented")
+}
+func (UnimplementedSorobanServiceServer) SetProvider(context.Context, *SetProviderRequest) (*SetProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetProvider not implemented")
+}
+func (UnimplementedSorobanServiceServer) GetProvider(context.Context, *GetProviderRequest) (*GetProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProvider not implemented")
+}
+func (UnimplementedSorobanServiceServer) DeleteProvider(context.Context, *DeleteProviderRequest) (*DeleteProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteProvider not implemented")
 }
 func (UnimplementedSorobanServiceServer) mustEmbedUnimplementedSorobanServiceServer() {}
 func (UnimplementedSorobanServiceServer) testEmbeddedByValue()                        {}
@@ -372,6 +442,60 @@ func _SorobanService_ListPrices_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SorobanService_SetProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).SetProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_SetProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).SetProvider(ctx, req.(*SetProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_GetProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).GetProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_GetProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).GetProvider(ctx, req.(*GetProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SorobanService_DeleteProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SorobanServiceServer).DeleteProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SorobanService_DeleteProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SorobanServiceServer).DeleteProvider(ctx, req.(*DeleteProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SorobanService_ServiceDesc is the grpc.ServiceDesc for SorobanService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -410,6 +534,18 @@ var SorobanService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPrices",
 			Handler:    _SorobanService_ListPrices_Handler,
+		},
+		{
+			MethodName: "SetProvider",
+			Handler:    _SorobanService_SetProvider_Handler,
+		},
+		{
+			MethodName: "GetProvider",
+			Handler:    _SorobanService_GetProvider_Handler,
+		},
+		{
+			MethodName: "DeleteProvider",
+			Handler:    _SorobanService_DeleteProvider_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

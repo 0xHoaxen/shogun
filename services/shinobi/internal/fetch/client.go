@@ -5,14 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
-	"net/netip"
 	"net/url"
-	"syscall"
 	"time"
 
-	"github.com/0xHoaxen/shogun/services/shinobi/internal/domain"
+	"github.com/0xHoaxen/shogun/pkg/netguard"
 )
 
 const (
@@ -37,7 +34,7 @@ var (
 	// ErrRobotsDisallowed means the source's robots.txt forbids reading the address.
 	ErrRobotsDisallowed = errors.New("fetch: robots.txt disallows this address")
 	// ErrNotPublic means the address names this machine or a private network.
-	ErrNotPublic = errors.New("fetch: address is not public")
+	ErrNotPublic = netguard.ErrNotPublic
 	// ErrTooLarge means the answer is bigger than MaxBodyBytes.
 	ErrTooLarge = errors.New("fetch: answer is too large")
 	// ErrFailed means the source could not be read: unreachable, or an error status.
@@ -70,7 +67,7 @@ func New(opts ...Option) *Client {
 	c := &Client{throttle: newThrottle(DefaultInterval)}
 	c.http = &http.Client{
 		Timeout:   requestTimeout,
-		Transport: guardedTransport(),
+		Transport: netguard.Transport(),
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) > maxRedirects {
 				return fmt.Errorf("%w: too many redirects", ErrFailed)
@@ -85,35 +82,6 @@ func New(opts ...Option) *Client {
 		opt(c)
 	}
 	return c
-}
-
-// guardedTransport refuses, when connecting, any address that is not public. It
-// checks the address actually dialled, after DNS, so a name that points inside
-// the network is refused too, and so is every redirect. It ignores proxy
-// settings from the environment.
-func guardedTransport() *http.Transport {
-	dialer := &net.Dialer{
-		Timeout: dialTimeout,
-		Control: func(_, address string, _ syscall.RawConn) error {
-			host, _, err := net.SplitHostPort(address)
-			if err != nil {
-				return ErrNotPublic
-			}
-			ip, err := netip.ParseAddr(host)
-			if err != nil || !domain.IsPublicIP(ip) {
-				return ErrNotPublic
-			}
-			return nil
-		},
-	}
-	return &http.Transport{
-		Proxy:                 nil,
-		DialContext:           dialer.DialContext,
-		TLSHandshakeTimeout:   dialTimeout,
-		ResponseHeaderTimeout: headerTimeout,
-		MaxIdleConns:          10,
-		IdleConnTimeout:       time.Minute,
-	}
 }
 
 // Get returns the body of rawURL, after checking the host's robots.txt.

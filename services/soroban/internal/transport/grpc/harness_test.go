@@ -20,6 +20,7 @@ import (
 
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/app"
@@ -40,6 +41,7 @@ type harness struct {
 	client    sorobanv1.SorobanServiceClient
 	pool      *pgxpool.Pool
 	authority *authz.Authority
+	svc       *app.Service
 	owner     string
 }
 
@@ -63,7 +65,12 @@ func newHarness(t *testing.T) *harness {
 		grpc.UnaryInterceptor(authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(authority.StreamServerInterceptor()),
 	)
-	sorobanv1.RegisterSorobanServiceServer(srv, sorobangrpc.New(app.NewService(pool, func() time.Time { return fixedNow })))
+	keys, err := envelope.NewKeyring("soroban-test", map[string][]byte{"soroban-test": bytes.Repeat([]byte("m"), envelope.KeySize)})
+	if err != nil {
+		t.Fatalf("keyring: %v", err)
+	}
+	svc := app.NewService(pool, func() time.Time { return fixedNow }, app.WithKeyring(keys))
+	sorobanv1.RegisterSorobanServiceServer(srv, sorobangrpc.New(svc))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
@@ -81,6 +88,7 @@ func newHarness(t *testing.T) *harness {
 		client:    sorobanv1.NewSorobanServiceClient(conn),
 		pool:      pool,
 		authority: authority,
+		svc:       svc,
 		owner:     uuid.NewString(),
 	}
 }

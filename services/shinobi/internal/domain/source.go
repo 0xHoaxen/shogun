@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/0xHoaxen/shogun/pkg/netguard"
+
 	"github.com/robfig/cron/v3"
 )
 
@@ -174,17 +176,9 @@ func checkFeedURL(raw string) error {
 	return nil
 }
 
-// cgnat is the shared address space of carrier-grade NAT, which is not public
-// but is not covered by netip's IsPrivate.
-var cgnat = netip.MustParsePrefix("100.64.0.0/10")
-
 // IsPublicIP reports whether addr is an address a source may be fetched from:
 // not loopback, private, link-local, multicast, unspecified or shared.
-func IsPublicIP(addr netip.Addr) bool {
-	addr = addr.Unmap()
-	return addr.IsValid() && !addr.IsPrivate() && !addr.IsLoopback() && !addr.IsLinkLocalUnicast() &&
-		!addr.IsLinkLocalMulticast() && !addr.IsMulticast() && !addr.IsUnspecified() && !cgnat.Contains(addr)
-}
+func IsPublicIP(addr netip.Addr) bool { return netguard.IsPublic(addr) }
 
 // FirstRunSlot names the run of a source that has never run.
 const FirstRunSlot = "first"

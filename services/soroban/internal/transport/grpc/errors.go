@@ -24,6 +24,9 @@ const (
 	reasonVersionConflict    = "VERSION_CONFLICT"
 	reasonAlreadyExists      = "ALREADY_EXISTS"
 	reasonInternal           = "INTERNAL"
+
+	reasonProviderStorageOff = "PROVIDER_STORAGE_UNAVAILABLE"
+	reasonNoProvider         = "AI_PROVIDER_NOT_CONFIGURED"
 )
 
 // toStatus maps a use case error to a gRPC status carrying an ErrorInfo
@@ -51,6 +54,10 @@ func toStatus(err error) error {
 		return withReason(codes.Aborted, reasonVersionConflict, "version is stale; read the latest and retry", nil)
 	case errors.Is(err, store.ErrDuplicate):
 		return withReason(codes.AlreadyExists, reasonAlreadyExists, "already exists", nil)
+	case errors.Is(err, app.ErrProviderNotConfigured):
+		return withReason(codes.FailedPrecondition, reasonNoProvider, "no AI provider is set; add one in Settings", nil)
+	case errors.Is(err, app.ErrProviderStorageOff):
+		return withReason(codes.FailedPrecondition, reasonProviderStorageOff, "AI providers cannot be stored on this server", nil)
 	case errors.Is(err, app.ErrReservationNotOpen):
 		return withReason(codes.FailedPrecondition, reasonReservationNotOpen, "reservation is not open", nil)
 	default:

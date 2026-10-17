@@ -12,10 +12,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
-	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/mailtest"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/store"

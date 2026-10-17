@@ -270,6 +270,8 @@ services:
     environment:
       <<: *env
       DATABASE_URL: postgres://soroban:${SOROBAN_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
+      SOROBAN_SECRET_MASTER_KEY: ${SOROBAN_SECRET_MASTER_KEY:?copy .env.example to .env}
+      SOROBAN_SECRET_KEY_ID: ${SOROBAN_SECRET_KEY_ID:-soroban-1}
     ports:
       - "127.0.0.1:8090:8080"
       - "127.0.0.1:9100:9090"
