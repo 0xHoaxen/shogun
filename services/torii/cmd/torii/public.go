@@ -165,6 +165,7 @@ func newPublicServer(
 		Auth:          auth,
 		SecureCookies: secure,
 		Open:          []string{apiv1connect.AuthServiceLogoutProcedure},
+		Limiter:       httpmw.NewRateLimiter(s.RateLimit, s.RateBurst),
 		Log:           log,
 	})
 	handlerOpts := []connect.HandlerOption{
@@ -188,7 +189,7 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewInsightsServiceHandler(connectapi.NewInsightsServer(sensei, log), handlerOpts...))
 
 	srv := &http.Server{
-		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
+		Handler:           httpmw.NewRateLimiter(s.IPRateLimit, s.IPRateBurst).Middleware(mux),
 		ReadHeaderTimeout: publicReadHeaderTimeout,
 		IdleTimeout:       publicIdleTimeout,
 	}

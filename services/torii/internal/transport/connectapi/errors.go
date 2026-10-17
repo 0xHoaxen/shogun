@@ -14,6 +14,7 @@ const errorDomain = "shogun"
 const (
 	reasonUnauthenticated = "UNAUTHENTICATED"
 	reasonInternal        = "INTERNAL"
+	reasonRateLimited     = "RATE_LIMITED"
 )
 
 // newError returns a Connect error with a stable ErrorInfo.reason, so clients

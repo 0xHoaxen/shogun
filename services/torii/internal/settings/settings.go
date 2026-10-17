@@ -20,7 +20,12 @@ const (
 	defaultSessionTTL = 7 * 24 * time.Hour
 	defaultRateLimit  = 20
 	defaultRateBurst  = 40
-	defaultMaxBody    = 8 << 20
+	// The per-address limit is a flood guard. Behind the web app's proxy every
+	// browser shares one address, so it must sit far above what a few dozen users
+	// make together; each signed-in user is limited separately by RateLimit.
+	defaultIPRateLimit = 500
+	defaultIPRateBurst = 1000
+	defaultMaxBody     = 8 << 20
 )
 
 // Settings is torii's own configuration.
@@ -56,9 +61,13 @@ type Settings struct {
 	// SorobanAddr is the gRPC address of soroban, which meters Claude spend.
 	SorobanAddr string
 	SessionTTL  time.Duration
-	// RateLimit is requests per second per client; RateBurst the burst size.
+	// RateLimit is requests per second per signed-in user; RateBurst the burst size.
 	RateLimit int
 	RateBurst int
+	// IPRateLimit is requests per second per remote address, and IPRateBurst the
+	// burst size. It is a flood guard shared by every browser behind the proxy.
+	IPRateLimit int
+	IPRateBurst int
 	// MaxBodyBytes caps a request body; the CSV import is the largest.
 	MaxBodyBytes int
 }
@@ -109,6 +118,10 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	rateBurst, err := config.Int(lookup, "TORII_RATE_BURST", defaultRateBurst)
 	collect(err)
+	ipRateLimit, err := config.Int(lookup, "TORII_IP_RATE_LIMIT", defaultIPRateLimit)
+	collect(err)
+	ipRateBurst, err := config.Int(lookup, "TORII_IP_RATE_BURST", defaultIPRateBurst)
+	collect(err)
 	maxBody, err := config.Int(lookup, "TORII_MAX_BODY_BYTES", defaultMaxBody)
 	collect(err)
 
@@ -131,6 +144,8 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		SessionTTL:         ttl,
 		RateLimit:          rateLimit,
 		RateBurst:          rateBurst,
+		IPRateLimit:        ipRateLimit,
+		IPRateBurst:        ipRateBurst,
 		MaxBodyBytes:       maxBody,
 	}
 	collect(s.validate())
@@ -154,6 +169,9 @@ func (s Settings) validate() error {
 	}
 	if s.SessionTTL <= 0 {
 		errs = append(errs, errors.New("settings: SESSION_TTL must be positive"))
+	}
+	if s.IPRateLimit <= 0 || s.IPRateBurst <= 0 {
+		errs = append(errs, errors.New("settings: TORII_IP_RATE_LIMIT and TORII_IP_RATE_BURST must be positive"))
 	}
 	if s.RateLimit <= 0 || s.RateBurst <= 0 {
 		errs = append(errs, errors.New("settings: TORII_RATE_LIMIT and TORII_RATE_BURST must be positive"))

@@ -837,8 +837,13 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Done when: `make proto`, `cd services/torii && go test -race ./...`.
 
 - [ ] **P11.5e3 AI provider settings screen** (M) Needs: P11.5e2, P11.10
+  Status: built and committed (Settings > AI provider tab, notices on the four AI pages, plain-language draft failures, 164 Playwright specs pass, compose specs add a provider through Settings). **Not done:** the real-stack suite (`npm run test:e2e:compose`, run by `run-e2e` style script against `compose.e2e.yaml`) passes 3 of 3 on `main` but only about 3 of 5 on this branch; the failing test varies (learning.spec.ts, "Can't reach Shogun" or a missing row) and the cause is not found. Not rate limiting alone (P11.12 did not fix it and the failing run's logs hold no 429). One lead: torii logs `authenticate session: get user: context canceled` when a browser aborts a request, from the per-request user lookup added in P11.2. Find it before ticking this box.
   Do: Settings > AI provider tab (address, model, write-only key with last four shown, optional prices and monthly token cap, Test connection, remove) with copy in `web/src/content/sections.ts`; Spend shows token counts for models with no price; every AI action explains "add your AI provider in Settings" for `AI_PROVIDER_NOT_CONFIGURED` and fude's `provider_not_configured`; `web/e2e-compose` seeds a provider for its test user (mock at `http://mock-apis:8090`).
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [x] **P11.12 Rate limit per user** (S) Needs: P11.2
+  Found while chasing the e2e flake: torii limited requests per remote address, and behind the web app's proxy that is one address for every browser, so with many users they would all share one bucket of 20 requests a second. Now each signed-in user has their own bucket (`TORII_RATE_LIMIT`/`TORII_RATE_BURST`, applied in the session interceptor after authentication, answer `RATE_LIMITED`), and the per-address limit is only a flood guard far above it (`TORII_IP_RATE_LIMIT`/`TORII_IP_RATE_BURST`, default 500 and 1000). Requests with no valid session spend nobody's limit. The web app shows no special text for `RATE_LIMITED` yet.
+  Done when: `cd services/torii && go test -race ./...`.
 
 - [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4a, P11.10
   Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.

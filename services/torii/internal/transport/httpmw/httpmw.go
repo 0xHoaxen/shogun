@@ -45,7 +45,14 @@ func NewRateLimiter(perSecond, burst int) *RateLimiter {
 	}
 }
 
-// Middleware rejects requests over the limit with 429 and a Retry-After.
+// Allow reports whether key may make a request now, and counts it. Each key has
+// its own bucket, so one key running out does not affect another.
+func (l *RateLimiter) Allow(key string) bool { return l.allow(key) }
+
+// Middleware rejects requests over the limit with 429 and a Retry-After. It
+// limits by remote address, which behind the web app's proxy is the proxy
+// itself, so every browser shares it: use it as a flood guard, with a limit far
+// above what one person needs, and limit each signed-in user with Allow.
 func (l *RateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !l.allow(clientKey(r)) {
@@ -83,8 +90,8 @@ func (l *RateLimiter) dropIdle(now time.Time) {
 	}
 }
 
-// clientKey is the remote host. Behind the web app's proxy that is the proxy,
-// so the limit is shared by all browsers, which is what a single-owner app wants.
+// clientKey is the remote host. Behind the web app's proxy that is the proxy, so
+// the limit is shared by all browsers; per-user limits are applied after sign-in.
 func clientKey(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

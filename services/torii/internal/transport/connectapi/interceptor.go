@@ -22,9 +22,19 @@ type Authenticator interface {
 	Authenticate(ctx context.Context, token string) (domain.Session, bool, error)
 }
 
+// Limiter says whether a signed-in user may make another request now.
+// httpmw.RateLimiter implements it.
+type Limiter interface {
+	Allow(key string) bool
+}
+
 // InterceptorConfig configures the session interceptor.
 type InterceptorConfig struct {
 	Auth Authenticator
+	// Limiter, when set, gives each signed-in user their own request limit, so
+	// one busy user cannot slow down the rest. Requests with no valid session
+	// are not counted against anyone.
+	Limiter Limiter
 	// SecureCookies sets the Secure flag on a renewed session cookie.
 	SecureCookies bool
 	// Open lists procedures that skip authentication, such as Logout, which
@@ -61,6 +71,9 @@ func (i *sessionInterceptor) authenticate(ctx context.Context, header http.Heade
 	session, renewed, err := i.cfg.Auth.Authenticate(ctx, token)
 	if err != nil {
 		return nil, nil, i.cfg.authError(ctx, err)
+	}
+	if i.cfg.Limiter != nil && !i.cfg.Limiter.Allow(session.OwnerID.String()) {
+		return nil, nil, newError(connect.CodeResourceExhausted, reasonRateLimited, "too many requests; slow down for a moment")
 	}
 	ctx = WithSession(ctx, session)
 	ctx = authz.WithIdentity(ctx, authz.Identity{
