@@ -4,9 +4,11 @@ Guidance for any coding agent (and humans) working in this repo. Read this first
 
 ## What Shogun is
 
-A private, single-user web app that manages a professional life: job tracker, contacts and outreach, Gmail job-mail detection, AI-drafted messages and posts in the owner's voice, a learning log, GitHub-driven resume suggestions, job discovery, analytics, notifications and cost control.
+A multi-user web app (open Google sign-up, admin and member roles, every user fully isolated from every other) that manages a professional life: job tracker, contacts and outreach, Gmail job-mail detection, AI-drafted messages and posts in each user's voice, a learning log, GitHub-driven resume suggestions, job discovery, analytics, notifications and cost control.
 
-**Hard product rule:** nothing leaves the system (email, DM, post) without the owner approving that exact draft version. Automation is allowed for internal events only.
+**Hard product rule:** nothing leaves the system (email, DM, post) without *that user* approving that exact draft version. Automation is allowed for internal events only.
+
+**Tenancy rules:** every user-facing row carries `owner_id` and every query reachable from an RPC filters on it. Each user brings their own Anthropic-compatible provider (base URL, API key, model) and their own GitHub connection, set in the web Settings and stored encrypted. There are no global `ANTHROPIC_*`, `KATANA_GITHUB_*` or `TORII_ALLOWED_EMAILS` settings.
 
 ## Architecture in one screen
 

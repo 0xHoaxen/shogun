@@ -55,7 +55,26 @@ CREATE TABLE sessions (
   expires_at    timestamptz NOT NULL
 );
 CREATE INDEX sessions_expiry ON sessions (expires_at);
+
+-- One row per Google account. id is the derived owner id (uuid v5 of the
+-- Google subject), so it is the owner_id used in every other schema.
+CREATE TABLE users (
+  id            uuid PRIMARY KEY,
+  google_sub    text        NOT NULL UNIQUE,
+  email         citext      NOT NULL,
+  display_name  text        NOT NULL DEFAULT '',
+  role          text        NOT NULL DEFAULT 'member' CHECK (role IN ('admin','member')),
+  status        text        NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled')),
+  gmail_allowed boolean     NOT NULL DEFAULT false,  -- admin-approved while the Google app is unverified
+  timezone      text        NOT NULL DEFAULT 'Asia/Kolkata',
+  version       int         NOT NULL DEFAULT 1,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now(),
+  archived_at   timestamptz
+);
 ```
+
+Events written by torii: `user.activated`, `user.updated` (status, timezone), `user.deleted`. Services that run per-user schedules keep a local `owners(id, timezone, status)` table filled by an idempotent inbox handler.
 
 ## kagami
 
@@ -384,6 +403,16 @@ CREATE TABLE suggestions (
   decided_at  timestamptz
 );
 CREATE INDEX suggestions_open ON suggestions (owner_id, created_at DESC) WHERE state = 'open';
+
+-- One GitHub connection per user. The token is encrypted with
+-- KATANA_SECRET_MASTER_KEY (key id recorded for rotation).
+CREATE TABLE github_accounts (
+  owner_id         uuid PRIMARY KEY,
+  login            text  NOT NULL,
+  token_ciphertext bytea NOT NULL,
+  key_id           text  NOT NULL,
+  connected_at     timestamptz NOT NULL DEFAULT now()
+);
 ```
 
 ## shinobi
@@ -472,6 +501,21 @@ CREATE TABLE prices (
   cache_read_micros_per_mtok  bigint NOT NULL DEFAULT 0,
   cache_write_micros_per_mtok bigint NOT NULL DEFAULT 0,
   PRIMARY KEY (model, effective_from)
+);
+
+-- One AI provider per user. The key is encrypted with SOROBAN_SECRET_MASTER_KEY.
+-- No row means AI features are off for that user.
+CREATE TABLE providers (
+  owner_id               uuid PRIMARY KEY,
+  base_url               text  NOT NULL,
+  model                  text  NOT NULL,
+  api_key_ciphertext     bytea NOT NULL,
+  key_id                 text  NOT NULL,
+  key_last4              text  NOT NULL,
+  input_micros_per_mtok  bigint,            -- optional, for models not in prices
+  output_micros_per_mtok bigint,
+  version                int   NOT NULL DEFAULT 1,
+  updated_at             timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE budgets (

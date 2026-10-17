@@ -65,7 +65,7 @@ It seals `postgres` and the ten `<name>` Secrets for `shogun`, `grafana-admin` f
 
 Each environment is its own cluster with its own key and certificate, so seal staging and production separately. A SealedSecret is bound to its name and namespace (strict scope).
 
-Placeholders for Google sign-in, Gmail, `ANTHROPIC_API_KEY` and `KATANA_GITHUB_*` let the stack start, but sign-in, drafts and GitHub sync will not work until you fill them in; `seal` warns about each one.
+Placeholders for Google sign-in, Gmail and the GitHub OAuth app let the stack start, but sign-in, Gmail and GitHub connect will not work until you fill them in. AI providers are per user: each user adds theirs in Settings; `seal` warns about each one.
 
 ## 2. Exposing the web app and Grafana
 
@@ -101,7 +101,7 @@ kubectl --context "$CTX" -n shogun port-forward svc/web 3000:3000
 Then, with the port-forward running:
 
 1. `curl -fsSI http://localhost:3000/login | head -1` returns 200.
-2. Open http://localhost:3000 and sign in with an address in `TORII_ALLOWED_EMAILS`. The redirect URI registered in Google must be `http://localhost:3000/auth/callback`, so keep `TORII_PUBLIC_URL` and the port-forward port the same.
+2. Open http://localhost:3000 and sign in with any Google account; addresses in `TORII_ADMIN_EMAILS` become admins. The redirect URI registered in Google must be `http://localhost:3000/auth/callback`, so keep `TORII_PUBLIC_URL` and the port-forward port the same.
 3. Check one service's readiness: `kubectl -n shogun port-forward svc/kagami 8080:8080` and `curl -fsS localhost:8080/readyz`.
 4. Add a draft, approve it and send it to yourself, once, to exercise the whole Hanko path.
 5. `make backup-now ENV=staging CONTEXT="$CTX"` writes a backup; restore it once (`docs/backup-restore.md`, "On the cluster").
@@ -140,7 +140,7 @@ kubectl --context "$CTX" delete namespace shogun        # also deletes Postgres 
 - [ ] `.secrets/<env>.env` is mode 600, not in git, and backed up; so is the sealing key backup.
 - [ ] `ENVIRONMENT=production` and `TORII_PUBLIC_URL` is `https://` in the production values.
 - [ ] No placeholder remains: `grep replace-me .secrets/<env>.env` prints nothing.
-- [ ] `TORII_ALLOWED_EMAILS` lists only you.
+- [ ] `TORII_ADMIN_EMAILS` lists only the people who should administer users.
 - [ ] Only the web app and Grafana are exposed outside the cluster; Postgres, Prometheus, Alertmanager and the service Services stay `ClusterIP`.
 - [ ] Hanko keys match (a test send succeeds; a tampered draft is refused).
 - [ ] The Google OAuth consent screen is limited to you.
