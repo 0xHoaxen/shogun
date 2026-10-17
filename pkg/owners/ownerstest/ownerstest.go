@@ -45,7 +45,7 @@ func RequireCovered(t *testing.T, pool *pgxpool.Pool, statements []string, excep
 func mentioned(statements []string, name string) bool {
 	for _, stmt := range statements {
 		for _, word := range strings.FieldsFunc(stmt, func(r rune) bool {
-			return !(r == '_' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9')
+			return r != '_' && (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9')
 		}) {
 			if word == name {
 				return true
