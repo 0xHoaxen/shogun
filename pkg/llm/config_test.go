@@ -18,7 +18,7 @@ func TestNewConfigListsOnlyTheServicesFeatures(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.service, func(t *testing.T) {
-			cfg, err := llm.NewConfig(tt.service, noEnv)
+			cfg, err := llm.NewConfig(tt.service)
 			if err != nil {
 				t.Fatalf("NewConfig: %v", err)
 			}
@@ -26,71 +26,17 @@ func TestNewConfigListsOnlyTheServicesFeatures(t *testing.T) {
 				t.Fatalf("got %d features, want %v", len(cfg.Features), tt.features)
 			}
 			for _, f := range tt.features {
-				if fc, ok := cfg.Features[f]; !ok || fc.Model == "" || fc.MaxTokens <= 0 {
-					t.Errorf("feature %s = %+v, want a model and a cap", f, fc)
+				if fc, ok := cfg.Features[f]; !ok || fc.MaxTokens <= 0 {
+					t.Errorf("feature %s = %+v, want an output cap", f, fc)
 				}
 			}
 		})
 	}
 }
 
-func TestNewConfigUsesTheSmallerModelForClassifyAndScore(t *testing.T) {
-	tsubame, _ := llm.NewConfig("tsubame", noEnv)
-	shinobi, _ := llm.NewConfig("shinobi", noEnv)
-	fude, _ := llm.NewConfig("fude", noEnv)
-
-	if got := tsubame.Features["tsubame.classify"].Model; got != "claude-haiku-4-5" {
-		t.Errorf("classify model = %s, want haiku", got)
-	}
-	if got := shinobi.Features["shinobi.score"].Model; got != "claude-haiku-4-5" {
-		t.Errorf("score model = %s, want haiku", got)
-	}
-	if got := fude.Features["fude.post"].Model; got != "claude-opus-5-5" {
-		t.Errorf("post model = %s, want opus", got)
-	}
-}
-
-func TestNewConfigReadsAModelOverrideFromTheEnvironment(t *testing.T) {
-	env := map[string]string{"LLM_MODEL_FUDE_COVER_LETTER": "claude-sonnet-5-5"}
-	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
-
-	cfg, err := llm.NewConfig("fude", lookup)
-	if err != nil {
-		t.Fatalf("NewConfig: %v", err)
-	}
-
-	if got := cfg.Features["fude.cover_letter"].Model; got != "claude-sonnet-5-5" {
-		t.Errorf("cover letter model = %s, want the override", got)
-	}
-	if got := cfg.Features["fude.post"].Model; got != "claude-opus-5-5" {
-		t.Errorf("post model = %s, want the default", got)
-	}
-}
-
-func TestNewConfigReadsOneModelForEveryFeatureFromTheEnvironment(t *testing.T) {
-	env := map[string]string{
-		"ANTHROPIC_MODEL":             "claude-sonnet-5-5",
-		"LLM_MODEL_FUDE_COVER_LETTER": "claude-opus-5-5",
-	}
-	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
-
-	fude, _ := llm.NewConfig("fude", lookup)
-	tsubame, _ := llm.NewConfig("tsubame", lookup)
-
-	if got := fude.Features["fude.post"].Model; got != "claude-sonnet-5-5" {
-		t.Errorf("post model = %s, want the shared override", got)
-	}
-	if got := tsubame.Features["tsubame.classify"].Model; got != "claude-sonnet-5-5" {
-		t.Errorf("classify model = %s, want the shared override", got)
-	}
-	if got := fude.Features["fude.cover_letter"].Model; got != "claude-opus-5-5" {
-		t.Errorf("cover letter model = %s, want the feature override to win", got)
-	}
-}
-
 func TestNewConfigRejectsAServiceWithoutFeatures(t *testing.T) {
 	for _, service := range []string{"", "kagami"} {
-		if _, err := llm.NewConfig(service, noEnv); err == nil {
+		if _, err := llm.NewConfig(service); err == nil {
 			t.Errorf("service %q: want an error", service)
 		}
 	}

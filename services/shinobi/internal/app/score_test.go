@@ -255,7 +255,9 @@ func TestAnExcludedTermScoresZeroWithNoEvent(t *testing.T) {
 }
 
 func TestWithoutAModelABorderlinePostingKeepsItsRuleScore(t *testing.T) {
-	for name, model := range map[string]app.Completer{"no completer": nil, "model off": offModel{}} {
+	for name, model := range map[string]app.Completer{
+		"no completer": nil, "model off": offModel{}, "the user has no AI provider": &fakeModel{err: llm.ErrProviderNotConfigured},
+	} {
 		t.Run(name, func(t *testing.T) {
 			svc, pool := newScorer(t, &fakeFetcher{}, &fakeQueue{}, model)
 			owner := uuid.New()

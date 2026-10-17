@@ -37,6 +37,9 @@ func (e *BudgetError) Unwrap() error { return e.cause }
 // through.
 func reserveError(err error) error {
 	st, ok := status.FromError(err)
+	if ok && st.Code() == codes.FailedPrecondition && hasReason(st, reasonNoProvider) {
+		return fmt.Errorf("%w: %w", ErrProviderNotConfigured, err)
+	}
 	if !ok || st.Code() != codes.ResourceExhausted {
 		return fmt.Errorf("%w: %w", ErrMeteringUnavailable, err)
 	}
@@ -52,4 +55,17 @@ func reserveError(err error) error {
 		}
 	}
 	return refusal
+}
+
+// reasonNoProvider is the ErrorInfo.reason soroban gives a Reserve from a user
+// with no AI provider.
+const reasonNoProvider = "AI_PROVIDER_NOT_CONFIGURED"
+
+func hasReason(st *status.Status, reason string) bool {
+	for _, d := range st.Details() {
+		if info, ok := d.(*errdetails.ErrorInfo); ok && info.GetReason() == reason {
+			return true
+		}
+	}
+	return false
 }
