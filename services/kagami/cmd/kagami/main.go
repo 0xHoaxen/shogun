@@ -27,6 +27,7 @@ import (
 	"github.com/0xHoaxen/shogun/services/kagami/internal/app"
 	kagamievents "github.com/0xHoaxen/shogun/services/kagami/internal/events"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/kagami/internal/store"
 	kagamigrpc "github.com/0xHoaxen/shogun/services/kagami/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/kagami/migrations"
 )
@@ -114,7 +115,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 
 	service := app.NewService(pool, nil)
-	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(kagamievents.Handlers(service, log), log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(kagamievents.Handlers(service, log), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}

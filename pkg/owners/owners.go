@@ -95,13 +95,20 @@ WHERE owners.version < EXCLUDED.version`
 // Upsert stores o. It changes nothing when the table already holds the same or
 // a newer version, so events can arrive twice or out of order.
 func Upsert(ctx context.Context, db DBTX, o Owner) error {
+	_, err := upsert(ctx, db, o)
+	return err
+}
+
+// upsert is Upsert that also reports whether o was newer than what was held.
+func upsert(ctx context.Context, db DBTX, o Owner) (applied bool, err error) {
 	if err := o.validate(); err != nil {
-		return err
+		return false, err
 	}
-	if _, err := db.Exec(ctx, upsertSQL, o.ID, o.Timezone, o.Status, o.Version); err != nil {
-		return fmt.Errorf("owners: upsert: %w", err)
+	tag, err := db.Exec(ctx, upsertSQL, o.ID, o.Timezone, o.Status, o.Version)
+	if err != nil {
+		return false, fmt.Errorf("owners: upsert: %w", err)
 	}
-	return nil
+	return tag.RowsAffected() > 0, nil
 }
 
 func (o Owner) validate() error {

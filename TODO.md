@@ -870,9 +870,45 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Done: `AuthService.DeleteAccount` (the user types their email; `CONFIRMATION_MISMATCH` otherwise): ends every session, archives the user (email and name removed, a tombstone kept so the owner id and version stay unique) and writes `user.deleted` in the same transaction. Signing in again afterwards makes a fresh member and writes `user.activated` with a higher version, so services do not ignore it. Consumers still only mark their local `owners` row deleted; the purge is P11.8c. Adding fude, tsubame, dojo and soroban to the `user.deleted` route moves to P11.8c, with their handlers, so no event is routed to a service that cannot handle it.
   Done when: `cd services/torii && go test -race ./...`.
 
-- [ ] **P11.8c Delete my data: purge per service** (L, split per service when taken) Needs: P11.8b
-  Do: each consumer deletes every row of that owner in its own schema when `user.deleted` arrives (idempotent; tested with an owner who has data and one who does not, and the other owner's rows untouched). tsubame also deletes sealed mail tokens, soroban the sealed AI provider key, katana the sealed GitHub token. One PR per service: kagami, tsubame, fude, taiko, dojo, katana, shinobi, sensei, soroban.
-  Done when: `make test`.
+- [x] **P11.8c0 Purge hook in pkg/owners** (S) Needs: P11.8b
+  Done: `owners.WithPurge(fn)` option for `WithHandlers`: `fn` runs in the same transaction as the tombstone, once per deletion (a repeated or older `user.deleted` is skipped, so it cannot wipe an account made again later); a failing purge fails the event so it is retried.
+  Done when: `cd pkg && go test -race ./owners/...`.
+
+- [x] **P11.8c1 Purge: kagami** (S) Needs: P11.8c0
+  Done: `store.PurgeStatements` (children first) wired with `owners.WithPurge`; tested with two owners' rows in every table, an owner with no data, and a check that every table of the schema is covered.
+  Done when: `cd services/kagami && go test -race ./...`.
+
+- [ ] **P11.8c2 Purge: tsubame** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Also removes sealed mail tokens (the `accounts` rows) and adds tsubame to the `user.deleted` route with the `owners` table and handler it lacks.
+  Done when: `cd services/tsubame && go test -race ./...`.
+
+- [ ] **P11.8c3 Purge: fude** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Adds fude to the `user.deleted` route with the `owners` table and handler it lacks.
+  Done when: `cd services/fude && go test -race ./...`.
+
+- [ ] **P11.8c4 Purge: taiko** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check.
+  Done when: `cd services/taiko && go test -race ./...`.
+
+- [ ] **P11.8c5 Purge: dojo** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Adds dojo to the `user.deleted` route with the `owners` table and handler it lacks.
+  Done when: `cd services/dojo && go test -race ./...`.
+
+- [ ] **P11.8c6 Purge: katana** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Also removes the sealed GitHub token (`github_accounts`).
+  Done when: `cd services/katana && go test -race ./...`.
+
+- [ ] **P11.8c7 Purge: shinobi** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check.
+  Done when: `cd services/shinobi && go test -race ./...`.
+
+- [ ] **P11.8c8 Purge: sensei** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check.
+  Done when: `cd services/sensei && go test -race ./...`.
+
+- [ ] **P11.8c9 Purge: soroban** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Also removes the sealed AI provider key (`providers`). Adds soroban to the `user.deleted` route with the `owners` table and handler it lacks; leave the shared `prices` table alone.
+  Done when: `cd services/soroban && go test -race ./...`.
 
 - [ ] **P11.8d Delete my data: web** (S) Needs: P11.8b
   Do: Account tab gets a "Delete my data" section: says what is removed, asks for the email to confirm, signs out and shows a goodbye page. Copy in `sections.ts`; Playwright spec.
