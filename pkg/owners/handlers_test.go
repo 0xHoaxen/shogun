@@ -136,15 +136,19 @@ func TestPurgeRunsOnceWhenAUserIsDeletedAndNeverForAStaleEvent(t *testing.T) {
 		return nil
 	}))
 	id := uuid.New()
-	deliver(ctx, t, pool, handlers[owners.TypeUserActivated], envelope(t, owners.TypeUserActivated,
-		&toriiv1.UserActivated{OwnerId: id.String(), Timezone: "UTC", Status: "active", Version: 1}))
+	if err := deliver(ctx, t, pool, handlers[owners.TypeUserActivated], envelope(t, owners.TypeUserActivated,
+		&toriiv1.UserActivated{OwnerId: id.String(), Timezone: "UTC", Status: "active", Version: 1})); err != nil {
+		t.Fatalf("activated: %v", err)
+	}
 	gone := envelope(t, owners.TypeUserDeleted, &toriiv1.UserDeleted{OwnerId: id.String(), Version: 2})
 
 	// Act: delivered twice, then a delete older than a later sign-up.
 	first := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], gone)
 	again := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], gone)
-	deliver(ctx, t, pool, handlers[owners.TypeUserActivated], envelope(t, owners.TypeUserActivated,
-		&toriiv1.UserActivated{OwnerId: id.String(), Timezone: "UTC", Status: "active", Version: 3}))
+	if err := deliver(ctx, t, pool, handlers[owners.TypeUserActivated], envelope(t, owners.TypeUserActivated,
+		&toriiv1.UserActivated{OwnerId: id.String(), Timezone: "UTC", Status: "active", Version: 3})); err != nil {
+		t.Fatalf("reactivated: %v", err)
+	}
 	stale := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], envelope(t, owners.TypeUserDeleted,
 		&toriiv1.UserDeleted{OwnerId: id.String(), Version: 2}))
 
