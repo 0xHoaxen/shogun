@@ -2,6 +2,9 @@ package grpc
 
 import (
 	"context"
+	"errors"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
@@ -75,4 +78,43 @@ func (s *Server) DismissSuggestion(ctx context.Context, req *katanav1.DismissSug
 		return nil, toStatus(err)
 	}
 	return &katanav1.DismissSuggestionResponse{Suggestion: suggestionToProto(row)}, nil
+}
+
+// ConnectGitHub implements katana.v1.KatanaService.
+func (s *Server) ConnectGitHub(ctx context.Context, _ *katanav1.ConnectGitHubRequest) (*katanav1.ConnectGitHubResponse, error) {
+	authURL, err := s.svc.ConnectGitHub(ctx)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &katanav1.ConnectGitHubResponse{AuthorizationUrl: authURL}, nil
+}
+
+// CompleteGitHubConnect implements katana.v1.KatanaService.
+func (s *Server) CompleteGitHubConnect(ctx context.Context, req *katanav1.CompleteGitHubConnectRequest) (*katanav1.CompleteGitHubConnectResponse, error) {
+	view, err := s.svc.CompleteGitHubConnect(ctx, req.GetCode(), req.GetState())
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &katanav1.CompleteGitHubConnectResponse{Login: view.Login, ConnectedAt: timestamppb.New(view.ConnectedAt)}, nil
+}
+
+// GetGitHubAccount implements katana.v1.KatanaService. Not connected is an
+// answer, not an error.
+func (s *Server) GetGitHubAccount(ctx context.Context, _ *katanav1.GetGitHubAccountRequest) (*katanav1.GetGitHubAccountResponse, error) {
+	view, err := s.svc.GitHubAccount(ctx)
+	if errors.Is(err, app.ErrGitHubNotConnected) {
+		return &katanav1.GetGitHubAccountResponse{}, nil
+	}
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &katanav1.GetGitHubAccountResponse{Connected: true, Login: view.Login, ConnectedAt: timestamppb.New(view.ConnectedAt)}, nil
+}
+
+// DisconnectGitHub implements katana.v1.KatanaService.
+func (s *Server) DisconnectGitHub(ctx context.Context, _ *katanav1.DisconnectGitHubRequest) (*katanav1.DisconnectGitHubResponse, error) {
+	if err := s.svc.DisconnectGitHub(ctx); err != nil {
+		return nil, toStatus(err)
+	}
+	return &katanav1.DisconnectGitHubResponse{}, nil
 }

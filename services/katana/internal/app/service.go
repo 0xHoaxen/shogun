@@ -33,6 +33,9 @@ type Service struct {
 	// keys seals the GitHub tokens users connect. Without it none can be stored.
 	keys *envelope.Keyring
 
+	// oauth is the GitHub OAuth app users connect through. Nil means connecting is off.
+	oauth OAuth
+
 	// Set by WithSuggestions.
 	queue Queue
 	llm   Completer

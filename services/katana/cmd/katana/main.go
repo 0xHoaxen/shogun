@@ -134,7 +134,15 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 	defer suggest.close()
-	svc := app.NewService(pool, gh, nil, app.WithKeyring(keys), suggest.option)
+	oauth, err := newGitHubOAuth(lookup, cfg.IsProduction())
+	if err != nil {
+		return err
+	}
+	appOpts := []app.Option{app.WithKeyring(keys), suggest.option}
+	if oauth != nil {
+		appOpts = append(appOpts, app.WithOAuth(oauth))
+	}
+	svc := app.NewService(pool, gh, nil, appOpts...)
 	scheduled := jobs.NewSetup(svc, svc, svc, jobs.ContextEnqueuer{}, time.Now, log)
 
 	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log), log), log)

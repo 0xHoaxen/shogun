@@ -19,10 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	KatanaService_SyncGitHub_FullMethodName        = "/shogun.katana.v1.KatanaService/SyncGitHub"
-	KatanaService_ListSuggestions_FullMethodName   = "/shogun.katana.v1.KatanaService/ListSuggestions"
-	KatanaService_AcceptSuggestion_FullMethodName  = "/shogun.katana.v1.KatanaService/AcceptSuggestion"
-	KatanaService_DismissSuggestion_FullMethodName = "/shogun.katana.v1.KatanaService/DismissSuggestion"
+	KatanaService_SyncGitHub_FullMethodName            = "/shogun.katana.v1.KatanaService/SyncGitHub"
+	KatanaService_ListSuggestions_FullMethodName       = "/shogun.katana.v1.KatanaService/ListSuggestions"
+	KatanaService_AcceptSuggestion_FullMethodName      = "/shogun.katana.v1.KatanaService/AcceptSuggestion"
+	KatanaService_DismissSuggestion_FullMethodName     = "/shogun.katana.v1.KatanaService/DismissSuggestion"
+	KatanaService_ConnectGitHub_FullMethodName         = "/shogun.katana.v1.KatanaService/ConnectGitHub"
+	KatanaService_CompleteGitHubConnect_FullMethodName = "/shogun.katana.v1.KatanaService/CompleteGitHubConnect"
+	KatanaService_GetGitHubAccount_FullMethodName      = "/shogun.katana.v1.KatanaService/GetGitHubAccount"
+	KatanaService_DisconnectGitHub_FullMethodName      = "/shogun.katana.v1.KatanaService/DisconnectGitHub"
 )
 
 // KatanaServiceClient is the client API for KatanaService service.
@@ -41,6 +45,18 @@ type KatanaServiceClient interface {
 	// twice is FailedPrecondition with reason SUGGESTION_ALREADY_DECIDED.
 	AcceptSuggestion(ctx context.Context, in *AcceptSuggestionRequest, opts ...grpc.CallOption) (*AcceptSuggestionResponse, error)
 	DismissSuggestion(ctx context.Context, in *DismissSuggestionRequest, opts ...grpc.CallOption) (*DismissSuggestionResponse, error)
+	// ConnectGitHub returns where to send the caller to grant read-only access
+	// on GitHub. FailedPrecondition GITHUB_NOT_CONFIGURED when the OAuth app is
+	// not set up. Caller: torii.
+	ConnectGitHub(ctx context.Context, in *ConnectGitHubRequest, opts ...grpc.CallOption) (*ConnectGitHubResponse, error)
+	// CompleteGitHubConnect finishes it with the code and state GitHub sent
+	// back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+	CompleteGitHubConnect(ctx context.Context, in *CompleteGitHubConnectRequest, opts ...grpc.CallOption) (*CompleteGitHubConnectResponse, error)
+	// GetGitHubAccount says whether the caller has connected GitHub. It never
+	// returns the token.
+	GetGitHubAccount(ctx context.Context, in *GetGitHubAccountRequest, opts ...grpc.CallOption) (*GetGitHubAccountResponse, error)
+	// DisconnectGitHub deletes the caller's stored token. Having none is fine.
+	DisconnectGitHub(ctx context.Context, in *DisconnectGitHubRequest, opts ...grpc.CallOption) (*DisconnectGitHubResponse, error)
 }
 
 type katanaServiceClient struct {
@@ -91,6 +107,46 @@ func (c *katanaServiceClient) DismissSuggestion(ctx context.Context, in *Dismiss
 	return out, nil
 }
 
+func (c *katanaServiceClient) ConnectGitHub(ctx context.Context, in *ConnectGitHubRequest, opts ...grpc.CallOption) (*ConnectGitHubResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConnectGitHubResponse)
+	err := c.cc.Invoke(ctx, KatanaService_ConnectGitHub_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *katanaServiceClient) CompleteGitHubConnect(ctx context.Context, in *CompleteGitHubConnectRequest, opts ...grpc.CallOption) (*CompleteGitHubConnectResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompleteGitHubConnectResponse)
+	err := c.cc.Invoke(ctx, KatanaService_CompleteGitHubConnect_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *katanaServiceClient) GetGitHubAccount(ctx context.Context, in *GetGitHubAccountRequest, opts ...grpc.CallOption) (*GetGitHubAccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetGitHubAccountResponse)
+	err := c.cc.Invoke(ctx, KatanaService_GetGitHubAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *katanaServiceClient) DisconnectGitHub(ctx context.Context, in *DisconnectGitHubRequest, opts ...grpc.CallOption) (*DisconnectGitHubResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisconnectGitHubResponse)
+	err := c.cc.Invoke(ctx, KatanaService_DisconnectGitHub_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // KatanaServiceServer is the server API for KatanaService service.
 // All implementations must embed UnimplementedKatanaServiceServer
 // for forward compatibility.
@@ -107,6 +163,18 @@ type KatanaServiceServer interface {
 	// twice is FailedPrecondition with reason SUGGESTION_ALREADY_DECIDED.
 	AcceptSuggestion(context.Context, *AcceptSuggestionRequest) (*AcceptSuggestionResponse, error)
 	DismissSuggestion(context.Context, *DismissSuggestionRequest) (*DismissSuggestionResponse, error)
+	// ConnectGitHub returns where to send the caller to grant read-only access
+	// on GitHub. FailedPrecondition GITHUB_NOT_CONFIGURED when the OAuth app is
+	// not set up. Caller: torii.
+	ConnectGitHub(context.Context, *ConnectGitHubRequest) (*ConnectGitHubResponse, error)
+	// CompleteGitHubConnect finishes it with the code and state GitHub sent
+	// back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+	CompleteGitHubConnect(context.Context, *CompleteGitHubConnectRequest) (*CompleteGitHubConnectResponse, error)
+	// GetGitHubAccount says whether the caller has connected GitHub. It never
+	// returns the token.
+	GetGitHubAccount(context.Context, *GetGitHubAccountRequest) (*GetGitHubAccountResponse, error)
+	// DisconnectGitHub deletes the caller's stored token. Having none is fine.
+	DisconnectGitHub(context.Context, *DisconnectGitHubRequest) (*DisconnectGitHubResponse, error)
 	mustEmbedUnimplementedKatanaServiceServer()
 }
 
@@ -128,6 +196,18 @@ func (UnimplementedKatanaServiceServer) AcceptSuggestion(context.Context, *Accep
 }
 func (UnimplementedKatanaServiceServer) DismissSuggestion(context.Context, *DismissSuggestionRequest) (*DismissSuggestionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DismissSuggestion not implemented")
+}
+func (UnimplementedKatanaServiceServer) ConnectGitHub(context.Context, *ConnectGitHubRequest) (*ConnectGitHubResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConnectGitHub not implemented")
+}
+func (UnimplementedKatanaServiceServer) CompleteGitHubConnect(context.Context, *CompleteGitHubConnectRequest) (*CompleteGitHubConnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteGitHubConnect not implemented")
+}
+func (UnimplementedKatanaServiceServer) GetGitHubAccount(context.Context, *GetGitHubAccountRequest) (*GetGitHubAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGitHubAccount not implemented")
+}
+func (UnimplementedKatanaServiceServer) DisconnectGitHub(context.Context, *DisconnectGitHubRequest) (*DisconnectGitHubResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DisconnectGitHub not implemented")
 }
 func (UnimplementedKatanaServiceServer) mustEmbedUnimplementedKatanaServiceServer() {}
 func (UnimplementedKatanaServiceServer) testEmbeddedByValue()                       {}
@@ -222,6 +302,78 @@ func _KatanaService_DismissSuggestion_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KatanaService_ConnectGitHub_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectGitHubRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).ConnectGitHub(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_ConnectGitHub_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).ConnectGitHub(ctx, req.(*ConnectGitHubRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KatanaService_CompleteGitHubConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteGitHubConnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).CompleteGitHubConnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_CompleteGitHubConnect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).CompleteGitHubConnect(ctx, req.(*CompleteGitHubConnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KatanaService_GetGitHubAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGitHubAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).GetGitHubAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_GetGitHubAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).GetGitHubAccount(ctx, req.(*GetGitHubAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KatanaService_DisconnectGitHub_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisconnectGitHubRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KatanaServiceServer).DisconnectGitHub(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KatanaService_DisconnectGitHub_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KatanaServiceServer).DisconnectGitHub(ctx, req.(*DisconnectGitHubRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // KatanaService_ServiceDesc is the grpc.ServiceDesc for KatanaService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -244,6 +396,22 @@ var KatanaService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DismissSuggestion",
 			Handler:    _KatanaService_DismissSuggestion_Handler,
+		},
+		{
+			MethodName: "ConnectGitHub",
+			Handler:    _KatanaService_ConnectGitHub_Handler,
+		},
+		{
+			MethodName: "CompleteGitHubConnect",
+			Handler:    _KatanaService_CompleteGitHubConnect_Handler,
+		},
+		{
+			MethodName: "GetGitHubAccount",
+			Handler:    _KatanaService_GetGitHubAccount_Handler,
+		},
+		{
+			MethodName: "DisconnectGitHub",
+			Handler:    _KatanaService_DisconnectGitHub_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
