@@ -231,6 +231,12 @@ message Provider {
   optional int64 output_micros_per_mtok = 5;
   int32 version = 6;
   google.protobuf.Timestamp updated_at = 7;
+  // monthly_token_cap, when set, stops this user's AI calls once their input and
+  // output tokens for the month, counting calls still in flight, would pass it.
+  // Unset means unlimited. It counts tokens, so it works for a model with no
+  // price. A refused call is ResourceExhausted with reason TOKEN_CAP_EXHAUSTED
+  // and metadata resets_at.
+  optional int64 monthly_token_cap = 8;
 }
 
 message SetProviderRequest {
@@ -240,6 +246,9 @@ message SetProviderRequest {
   optional int64 input_micros_per_mtok = 4;
   optional int64 output_micros_per_mtok = 5;
   int32 version = 6;
+  // monthly_token_cap must be above 0 when set (INVALID_TOKEN_CAP). Leaving it
+  // unset removes any cap.
+  optional int64 monthly_token_cap = 7;
 }
 
 message SetProviderResponse {
@@ -251,6 +260,9 @@ message GetProviderRequest {}
 message GetProviderResponse {
   // provider is unset when the caller has none.
   Provider provider = 1;
+  // tokens_this_month is the caller's input, output and cache tokens so far this
+  // month, whether or not their model has a price.
+  int64 tokens_this_month = 2;
 }
 
 message DeleteProviderRequest {}

@@ -87,6 +87,7 @@ type Provider struct {
 	Version             int32
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
+	MonthlyTokenCap     *int64
 }
 
 type Reservation struct {
@@ -100,4 +101,5 @@ type Reservation struct {
 	Status          string
 	CreatedAt       time.Time
 	ExpiresAt       time.Time
+	EstTokens       int64
 }

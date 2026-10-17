@@ -17,6 +17,7 @@ var (
 	ErrInvalidProviderModel = errors.New("provider model is not valid")
 	ErrInvalidAPIKey        = errors.New("api key is not valid")
 	ErrInvalidProviderPrice = errors.New("provider price is not valid")
+	ErrInvalidTokenCap      = errors.New("token cap must be above zero")
 )
 
 const (
@@ -130,6 +131,14 @@ func ValidateProviderPrices(input, output *int64) error {
 		if p != nil && (*p < 0 || *p > maxMicrosPerMTok) {
 			return fmt.Errorf("%w: out of range", ErrInvalidProviderPrice)
 		}
+	}
+	return nil
+}
+
+// ValidateTokenCap checks the optional monthly token cap: unset, or above zero.
+func ValidateTokenCap(capTokens *int64) error {
+	if capTokens != nil && *capTokens <= 0 {
+		return ErrInvalidTokenCap
 	}
 	return nil
 }

@@ -24,7 +24,7 @@ func (q *Queries) DeleteProvider(ctx context.Context, ownerID uuid.UUID) (int64,
 }
 
 const getProvider = `-- name: GetProvider :one
-SELECT owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at FROM providers WHERE owner_id = $1
+SELECT owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at, monthly_token_cap FROM providers WHERE owner_id = $1
 `
 
 func (q *Queries) GetProvider(ctx context.Context, ownerID uuid.UUID) (Provider, error) {
@@ -42,16 +42,43 @@ func (q *Queries) GetProvider(ctx context.Context, ownerID uuid.UUID) (Provider,
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MonthlyTokenCap,
+	)
+	return i, err
+}
+
+const getProviderForUpdate = `-- name: GetProviderForUpdate :one
+SELECT owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at, monthly_token_cap FROM providers WHERE owner_id = $1 FOR UPDATE
+`
+
+// Locks the owner's row, so one owner's reservations are checked against their
+// token cap one at a time.
+func (q *Queries) GetProviderForUpdate(ctx context.Context, ownerID uuid.UUID) (Provider, error) {
+	row := q.db.QueryRow(ctx, getProviderForUpdate, ownerID)
+	var i Provider
+	err := row.Scan(
+		&i.OwnerID,
+		&i.BaseUrl,
+		&i.Model,
+		&i.ApiKeyCiphertext,
+		&i.KeyID,
+		&i.KeyLast4,
+		&i.InputMicrosPerMtok,
+		&i.OutputMicrosPerMtok,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.MonthlyTokenCap,
 	)
 	return i, err
 }
 
 const insertProvider = `-- name: InsertProvider :one
 INSERT INTO providers (owner_id, base_url, model, api_key_ciphertext, key_id, key_last4,
-                       input_micros_per_mtok, output_micros_per_mtok)
+                       input_micros_per_mtok, output_micros_per_mtok, monthly_token_cap)
 VALUES ($1, $2, $3, $4, $5, $6,
-        $7, $8)
-RETURNING owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at
+        $7, $8, $9)
+RETURNING owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at, monthly_token_cap
 `
 
 type InsertProviderParams struct {
@@ -63,6 +90,7 @@ type InsertProviderParams struct {
 	KeyLast4            string
 	InputMicrosPerMtok  *int64
 	OutputMicrosPerMtok *int64
+	MonthlyTokenCap     *int64
 }
 
 func (q *Queries) InsertProvider(ctx context.Context, arg InsertProviderParams) (Provider, error) {
@@ -75,6 +103,7 @@ func (q *Queries) InsertProvider(ctx context.Context, arg InsertProviderParams) 
 		arg.KeyLast4,
 		arg.InputMicrosPerMtok,
 		arg.OutputMicrosPerMtok,
+		arg.MonthlyTokenCap,
 	)
 	var i Provider
 	err := row.Scan(
@@ -89,6 +118,7 @@ func (q *Queries) InsertProvider(ctx context.Context, arg InsertProviderParams) 
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MonthlyTokenCap,
 	)
 	return i, err
 }
@@ -98,9 +128,10 @@ UPDATE providers
 SET base_url = $1, model = $2, api_key_ciphertext = $3,
     key_id = $4, key_last4 = $5,
     input_micros_per_mtok = $6, output_micros_per_mtok = $7,
+    monthly_token_cap = $8,
     version = version + 1, updated_at = now()
-WHERE owner_id = $8 AND version = $9
-RETURNING owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at
+WHERE owner_id = $9 AND version = $10
+RETURNING owner_id, base_url, model, api_key_ciphertext, key_id, key_last4, input_micros_per_mtok, output_micros_per_mtok, version, created_at, updated_at, monthly_token_cap
 `
 
 type UpdateProviderParams struct {
@@ -111,6 +142,7 @@ type UpdateProviderParams struct {
 	KeyLast4            string
 	InputMicrosPerMtok  *int64
 	OutputMicrosPerMtok *int64
+	MonthlyTokenCap     *int64
 	OwnerID             uuid.UUID
 	Version             int32
 }
@@ -125,6 +157,7 @@ func (q *Queries) UpdateProvider(ctx context.Context, arg UpdateProviderParams) 
 		arg.KeyLast4,
 		arg.InputMicrosPerMtok,
 		arg.OutputMicrosPerMtok,
+		arg.MonthlyTokenCap,
 		arg.OwnerID,
 		arg.Version,
 	)
@@ -141,6 +174,7 @@ func (q *Queries) UpdateProvider(ctx context.Context, arg UpdateProviderParams) 
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MonthlyTokenCap,
 	)
 	return i, err
 }

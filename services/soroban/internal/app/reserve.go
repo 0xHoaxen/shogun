@@ -74,7 +74,7 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
 		// The provider comes first: a user with none has no AI features, and
 		// nothing may be written for them.
-		provider, err := s.providerSecretFor(ctx, repo, owner)
+		provider, err := s.reservableProvider(ctx, repo, owner, in, now)
 		if err != nil {
 			return err
 		}
@@ -107,6 +107,31 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 		return ReserveResult{}, denial
 	}
 	return result, nil
+}
+
+// reservableProvider loads and locks the owner's provider, opens its key and
+// checks the call against the owner's monthly token cap. The lock serialises one
+// owner's reservations, so the cap cannot be passed by calls racing each other.
+func (s *Service) reservableProvider(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInput, now time.Time) (ProviderSecret, error) {
+	if s.keys == nil {
+		return ProviderSecret{}, ErrProviderStorageOff
+	}
+	row, err := repo.GetProviderForUpdate(ctx, owner)
+	if errors.Is(err, store.ErrNotFound) {
+		return ProviderSecret{}, ErrProviderNotConfigured
+	}
+	if err != nil {
+		return ProviderSecret{}, err
+	}
+	provider, err := s.openProvider(row, owner)
+	if err != nil {
+		return ProviderSecret{}, err
+	}
+	est := int64(in.EstInputTokens) + int64(in.EstOutputTokens)
+	if err := s.checkTokenCap(ctx, repo, owner, provider.MonthlyTokenCap, est, now); err != nil {
+		return ProviderSecret{}, err
+	}
+	return provider, nil
 }
 
 func validateReserve(in ReserveInput) error {
@@ -247,7 +272,7 @@ func hold(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInpu
 	}
 	res, err := repo.InsertReservation(ctx, db.InsertReservationParams{
 		ID: store.NewID(), OwnerID: owner, Service: in.Service, Feature: in.Feature, Model: model,
-		EstMicros: est, BudgetPeriodIds: periodIDs, CreatedAt: now, ExpiresAt: now.Add(reservationTTL),
+		EstMicros: est, EstTokens: int64(in.EstInputTokens) + int64(in.EstOutputTokens), BudgetPeriodIds: periodIDs, CreatedAt: now, ExpiresAt: now.Add(reservationTTL),
 	})
 	if err != nil {
 		return ReserveResult{}, fmt.Errorf("insert reservation: %w", err)
