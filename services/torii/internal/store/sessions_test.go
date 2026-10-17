@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/postgres"
@@ -166,5 +167,46 @@ func TestDeleteExpiredKeepsLiveSessions(t *testing.T) {
 	}
 	if !errors.Is(expiredErr, store.ErrNotFound) || liveErr != nil {
 		t.Fatalf("expired lookup %v, live lookup %v", expiredErr, liveErr)
+	}
+}
+
+func TestDeleteByOwnerEndsEverySessionOfThatUserAndNobodyElses(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	sessions, _ := newSessions(t)
+	ada, bob := store.NewID(), store.NewID()
+	for i, owner := range []uuid.UUID{ada, ada, bob} {
+		s := newSession(storeNow.Add(time.Hour))
+		s.OwnerID = owner
+		if err := sessions.Insert(ctx, s, []byte{byte(i + 1)}); err != nil {
+			t.Fatalf("insert %d: %v", i, err)
+		}
+	}
+
+	// Act
+	n, err := sessions.DeleteByOwner(ctx, ada)
+
+	// Assert
+	if err != nil || n != 2 {
+		t.Fatalf("removed %d, err %v; want 2", n, err)
+	}
+	if _, err := sessions.ByTokenHash(ctx, []byte{1}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("ada's first session: err = %v, want ErrNotFound", err)
+	}
+	if _, err := sessions.ByTokenHash(ctx, []byte{2}); !errors.Is(err, store.ErrNotFound) {
+		t.Errorf("ada's second session: err = %v, want ErrNotFound", err)
+	}
+	if _, err := sessions.ByTokenHash(ctx, []byte{3}); err != nil {
+		t.Errorf("bob's session was removed: %v", err)
+	}
+}
+
+func TestDeleteByOwnerWithNoSessionsIsNotAnError(t *testing.T) {
+	sessions, _ := newSessions(t)
+
+	n, err := sessions.DeleteByOwner(context.Background(), store.NewID())
+
+	if err != nil || n != 0 {
+		t.Fatalf("removed %d, err %v", n, err)
 	}
 }

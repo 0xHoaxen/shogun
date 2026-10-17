@@ -16,7 +16,9 @@ type Session struct {
 	Role Role
 	// GmailAllowed is whether an admin approved this user to connect Gmail. Authenticate fills it in.
 	GmailAllowed bool
-	ExpiresAt    time.Time
+	// Timezone is the zone the user's days are counted in. Authenticate fills it in.
+	Timezone  string
+	ExpiresAt time.Time
 }
 
 // Expired reports whether the session is no longer valid at now.

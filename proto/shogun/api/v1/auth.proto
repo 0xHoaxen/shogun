@@ -11,6 +11,13 @@ service AuthService {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
   // Logout ends the current session and clears its cookie.
   rpc Logout(LogoutRequest) returns (LogoutResponse);
+  // LogoutEverywhere ends every session of the signed-in user, this one
+  // included, and clears this browser's cookie.
+  rpc LogoutEverywhere(LogoutEverywhereRequest) returns (LogoutEverywhereResponse);
+  // SetTimezone changes the zone the user's days are counted in, which their
+  // follow-up scans, digests and rollups follow. InvalidArgument
+  // INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+  rpc SetTimezone(SetTimezoneRequest) returns (SetTimezoneResponse);
 }
 
 message Session {
@@ -21,6 +28,8 @@ message Session {
   string role = 4;
   // gmail_allowed is whether an admin approved this user to connect Gmail.
   bool gmail_allowed = 5;
+  // timezone is the user's IANA zone, such as Asia/Kolkata.
+  string timezone = 6;
 }
 
 message GetSessionRequest {}
@@ -32,3 +41,18 @@ message GetSessionResponse {
 message LogoutRequest {}
 
 message LogoutResponse {}
+
+message LogoutEverywhereRequest {}
+
+message LogoutEverywhereResponse {
+  // ended is how many sessions were ended.
+  int64 ended = 1;
+}
+
+message SetTimezoneRequest {
+  string timezone = 1;
+}
+
+message SetTimezoneResponse {
+  string timezone = 1;
+}

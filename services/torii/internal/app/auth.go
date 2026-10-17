@@ -23,6 +23,8 @@ var (
 	ErrNotAllowed = errors.New("app: account not allowed")
 	// ErrUnauthenticated means the session token is missing, unknown or expired.
 	ErrUnauthenticated = errors.New("app: unauthenticated")
+	// ErrInvalidTimezone means the name is not an IANA time zone.
+	ErrInvalidTimezone = errors.New("app: not a valid time zone")
 )
 
 const tokenBytes = 32
@@ -37,6 +39,7 @@ type SessionStore interface {
 	ByTokenHash(ctx context.Context, tokenHash []byte) (domain.Session, error)
 	Extend(ctx context.Context, id uuid.UUID, expiresAt time.Time) error
 	Delete(ctx context.Context, tokenHash []byte) error
+	DeleteByOwner(ctx context.Context, owner uuid.UUID) (int64, error)
 }
 
 // UserStore is the persistence the auth use cases need for users.
@@ -45,6 +48,7 @@ type UserStore interface {
 	ByID(ctx context.Context, id uuid.UUID) (domain.User, error)
 	SetRole(ctx context.Context, id uuid.UUID, role domain.Role) (domain.User, error)
 	SetGmailAllowed(ctx context.Context, id uuid.UUID, allowed bool) (domain.User, error)
+	SetTimezone(ctx context.Context, id uuid.UUID, timezone string) (domain.User, error)
 }
 
 // Claims is what the identity provider vouches for after a successful login.
@@ -200,6 +204,7 @@ func (a *Auth) Authenticate(ctx context.Context, token string) (domain.Session, 
 	}
 	session.Role = user.Role
 	session.GmailAllowed = user.GmailAllowed
+	session.Timezone = user.Timezone
 	renewed, ok := session.Renewed(now, a.ttl)
 	if !ok {
 		return session, false, nil

@@ -67,6 +67,11 @@ func (m *MemUsers) SetGmailAllowed(_ context.Context, id uuid.UUID, allowed bool
 	return m.update(id, func(u domain.User) domain.User { u.GmailAllowed = allowed; return u })
 }
 
+// SetTimezone implements app.UserStore.
+func (m *MemUsers) SetTimezone(_ context.Context, id uuid.UUID, timezone string) (domain.User, error) {
+	return m.update(id, func(u domain.User) domain.User { u.Timezone = timezone; return u })
+}
+
 // SetStatus changes a user's status, for tests that disable a user.
 func (m *MemUsers) SetStatus(_ context.Context, id uuid.UUID, status domain.Status) (domain.User, error) {
 	return m.update(id, func(u domain.User) domain.User { u.Status = status; return u })

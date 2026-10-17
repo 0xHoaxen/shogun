@@ -19,8 +19,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthService_GetSession_FullMethodName = "/shogun.api.v1.AuthService/GetSession"
-	AuthService_Logout_FullMethodName     = "/shogun.api.v1.AuthService/Logout"
+	AuthService_GetSession_FullMethodName       = "/shogun.api.v1.AuthService/GetSession"
+	AuthService_Logout_FullMethodName           = "/shogun.api.v1.AuthService/Logout"
+	AuthService_LogoutEverywhere_FullMethodName = "/shogun.api.v1.AuthService/LogoutEverywhere"
+	AuthService_SetTimezone_FullMethodName      = "/shogun.api.v1.AuthService/SetTimezone"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -34,6 +36,13 @@ type AuthServiceClient interface {
 	GetSession(ctx context.Context, in *GetSessionRequest, opts ...grpc.CallOption) (*GetSessionResponse, error)
 	// Logout ends the current session and clears its cookie.
 	Logout(ctx context.Context, in *LogoutRequest, opts ...grpc.CallOption) (*LogoutResponse, error)
+	// LogoutEverywhere ends every session of the signed-in user, this one
+	// included, and clears this browser's cookie.
+	LogoutEverywhere(ctx context.Context, in *LogoutEverywhereRequest, opts ...grpc.CallOption) (*LogoutEverywhereResponse, error)
+	// SetTimezone changes the zone the user's days are counted in, which their
+	// follow-up scans, digests and rollups follow. InvalidArgument
+	// INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+	SetTimezone(ctx context.Context, in *SetTimezoneRequest, opts ...grpc.CallOption) (*SetTimezoneResponse, error)
 }
 
 type authServiceClient struct {
@@ -64,6 +73,26 @@ func (c *authServiceClient) Logout(ctx context.Context, in *LogoutRequest, opts 
 	return out, nil
 }
 
+func (c *authServiceClient) LogoutEverywhere(ctx context.Context, in *LogoutEverywhereRequest, opts ...grpc.CallOption) (*LogoutEverywhereResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogoutEverywhereResponse)
+	err := c.cc.Invoke(ctx, AuthService_LogoutEverywhere_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) SetTimezone(ctx context.Context, in *SetTimezoneRequest, opts ...grpc.CallOption) (*SetTimezoneResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetTimezoneResponse)
+	err := c.cc.Invoke(ctx, AuthService_SetTimezone_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -75,6 +104,13 @@ type AuthServiceServer interface {
 	GetSession(context.Context, *GetSessionRequest) (*GetSessionResponse, error)
 	// Logout ends the current session and clears its cookie.
 	Logout(context.Context, *LogoutRequest) (*LogoutResponse, error)
+	// LogoutEverywhere ends every session of the signed-in user, this one
+	// included, and clears this browser's cookie.
+	LogoutEverywhere(context.Context, *LogoutEverywhereRequest) (*LogoutEverywhereResponse, error)
+	// SetTimezone changes the zone the user's days are counted in, which their
+	// follow-up scans, digests and rollups follow. InvalidArgument
+	// INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+	SetTimezone(context.Context, *SetTimezoneRequest) (*SetTimezoneResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -90,6 +126,12 @@ func (UnimplementedAuthServiceServer) GetSession(context.Context, *GetSessionReq
 }
 func (UnimplementedAuthServiceServer) Logout(context.Context, *LogoutRequest) (*LogoutResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
+}
+func (UnimplementedAuthServiceServer) LogoutEverywhere(context.Context, *LogoutEverywhereRequest) (*LogoutEverywhereResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogoutEverywhere not implemented")
+}
+func (UnimplementedAuthServiceServer) SetTimezone(context.Context, *SetTimezoneRequest) (*SetTimezoneResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetTimezone not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -148,6 +190,42 @@ func _AuthService_Logout_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_LogoutEverywhere_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogoutEverywhereRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).LogoutEverywhere(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_LogoutEverywhere_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).LogoutEverywhere(ctx, req.(*LogoutEverywhereRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_SetTimezone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetTimezoneRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).SetTimezone(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_SetTimezone_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).SetTimezone(ctx, req.(*SetTimezoneRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -162,6 +240,14 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Logout",
 			Handler:    _AuthService_Logout_Handler,
+		},
+		{
+			MethodName: "LogoutEverywhere",
+			Handler:    _AuthService_LogoutEverywhere_Handler,
+		},
+		{
+			MethodName: "SetTimezone",
+			Handler:    _AuthService_SetTimezone_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -82,6 +82,12 @@ export const SECTIONS = {
     does: "You connect it with GitHub and Shogun asks for no permissions beyond your public profile, so it can read only what anyone can see and can never change anything. It then looks at your public repositories and merged work to suggest resume and LinkedIn edits. Your token is stored encrypted, used only for your account, and deleted when you disconnect.",
     helps: "Your resume and LinkedIn keep up with what you have actually built, without you remembering to update them. Until you connect, Profile has nothing to sync and everything else keeps working.",
   },
+  account: {
+    id: "account",
+    role: "Account is where you control how Shogun treats you as a person: your time zone and your sessions.",
+    does: "You choose the time zone your days follow, so reminders, the daily digest and daily summaries arrive when your day starts and ends. You can also sign out on every device at once.",
+    helps: "Reminders land at the right hour wherever you live or travel, and a lost phone or a shared computer never keeps access to your Shogun.",
+  },
   spend: {
     id: "spend",
     role: "Spend is the meter for the AI calls made on your behalf.",

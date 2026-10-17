@@ -56,6 +56,17 @@ func (m *memSessions) Delete(_ context.Context, hash []byte) error {
 	return nil
 }
 
+func (m *memSessions) DeleteByOwner(_ context.Context, owner uuid.UUID) (int64, error) {
+	var n int64
+	for hash, s := range m.byHash {
+		if s.OwnerID == owner {
+			delete(m.byHash, hash)
+			n++
+		}
+	}
+	return n, nil
+}
+
 type harness struct {
 	idp      *idptest.IDP
 	sessions *memSessions

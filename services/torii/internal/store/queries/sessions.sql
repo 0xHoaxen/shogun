@@ -18,6 +18,9 @@ WHERE id = @id;
 -- owner-scope: global the secret token hash identifies the session
 DELETE FROM sessions WHERE token_hash = @token_hash;
 
+-- name: DeleteSessionsByOwner :execrows
+DELETE FROM sessions WHERE owner_id = @owner_id;
+
 -- name: DeleteExpiredSessions :execrows
 -- owner-scope: global housekeeping over expired sessions
 DELETE FROM sessions WHERE expires_at <= @now;
