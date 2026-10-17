@@ -3,8 +3,9 @@ import { reasonOf } from "@/lib/errors";
 const REASONS: Record<string, string> = {
   SUGGESTION_ALREADY_DECIDED: "That suggestion was already decided, so the list has been reloaded.",
   SUGGESTION_NOT_FOUND: "That suggestion no longer exists, so the list has been reloaded.",
-  GITHUB_NOT_CONFIGURED: "GitHub is not connected. Set KATANA_GITHUB_USER and KATANA_GITHUB_TOKEN, then try again.",
-  GITHUB_UNAUTHORIZED: "GitHub refused the token. Check KATANA_GITHUB_TOKEN, then try again.",
+  GITHUB_NOT_CONFIGURED: "GitHub sync is not set up on this Shogun yet.",
+  GITHUB_NOT_CONNECTED: "Your GitHub account is not connected yet, so there is nothing to sync.",
+  GITHUB_UNAUTHORIZED: "GitHub refused the connection. Reconnect your GitHub account and try again.",
   GITHUB_RATE_LIMITED: "GitHub's rate limit is used up. Try again later.",
   UNAVAILABLE: "Shogun is busy right now. Try again in a moment.",
 };

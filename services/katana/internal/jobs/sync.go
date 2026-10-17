@@ -12,9 +12,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
-	"github.com/0xHoaxen/shogun/pkg/schedule"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
 )
 
@@ -22,24 +24,39 @@ const (
 	// Queue is the River queue of katana's own jobs.
 	Queue = "katana"
 
-	// syncLocation is the zone the owner's days are counted in.
-	syncLocation = "Asia/Kolkata"
-
 	kindGitHubSync = "github_sync"
+	kindSyncTick   = "github_sync_tick"
 
 	syncHour, syncMinute = 2, 0
 	syncMaxAttempts      = 3
+
+	// tickEvery is how often katana looks for owners whose sync time has come.
+	tickEvery = 15 * time.Minute
+
+	minuteLayout = "2006-01-02T15:04"
 )
 
-// Syncer reads GitHub for every owner katana knows.
+// Syncer reads GitHub for one owner.
 type Syncer interface {
-	SyncAll(ctx context.Context, log *slog.Logger) error
+	SyncFor(ctx context.Context, owner uuid.UUID) (app.SyncResult, error)
 }
 
-// GitHubSyncArgs are the args of github_sync. Date is the local calendar date,
-// YYYY-MM-DD; unique-by-args makes the job run once per date.
+// OwnerLister lists the owners whose GitHub may be synced: active owners with a
+// GitHub connection.
+type OwnerLister interface {
+	SyncableOwners(ctx context.Context) ([]owners.Owner, error)
+}
+
+// Enqueuer queues the sync of one owner for one local date.
+type Enqueuer interface {
+	EnqueueSync(ctx context.Context, owner uuid.UUID, date string) error
+}
+
+// GitHubSyncArgs are the args of github_sync. Date is the owner's local calendar
+// date, YYYY-MM-DD; unique-by-args makes the job run once per owner and date.
 type GitHubSyncArgs struct {
-	Date string `json:"date"`
+	OwnerID string `json:"owner_id"`
+	Date    string `json:"date"`
 }
 
 // Kind implements river.JobArgs.
@@ -50,23 +67,65 @@ func (GitHubSyncArgs) InsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: Queue, MaxAttempts: syncMaxAttempts, UniqueOpts: river.UniqueOpts{ByArgs: true}}
 }
 
+// SyncTickArgs are the args of github_sync_tick; Minute is the UTC minute it
+// was queued for, so a tick is queued once however many replicas run.
+type SyncTickArgs struct {
+	Minute string `json:"minute"`
+}
+
+// Kind implements river.JobArgs.
+func (SyncTickArgs) Kind() string { return kindSyncTick }
+
+// InsertOpts implements river.JobArgsWithInsertOpts.
+func (SyncTickArgs) InsertOpts() river.InsertOpts {
+	return river.InsertOpts{Queue: Queue, UniqueOpts: river.UniqueOpts{ByArgs: true}}
+}
+
+type tickWorker struct {
+	river.WorkerDefaults[SyncTickArgs]
+	owners   OwnerLister
+	enqueuer Enqueuer
+	now      func() time.Time
+}
+
+// Work implements river.Worker. An owner whose sync cannot be queued does not
+// stop the others; the failures are returned together so the tick is retried.
+func (w *tickWorker) Work(ctx context.Context, _ *river.Job[SyncTickArgs]) error {
+	list, err := w.owners.SyncableOwners(ctx)
+	if err != nil {
+		return fmt.Errorf("list owners: %w", err)
+	}
+	var errs []error
+	for _, due := range owners.DueAt(list, w.now(), syncHour, syncMinute) {
+		if err := w.enqueuer.EnqueueSync(ctx, due.Owner.ID, due.Date); err != nil {
+			errs = append(errs, fmt.Errorf("owner %s: %w", due.Owner.ID, err))
+		}
+	}
+	return errors.Join(errs...)
+}
+
 type syncWorker struct {
 	river.WorkerDefaults[GitHubSyncArgs]
 	syncer Syncer
 	log    *slog.Logger
 }
 
-// Work implements river.Worker. Without a GitHub user and token there is
-// nothing to do, which is logged and not retried; a rate limit snoozes the job
-// until GitHub lifts it.
+// Work implements river.Worker. An owner with no GitHub connection has nothing
+// to sync, which is logged and not retried; an owner id that is not one can
+// never succeed; a rate limit snoozes the job until GitHub lifts it.
 func (w *syncWorker) Work(ctx context.Context, job *river.Job[GitHubSyncArgs]) error {
-	err := w.syncer.SyncAll(ctx, w.log)
+	owner, err := uuid.Parse(job.Args.OwnerID)
+	if err != nil {
+		return river.JobCancel(fmt.Errorf("sync owner %q is not a uuid: %w", job.Args.OwnerID, err))
+	}
+	res, err := w.syncer.SyncFor(ctx, owner)
 	var limit *app.RateLimitError
 	switch {
 	case err == nil:
+		w.log.Info("github sync done", slog.String("owner_id", owner.String()), slog.Bool("changed", res.Changed))
 		return nil
-	case errors.Is(err, app.ErrGitHubNotConfigured):
-		w.log.Warn("github sync skipped: no github user or token configured", slog.String("date", job.Args.Date))
+	case errors.Is(err, app.ErrGitHubNotConfigured), errors.Is(err, app.ErrGitHubNotConnected):
+		w.log.Warn("github sync skipped: no github connection", slog.String("owner_id", owner.String()), slog.String("date", job.Args.Date))
 		return nil
 	case errors.As(err, &limit):
 		wait := time.Until(limit.ResetAt)
@@ -85,34 +144,36 @@ type Setup struct {
 	PeriodicJobs []*river.PeriodicJob
 }
 
-// Location loads the zone the owner's days are counted in.
-func Location() (*time.Location, error) {
-	loc, err := time.LoadLocation(syncLocation)
-	if err != nil {
-		return nil, fmt.Errorf("load %s: %w", syncLocation, err)
-	}
-	return loc, nil
-}
-
-// syncArgs builds the args of each scheduled run: today's date in the owner's
-// zone, so the job runs once a day however often it is retried.
-func syncArgs(now func() time.Time, loc *time.Location) func() (river.JobArgs, *river.InsertOpts) {
+func tickArgs(now func() time.Time) func() (river.JobArgs, *river.InsertOpts) {
 	return func() (river.JobArgs, *river.InsertOpts) {
-		return GitHubSyncArgs{Date: now().In(loc).Format(time.DateOnly)}, nil
+		return SyncTickArgs{Minute: now().UTC().Format(minuteLayout)}, nil
 	}
 }
 
 // NewSetup builds the scheduled jobs. now is the clock, injected for tests.
-func NewSetup(syncer Syncer, suggester Suggester, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
-	at := schedule.Daily{Hour: syncHour, Minute: syncMinute, Loc: loc}
+func NewSetup(syncer Syncer, suggester Suggester, lister OwnerLister, enqueuer Enqueuer, now func() time.Time, log *slog.Logger) Setup {
 	return Setup{
 		Workers: func(ws *river.Workers) {
+			river.AddWorker(ws, &tickWorker{owners: lister, enqueuer: enqueuer, now: now})
 			river.AddWorker(ws, &syncWorker{syncer: syncer, log: log})
 			river.AddWorker(ws, &suggestWorker{suggester: suggester, now: now, log: log})
 		},
 		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: 1}},
 		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(at, syncArgs(now, loc), nil),
+			river.NewPeriodicJob(river.PeriodicInterval(tickEvery), tickArgs(now), nil),
 		},
 	}
+}
+
+// ContextEnqueuer queues syncs on the River client the calling worker runs on,
+// so it can only be used from inside a worker.
+type ContextEnqueuer struct{}
+
+// EnqueueSync implements Enqueuer.
+func (ContextEnqueuer) EnqueueSync(ctx context.Context, owner uuid.UUID, date string) error {
+	client := river.ClientFromContext[pgx.Tx](ctx)
+	if _, err := client.Insert(ctx, GitHubSyncArgs{OwnerID: owner.String(), Date: date}, nil); err != nil {
+		return fmt.Errorf("enqueue github_sync: %w", err)
+	}
+	return nil
 }

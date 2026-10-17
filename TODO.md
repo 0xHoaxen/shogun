@@ -796,8 +796,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: a 15-minute `daily_scan_tick` queues one `daily_scan` per active owner and local date once their clock reaches 07:55; the job runs the stale scan and then the due scan for that owner, in that order. `ListJobsDueOn`, `ListContactsDueOn` and `ListStaleAppliedJobs` now filter on `owner_id`. Tightened `check-owner-scope.sh`: naming `owner_id` only in `ORDER BY` no longer counts as a filter, which showed these three, plus katana, sensei and shinobi queries that P11.4d–f replace (annotated for now).
   Done when: `cd services/kagami && go test -race ./...`.
 
-- [ ] **P11.4d katana GitHub sync per owner** (S) Needs: P11.4a
-  Do: sync job per active owner at their local time. Per-user GitHub credentials arrive in P11.6.
+- [x] **P11.4d katana GitHub sync per owner** (S) Needs: P11.4a
+  Do: a 15-minute `github_sync_tick` queues one `github_sync` per syncable owner and local date once their clock reaches 02:00 (`Service.SyncableOwners`, `Service.SyncFor` replace `SyncAll`). **Security fix found on the way:** katana has one global GitHub account and `ProfileService.SyncGitHub` is open to every signed-in user, so with open sign-up a new user could have synced the operator's repositories into their own account. Until P11.6 gives each user their own connection, `syncOwner` refuses any owner with no snapshot (`ErrGitHubNotConnected`, reason `GITHUB_NOT_CONNECTED`), so only the owner who already synced can use the shared account; the schedule follows the same rule. Reworded the Profile page's GitHub errors, which told users to set operator env vars. Do not deploy Phase 11 without P11.6 if anyone but that owner needs GitHub sync.
   Done when: `cd services/katana && go test -race ./...`.
 
 - [ ] **P11.4e sensei rollup per owner** (M) Needs: P11.4a
