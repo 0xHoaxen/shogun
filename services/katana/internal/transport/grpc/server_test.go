@@ -49,7 +49,7 @@ type harness struct {
 	owner     string
 }
 
-func newHarness(t *testing.T, configured bool) *harness {
+func newHarness(t *testing.T, configured bool, opts ...app.Option) *harness {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "katana")
@@ -74,7 +74,7 @@ func newHarness(t *testing.T, configured bool) *harness {
 	if err != nil {
 		t.Fatalf("keyring: %v", err)
 	}
-	service := app.NewService(pool, source, nil, app.WithKeyring(keys))
+	service := app.NewService(pool, source, nil, append([]app.Option{app.WithKeyring(keys)}, opts...)...)
 	// The harness owner has connected a GitHub account of their own.
 	if _, err := service.SaveGitHubAccount(authz.WithIdentity(ctx, authz.Identity{OwnerID: owner}), "octo", "ghp_harness-token-1"); err != nil {
 		t.Fatalf("connect github: %v", err)

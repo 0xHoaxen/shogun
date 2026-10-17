@@ -23,6 +23,9 @@ const (
 	reasonGitHubUnauthorized = "GITHUB_UNAUTHORIZED"
 	reasonGitHubRateLimited  = "GITHUB_RATE_LIMITED"
 	reasonGitHubUnavailable  = "GITHUB_UNAVAILABLE"
+	reasonGitHubStorageOff   = "GITHUB_STORAGE_OFF"
+	reasonInvalidState       = "INVALID_STATE"
+	reasonInvalidCode        = "INVALID_CODE"
 	reasonInternal           = "INTERNAL"
 	reasonInvalidID          = "INVALID_ID"
 	reasonInvalidToken       = "INVALID_PAGE_TOKEN"
@@ -52,8 +55,14 @@ func toStatus(err error) error {
 		return withReason(codes.InvalidArgument, reasonInvalidToken, "page token is not valid")
 	case errors.Is(err, app.ErrNoOwner):
 		return withReason(codes.PermissionDenied, reasonOwnerRequired, "call has no valid owner")
+	case errors.Is(err, app.ErrInvalidState):
+		return withReason(codes.InvalidArgument, reasonInvalidState, "state is invalid or has expired; start again")
+	case errors.Is(err, app.ErrInvalidCode):
+		return withReason(codes.InvalidArgument, reasonInvalidCode, "GitHub refused the code; start again")
+	case errors.Is(err, app.ErrGitHubStorageOff):
+		return withReason(codes.FailedPrecondition, reasonGitHubStorageOff, "this server cannot store GitHub connections")
 	case errors.Is(err, app.ErrGitHubNotConfigured):
-		return withReason(codes.FailedPrecondition, reasonGitHubNotSet, "no GitHub user or token is configured")
+		return withReason(codes.FailedPrecondition, reasonGitHubNotSet, "connecting GitHub is not set up on this server")
 	case errors.Is(err, app.ErrGitHubNotConnected):
 		return withReason(codes.FailedPrecondition, reasonGitHubNotConnected, "connect your GitHub account first")
 	case errors.Is(err, app.ErrGitHubUnauthorized):
