@@ -60,6 +60,17 @@ func (f *fakeSessions) Delete(_ context.Context, hash []byte) error {
 	return nil
 }
 
+func (f *fakeSessions) DeleteByOwner(_ context.Context, owner uuid.UUID) (int64, error) {
+	var n int64
+	for hash, s := range f.byHash {
+		if s.OwnerID == owner {
+			delete(f.byHash, hash)
+			n++
+		}
+	}
+	return n, nil
+}
+
 func newAuth(t *testing.T, sessions *fakeSessions, users *apptest.MemUsers, now time.Time) *app.Auth {
 	t.Helper()
 	auth, err := app.NewAuth(sessions, users,

@@ -35,6 +35,18 @@ func (q *Queries) DeleteSessionByTokenHash(ctx context.Context, tokenHash []byte
 	return err
 }
 
+const deleteSessionsByOwner = `-- name: DeleteSessionsByOwner :execrows
+DELETE FROM sessions WHERE owner_id = $1
+`
+
+func (q *Queries) DeleteSessionsByOwner(ctx context.Context, ownerID uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteSessionsByOwner, ownerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const extendSession = `-- name: ExtendSession :execrows
 UPDATE sessions
 SET expires_at = $1, updated_at = now()
@@ -69,6 +81,7 @@ type GetSessionByTokenHashRow struct {
 	ExpiresAt   time.Time
 }
 
+// owner-scope: global the secret token hash identifies the session
 func (q *Queries) GetSessionByTokenHash(ctx context.Context, tokenHash []byte) (GetSessionByTokenHashRow, error) {
 	row := q.db.QueryRow(ctx, getSessionByTokenHash, tokenHash)
 	var i GetSessionByTokenHashRow

@@ -15,6 +15,7 @@ const (
 	reasonUnauthenticated = "UNAUTHENTICATED"
 	reasonInternal        = "INTERNAL"
 	reasonRateLimited     = "RATE_LIMITED"
+	reasonInvalidTimezone = "INVALID_TIMEZONE"
 )
 
 // newError returns a Connect error with a stable ErrorInfo.reason, so clients

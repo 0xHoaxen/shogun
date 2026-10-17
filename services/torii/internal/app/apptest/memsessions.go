@@ -71,3 +71,17 @@ func (m *MemSessions) Delete(_ context.Context, hash []byte) error {
 	delete(m.byHash, string(hash))
 	return nil
 }
+
+// DeleteByOwner implements app.SessionStore.
+func (m *MemSessions) DeleteByOwner(_ context.Context, owner uuid.UUID) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var n int64
+	for hash, s := range m.byHash {
+		if s.OwnerID == owner {
+			delete(m.byHash, hash)
+			n++
+		}
+	}
+	return n, nil
+}

@@ -15,7 +15,7 @@ export interface SettingsTab {
   adminOnly?: boolean;
 }
 
-// The Settings tabs, in order. The Account tab is added by its own task.
+// The Settings tabs, in order. Deleting your data is added to the Account tab by its own task.
 export const SETTINGS_TABS: readonly SettingsTab[] = [
   {
     href: "/settings/provider",
@@ -41,6 +41,11 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
     href: "/settings/notifications",
     label: "Alerts",
     summary: "Choose whether notifications are on and when the daily digest stays quiet.",
+  },
+  {
+    href: "/settings/account",
+    label: "Account",
+    summary: "Set the time zone your days follow and sign out on every device.",
   },
   {
     href: "/settings/users",

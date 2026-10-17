@@ -98,3 +98,13 @@ func (s *Sessions) DeleteExpired(ctx context.Context, now time.Time) (int64, err
 	}
 	return n, nil
 }
+
+// DeleteByOwner removes every session of one user and returns how many it
+// removed. It is how "sign out everywhere" ends the sessions on other devices.
+func (s *Sessions) DeleteByOwner(ctx context.Context, owner uuid.UUID) (int64, error) {
+	n, err := s.q.DeleteSessionsByOwner(ctx, owner)
+	if err != nil {
+		return 0, fmt.Errorf("delete sessions of owner: %w", err)
+	}
+	return n, nil
+}

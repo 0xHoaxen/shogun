@@ -237,3 +237,64 @@ func TestLogoutSucceedsWithoutASession(t *testing.T) {
 		t.Fatalf("Set-Cookie = %q, want a cleared cookie", resp.Header().Get("Set-Cookie"))
 	}
 }
+
+func TestLogoutEverywhereEndsEveryDevicesSessionAndClearsTheCookie(t *testing.T) {
+	// Arrange
+	h := newHarness(t)
+	laptop := h.login(t)
+	phone := h.login(t)
+
+	// Act
+	resp, err := h.client.LogoutEverywhere(context.Background(), withCookie(connect.NewRequest(&apiv1.LogoutEverywhereRequest{}), laptop))
+	_, phoneErr := h.client.GetSession(context.Background(), withCookie(connect.NewRequest(&apiv1.GetSessionRequest{}), phone))
+
+	// Assert
+	if err != nil || resp.Msg.GetEnded() != 2 {
+		t.Fatalf("LogoutEverywhere: %v, %v", resp, err)
+	}
+	if !strings.Contains(resp.Header().Get("Set-Cookie"), "Max-Age=0") {
+		t.Fatalf("Set-Cookie = %q, want a cleared cookie", resp.Header().Get("Set-Cookie"))
+	}
+	if connect.CodeOf(phoneErr) != connect.CodeUnauthenticated || h.sessions.Len() != 0 {
+		t.Fatalf("after: code %v, %d sessions left", connect.CodeOf(phoneErr), h.sessions.Len())
+	}
+}
+
+func TestLogoutEverywhereNeedsASession(t *testing.T) {
+	h := newHarness(t)
+
+	_, err := h.client.LogoutEverywhere(context.Background(), connect.NewRequest(&apiv1.LogoutEverywhereRequest{}))
+
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Fatalf("code = %v, want Unauthenticated", connect.CodeOf(err))
+	}
+}
+
+func TestSetTimezoneChangesWhatTheSessionReports(t *testing.T) {
+	// Arrange
+	h := newHarness(t)
+	token := h.login(t)
+
+	// Act
+	resp, err := h.client.SetTimezone(context.Background(), withCookie(connect.NewRequest(&apiv1.SetTimezoneRequest{Timezone: "Europe/Berlin"}), token))
+	got, getErr := h.client.GetSession(context.Background(), withCookie(connect.NewRequest(&apiv1.GetSessionRequest{}), token))
+
+	// Assert
+	if err != nil || resp.Msg.GetTimezone() != "Europe/Berlin" {
+		t.Fatalf("SetTimezone: %v, %v", resp, err)
+	}
+	if getErr != nil || got.Msg.GetSession().GetTimezone() != "Europe/Berlin" {
+		t.Fatalf("GetSession: %v, %v", got, getErr)
+	}
+}
+
+func TestSetTimezoneRefusesANameThatIsNotAZone(t *testing.T) {
+	h := newHarness(t)
+	token := h.login(t)
+
+	_, err := h.client.SetTimezone(context.Background(), withCookie(connect.NewRequest(&apiv1.SetTimezoneRequest{Timezone: "Mars/Olympus"}), token))
+
+	if connect.CodeOf(err) != connect.CodeInvalidArgument || reasonOf(err) != "INVALID_TIMEZONE" {
+		t.Fatalf("code %v, reason %q, want InvalidArgument INVALID_TIMEZONE", connect.CodeOf(err), reasonOf(err))
+	}
+}
