@@ -18,6 +18,10 @@ type ProfileBackend interface {
 	ListSuggestions(ctx context.Context, in *katanav1.ListSuggestionsRequest, opts ...grpc.CallOption) (*katanav1.ListSuggestionsResponse, error)
 	AcceptSuggestion(ctx context.Context, in *katanav1.AcceptSuggestionRequest, opts ...grpc.CallOption) (*katanav1.AcceptSuggestionResponse, error)
 	DismissSuggestion(ctx context.Context, in *katanav1.DismissSuggestionRequest, opts ...grpc.CallOption) (*katanav1.DismissSuggestionResponse, error)
+	ConnectGitHub(ctx context.Context, in *katanav1.ConnectGitHubRequest, opts ...grpc.CallOption) (*katanav1.ConnectGitHubResponse, error)
+	CompleteGitHubConnect(ctx context.Context, in *katanav1.CompleteGitHubConnectRequest, opts ...grpc.CallOption) (*katanav1.CompleteGitHubConnectResponse, error)
+	GetGitHubAccount(ctx context.Context, in *katanav1.GetGitHubAccountRequest, opts ...grpc.CallOption) (*katanav1.GetGitHubAccountResponse, error)
+	DisconnectGitHub(ctx context.Context, in *katanav1.DisconnectGitHubRequest, opts ...grpc.CallOption) (*katanav1.DisconnectGitHubResponse, error)
 }
 
 // ProfileServer implements shogun.api.v1.ProfileService on top of katana.
@@ -115,4 +119,50 @@ func (s *ProfileServer) DismissProfileSuggestion(
 		return nil, fromGRPC(ctx, s.log, err)
 	}
 	return connect.NewResponse(&apiv1.DismissProfileSuggestionResponse{Suggestion: profileSuggestionToAPI(resp.GetSuggestion())}), nil
+}
+
+// ConnectGitHub returns where to send the browser to grant access on GitHub.
+func (s *ProfileServer) ConnectGitHub(
+	ctx context.Context, _ *connect.Request[apiv1.ConnectGitHubRequest],
+) (*connect.Response[apiv1.ConnectGitHubResponse], error) {
+	resp, err := s.katana.ConnectGitHub(ctx, &katanav1.ConnectGitHubRequest{})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.ConnectGitHubResponse{AuthUrl: resp.GetAuthorizationUrl()}), nil
+}
+
+// CompleteGitHubConnect finishes the connection with the code and state GitHub
+// sent back. Neither is logged.
+func (s *ProfileServer) CompleteGitHubConnect(
+	ctx context.Context, req *connect.Request[apiv1.CompleteGitHubConnectRequest],
+) (*connect.Response[apiv1.CompleteGitHubConnectResponse], error) {
+	resp, err := s.katana.CompleteGitHubConnect(ctx, &katanav1.CompleteGitHubConnectRequest{
+		Code: req.Msg.GetCode(), State: req.Msg.GetState(),
+	})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.CompleteGitHubConnectResponse{Login: resp.GetLogin()}), nil
+}
+
+// GetGitHubAccount says whether the caller has connected GitHub.
+func (s *ProfileServer) GetGitHubAccount(
+	ctx context.Context, _ *connect.Request[apiv1.GetGitHubAccountRequest],
+) (*connect.Response[apiv1.GetGitHubAccountResponse], error) {
+	resp, err := s.katana.GetGitHubAccount(ctx, &katanav1.GetGitHubAccountRequest{})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.GetGitHubAccountResponse{Connected: resp.GetConnected(), Login: resp.GetLogin()}), nil
+}
+
+// DisconnectGitHub deletes the caller's stored GitHub token.
+func (s *ProfileServer) DisconnectGitHub(
+	ctx context.Context, _ *connect.Request[apiv1.DisconnectGitHubRequest],
+) (*connect.Response[apiv1.DisconnectGitHubResponse], error) {
+	if _, err := s.katana.DisconnectGitHub(ctx, &katanav1.DisconnectGitHubRequest{}); err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.DisconnectGitHubResponse{}), nil
 }
