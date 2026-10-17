@@ -27,6 +27,7 @@ import (
 	"github.com/0xHoaxen/shogun/services/sensei/internal/app"
 	"github.com/0xHoaxen/shogun/services/sensei/internal/events"
 	"github.com/0xHoaxen/shogun/services/sensei/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/sensei/internal/store"
 	senseigrpc "github.com/0xHoaxen/shogun/services/sensei/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/sensei/migrations"
 )
@@ -115,7 +116,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 
 	svc := app.NewService(pool, nil)
 	scheduled := jobs.NewSetup(svc, svc, jobs.ContextEnqueuer{}, time.Now, log)
-	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log, nil), log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log, nil), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}

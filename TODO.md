@@ -902,8 +902,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`; scores are reached through their posting.
   Done when: `cd services/shinobi && go test -race ./...`.
 
-- [ ] **P11.8c8 Purge: sensei** (S) Needs: P11.8c0
-  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check.
+- [x] **P11.8c8 Purge: sensei** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`.
   Done when: `cd services/sensei && go test -race ./...`.
 
 - [ ] **P11.8c9 Purge: soroban** (S) Needs: P11.8c0
