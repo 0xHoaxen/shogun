@@ -870,6 +870,10 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Done: `AuthService.DeleteAccount` (the user types their email; `CONFIRMATION_MISMATCH` otherwise): ends every session, archives the user (email and name removed, a tombstone kept so the owner id and version stay unique) and writes `user.deleted` in the same transaction. Signing in again afterwards makes a fresh member and writes `user.activated` with a higher version, so services do not ignore it. Consumers still only mark their local `owners` row deleted; the purge is P11.8c. Adding fude, tsubame, dojo and soroban to the `user.deleted` route moves to P11.8c, with their handlers, so no event is routed to a service that cannot handle it.
   Done when: `cd services/torii && go test -race ./...`.
 
+- [x] **P11.8c0 Purge hook in pkg/owners** (S) Needs: P11.8b
+  Done: `owners.WithPurge(fn)` option for `WithHandlers`: `fn` runs in the same transaction as the tombstone, once per deletion (a repeated or older `user.deleted` is skipped, so it cannot wipe an account made again later); a failing purge fails the event so it is retried.
+  Done when: `cd pkg && go test -race ./owners/...`.
+
 - [ ] **P11.8c Delete my data: purge per service** (L, split per service when taken) Needs: P11.8b
   Do: each consumer deletes every row of that owner in its own schema when `user.deleted` arrives (idempotent; tested with an owner who has data and one who does not, and the other owner's rows untouched). tsubame also deletes sealed mail tokens, soroban the sealed AI provider key, katana the sealed GitHub token. One PR per service: kagami, tsubame, fude, taiko, dojo, katana, shinobi, sensei, soroban.
   Done when: `make test`.

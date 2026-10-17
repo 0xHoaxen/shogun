@@ -126,3 +126,51 @@ func TestWithHandlersKeepsTheServicesOwnHandlers(t *testing.T) {
 		}
 	}
 }
+
+func TestPurgeRunsOnceWhenAUserIsDeletedAndNeverForAStaleEvent(t *testing.T) {
+	// Arrange
+	ctx, pool := newPool(t)
+	var purged []uuid.UUID
+	handlers := owners.WithHandlers(nil, nil, owners.WithPurge(func(_ context.Context, _ pgx.Tx, owner uuid.UUID) error {
+		purged = append(purged, owner)
+		return nil
+	}))
+	id := uuid.New()
+	deliver(ctx, t, pool, handlers[owners.TypeUserActivated], envelope(t, owners.TypeUserActivated,
+		&toriiv1.UserActivated{OwnerId: id.String(), Timezone: "UTC", Status: "active", Version: 1}))
+	gone := envelope(t, owners.TypeUserDeleted, &toriiv1.UserDeleted{OwnerId: id.String(), Version: 2})
+
+	// Act: delivered twice, then a delete older than a later sign-up.
+	first := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], gone)
+	again := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], gone)
+	deliver(ctx, t, pool, handlers[owners.TypeUserActivated], envelope(t, owners.TypeUserActivated,
+		&toriiv1.UserActivated{OwnerId: id.String(), Timezone: "UTC", Status: "active", Version: 3}))
+	stale := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], envelope(t, owners.TypeUserDeleted,
+		&toriiv1.UserDeleted{OwnerId: id.String(), Version: 2}))
+
+	// Assert
+	if first != nil || again != nil || stale != nil {
+		t.Fatalf("handlers: %v, %v, %v", first, again, stale)
+	}
+	if len(purged) != 1 || purged[0] != id {
+		t.Fatalf("purged %v, want exactly one purge of %s: a repeat or stale delete must not wipe the new account", purged, id)
+	}
+}
+
+func TestAFailedPurgeRollsBackTheTombstoneSoTheEventIsRetried(t *testing.T) {
+	ctx, pool := newPool(t)
+	handlers := owners.WithHandlers(nil, nil, owners.WithPurge(func(context.Context, pgx.Tx, uuid.UUID) error {
+		return context.DeadlineExceeded
+	}))
+	id := uuid.New()
+
+	err := deliver(ctx, t, pool, handlers[owners.TypeUserDeleted], envelope(t, owners.TypeUserDeleted,
+		&toriiv1.UserDeleted{OwnerId: id.String(), Version: 2}))
+
+	if err == nil {
+		t.Fatal("a failed purge was acknowledged, so the data would never be removed")
+	}
+	if _, getErr := owners.Get(ctx, pool, id); getErr == nil {
+		t.Fatal("the tombstone was kept although the purge failed")
+	}
+}
