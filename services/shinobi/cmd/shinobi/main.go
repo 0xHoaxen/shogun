@@ -29,6 +29,7 @@ import (
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/app"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/fetch"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/shinobi/internal/store"
 	shinobigrpc "github.com/0xHoaxen/shogun/services/shinobi/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/shinobi/migrations"
 )
@@ -116,7 +117,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(map[string]bus.Handler{}, log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(map[string]bus.Handler{}, log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}

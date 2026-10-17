@@ -898,8 +898,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`; the sealed GitHub token (`github_accounts`) goes too.
   Done when: `cd services/katana && go test -race ./...`.
 
-- [ ] **P11.8c7 Purge: shinobi** (S) Needs: P11.8c0
-  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check.
+- [x] **P11.8c7 Purge: shinobi** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`; scores are reached through their posting.
   Done when: `cd services/shinobi && go test -race ./...`.
 
 - [ ] **P11.8c8 Purge: sensei** (S) Needs: P11.8c0
