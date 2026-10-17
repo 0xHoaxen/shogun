@@ -40,3 +40,26 @@ func (a *Auth) EndAllSessions(ctx context.Context, owner uuid.UUID) (int64, erro
 	}
 	return n, nil
 }
+
+// DeleteAccount deletes the user's account after they type their email to
+// confirm. It ends every session, removes the email and name, and announces
+// user.deleted so each service purges the user's data. It returns how many
+// sessions it ended.
+func (a *Auth) DeleteAccount(ctx context.Context, owner uuid.UUID, typedEmail string) (int64, error) {
+	user, err := a.users.ByID(ctx, owner)
+	if err != nil {
+		return 0, fmt.Errorf("find account: %w", err)
+	}
+	if typed := normaliseEmail(typedEmail); typed == "" || typed != normaliseEmail(user.Email) {
+		return 0, ErrConfirmationMismatch
+	}
+	// Sessions first: if the delete then fails, the user is only signed out and can try again.
+	ended, err := a.store.DeleteByOwner(ctx, owner)
+	if err != nil {
+		return 0, fmt.Errorf("end sessions: %w", err)
+	}
+	if _, err := a.users.Archive(ctx, owner); err != nil {
+		return 0, fmt.Errorf("delete account: %w", err)
+	}
+	return ended, nil
+}

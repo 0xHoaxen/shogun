@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/auth.proto.
  */
 export const file_shogun_api_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChhzaG9ndW4vYXBpL3YxL2F1dGgucHJvdG8SDXNob2d1bi5hcGkudjEilQEKB1Nlc3Npb24SDQoFZW1haWwYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEi4KCmV4cGlyZXNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBHJvbGUYBCABKAkSFQoNZ21haWxfYWxsb3dlZBgFIAEoCBIQCgh0aW1lem9uZRgGIAEoCSITChFHZXRTZXNzaW9uUmVxdWVzdCI9ChJHZXRTZXNzaW9uUmVzcG9uc2USJwoHc2Vzc2lvbhgBIAEoCzIWLnNob2d1bi5hcGkudjEuU2Vzc2lvbiIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhkKF0xvZ291dEV2ZXJ5d2hlcmVSZXF1ZXN0IikKGExvZ291dEV2ZXJ5d2hlcmVSZXNwb25zZRINCgVlbmRlZBgBIAEoAyImChJTZXRUaW1lem9uZVJlcXVlc3QSEAoIdGltZXpvbmUYASABKAkiJwoTU2V0VGltZXpvbmVSZXNwb25zZRIQCgh0aW1lem9uZRgBIAEoCTLiAgoLQXV0aFNlcnZpY2USUQoKR2V0U2Vzc2lvbhIgLnNob2d1bi5hcGkudjEuR2V0U2Vzc2lvblJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkdldFNlc3Npb25SZXNwb25zZRJFCgZMb2dvdXQSHC5zaG9ndW4uYXBpLnYxLkxvZ291dFJlcXVlc3QaHS5zaG9ndW4uYXBpLnYxLkxvZ291dFJlc3BvbnNlEmMKEExvZ291dEV2ZXJ5d2hlcmUSJi5zaG9ndW4uYXBpLnYxLkxvZ291dEV2ZXJ5d2hlcmVSZXF1ZXN0Gicuc2hvZ3VuLmFwaS52MS5Mb2dvdXRFdmVyeXdoZXJlUmVzcG9uc2USVAoLU2V0VGltZXpvbmUSIS5zaG9ndW4uYXBpLnYxLlNldFRpbWV6b25lUmVxdWVzdBoiLnNob2d1bi5hcGkudjEuU2V0VGltZXpvbmVSZXNwb25zZWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChhzaG9ndW4vYXBpL3YxL2F1dGgucHJvdG8SDXNob2d1bi5hcGkudjEilQEKB1Nlc3Npb24SDQoFZW1haWwYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEi4KCmV4cGlyZXNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBHJvbGUYBCABKAkSFQoNZ21haWxfYWxsb3dlZBgFIAEoCBIQCgh0aW1lem9uZRgGIAEoCSITChFHZXRTZXNzaW9uUmVxdWVzdCI9ChJHZXRTZXNzaW9uUmVzcG9uc2USJwoHc2Vzc2lvbhgBIAEoCzIWLnNob2d1bi5hcGkudjEuU2Vzc2lvbiIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhkKF0xvZ291dEV2ZXJ5d2hlcmVSZXF1ZXN0IikKGExvZ291dEV2ZXJ5d2hlcmVSZXNwb25zZRINCgVlbmRlZBgBIAEoAyImChJTZXRUaW1lem9uZVJlcXVlc3QSEAoIdGltZXpvbmUYASABKAkiJwoTU2V0VGltZXpvbmVSZXNwb25zZRIQCgh0aW1lem9uZRgBIAEoCSItChREZWxldGVBY2NvdW50UmVxdWVzdBIVCg1jb25maXJtX2VtYWlsGAEgASgJIhcKFURlbGV0ZUFjY291bnRSZXNwb25zZTK+AwoLQXV0aFNlcnZpY2USUQoKR2V0U2Vzc2lvbhIgLnNob2d1bi5hcGkudjEuR2V0U2Vzc2lvblJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkdldFNlc3Npb25SZXNwb25zZRJFCgZMb2dvdXQSHC5zaG9ndW4uYXBpLnYxLkxvZ291dFJlcXVlc3QaHS5zaG9ndW4uYXBpLnYxLkxvZ291dFJlc3BvbnNlEmMKEExvZ291dEV2ZXJ5d2hlcmUSJi5zaG9ndW4uYXBpLnYxLkxvZ291dEV2ZXJ5d2hlcmVSZXF1ZXN0Gicuc2hvZ3VuLmFwaS52MS5Mb2dvdXRFdmVyeXdoZXJlUmVzcG9uc2USVAoLU2V0VGltZXpvbmUSIS5zaG9ndW4uYXBpLnYxLlNldFRpbWV6b25lUmVxdWVzdBoiLnNob2d1bi5hcGkudjEuU2V0VGltZXpvbmVSZXNwb25zZRJaCg1EZWxldGVBY2NvdW50EiMuc2hvZ3VuLmFwaS52MS5EZWxldGVBY2NvdW50UmVxdWVzdBokLnNob2d1bi5hcGkudjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message shogun.api.v1.Session
@@ -185,6 +185,36 @@ export const SetTimezoneResponseSchema: GenMessage<SetTimezoneResponse> = /*@__P
   messageDesc(file_shogun_api_v1_auth, 8);
 
 /**
+ * @generated from message shogun.api.v1.DeleteAccountRequest
+ */
+export type DeleteAccountRequest = Message<"shogun.api.v1.DeleteAccountRequest"> & {
+  /**
+   * @generated from field: string confirm_email = 1;
+   */
+  confirmEmail: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.DeleteAccountRequest.
+ * Use `create(DeleteAccountRequestSchema)` to create a new message.
+ */
+export const DeleteAccountRequestSchema: GenMessage<DeleteAccountRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 9);
+
+/**
+ * @generated from message shogun.api.v1.DeleteAccountResponse
+ */
+export type DeleteAccountResponse = Message<"shogun.api.v1.DeleteAccountResponse"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.DeleteAccountResponse.
+ * Use `create(DeleteAccountResponseSchema)` to create a new message.
+ */
+export const DeleteAccountResponseSchema: GenMessage<DeleteAccountResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 10);
+
+/**
  * AuthService is the session surface of the web app. Login itself is the
  * browser redirect flow under /auth/*; these RPCs only read and end a session.
  *
@@ -233,6 +263,19 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof SetTimezoneRequestSchema;
     output: typeof SetTimezoneResponseSchema;
+  },
+  /**
+   * DeleteAccount deletes the signed-in user's account and, through the
+   * user.deleted event, all of their data in every service. confirm_email must
+   * be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+   * every session and clears this browser's cookie. It cannot be undone.
+   *
+   * @generated from rpc shogun.api.v1.AuthService.DeleteAccount
+   */
+  deleteAccount: {
+    methodKind: "unary";
+    input: typeof DeleteAccountRequestSchema;
+    output: typeof DeleteAccountResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_shogun_api_v1_auth, 0);

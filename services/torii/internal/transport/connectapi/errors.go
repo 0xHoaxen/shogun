@@ -12,10 +12,11 @@ const errorDomain = "shogun"
 
 // Stable ErrorInfo.reason values the web app switches on.
 const (
-	reasonUnauthenticated = "UNAUTHENTICATED"
-	reasonInternal        = "INTERNAL"
-	reasonRateLimited     = "RATE_LIMITED"
-	reasonInvalidTimezone = "INVALID_TIMEZONE"
+	reasonUnauthenticated      = "UNAUTHENTICATED"
+	reasonInternal             = "INTERNAL"
+	reasonRateLimited          = "RATE_LIMITED"
+	reasonInvalidTimezone      = "INVALID_TIMEZONE"
+	reasonConfirmationMismatch = "CONFIRMATION_MISMATCH"
 )
 
 // newError returns a Connect error with a stable ErrorInfo.reason, so clients

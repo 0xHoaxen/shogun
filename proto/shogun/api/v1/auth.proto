@@ -18,6 +18,11 @@ service AuthService {
   // follow-up scans, digests and rollups follow. InvalidArgument
   // INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
   rpc SetTimezone(SetTimezoneRequest) returns (SetTimezoneResponse);
+  // DeleteAccount deletes the signed-in user's account and, through the
+  // user.deleted event, all of their data in every service. confirm_email must
+  // be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+  // every session and clears this browser's cookie. It cannot be undone.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
 }
 
 message Session {
@@ -56,3 +61,9 @@ message SetTimezoneRequest {
 message SetTimezoneResponse {
   string timezone = 1;
 }
+
+message DeleteAccountRequest {
+  string confirm_email = 1;
+}
+
+message DeleteAccountResponse {}

@@ -430,6 +430,86 @@ func (x *SetTimezoneResponse) GetTimezone() string {
 	return ""
 }
 
+type DeleteAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ConfirmEmail  string                 `protobuf:"bytes,1,opt,name=confirm_email,json=confirmEmail,proto3" json:"confirm_email,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAccountRequest) Reset() {
+	*x = DeleteAccountRequest{}
+	mi := &file_shogun_api_v1_auth_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAccountRequest) ProtoMessage() {}
+
+func (x *DeleteAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_auth_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAccountRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAccountRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_auth_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *DeleteAccountRequest) GetConfirmEmail() string {
+	if x != nil {
+		return x.ConfirmEmail
+	}
+	return ""
+}
+
+type DeleteAccountResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAccountResponse) Reset() {
+	*x = DeleteAccountResponse{}
+	mi := &file_shogun_api_v1_auth_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAccountResponse) ProtoMessage() {}
+
+func (x *DeleteAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_auth_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAccountResponse.ProtoReflect.Descriptor instead.
+func (*DeleteAccountResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_auth_proto_rawDescGZIP(), []int{10}
+}
+
 var File_shogun_api_v1_auth_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_auth_proto_rawDesc = "" +
@@ -454,13 +534,17 @@ const file_shogun_api_v1_auth_proto_rawDesc = "" +
 	"\x12SetTimezoneRequest\x12\x1a\n" +
 	"\btimezone\x18\x01 \x01(\tR\btimezone\"1\n" +
 	"\x13SetTimezoneResponse\x12\x1a\n" +
-	"\btimezone\x18\x01 \x01(\tR\btimezone2\xe2\x02\n" +
+	"\btimezone\x18\x01 \x01(\tR\btimezone\";\n" +
+	"\x14DeleteAccountRequest\x12#\n" +
+	"\rconfirm_email\x18\x01 \x01(\tR\fconfirmEmail\"\x17\n" +
+	"\x15DeleteAccountResponse2\xbe\x03\n" +
 	"\vAuthService\x12Q\n" +
 	"\n" +
 	"GetSession\x12 .shogun.api.v1.GetSessionRequest\x1a!.shogun.api.v1.GetSessionResponse\x12E\n" +
 	"\x06Logout\x12\x1c.shogun.api.v1.LogoutRequest\x1a\x1d.shogun.api.v1.LogoutResponse\x12c\n" +
 	"\x10LogoutEverywhere\x12&.shogun.api.v1.LogoutEverywhereRequest\x1a'.shogun.api.v1.LogoutEverywhereResponse\x12T\n" +
-	"\vSetTimezone\x12!.shogun.api.v1.SetTimezoneRequest\x1a\".shogun.api.v1.SetTimezoneResponseB\xab\x01\n" +
+	"\vSetTimezone\x12!.shogun.api.v1.SetTimezoneRequest\x1a\".shogun.api.v1.SetTimezoneResponse\x12Z\n" +
+	"\rDeleteAccount\x12#.shogun.api.v1.DeleteAccountRequest\x1a$.shogun.api.v1.DeleteAccountResponseB\xab\x01\n" +
 	"\x11com.shogun.api.v1B\tAuthProtoP\x01Z5github.com/0xHoaxen/shogun/gen/go/shogun/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\rShogun.Api.V1\xca\x02\rShogun\\Api\\V1\xe2\x02\x19Shogun\\Api\\V1\\GPBMetadata\xea\x02\x0fShogun::Api::V1b\x06proto3"
 
 var (
@@ -475,7 +559,7 @@ func file_shogun_api_v1_auth_proto_rawDescGZIP() []byte {
 	return file_shogun_api_v1_auth_proto_rawDescData
 }
 
-var file_shogun_api_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_shogun_api_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_shogun_api_v1_auth_proto_goTypes = []any{
 	(*Session)(nil),                  // 0: shogun.api.v1.Session
 	(*GetSessionRequest)(nil),        // 1: shogun.api.v1.GetSessionRequest
@@ -486,24 +570,28 @@ var file_shogun_api_v1_auth_proto_goTypes = []any{
 	(*LogoutEverywhereResponse)(nil), // 6: shogun.api.v1.LogoutEverywhereResponse
 	(*SetTimezoneRequest)(nil),       // 7: shogun.api.v1.SetTimezoneRequest
 	(*SetTimezoneResponse)(nil),      // 8: shogun.api.v1.SetTimezoneResponse
-	(*timestamppb.Timestamp)(nil),    // 9: google.protobuf.Timestamp
+	(*DeleteAccountRequest)(nil),     // 9: shogun.api.v1.DeleteAccountRequest
+	(*DeleteAccountResponse)(nil),    // 10: shogun.api.v1.DeleteAccountResponse
+	(*timestamppb.Timestamp)(nil),    // 11: google.protobuf.Timestamp
 }
 var file_shogun_api_v1_auth_proto_depIdxs = []int32{
-	9, // 0: shogun.api.v1.Session.expires_at:type_name -> google.protobuf.Timestamp
-	0, // 1: shogun.api.v1.GetSessionResponse.session:type_name -> shogun.api.v1.Session
-	1, // 2: shogun.api.v1.AuthService.GetSession:input_type -> shogun.api.v1.GetSessionRequest
-	3, // 3: shogun.api.v1.AuthService.Logout:input_type -> shogun.api.v1.LogoutRequest
-	5, // 4: shogun.api.v1.AuthService.LogoutEverywhere:input_type -> shogun.api.v1.LogoutEverywhereRequest
-	7, // 5: shogun.api.v1.AuthService.SetTimezone:input_type -> shogun.api.v1.SetTimezoneRequest
-	2, // 6: shogun.api.v1.AuthService.GetSession:output_type -> shogun.api.v1.GetSessionResponse
-	4, // 7: shogun.api.v1.AuthService.Logout:output_type -> shogun.api.v1.LogoutResponse
-	6, // 8: shogun.api.v1.AuthService.LogoutEverywhere:output_type -> shogun.api.v1.LogoutEverywhereResponse
-	8, // 9: shogun.api.v1.AuthService.SetTimezone:output_type -> shogun.api.v1.SetTimezoneResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	11, // 0: shogun.api.v1.Session.expires_at:type_name -> google.protobuf.Timestamp
+	0,  // 1: shogun.api.v1.GetSessionResponse.session:type_name -> shogun.api.v1.Session
+	1,  // 2: shogun.api.v1.AuthService.GetSession:input_type -> shogun.api.v1.GetSessionRequest
+	3,  // 3: shogun.api.v1.AuthService.Logout:input_type -> shogun.api.v1.LogoutRequest
+	5,  // 4: shogun.api.v1.AuthService.LogoutEverywhere:input_type -> shogun.api.v1.LogoutEverywhereRequest
+	7,  // 5: shogun.api.v1.AuthService.SetTimezone:input_type -> shogun.api.v1.SetTimezoneRequest
+	9,  // 6: shogun.api.v1.AuthService.DeleteAccount:input_type -> shogun.api.v1.DeleteAccountRequest
+	2,  // 7: shogun.api.v1.AuthService.GetSession:output_type -> shogun.api.v1.GetSessionResponse
+	4,  // 8: shogun.api.v1.AuthService.Logout:output_type -> shogun.api.v1.LogoutResponse
+	6,  // 9: shogun.api.v1.AuthService.LogoutEverywhere:output_type -> shogun.api.v1.LogoutEverywhereResponse
+	8,  // 10: shogun.api.v1.AuthService.SetTimezone:output_type -> shogun.api.v1.SetTimezoneResponse
+	10, // 11: shogun.api.v1.AuthService.DeleteAccount:output_type -> shogun.api.v1.DeleteAccountResponse
+	7,  // [7:12] is the sub-list for method output_type
+	2,  // [2:7] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_shogun_api_v1_auth_proto_init() }
@@ -517,7 +605,7 @@ func file_shogun_api_v1_auth_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_api_v1_auth_proto_rawDesc), len(file_shogun_api_v1_auth_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   9,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

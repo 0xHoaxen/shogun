@@ -7,9 +7,12 @@ VALUES (@id, @google_sub, @email, @display_name)
 ON CONFLICT (google_sub) DO UPDATE
 SET email = EXCLUDED.email,
     display_name = EXCLUDED.display_name,
-    version = CASE WHEN users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
+    -- Signing in again after deleting the account starts a fresh, active member.
+    archived_at = NULL,
+    status = CASE WHEN users.archived_at IS NOT NULL THEN 'active' ELSE users.status END,
+    version = CASE WHEN users.archived_at IS NOT NULL OR users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
                    THEN users.version + 1 ELSE users.version END,
-    updated_at = CASE WHEN users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
+    updated_at = CASE WHEN users.archived_at IS NOT NULL OR users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
                       THEN now() ELSE users.updated_at END
 RETURNING *, (xmax = 0) AS inserted;
 
@@ -46,5 +49,18 @@ RETURNING *;
 -- name: SetUserTimezone :one
 -- owner-scope: global users are the tenants; a user changes only their own, by session id
 UPDATE users SET timezone = @timezone, version = version + 1, updated_at = now()
+WHERE id = @id AND archived_at IS NULL
+RETURNING *;
+
+-- name: IsUserArchived :one
+-- owner-scope: global users are the tenants; looked up by the Google subject at login
+SELECT COALESCE((SELECT archived_at IS NOT NULL FROM users WHERE google_sub = @google_sub), false)::boolean;
+
+-- name: ArchiveUser :one
+-- owner-scope: global users are the tenants; a user archives only their own, by session id
+-- Keeps a tombstone so the owner id and version stay unique, and removes what identifies the person.
+UPDATE users
+SET archived_at = now(), email = '', display_name = '', role = 'member', gmail_allowed = false,
+    version = version + 1, updated_at = now()
 WHERE id = @id AND archived_at IS NULL
 RETURNING *;

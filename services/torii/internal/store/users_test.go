@@ -241,3 +241,81 @@ func TestAFailedChangeWritesNoEvent(t *testing.T) {
 		t.Fatalf("err = %v, events = %d, want ErrNotFound and no event", err, len(outboxEvents(t, pool)))
 	}
 }
+
+func TestArchiveRemovesWhoTheUserWasAndAnnouncesIt(t *testing.T) {
+	// Arrange
+	_, pool := newSessions(t)
+	users := store.NewUsers(pool)
+	ctx := context.Background()
+	first, err := users.Upsert(ctx, newUser("a"))
+	if err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+
+	// Act
+	gone, err := users.Archive(ctx, first.ID)
+	_, lookupErr := users.ByID(ctx, first.ID)
+
+	// Assert
+	if err != nil || gone.Email != "" || gone.DisplayName != "" || gone.Version != first.Version+1 {
+		t.Fatalf("archived %+v, err %v", gone, err)
+	}
+	if !errors.Is(lookupErr, store.ErrNotFound) {
+		t.Fatalf("ByID after archive: %v, want ErrNotFound", lookupErr)
+	}
+	events := outboxEvents(t, pool)
+	last := events[len(events)-1]
+	if last.GetType() != "user.deleted" || last.GetSubject() != first.ID.String() {
+		t.Fatalf("last event = %v, want user.deleted about the user", last)
+	}
+}
+
+func TestArchivingTwiceIsNotFoundAndWritesNoSecondEvent(t *testing.T) {
+	_, pool := newSessions(t)
+	users := store.NewUsers(pool)
+	ctx := context.Background()
+	first, _ := users.Upsert(ctx, newUser("a"))
+	if _, err := users.Archive(ctx, first.ID); err != nil {
+		t.Fatalf("first Archive: %v", err)
+	}
+	before := len(outboxEvents(t, pool))
+
+	_, err := users.Archive(ctx, first.ID)
+
+	if !errors.Is(err, store.ErrNotFound) || len(outboxEvents(t, pool)) != before {
+		t.Fatalf("err = %v, events %d -> %d", err, before, len(outboxEvents(t, pool)))
+	}
+}
+
+func TestSigningInAgainAfterDeletionStartsAFreshMemberAndAnnouncesIt(t *testing.T) {
+	// Arrange
+	_, pool := newSessions(t)
+	users := store.NewUsers(pool)
+	ctx := context.Background()
+	first, _ := users.Upsert(ctx, newUser("a"))
+	if _, err := users.SetGmailAllowed(ctx, first.ID, true); err != nil {
+		t.Fatalf("SetGmailAllowed: %v", err)
+	}
+	gone, err := users.Archive(ctx, first.ID)
+	if err != nil {
+		t.Fatalf("Archive: %v", err)
+	}
+
+	// Act
+	back, err := users.Upsert(ctx, newUser("a"))
+
+	// Assert
+	if err != nil || back.ID != first.ID || back.Status != domain.StatusActive || back.GmailAllowed || back.Role != domain.RoleMember {
+		t.Fatalf("back %+v, err %v", back, err)
+	}
+	if back.Version <= gone.Version {
+		t.Fatalf("version %d did not pass the tombstone's %d, so services would ignore the sign-up", back.Version, gone.Version)
+	}
+	events := outboxEvents(t, pool)
+	if last := events[len(events)-1]; last.GetType() != "user.activated" {
+		t.Fatalf("last event = %v, want user.activated", last)
+	}
+	if _, err := users.ByID(ctx, first.ID); err != nil {
+		t.Fatalf("ByID after returning: %v", err)
+	}
+}

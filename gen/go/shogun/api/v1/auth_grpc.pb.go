@@ -23,6 +23,7 @@ const (
 	AuthService_Logout_FullMethodName           = "/shogun.api.v1.AuthService/Logout"
 	AuthService_LogoutEverywhere_FullMethodName = "/shogun.api.v1.AuthService/LogoutEverywhere"
 	AuthService_SetTimezone_FullMethodName      = "/shogun.api.v1.AuthService/SetTimezone"
+	AuthService_DeleteAccount_FullMethodName    = "/shogun.api.v1.AuthService/DeleteAccount"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -43,6 +44,11 @@ type AuthServiceClient interface {
 	// follow-up scans, digests and rollups follow. InvalidArgument
 	// INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
 	SetTimezone(ctx context.Context, in *SetTimezoneRequest, opts ...grpc.CallOption) (*SetTimezoneResponse, error)
+	// DeleteAccount deletes the signed-in user's account and, through the
+	// user.deleted event, all of their data in every service. confirm_email must
+	// be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+	// every session and clears this browser's cookie. It cannot be undone.
+	DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error)
 }
 
 type authServiceClient struct {
@@ -93,6 +99,16 @@ func (c *authServiceClient) SetTimezone(ctx context.Context, in *SetTimezoneRequ
 	return out, nil
 }
 
+func (c *authServiceClient) DeleteAccount(ctx context.Context, in *DeleteAccountRequest, opts ...grpc.CallOption) (*DeleteAccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteAccountResponse)
+	err := c.cc.Invoke(ctx, AuthService_DeleteAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility.
@@ -111,6 +127,11 @@ type AuthServiceServer interface {
 	// follow-up scans, digests and rollups follow. InvalidArgument
 	// INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
 	SetTimezone(context.Context, *SetTimezoneRequest) (*SetTimezoneResponse, error)
+	// DeleteAccount deletes the signed-in user's account and, through the
+	// user.deleted event, all of their data in every service. confirm_email must
+	// be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+	// every session and clears this browser's cookie. It cannot be undone.
+	DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -132,6 +153,9 @@ func (UnimplementedAuthServiceServer) LogoutEverywhere(context.Context, *LogoutE
 }
 func (UnimplementedAuthServiceServer) SetTimezone(context.Context, *SetTimezoneRequest) (*SetTimezoneResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetTimezone not implemented")
+}
+func (UnimplementedAuthServiceServer) DeleteAccount(context.Context, *DeleteAccountRequest) (*DeleteAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteAccount not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
@@ -226,6 +250,24 @@ func _AuthService_SetTimezone_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_DeleteAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DeleteAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DeleteAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DeleteAccount(ctx, req.(*DeleteAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -248,6 +290,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetTimezone",
 			Handler:    _AuthService_SetTimezone_Handler,
+		},
+		{
+			MethodName: "DeleteAccount",
+			Handler:    _AuthService_DeleteAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
