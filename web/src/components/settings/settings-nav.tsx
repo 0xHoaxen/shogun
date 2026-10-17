@@ -15,9 +15,14 @@ export interface SettingsTab {
   adminOnly?: boolean;
 }
 
-// The Settings tabs, in order. The AI provider, GitHub and Account tabs are
-// added by their own tasks.
+// The Settings tabs, in order. The GitHub and Account tabs are added by their
+// own tasks.
 export const SETTINGS_TABS: readonly SettingsTab[] = [
+  {
+    href: "/settings/provider",
+    label: "AI provider",
+    summary: "Add the AI provider, model and key Shogun uses for your drafts, mail sorting and job scoring.",
+  },
   {
     href: "/settings/mail",
     label: "Mail",

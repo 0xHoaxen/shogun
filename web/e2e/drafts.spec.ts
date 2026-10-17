@@ -30,6 +30,7 @@ interface Scenario {
   currentVersion: number;
   version: number;
   recipient: string;
+  failureReason?: string;
   versions: { version: number; subject: string; body: string; author: VersionAuthor; extraContext?: string }[];
 }
 
@@ -55,6 +56,7 @@ function draftOf(s: Scenario) {
     state: s.state,
     currentVersion: s.currentVersion,
     recipient: s.recipient,
+    failureReason: s.failureReason ?? "",
     version: s.version,
     subject: newest?.subject ?? "",
     preview: newest?.body.slice(0, 200) ?? "",
@@ -345,4 +347,20 @@ test("a failed draft says nothing was sent and offers no approval", async ({ pag
   await expect(page.locator('p[role="alert"]')).toContainText("could not be written");
   await expect(page.locator('p[role="alert"]')).toContainText("Nothing was sent");
   await expect(page.getByRole("button", { name: /Approve/ })).toBeHidden();
+});
+
+test("a draft that failed for want of an AI provider says so in words and links to Settings", async ({ page }) => {
+  const s = emailScenario();
+  s.state = DraftState.FAILED;
+  s.failureReason = "provider_not_configured";
+  s.currentVersion = 0;
+  s.versions = [];
+  await serve(page, s);
+
+  await page.goto("/drafts/d1");
+
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toContainText("you have not added an AI provider yet");
+  await expect(alert).not.toContainText("provider_not_configured");
+  await expect(alert.getByRole("link", { name: "Check your AI provider" })).toHaveAttribute("href", "/settings/provider");
 });

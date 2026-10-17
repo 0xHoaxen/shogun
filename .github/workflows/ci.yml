@@ -264,7 +264,7 @@ jobs:
           $COMPOSE logs --no-color kagami torii web soroban fude tsubame taiko dojo \
             | scripts/check-logs-clean.sh \
               "jobs@lumen.example" "this is the text the owner approved" \
-              "stub-access" "stub-refresh" "e2e-secret" "e2e-code"
+              "stub-access" "stub-refresh" "e2e-secret" "e2e-code" "e2e-key-0123456789"
       - name: Show container logs
         if: failure()
         run: $COMPOSE logs --no-color --tail=200
