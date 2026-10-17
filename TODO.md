@@ -784,11 +784,31 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: Settings button bottom-left of the footer; `/settings` hub with a left tab list (`SETTINGS_TABS` in `web/src/components/settings/settings-nav.tsx`): Mail, Spend, Alerts and Users (admin) today. The AI provider tab is added by P11.5e, GitHub by P11.6, Account by P11.8: each appends to `SETTINGS_TABS`. Mail, Spend and Alerts left the top tabs.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test` pass.
 
-- [ ] **P11.4 User directory and per-user timezone** (L) Needs: P11.3
-  Do: torii `user.*` events; local `owners` tables; per-owner fan-out and timezone in kagami, katana, sensei, shinobi, taiko jobs. Split per service.
-  Done when: `make test`.
+- [x] **P11.4a User directory** (M) Needs: P11.3
+  Do: `shogun.torii.v1` `UserActivated`, `UserUpdated`, `UserDeleted` events (routes in `pkg/bus/routes.go` to kagami, katana, sensei, shinobi, taiko); torii writes `user.activated` on first login and `user.updated` on a status or time zone change, in the same transaction as the change (`store.Users`); new `pkg/owners` holds the `owners(id, timezone, status, version)` migration snippet, the store (`Upsert` ignores old versions, `ListActive`, `Get`), `Owner.Location/LocalDate/ReachedLocalTime`, and `WithHandlers`, which the five consumers add to their sink with a copy of the snippet as a migration. `user.deleted` is produced by P11.8. A user's row reaches a service the next time they log in, since existing users have no `users` row until then.
+  Done when: `cd pkg && go test -race ./owners/... ./bus/...`, `cd services/torii && go test -race ./...`, and each consumer's `go test -race ./...` pass.
 
-- [ ] **P11.5a soroban providers** (M) Needs: P11.4
+- [ ] **P11.4b taiko daily digest per owner** (M) Needs: P11.4a
+  Do: replace the single daily periodic job with a 15-minute tick that, for each active owner whose local clock has reached the digest time, enqueues `daily_digest` for `(owner_id, local date)` (unique by args); the digester runs for that owner only, in their zone. Remove the hard-coded `Asia/Kolkata`.
+  Done when: `cd services/taiko && go test -race ./...`.
+
+- [ ] **P11.4c kagami scans per owner** (M) Needs: P11.4a
+  Do: same tick for the follow-up and stale-application scans; scan queries take `owner_id` and the owner's local date.
+  Done when: `cd services/kagami && go test -race ./...`.
+
+- [ ] **P11.4d katana GitHub sync per owner** (S) Needs: P11.4a
+  Do: sync job per active owner at their local time. Per-user GitHub credentials arrive in P11.6.
+  Done when: `cd services/katana && go test -race ./...`.
+
+- [ ] **P11.4e sensei rollup per owner** (M) Needs: P11.4a
+  Do: the rollup SQL joins `owners` for the zone instead of `'Asia/Kolkata'`; rebuild per owner on their local day change.
+  Done when: `cd services/sensei && go test -race ./...`.
+
+- [ ] **P11.4f shinobi source schedules per owner** (S) Needs: P11.4a
+  Do: read source schedules in the owner's zone (`DueSources` takes each owner's location).
+  Done when: `cd services/shinobi && go test -race ./...`.
+
+- [ ] **P11.5a soroban providers** (M) Needs: P11.4a
   Do: `providers` table, encrypted key, Set/Get/Delete/Test RPCs, SSRF-safe base URL validation.
   Done when: `cd services/soroban && go test -race ./...`.
 
@@ -808,7 +828,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: Settings AI provider form and "add your provider" prompts.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
-- [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4, P11.10
+- [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4a, P11.10
   Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.
   Done when: `cd services/katana && go test -race ./...`.
 
@@ -816,7 +836,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: audited every sqlc query without `owner_id`; each is now annotated `-- owner-scope: child|internal|global <why>` and `scripts/check-owner-scope.sh` (tested by `scripts/check-owner-scope_test.sh`, wired into `make lint` and `make deploy-test`) fails any new query that has neither. Removed shinobi's unused `GetPostingByID`, which returned a posting whatever its owner. Added cross-owner tests for sensei rollups and taiko notifications; kagami, fude, tsubame, dojo, katana, shinobi and soroban already had them. Moved ahead of P11.4 because open sign-up (P11.2) made cross-tenant reads reachable.
   Done when: `make lint` and `make test`.
 
-- [ ] **P11.8 Account settings** (M) Needs: P11.10, P11.4
+- [ ] **P11.8 Account settings** (M) Needs: P11.10, P11.4a
   Do: timezone picker, sign out everywhere, delete my data via `user.deleted`.
   Done when: `make test`.
 

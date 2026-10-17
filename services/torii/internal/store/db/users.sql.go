@@ -223,7 +223,7 @@ SET email = EXCLUDED.email,
                    THEN users.version + 1 ELSE users.version END,
     updated_at = CASE WHEN users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
                       THEN now() ELSE users.updated_at END
-RETURNING id, google_sub, email, display_name, role, status, gmail_allowed, timezone, version, created_at, updated_at, archived_at
+RETURNING id, google_sub, email, display_name, role, status, gmail_allowed, timezone, version, created_at, updated_at, archived_at, (xmax = 0) AS inserted
 `
 
 type UpsertUserParams struct {
@@ -233,17 +233,33 @@ type UpsertUserParams struct {
 	DisplayName string
 }
 
+type UpsertUserRow struct {
+	ID           uuid.UUID
+	GoogleSub    string
+	Email        string
+	DisplayName  string
+	Role         string
+	Status       string
+	GmailAllowed bool
+	Timezone     string
+	Version      int32
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	ArchivedAt   *time.Time
+	Inserted     bool
+}
+
 // owner-scope: global users are the tenants; the id is derived from the Google subject at login
 // Creates the user, or refreshes email and display name on a later login.
 // Role, status, gmail_allowed and timezone are only changed by their setters.
-func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error) {
+func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (UpsertUserRow, error) {
 	row := q.db.QueryRow(ctx, upsertUser,
 		arg.ID,
 		arg.GoogleSub,
 		arg.Email,
 		arg.DisplayName,
 	)
-	var i User
+	var i UpsertUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.GoogleSub,
@@ -257,6 +273,7 @@ func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, e
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.ArchivedAt,
+		&i.Inserted,
 	)
 	return i, err
 }

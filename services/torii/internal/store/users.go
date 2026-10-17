@@ -10,6 +10,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/protobuf/proto"
+
+	toriiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/torii/v1"
+	"github.com/0xHoaxen/shogun/pkg/outbox"
+	"github.com/0xHoaxen/shogun/pkg/postgres"
 
 	"github.com/0xHoaxen/shogun/services/torii/internal/domain"
 	"github.com/0xHoaxen/shogun/services/torii/internal/store/db"
@@ -18,27 +24,57 @@ import (
 // ErrBadPageToken is returned when a page token was not issued by List.
 var ErrBadPageToken = errors.New("store: bad page token")
 
-// Users reads and writes torii's users table.
+// eventSource is the source of the events torii writes about users.
+const eventSource = "torii"
+
+// Event types about users. Routes live in pkg/bus/routes.go.
+const (
+	eventUserActivated = "user.activated"
+	eventUserUpdated   = "user.updated"
+)
+
+// Users reads and writes torii's users table. A change other services care
+// about, a sign-up or a new status or time zone, is written to the outbox in
+// the same transaction.
 type Users struct {
-	q *db.Queries
+	pool *pgxpool.Pool
+	q    *db.Queries
 }
 
-// NewUsers returns a Users store that runs on d.
-func NewUsers(d DBTX) *Users { return &Users{q: db.New(d)} }
+// NewUsers returns a Users store that runs on pool.
+func NewUsers(pool *pgxpool.Pool) *Users { return &Users{pool: pool, q: db.New(pool)} }
 
 // Upsert creates the user, or refreshes the email and display name of the
-// existing one. Role, status, Gmail approval and timezone are kept.
+// existing one. Role, status, Gmail approval and timezone are kept. A new user
+// is announced with user.activated.
 func (u *Users) Upsert(ctx context.Context, user domain.User) (domain.User, error) {
-	row, err := u.q.UpsertUser(ctx, db.UpsertUserParams{
-		ID:          user.ID,
-		GoogleSub:   user.GoogleSub,
-		Email:       user.Email,
-		DisplayName: user.DisplayName,
+	var out domain.User
+	err := postgres.InTx(ctx, u.pool, func(tx pgx.Tx) error {
+		row, err := db.New(tx).UpsertUser(ctx, db.UpsertUserParams{
+			ID:          user.ID,
+			GoogleSub:   user.GoogleSub,
+			Email:       user.Email,
+			DisplayName: user.DisplayName,
+		})
+		if err != nil {
+			return fmt.Errorf("upsert user: %w", err)
+		}
+		out = toUser(db.User{
+			ID: row.ID, GoogleSub: row.GoogleSub, Email: row.Email, DisplayName: row.DisplayName,
+			Role: row.Role, Status: row.Status, GmailAllowed: row.GmailAllowed, Timezone: row.Timezone,
+			Version: row.Version, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
+		})
+		if !row.Inserted {
+			return nil
+		}
+		return writeUserEvent(ctx, tx, eventUserActivated, out, &toriiv1.UserActivated{
+			OwnerId: out.ID.String(), Timezone: out.Timezone, Status: string(out.Status), Version: out.Version,
+		})
 	})
 	if err != nil {
-		return domain.User{}, fmt.Errorf("upsert user: %w", err)
+		return domain.User{}, err
 	}
-	return toUser(row), nil
+	return out, nil
 }
 
 // ByID returns the user, or ErrNotFound.
@@ -87,13 +123,12 @@ func (u *Users) SetRole(ctx context.Context, id uuid.UUID, role domain.Role) (do
 	return toUser(row), nil
 }
 
-// SetStatus enables or disables the user and returns the updated user.
+// SetStatus enables or disables the user and returns the updated user. The
+// change is announced with user.updated.
 func (u *Users) SetStatus(ctx context.Context, id uuid.UUID, status domain.Status) (domain.User, error) {
-	row, err := u.q.SetUserStatus(ctx, db.SetUserStatusParams{ID: id, Status: string(status)})
-	if err != nil {
-		return domain.User{}, notFoundOr(err, "set user status")
-	}
-	return toUser(row), nil
+	return u.changeAndAnnounce(ctx, "set user status", func(q *db.Queries) (db.User, error) {
+		return q.SetUserStatus(ctx, db.SetUserStatusParams{ID: id, Status: string(status)})
+	})
 }
 
 // SetGmailAllowed records the admin's Gmail approval and returns the updated user.
@@ -105,13 +140,39 @@ func (u *Users) SetGmailAllowed(ctx context.Context, id uuid.UUID, allowed bool)
 	return toUser(row), nil
 }
 
-// SetTimezone changes the zone the user's days are counted in.
+// SetTimezone changes the zone the user's days are counted in and announces it
+// with user.updated.
 func (u *Users) SetTimezone(ctx context.Context, id uuid.UUID, timezone string) (domain.User, error) {
-	row, err := u.q.SetUserTimezone(ctx, db.SetUserTimezoneParams{ID: id, Timezone: timezone})
+	return u.changeAndAnnounce(ctx, "set user timezone", func(q *db.Queries) (db.User, error) {
+		return q.SetUserTimezone(ctx, db.SetUserTimezoneParams{ID: id, Timezone: timezone})
+	})
+}
+
+// changeAndAnnounce runs change and writes user.updated for its result in one
+// transaction, so the event exists exactly when the change does.
+func (u *Users) changeAndAnnounce(ctx context.Context, what string, change func(*db.Queries) (db.User, error)) (domain.User, error) {
+	var out domain.User
+	err := postgres.InTx(ctx, u.pool, func(tx pgx.Tx) error {
+		row, err := change(db.New(tx))
+		if err != nil {
+			return notFoundOr(err, what)
+		}
+		out = toUser(row)
+		return writeUserEvent(ctx, tx, eventUserUpdated, out, &toriiv1.UserUpdated{
+			OwnerId: out.ID.String(), Timezone: out.Timezone, Status: string(out.Status), Version: out.Version,
+		})
+	})
 	if err != nil {
-		return domain.User{}, notFoundOr(err, "set user timezone")
+		return domain.User{}, err
 	}
-	return toUser(row), nil
+	return out, nil
+}
+
+func writeUserEvent(ctx context.Context, tx pgx.Tx, typ string, user domain.User, payload proto.Message) error {
+	if _, err := outbox.Write(ctx, tx, eventSource, typ, user.ID.String(), payload); err != nil {
+		return fmt.Errorf("write %s: %w", typ, err)
+	}
+	return nil
 }
 
 func notFoundOr(err error, what string) error {

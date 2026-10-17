@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package shogun.torii.v1;
+
+// Payloads of the events torii produces. Routes live in pkg/bus/routes.go.
+// Consumers keep a small local owners table from these, so they can run
+// per-user schedules in each user's own time zone. version only goes up; a
+// consumer ignores an event older than the version it already holds.
+
+// UserActivated is the payload of user.activated: a user signed up.
+message UserActivated {
+  string owner_id = 1;
+  // timezone is an IANA name such as Asia/Kolkata.
+  string timezone = 2;
+  // status is "active" or "disabled".
+  string status = 3;
+  int32 version = 4;
+}
+
+// UserUpdated is the payload of user.updated: a user's status or time zone changed.
+message UserUpdated {
+  string owner_id = 1;
+  string timezone = 2;
+  string status = 3;
+  int32 version = 4;
+}
+
+// UserDeleted is the payload of user.deleted: a user asked for their data to
+// be removed. Each service purges that owner's rows.
+message UserDeleted {
+  string owner_id = 1;
+  int32 version = 2;
+}
