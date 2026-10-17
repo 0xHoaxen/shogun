@@ -111,7 +111,6 @@ func TestPurgeForAUserWithNoDataIsHarmless(t *testing.T) {
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	err = owners.PurgeSQL(store.PurgeStatements...)(ctx, tx, uuid.New())
-
 	if err != nil {
 		t.Fatalf("purge: %v", err)
 	}
