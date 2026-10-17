@@ -42,7 +42,7 @@ func addLoginSettings(t *testing.T, env map[string]string) *idptest.IDP {
 	env["GOOGLE_CLIENT_ID"] = testClientID
 	env["GOOGLE_CLIENT_SECRET"] = testClientSecret
 	env["GOOGLE_ISSUER_URL"] = idp.IssuerURL()
-	env["TORII_ALLOWED_EMAILS"] = testOwnerEmail
+	env["TORII_ADMIN_EMAILS"] = testOwnerEmail
 	env["TORII_PUBLIC_ADDR"] = "127.0.0.1:0"
 	// The connection is lazy, so tests that never call kagami need no server.
 	env["KAGAMI_ADDR"] = "127.0.0.1:1"

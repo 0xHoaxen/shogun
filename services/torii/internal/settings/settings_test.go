@@ -20,7 +20,7 @@ func validEnv() map[string]string {
 	return map[string]string{
 		"GOOGLE_CLIENT_ID":     "client-id",
 		"GOOGLE_CLIENT_SECRET": "client-secret",
-		"TORII_ALLOWED_EMAILS": "owner@example.com",
+		"TORII_ADMIN_EMAILS":   "owner@example.com",
 		"KAGAMI_ADDR":          "kagami:9090",
 		"SOROBAN_ADDR":         "soroban:9090",
 		"FUDE_ADDR":            "fude:9090",
@@ -53,7 +53,7 @@ func TestLoadAppliesDefaults(t *testing.T) {
 func TestLoadParsesOverrides(t *testing.T) {
 	// Arrange
 	env := validEnv()
-	env["TORII_ALLOWED_EMAILS"] = " a@example.com, b@example.com ,,"
+	env["TORII_ADMIN_EMAILS"] = " a@example.com, b@example.com ,,"
 	env["TORII_PUBLIC_URL"] = "https://shogun.example.com/"
 	env["SESSION_TTL"] = "48h"
 
@@ -63,8 +63,8 @@ func TestLoadParsesOverrides(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if want := []string{"a@example.com", "b@example.com"}; !reflect.DeepEqual(got.AllowedEmails, want) {
-		t.Fatalf("AllowedEmails = %v, want %v", got.AllowedEmails, want)
+	if want := []string{"a@example.com", "b@example.com"}; !reflect.DeepEqual(got.AdminEmails, want) {
+		t.Fatalf("AdminEmails = %v, want %v", got.AdminEmails, want)
 	}
 	if got.PublicURL != "https://shogun.example.com" || !got.SecureCookies() || got.SessionTTL != 48*time.Hour {
 		t.Fatalf("overrides wrong: %+v", got)
@@ -79,7 +79,7 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 	}{
 		{"missing client id", func(e map[string]string) { delete(e, "GOOGLE_CLIENT_ID") }, "GOOGLE_CLIENT_ID"},
 		{"missing client secret", func(e map[string]string) { delete(e, "GOOGLE_CLIENT_SECRET") }, "GOOGLE_CLIENT_SECRET"},
-		{"missing allowlist", func(e map[string]string) { delete(e, "TORII_ALLOWED_EMAILS") }, "TORII_ALLOWED_EMAILS"},
+		{"missing admin list", func(e map[string]string) { delete(e, "TORII_ADMIN_EMAILS") }, "TORII_ADMIN_EMAILS"},
 		{"missing kagami address", func(e map[string]string) { delete(e, "KAGAMI_ADDR") }, "KAGAMI_ADDR"},
 		{"missing soroban address", func(e map[string]string) { delete(e, "SOROBAN_ADDR") }, "SOROBAN_ADDR"},
 		{"missing fude address", func(e map[string]string) { delete(e, "FUDE_ADDR") }, "FUDE_ADDR"},
@@ -89,7 +89,7 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 		{"missing katana address", func(e map[string]string) { delete(e, "KATANA_ADDR") }, "KATANA_ADDR"},
 		{"missing shinobi address", func(e map[string]string) { delete(e, "SHINOBI_ADDR") }, "SHINOBI_ADDR"},
 		{"missing sensei address", func(e map[string]string) { delete(e, "SENSEI_ADDR") }, "SENSEI_ADDR"},
-		{"blank allowlist", func(e map[string]string) { e["TORII_ALLOWED_EMAILS"] = " , " }, "no addresses"},
+		{"blank admin list", func(e map[string]string) { e["TORII_ADMIN_EMAILS"] = " , " }, "no addresses"},
 		{"public url not http", func(e map[string]string) { e["TORII_PUBLIC_URL"] = "ftp://x" }, "TORII_PUBLIC_URL"},
 		{"http public url in production", func(e map[string]string) {
 			e["ENVIRONMENT"] = "production"

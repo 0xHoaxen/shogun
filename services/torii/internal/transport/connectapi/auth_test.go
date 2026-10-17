@@ -44,8 +44,8 @@ func newHarness(t *testing.T) *harness {
 	t.Helper()
 	now := time.Date(2026, 10, 4, 9, 0, 0, 0, time.UTC)
 	sessions := apptest.NewMemSessions()
-	auth, err := app.NewAuth(sessions,
-		app.AuthConfig{AllowedEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
+	auth, err := app.NewAuth(sessions, apptest.NewMemUsers(),
+		app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
 		app.WithClock(func() time.Time { return now }),
 	)
 	if err != nil {

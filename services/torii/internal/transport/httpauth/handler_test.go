@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/0xHoaxen/shogun/services/torii/internal/app"
+	"github.com/0xHoaxen/shogun/services/torii/internal/app/apptest"
 	"github.com/0xHoaxen/shogun/services/torii/internal/domain"
 	"github.com/0xHoaxen/shogun/services/torii/internal/idp/idptest"
 	"github.com/0xHoaxen/shogun/services/torii/internal/store"
@@ -58,6 +59,7 @@ func (m *memSessions) Delete(_ context.Context, hash []byte) error {
 type harness struct {
 	idp      *idptest.IDP
 	sessions *memSessions
+	users    *apptest.MemUsers
 	auth     *app.Auth
 	routes   http.Handler
 	now      *time.Time
@@ -73,7 +75,8 @@ func newHarness(t *testing.T, secure bool) *harness {
 		t.Fatalf("NewOIDCProvider: %v", err)
 	}
 	sessions := &memSessions{byHash: map[string]domain.Session{}}
-	auth, err := app.NewAuth(sessions, app.AuthConfig{AllowedEmails: []string{ownerEmail}, SessionTTL: sessionTTL})
+	users := apptest.NewMemUsers()
+	auth, err := app.NewAuth(sessions, users, app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL})
 	if err != nil {
 		t.Fatalf("NewAuth: %v", err)
 	}
@@ -85,7 +88,7 @@ func newHarness(t *testing.T, secure bool) *harness {
 	if err != nil {
 		t.Fatalf("NewHandler: %v", err)
 	}
-	return &harness{idp: idp, sessions: sessions, auth: auth, routes: handler.Routes(), now: &now}
+	return &harness{idp: idp, sessions: sessions, users: users, auth: auth, routes: handler.Routes(), now: &now}
 }
 
 func (h *harness) do(method, target string, cookies ...*http.Cookie) *httptest.ResponseRecorder {
@@ -183,12 +186,39 @@ func TestLoginCookieIsNotSecureForLocalHTTP(t *testing.T) {
 	}
 }
 
-func TestLoginWithDisallowedEmailIsRejected(t *testing.T) {
+func TestLoginWithAnyVerifiedEmailSignsUp(t *testing.T) {
 	// Arrange
 	h := newHarness(t, true)
 	flow, state, challenge := h.startLogin(t)
 	claims := ownerClaims()
+	claims.Subject = "stranger-subject"
 	claims.Email = "stranger@example.com"
+	code := h.idp.IssueCode(challenge, claims)
+
+	// Act
+	rec := h.callback(code, state, flow)
+
+	// Assert
+	wantRedirect(t, rec, postLogin)
+	if sessionCookie(rec) == nil || len(h.sessions.byHash) != 1 {
+		t.Fatalf("sign-up left cookie %v and %d sessions, want a session", sessionCookie(rec), len(h.sessions.byHash))
+	}
+}
+
+func TestLoginOfDisabledUserIsRejected(t *testing.T) {
+	// Arrange
+	h := newHarness(t, true)
+	claims := ownerClaims()
+	claims.Subject = "stranger-subject"
+	claims.Email = "stranger@example.com"
+	known, err := h.users.Upsert(context.Background(), domain.User{ID: uuid.New(), GoogleSub: claims.Subject, Email: claims.Email})
+	if err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+	if _, err := h.users.SetStatus(context.Background(), known.ID, domain.StatusDisabled); err != nil {
+		t.Fatalf("SetStatus: %v", err)
+	}
+	flow, state, challenge := h.startLogin(t)
 	code := h.idp.IssueCode(challenge, claims)
 
 	// Act
