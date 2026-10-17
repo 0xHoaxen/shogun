@@ -66,8 +66,10 @@ func TestListRollupsReturnsOnlyTheOwnersNumbers(t *testing.T) {
 	day := time.Date(2026, 10, 7, 0, 0, 0, 0, time.UTC)
 
 	// Act
-	if err := repo.RebuildRollups(ctx, day); err != nil {
-		t.Fatalf("RebuildRollups: %v", err)
+	for _, id := range []uuid.UUID{owner, other} {
+		if err := repo.RebuildRollups(ctx, id, "Asia/Kolkata", day); err != nil {
+			t.Fatalf("RebuildRollups: %v", err)
+		}
 	}
 	mine, mineErr := repo.ListRollups(ctx, owner, day, day, []string{"jobs_added"})
 	theirs, theirsErr := repo.ListRollups(ctx, other, day, day, []string{"jobs_added"})

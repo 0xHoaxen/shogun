@@ -1,22 +1,21 @@
 -- name: DeleteRollupsFrom :exec
--- owner-scope: internal rebuilds every owner's rollups in one transaction, then recomputes them all
-DELETE FROM daily_rollups WHERE day >= @from_day;
+-- The owner's rollups from from_day on; they are recomputed from the facts next.
+DELETE FROM daily_rollups WHERE owner_id = @owner_id AND day >= @from_day;
 
 -- name: RollupJobsAdded :exec
--- owner-scope: internal rebuild across all owners; made per-owner in P11.4e
 -- Jobs added per day and source.
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date, 'jobs_added',
-       'source=' || COALESCE(dimension->>'source', 'unknown'), count(*)
-FROM facts
-WHERE type = 'job.added' AND (occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= @from_day
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE @tz::text)::date, 'jobs_added',
+       'source=' || COALESCE(f.dimension->>'source', 'unknown'), count(*)
+FROM facts f
+WHERE f.owner_id = @owner_id AND f.type = 'job.added' AND (f.occurred_at AT TIME ZONE @tz::text)::date >= @from_day
 GROUP BY 1, 2, 3, 4;
 
 -- name: RollupJobStages :exec
 -- Moves into each stage per day, by the source the job was added from; a job
 -- sensei never saw added counts under source=unknown.
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT f.owner_id, (f.occurred_at AT TIME ZONE 'Asia/Kolkata')::date,
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE @tz::text)::date,
        CASE f.dimension->>'to'
          WHEN 'applied' THEN 'applications' WHEN 'shortlisted' THEN 'shortlisted'
          WHEN 'interview' THEN 'interviews' WHEN 'offer' THEN 'offers' ELSE 'rejections' END,
@@ -28,30 +27,28 @@ LEFT JOIN LATERAL (
       AND added.dimension->>'job_id' = f.dimension->>'job_id'
     ORDER BY added.occurred_at LIMIT 1
 ) a ON true
-WHERE f.type = 'job.status_changed'
+WHERE f.owner_id = @owner_id AND f.type = 'job.status_changed'
   AND f.dimension->>'to' IN ('applied', 'shortlisted', 'interview', 'offer', 'rejected')
-  AND (f.occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= @from_day
+  AND (f.occurred_at AT TIME ZONE @tz::text)::date >= @from_day
 GROUP BY 1, 2, 3, 4;
 
 -- name: RollupContacts :exec
--- owner-scope: internal rebuild across all owners; made per-owner in P11.4e
 -- First contacts and replies per day and channel, and moves per day and status.
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date,
-       CASE dimension->>'to' WHEN 'reached_out' THEN 'outreach_sent' ELSE 'replies' END,
-       'channel=' || COALESCE(dimension->>'channel', 'unknown'), count(*)
-FROM facts
-WHERE type = 'contact.status_changed' AND dimension->>'to' IN ('reached_out', 'replied')
-  AND (occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= @from_day
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE @tz::text)::date,
+       CASE f.dimension->>'to' WHEN 'reached_out' THEN 'outreach_sent' ELSE 'replies' END,
+       'channel=' || COALESCE(f.dimension->>'channel', 'unknown'), count(*)
+FROM facts f
+WHERE f.owner_id = @owner_id AND f.type = 'contact.status_changed' AND f.dimension->>'to' IN ('reached_out', 'replied')
+  AND (f.occurred_at AT TIME ZONE @tz::text)::date >= @from_day
 GROUP BY 1, 2, 3, 4;
 
 -- name: RollupContactMoves :exec
--- owner-scope: internal rebuild across all owners; made per-owner in P11.4e
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date, 'contact_moves',
-       'status=' || COALESCE(dimension->>'to', 'unknown'), count(*)
-FROM facts
-WHERE type = 'contact.status_changed' AND (occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= @from_day
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE @tz::text)::date, 'contact_moves',
+       'status=' || COALESCE(f.dimension->>'to', 'unknown'), count(*)
+FROM facts f
+WHERE f.owner_id = @owner_id AND f.type = 'contact.status_changed' AND (f.occurred_at AT TIME ZONE @tz::text)::date >= @from_day
 GROUP BY 1, 2, 3, 4;
 
 -- name: ListRollups :many

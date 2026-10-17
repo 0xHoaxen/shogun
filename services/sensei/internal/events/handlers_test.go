@@ -294,7 +294,7 @@ func TestReplayingTheSameEventsTwiceLeavesRollupsUnchanged(t *testing.T) {
 			t.Fatalf("deliver %s: %v", d.typ, err)
 		}
 	}
-	if err := svc.Rollup(ctx); err != nil {
+	if err := svc.Rollup(ctx, uuid.MustParse(owner)); err != nil {
 		t.Fatalf("rollup: %v", err)
 	}
 	once := snapshot()
@@ -303,7 +303,7 @@ func TestReplayingTheSameEventsTwiceLeavesRollupsUnchanged(t *testing.T) {
 			t.Fatalf("redeliver %s: %v", d.typ, err)
 		}
 	}
-	if err := svc.Rollup(ctx); err != nil {
+	if err := svc.Rollup(ctx, uuid.MustParse(owner)); err != nil {
 		t.Fatalf("rollup again: %v", err)
 	}
 

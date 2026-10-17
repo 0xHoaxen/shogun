@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/sensei/internal/app"
@@ -97,7 +98,7 @@ func TestRollupCountsJobsAndStagesBySourceAndDay(t *testing.T) {
 	owner := uuid.New()
 	seedJobs(t, pool, owner)
 
-	if err := svc.Rollup(context.Background()); err != nil {
+	if err := svc.Rollup(context.Background(), owner); err != nil {
 		t.Fatalf("Rollup: %v", err)
 	}
 
@@ -135,7 +136,7 @@ func TestRollupCountsContactMovesRepliesAndFirstContacts(t *testing.T) {
 	move("replied", "email", 3)
 	move("conversation_started", "email", 3)
 
-	if err := svc.Rollup(context.Background()); err != nil {
+	if err := svc.Rollup(context.Background(), owner); err != nil {
 		t.Fatalf("Rollup: %v", err)
 	}
 
@@ -163,7 +164,7 @@ func TestRollupUsesTheIndianDayNotTheUTCDay(t *testing.T) {
 	// 01:00 IST on 2 October is 19:30 UTC on 1 October.
 	fact(t, pool, owner, "job.added", map[string]string{"source": "x", "job_id": "j"}, istAt(10, 2, 1, 0))
 
-	if err := svc.Rollup(context.Background()); err != nil {
+	if err := svc.Rollup(context.Background(), owner); err != nil {
 		t.Fatalf("Rollup: %v", err)
 	}
 
@@ -181,9 +182,9 @@ func TestRollupTwiceLeavesRollupsUnchangedAndDropsStaleRows(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_ = svc.Rollup(context.Background())
+	_ = svc.Rollup(context.Background(), owner)
 	first := rollups(t, pool)
-	_ = svc.Rollup(context.Background())
+	_ = svc.Rollup(context.Background(), owner)
 	second := rollups(t, pool)
 
 	if len(first) == 0 || len(first) != len(second) {
@@ -207,7 +208,7 @@ func TestRollupLeavesDaysOlderThanTheWindowAlone(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := svc.Rollup(context.Background()); err != nil {
+	if err := svc.Rollup(context.Background(), owner); err != nil {
 		t.Fatalf("Rollup: %v", err)
 	}
 
@@ -225,7 +226,11 @@ func TestRollupKeepsOwnersApart(t *testing.T) {
 	fact(t, pool, b, "job.added", map[string]string{"source": "x", "job_id": "k"}, istAt(10, 1, 9, 0))
 	fact(t, pool, b, "job.status_changed", map[string]string{"job_id": "j", "to": "applied"}, istAt(10, 2, 9, 0))
 
-	_ = svc.Rollup(context.Background())
+	_ = svc.Rollup(context.Background(), a)
+	if rows := rollups(t, pool); len(rows) != 1 || rows[0].owner != a.String() {
+		t.Fatalf("rolling up one owner left rows %+v, want only theirs", rows)
+	}
+	_ = svc.Rollup(context.Background(), b)
 
 	counts := map[string]int64{}
 	for _, r := range rollups(t, pool) {
@@ -241,7 +246,7 @@ func TestGetFunnelReadsTheRollupsOfTheCallingOwner(t *testing.T) {
 	owner := uuid.New()
 	seedJobs(t, pool, owner)
 	fact(t, pool, uuid.New(), "job.added", map[string]string{"source": "linkedin", "job_id": "other"}, istAt(10, 1, 9, 0))
-	_ = svc.Rollup(context.Background())
+	_ = svc.Rollup(context.Background(), owner)
 
 	res, err := svc.GetFunnel(asOwner(owner), "2026-10-01", "2026-10-07", domain.FunnelBySource)
 
@@ -265,7 +270,7 @@ func TestGetFunnelDefaultsToTheLastThirtyDaysEndingToday(t *testing.T) {
 	owner := uuid.New()
 	fact(t, pool, owner, "job.added", map[string]string{"source": "x", "job_id": "j"}, istAt(9, 8, 9, 0)) // day 30 of the window
 	fact(t, pool, owner, "job.added", map[string]string{"source": "x", "job_id": "k"}, istAt(9, 7, 9, 0)) // one day too old
-	_ = svc.Rollup(context.Background())
+	_ = svc.Rollup(context.Background(), owner)
 
 	res, err := svc.GetFunnel(asOwner(owner), "", "", domain.FunnelBySource)
 
@@ -285,7 +290,7 @@ func TestGetOutreachStatsReadsTheRollups(t *testing.T) {
 		fact(t, pool, owner, "contact.status_changed", map[string]string{"to": "reached_out", "channel": "email"}, istAt(10, 1+i, 9, 0))
 	}
 	fact(t, pool, owner, "contact.status_changed", map[string]string{"to": "replied", "channel": "email"}, istAt(10, 6, 9, 0))
-	_ = svc.Rollup(context.Background())
+	_ = svc.Rollup(context.Background(), owner)
 
 	byChannel, err := svc.GetOutreachStats(asOwner(owner), "2026-10-01", "2026-10-07", domain.OutreachByChannel)
 	byStatus, _ := svc.GetOutreachStats(asOwner(owner), "2026-10-01", "2026-10-07", domain.OutreachByStatus)
@@ -307,5 +312,68 @@ func TestStatsRefuseABadRangeAndACallWithoutAnOwner(t *testing.T) {
 
 	if !errors.Is(badRange, domain.ErrInvalidRange) || !errors.Is(badOutreach, domain.ErrInvalidRange) || !errors.Is(noOwner, app.ErrNoOwner) {
 		t.Fatalf("errors: %v | %v | %v", badRange, badOutreach, noOwner)
+	}
+}
+
+// know makes sensei aware of an owner in a time zone, as torii's user.activated would.
+func know(t *testing.T, pool *pgxpool.Pool, owner uuid.UUID, timezone, status string) {
+	t.Helper()
+	if err := owners.Upsert(context.Background(), pool, owners.Owner{ID: owner, Timezone: timezone, Status: status, Version: 1}); err != nil {
+		t.Fatalf("know owner: %v", err)
+	}
+}
+
+func TestRollupCountsDaysInTheOwnersOwnZone(t *testing.T) {
+	// Arrange: 17:00 UTC on 1 October is 22:30 that day in India and 02:00 on the 2nd in Tokyo.
+	svc, pool := newService(t)
+	tokyo, kolkata := uuid.New(), uuid.New()
+	know(t, pool, tokyo, "Asia/Tokyo", owners.StatusActive)
+	know(t, pool, kolkata, "Asia/Kolkata", owners.StatusActive)
+	at := time.Date(2026, 10, 1, 17, 0, 0, 0, time.UTC)
+	for _, owner := range []uuid.UUID{tokyo, kolkata} {
+		if _, err := store.New(pool).InsertFact(context.Background(), domain.Fact{
+			EventID: store.NewID(), OwnerID: owner, Type: "job.added", Dimension: map[string]string{"source": "x", "job_id": "j"}, OccurredAt: at,
+		}); err != nil {
+			t.Fatalf("fact: %v", err)
+		}
+	}
+
+	// Act
+	_ = svc.Rollup(context.Background(), tokyo)
+	_ = svc.Rollup(context.Background(), kolkata)
+
+	// Assert
+	days := map[string]string{}
+	for _, r := range rollups(t, pool) {
+		days[r.owner] = r.day
+	}
+	if days[tokyo.String()] != "2026-10-02" || days[kolkata.String()] != "2026-10-01" {
+		t.Fatalf("days = %v, want Tokyo on the 2nd and India on the 1st", days)
+	}
+}
+
+func TestRollupSkipsADeletedOwner(t *testing.T) {
+	svc, pool := newService(t)
+	owner := uuid.New()
+	seedJobs(t, pool, owner)
+	know(t, pool, owner, "Asia/Kolkata", owners.StatusDeleted)
+
+	err := svc.Rollup(context.Background(), owner)
+
+	if err != nil || len(rollups(t, pool)) != 0 {
+		t.Fatalf("err %v, rows %d; want nothing rolled up for a deleted owner", err, len(rollups(t, pool)))
+	}
+}
+
+func TestDefaultStatsRangeEndsTodayInTheOwnersZone(t *testing.T) {
+	// testNow is 8 October in India but still the evening of the 7th in New York.
+	svc, pool := newService(t)
+	newYork := uuid.New()
+	know(t, pool, newYork, "America/New_York", owners.StatusActive)
+
+	res, err := svc.GetFunnel(asOwner(newYork), "", "", domain.FunnelBySource)
+
+	if err != nil || res.To.Format(time.DateOnly) != "2026-10-07" {
+		t.Fatalf("range ends %v, err %v; want 2026-10-07 in New York", res.To, err)
 	}
 }

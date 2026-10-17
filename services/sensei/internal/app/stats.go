@@ -23,7 +23,11 @@ func (s *Service) GetFunnel(ctx context.Context, from, to string, by domain.Funn
 	if err != nil {
 		return FunnelResult{}, err
 	}
-	start, end, err := domain.DayRange(from, to, s.today())
+	loc, err := s.ownerLocation(ctx, owner)
+	if err != nil {
+		return FunnelResult{}, err
+	}
+	start, end, err := domain.DayRange(from, to, s.today(loc))
 	if err != nil {
 		return FunnelResult{}, err
 	}
@@ -49,7 +53,11 @@ func (s *Service) GetOutreachStats(ctx context.Context, from, to string, by doma
 	if err != nil {
 		return OutreachResult{}, err
 	}
-	start, end, err := domain.DayRange(from, to, s.today())
+	loc, err := s.ownerLocation(ctx, owner)
+	if err != nil {
+		return OutreachResult{}, err
+	}
+	start, end, err := domain.DayRange(from, to, s.today(loc))
 	if err != nil {
 		return OutreachResult{}, err
 	}

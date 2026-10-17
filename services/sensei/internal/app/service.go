@@ -12,15 +12,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/services/sensei/internal/domain"
 	"github.com/0xHoaxen/shogun/services/sensei/internal/store"
 )
 
 const (
-	// istOffset is the offset of Asia/Kolkata, the zone days are counted in.
-	// India has no daylight saving time, so a fixed offset is exact.
-	istOffset = 5*time.Hour + 30*time.Minute
 	// RollupWindowDays is how many days back each rollup rebuilds, so a late
 	// event still lands while older days are left alone.
 	RollupWindowDays = 45
@@ -58,25 +56,55 @@ func (s *Service) RecordFact(ctx context.Context, tx pgx.Tx, f domain.Fact) erro
 	return nil
 }
 
-// today is the current date in the owner's zone, as midnight UTC, which is how
-// a date column reads back.
-func (s *Service) today() time.Time {
-	local := s.now().UTC().Add(istOffset)
+// today is the current date in loc, as midnight UTC, which is how a date column
+// reads back.
+func (s *Service) today(loc *time.Location) time.Time {
+	local := s.now().In(loc)
 	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
 }
 
-// Rollup rebuilds the daily rollups for the last RollupWindowDays days from the
-// facts, in one transaction. It is idempotent: the same facts always give the
-// same rollups.
-func (s *Service) Rollup(ctx context.Context) error {
-	from := s.today().AddDate(0, 0, -RollupWindowDays)
-	err := postgres.InTx(ctx, s.pool, func(tx pgx.Tx) error {
-		return store.New(tx).RebuildRollups(ctx, from)
+// ownerLocation is the zone the owner's days are counted in: their own once
+// torii has announced them, the default until then.
+func (s *Service) ownerLocation(ctx context.Context, owner uuid.UUID) (*time.Location, error) {
+	o, err := owners.Get(ctx, s.pool, owner)
+	if errors.Is(err, owners.ErrNotFound) {
+		return owners.Owner{Timezone: owners.DefaultTimezone}.Location(), nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("owner zone: %w", err)
+	}
+	return o.Location(), nil
+}
+
+// Rollup rebuilds one owner's daily rollups for the last RollupWindowDays days
+// from their facts, in one transaction, counting days in the owner's own time
+// zone. It is idempotent: the same facts always give the same rollups. An owner
+// torii has not announced yet is counted in the default zone, so no analytics
+// are lost; a deleted owner is skipped.
+func (s *Service) Rollup(ctx context.Context, owner uuid.UUID) error {
+	o, err := owners.Get(ctx, s.pool, owner)
+	switch {
+	case errors.Is(err, owners.ErrNotFound):
+		o = owners.Owner{ID: owner, Timezone: owners.DefaultTimezone}
+	case err != nil:
+		return fmt.Errorf("rollup: %w", err)
+	case o.Status == owners.StatusDeleted:
+		return nil
+	}
+	from := s.today(o.Location()).AddDate(0, 0, -RollupWindowDays)
+	err = postgres.InTx(ctx, s.pool, func(tx pgx.Tx) error {
+		return store.New(tx).RebuildRollups(ctx, owner, o.Timezone, from)
 	})
 	if err != nil {
 		return fmt.Errorf("rollup: %w", err)
 	}
 	return nil
+}
+
+// ActiveOwners lists the owners torii has told sensei about whose rollups may be
+// due.
+func (s *Service) ActiveOwners(ctx context.Context) ([]owners.Owner, error) {
+	return owners.ListActive(ctx, s.pool)
 }
 
 func ownerFrom(ctx context.Context) (uuid.UUID, error) {

@@ -10,22 +10,33 @@ import (
 	"github.com/0xHoaxen/shogun/services/sensei/internal/store/db"
 )
 
-// RebuildRollups replaces every rollup from fromDay on with what the facts add
-// up to. Build the Repo on a transaction so a failure leaves the old rollups.
-// Running it twice, or after a redelivered event, changes nothing.
-func (r *Repo) RebuildRollups(ctx context.Context, fromDay time.Time) error {
+// RebuildRollups replaces the owner's rollups from fromDay on with what their
+// facts add up to, counting days in timezone (an IANA name). Build the Repo on a
+// transaction so a failure leaves the old rollups. Running it twice, or after a
+// redelivered event, changes nothing, and no other owner's rollups are touched.
+func (r *Repo) RebuildRollups(ctx context.Context, owner uuid.UUID, timezone string, fromDay time.Time) error {
 	steps := []struct {
 		name string
-		run  func(context.Context, time.Time) error
+		run  func() error
 	}{
-		{"delete rollups", r.q.DeleteRollupsFrom},
-		{"roll up jobs added", r.q.RollupJobsAdded},
-		{"roll up job stages", r.q.RollupJobStages},
-		{"roll up contacts", r.q.RollupContacts},
-		{"roll up contact moves", r.q.RollupContactMoves},
+		{"delete rollups", func() error {
+			return r.q.DeleteRollupsFrom(ctx, db.DeleteRollupsFromParams{OwnerID: owner, FromDay: fromDay})
+		}},
+		{"roll up jobs added", func() error {
+			return r.q.RollupJobsAdded(ctx, db.RollupJobsAddedParams{OwnerID: owner, Tz: timezone, FromDay: fromDay})
+		}},
+		{"roll up job stages", func() error {
+			return r.q.RollupJobStages(ctx, db.RollupJobStagesParams{OwnerID: owner, Tz: timezone, FromDay: fromDay})
+		}},
+		{"roll up contacts", func() error {
+			return r.q.RollupContacts(ctx, db.RollupContactsParams{OwnerID: owner, Tz: timezone, FromDay: fromDay})
+		}},
+		{"roll up contact moves", func() error {
+			return r.q.RollupContactMoves(ctx, db.RollupContactMovesParams{OwnerID: owner, Tz: timezone, FromDay: fromDay})
+		}},
 	}
 	for _, step := range steps {
-		if err := step.run(ctx, fromDay); err != nil {
+		if err := step.run(); err != nil {
 			return wrap(step.name, err)
 		}
 	}
