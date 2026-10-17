@@ -16,6 +16,7 @@ const ROUTES: Record<keyof typeof SECTIONS, string> = {
   insights: "/insights",
   notifications: "/notifications",
   settings: "/settings",
+  provider: "/settings/provider",
   mail: "/settings/mail",
   spend: "/settings/spend",
   alerts: "/settings/notifications",

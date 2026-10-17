@@ -13,6 +13,7 @@ import { learningItemsKey } from "@/components/learning/learning-key";
 import { LogActivityDialog } from "@/components/learning/log-activity-dialog";
 import { PostDialog } from "@/components/learning/post-dialog";
 import { useLearningClient } from "@/components/learning/use-learning-client";
+import { AiProviderNotice } from "@/components/provider/ai-provider-notice";
 import { PageHeader } from "@/components/shell/page-header";
 import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ export function LearningScreen() {
         </Button>
         <Button onClick={() => setLogging(true)}>Log activity</Button>
       </PageHeader>
+      <AiProviderNotice />
 
       <div role="group" aria-label="Filter by status" className="flex flex-wrap border-b border-ink p-[22px] pb-[23px]">
         {STATUS_FILTERS.map((filter) => (

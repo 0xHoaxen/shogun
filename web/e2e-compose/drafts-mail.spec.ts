@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { addProvider } from "./provider";
+
 const OWNER_EMAIL = process.env.TORII_E2E_EMAIL ?? "owner@example.com";
 const STUB = process.env.MOCK_APIS_URL ?? "http://127.0.0.1:8091";
 const RECIPIENT = "jobs@lumen.example";
@@ -36,6 +38,9 @@ test("connect Gmail, write a draft, regenerate and edit it, approve it, and exac
   await page.goto("/login");
   await page.getByRole("link", { name: "Sign in with Google" }).click();
   await expect(page.getByTestId("owner-email")).toHaveText(OWNER_EMAIL);
+
+  // The AI provider is each user's own; without one no draft is written.
+  await addProvider(page);
 
   // Act and assert: connect Gmail.
   await grantGmailAccess(page);

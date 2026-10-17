@@ -58,10 +58,16 @@ export const SECTIONS = {
     does: "It lists reminders and events such as follow-ups that are due, drafts waiting for approval, new mail Shogun classified as job-related, and budget warnings. A daily digest summarises the day.",
     helps: "Important things reach you in one place, so a recruiter's reply or an expiring follow-up does not get buried.",
   },
+  provider: {
+    id: "provider",
+    role: "AI provider is where you give Shogun the AI it works with, so every call is made with your own provider and your own key.",
+    does: "You enter the address of an Anthropic-compatible provider, the model, and your API key. Shogun stores the key encrypted and never shows it again. It uses that provider for your drafts, for sorting your job mail, for profile suggestions and for scoring discovered jobs. You can set prices for a model Shogun has no price for, and a monthly token limit. Test connection makes one tiny call to check it works.",
+    helps: "Nobody else's usage or bill is mixed with yours, and you choose the model and the cost. Until you add a provider, the AI features stay off and everything else keeps working.",
+  },
   settings: {
     id: "settings",
     role: "Settings holds the keys and connections that belong to you alone.",
-    does: "Here you connect the accounts Shogun works with, such as Gmail, see and limit what your AI calls cost, and choose how Shogun reaches you. Keys and tokens are stored encrypted and used only for your account.",
+    does: "Here you add your AI provider, connect the accounts Shogun works with, such as Gmail, see and limit what your AI calls cost, and choose how Shogun reaches you. Keys and tokens are stored encrypted and used only for your account.",
     helps: "You decide what Shogun can reach and spend. Features that need a connection stay off until you set it up, so nothing happens that you did not choose.",
   },
   mail: {

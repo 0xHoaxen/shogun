@@ -9,6 +9,7 @@ import { STATE_FILTERS, suggestionStateLabel } from "@/components/profile/labels
 import { suggestionsKey } from "@/components/profile/profile-key";
 import { SuggestionCard } from "@/components/profile/suggestion-card";
 import { useProfileClient } from "@/components/profile/use-profile-client";
+import { AiProviderNotice } from "@/components/provider/ai-provider-notice";
 import { PageHeader } from "@/components/shell/page-header";
 import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ export function ProfileScreen() {
           Sync GitHub
         </Button>
       </PageHeader>
+      <AiProviderNotice />
 
       {sync.isError ? (
         <p role="alert" className="border-b border-ink p-[22px]">
