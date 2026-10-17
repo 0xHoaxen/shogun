@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,11 +19,11 @@ import (
 
 	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
 	"github.com/0xHoaxen/shogun/services/katana/internal/domain"
-	"github.com/0xHoaxen/shogun/services/katana/internal/store"
 	katanagrpc "github.com/0xHoaxen/shogun/services/katana/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/katana/migrations"
 )
@@ -37,7 +36,7 @@ type fakeGitHub struct {
 	etags []string
 }
 
-func (f *fakeGitHub) Fetch(_ context.Context, etag string) (domain.Snapshot, error) {
+func (f *fakeGitHub) Fetch(_ context.Context, _ domain.Credentials, etag string) (domain.Snapshot, error) {
 	f.etags = append(f.etags, etag)
 	return f.snap, f.err
 }
@@ -71,14 +70,17 @@ func newHarness(t *testing.T, configured bool) *harness {
 		source = gh
 	}
 	owner := uuid.NewString()
-	// The harness owner is the one the shared GitHub account belongs to: they have synced before.
-	if _, err := store.New(pool).InsertSnapshot(ctx, store.NewSnapshot{
-		ID: store.NewID(), OwnerID: uuid.MustParse(owner), TakenAt: time.Now().Add(-time.Hour), Repos: []byte(`[]`), Contributions: []byte(`{}`),
-	}); err != nil {
-		t.Fatalf("seed snapshot: %v", err)
+	keys, err := envelope.NewKeyring("k", map[string][]byte{"k": bytes.Repeat([]byte("k"), envelope.KeySize)})
+	if err != nil {
+		t.Fatalf("keyring: %v", err)
+	}
+	service := app.NewService(pool, source, nil, app.WithKeyring(keys))
+	// The harness owner has connected a GitHub account of their own.
+	if _, err := service.SaveGitHubAccount(authz.WithIdentity(ctx, authz.Identity{OwnerID: owner}), "octo", "ghp_harness-token-1"); err != nil {
+		t.Fatalf("connect github: %v", err)
 	}
 	srv := grpc.NewServer(grpc.UnaryInterceptor(authority.UnaryServerInterceptor()))
-	katanav1.RegisterKatanaServiceServer(srv, katanagrpc.New(app.NewService(pool, source, nil)))
+	katanav1.RegisterKatanaServiceServer(srv, katanagrpc.New(service))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)

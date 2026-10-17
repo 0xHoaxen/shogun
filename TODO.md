@@ -845,9 +845,17 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Found while chasing the e2e flake: torii limited requests per remote address, and behind the web app's proxy that is one address for every browser, so with many users they would all share one bucket of 20 requests a second. Now each signed-in user has their own bucket (`TORII_RATE_LIMIT`/`TORII_RATE_BURST`, applied in the session interceptor after authentication, answer `RATE_LIMITED`), and the per-address limit is only a flood guard far above it (`TORII_IP_RATE_LIMIT`/`TORII_IP_RATE_BURST`, default 500 and 1000). Requests with no valid session spend nobody's limit. The web app shows no special text for `RATE_LIMITED` yet.
   Done when: `cd services/torii && go test -race ./...`.
 
-- [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4a, P11.10
-  Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.
-  Done when: `cd services/katana && go test -race ./...`.
+- [x] **P11.6a Per-user GitHub token storage** (M) Needs: P11.4a, P11.10
+  Do: `github_accounts` (migration `00004`): one row per user, the token sealed with `pkg/envelope` and bound to the owner so a copied row will not open. `Fetch` now takes the credentials of the owner it reads (`domain.Credentials`) and the client holds none; the daily and manual sync read each owner with their own login and token, and only owners who have connected are synced. Added `SaveGitHubAccount`, `GitHubAccount` and `DisconnectGitHub` to the app layer. Removed `KATANA_GITHUB_USER` and `KATANA_GITHUB_TOKEN` from the code, `.env.example`, compose, the seal script and the sealed example; katana now needs `KATANA_SECRET_MASTER_KEY` (and `KATANA_SECRET_KEY_ID`) at startup. Replaces the interim "only the owner who synced before" rule from P11.4d. Reseal staging: `katana.yaml` has neither the new key nor a use for the old ones. No way to connect yet: that is P11.6b.
+  Done when: `cd services/katana && go test -race ./...`, `scripts/seal-secrets_test.sh`, `make lint`, `make test`.
+
+- [ ] **P11.6b GitHub OAuth connect flow** (M) Needs: P11.6a
+  Do: katana `ConnectGitHub` (sealed, expiring `state` bound to the owner, like tsubame's) and `CompleteGitHubConnect` (exchange the code with the GitHub OAuth app, read the login, save) and `DisconnectGitHub`/`GetGitHubAccount` RPCs; `KATANA_GITHUB_CLIENT_ID`, `KATANA_GITHUB_CLIENT_SECRET`, `KATANA_GITHUB_REDIRECT_URL` (the OAuth app, not a user credential); no scope is requested, so only public data is readable. TODO(owner): create the GitHub OAuth app and set its callback to `<TORII_PUBLIC_URL>/settings/github/callback`.
+  Done when: `make proto`, `cd services/katana && go test -race ./...`.
+
+- [ ] **P11.6c GitHub connect in torii and the web app** (M) Needs: P11.6b
+  Do: torii `ProfileService` gets connect, complete, disconnect and status; Settings > GitHub tab and callback page (like Gmail's); the Profile page's "not connected" text links to it; copy in `sections.ts`.
+  Done when: `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [x] **P11.7 Owner-scoping audit** (M) Needs: P11.2
   Do: audited every sqlc query without `owner_id`; each is now annotated `-- owner-scope: child|internal|global <why>` and `scripts/check-owner-scope.sh` (tested by `scripts/check-owner-scope_test.sh`, wired into `make lint` and `make deploy-test`) fails any new query that has neither. Removed shinobi's unused `GetPostingByID`, which returned a posting whatever its owner. Added cross-owner tests for sensei rollups and taiko notifications; kagami, fude, tsubame, dojo, katana, shinobi and soroban already had them. Moved ahead of P11.4 because open sign-up (P11.2) made cross-tenant reads reachable.

@@ -58,3 +58,10 @@ type Snapshot struct {
 	// ETag validates Repos on the next read.
 	ETag string
 }
+
+// Credentials is whose GitHub activity to read: the login to look up and the
+// token to read it with. The token is a secret and is never logged.
+type Credentials struct {
+	Login string
+	Token string
+}
