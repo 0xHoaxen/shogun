@@ -21,6 +21,7 @@ RETURNING *;
 SELECT * FROM sources WHERE enabled ORDER BY owner_id, id;
 
 -- name: MarkSourceRun :exec
+-- owner-scope: child source already loaded with the owner by RunSourceFor
 UPDATE sources SET last_run_at = @last_run_at, last_error = @last_error
 WHERE id = @id;
 

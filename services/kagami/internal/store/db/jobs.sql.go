@@ -276,6 +276,7 @@ type InsertJobEventParams struct {
 	OccurredAt    time.Time
 }
 
+// owner-scope: child job already loaded with the owner
 func (q *Queries) InsertJobEvent(ctx context.Context, arg InsertJobEventParams) (JobEvent, error) {
 	row := q.db.QueryRow(ctx, insertJobEvent,
 		arg.ID,
@@ -309,6 +310,7 @@ ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
 LIMIT 1
 `
 
+// owner-scope: child job already loaded with the owner
 // When the job's status last changed, as an event time: a change made from
 // mail carries the time of the mail event in its payload; any other change is
 // anchored at the moment it was made. A mail event that occurred before this
@@ -376,6 +378,7 @@ const listJobEvents = `-- name: ListJobEvents :many
 SELECT id, job_id, kind, from_status, to_status, source_event_id, payload, occurred_at FROM job_events WHERE job_id = $1 ORDER BY occurred_at DESC, id DESC
 `
 
+// owner-scope: child only after GetJob(owner, id)
 func (q *Queries) ListJobEvents(ctx context.Context, jobID uuid.UUID) ([]JobEvent, error) {
 	rows, err := q.db.Query(ctx, listJobEvents, jobID)
 	if err != nil {
@@ -582,6 +585,7 @@ type MarkJobFollowUpParams struct {
 	ID           uuid.UUID
 }
 
+// owner-scope: internal stale-application scan; the job comes from the scan's own listing
 // Plans a follow-up for a job that has none. Returns no row when one is set.
 func (q *Queries) MarkJobFollowUp(ctx context.Context, arg MarkJobFollowUpParams) (Job, error) {
 	row := q.db.QueryRow(ctx, markJobFollowUp, arg.NextFollowUp, arg.ID)

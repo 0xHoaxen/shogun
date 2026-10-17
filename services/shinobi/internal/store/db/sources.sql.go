@@ -186,6 +186,7 @@ type MarkSourceRunParams struct {
 	ID        uuid.UUID
 }
 
+// owner-scope: child source already loaded with the owner by RunSourceFor
 func (q *Queries) MarkSourceRun(ctx context.Context, arg MarkSourceRunParams) error {
 	_, err := q.db.Exec(ctx, markSourceRun, arg.LastRunAt, arg.LastError, arg.ID)
 	return err

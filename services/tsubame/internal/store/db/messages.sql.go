@@ -159,6 +159,7 @@ type ThreadHasOutboundParams struct {
 	ThreadID  *string
 }
 
+// owner-scope: child scoped by account_id of an account the job already holds
 // Whether the owner sent anything in the thread, which makes mail in it a
 // reply.
 func (q *Queries) ThreadHasOutbound(ctx context.Context, arg ThreadHasOutboundParams) (bool, error) {
@@ -187,6 +188,7 @@ type ThreadLinksRow struct {
 	LinkedContactID *uuid.UUID
 }
 
+// owner-scope: child scoped by account_id of an account the job already holds
 // The job and contact an earlier message of the thread was linked to.
 func (q *Queries) ThreadLinks(ctx context.Context, arg ThreadLinksParams) (ThreadLinksRow, error) {
 	row := q.db.QueryRow(ctx, threadLinks, arg.AccountID, arg.ThreadID, arg.ID)

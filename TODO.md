@@ -812,8 +812,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.
   Done when: `cd services/katana && go test -race ./...`.
 
-- [ ] **P11.7 Owner-scoping audit** (M) Needs: P11.4
-  Do: fix queries missing `owner_id`; cross-tenant store test per service; `scripts/check-owner-scope.sh` in `make lint`.
+- [x] **P11.7 Owner-scoping audit** (M) Needs: P11.2
+  Do: audited every sqlc query without `owner_id`; each is now annotated `-- owner-scope: child|internal|global <why>` and `scripts/check-owner-scope.sh` (tested by `scripts/check-owner-scope_test.sh`, wired into `make lint` and `make deploy-test`) fails any new query that has neither. Removed shinobi's unused `GetPostingByID`, which returned a posting whatever its owner. Added cross-owner tests for sensei rollups and taiko notifications; kagami, fude, tsubame, dojo, katana, shinobi and soroban already had them. Moved ahead of P11.4 because open sign-up (P11.2) made cross-tenant reads reachable.
   Done when: `make lint` and `make test`.
 
 - [ ] **P11.8 Account settings** (M) Needs: P11.10, P11.4

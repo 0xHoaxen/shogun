@@ -9,13 +9,16 @@ INSERT INTO sends (
 RETURNING *;
 
 -- name: MarkSendSent :execrows
+-- owner-scope: child send row loaded by the send or reconcile job
 UPDATE sends SET status = 'sent', provider_message_id = @provider_message_id, sent_at = @sent_at, error = NULL
 WHERE id = @id AND status = 'sending';
 
 -- name: MarkSendFailed :execrows
+-- owner-scope: child send row loaded by the send or reconcile job
 UPDATE sends SET status = 'failed', error = @error
 WHERE id = @id AND status = 'sending';
 
 -- name: ListOpenSends :many
+-- owner-scope: internal reconcile job across all owners
 -- Sends that were started and never finished, oldest first.
 SELECT * FROM sends WHERE status = 'sending' AND created_at <= @started_before ORDER BY created_at, id LIMIT @row_limit;

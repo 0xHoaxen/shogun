@@ -21,6 +21,7 @@ type AddReservedParams struct {
 	ID    uuid.UUID
 }
 
+// owner-scope: child budget period of a budget matched with the owner
 func (q *Queries) AddReserved(ctx context.Context, arg AddReservedParams) error {
 	_, err := q.db.Exec(ctx, addReserved, arg.Delta, arg.ID)
 	return err
@@ -39,6 +40,7 @@ type InsertPeriodIfAbsentParams struct {
 	PeriodEnd   time.Time
 }
 
+// owner-scope: child budget period of a budget matched with the owner
 func (q *Queries) InsertPeriodIfAbsent(ctx context.Context, arg InsertPeriodIfAbsentParams) error {
 	_, err := q.db.Exec(ctx, insertPeriodIfAbsent,
 		arg.ID,
@@ -99,6 +101,7 @@ type LockPeriodParams struct {
 	PeriodStart time.Time
 }
 
+// owner-scope: child budget period of a budget matched with the owner
 func (q *Queries) LockPeriod(ctx context.Context, arg LockPeriodParams) (BudgetPeriod, error) {
 	row := q.db.QueryRow(ctx, lockPeriod, arg.BudgetID, arg.PeriodStart)
 	var i BudgetPeriod
@@ -118,6 +121,7 @@ const lockPeriodsByID = `-- name: LockPeriodsByID :many
 SELECT id, budget_id, period_start, period_end, spent_micros, reserved_micros, notified_thresholds FROM budget_periods WHERE id = ANY ($1::uuid[]) ORDER BY budget_id FOR UPDATE
 `
 
+// owner-scope: child period ids come from a reservation locked with the owner
 // Ordered by budget id, the order Reserve locks in, so the two cannot deadlock.
 func (q *Queries) LockPeriodsByID(ctx context.Context, ids []uuid.UUID) ([]BudgetPeriod, error) {
 	rows, err := q.db.Query(ctx, lockPeriodsByID, ids)
@@ -158,6 +162,7 @@ type MarkThresholdNotifiedParams struct {
 	ID        uuid.UUID
 }
 
+// owner-scope: child budget period of a budget matched with the owner
 func (q *Queries) MarkThresholdNotified(ctx context.Context, arg MarkThresholdNotifiedParams) error {
 	_, err := q.db.Exec(ctx, markThresholdNotified, arg.Threshold, arg.ID)
 	return err
@@ -176,6 +181,7 @@ type SettlePeriodParams struct {
 	ID            uuid.UUID
 }
 
+// owner-scope: child period ids come from a reservation locked with the owner
 func (q *Queries) SettlePeriod(ctx context.Context, arg SettlePeriodParams) error {
 	_, err := q.db.Exec(ctx, settlePeriod, arg.ReleaseMicros, arg.SpendMicros, arg.ID)
 	return err

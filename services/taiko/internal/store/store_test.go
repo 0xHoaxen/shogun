@@ -300,3 +300,30 @@ func titles(pages ...[]db.Notification) []string {
 	}
 	return out
 }
+
+func TestListGetAndCountOnlyShowTheOwnersNotifications(t *testing.T) {
+	// Arrange
+	repo, _ := newRepo(t)
+	ctx := context.Background()
+	owner, other := store.NewID(), store.NewID()
+	mine := add(t, repo, owner, "mine", 0)
+	theirs := add(t, repo, other, "theirs", 1)
+	add(t, repo, other, "theirs too", 2)
+
+	// Act
+	listed, _, listErr := repo.List(ctx, owner, false, store.Page{Size: 10})
+	_, getErr := repo.Get(ctx, owner, theirs.ID)
+	count, countErr := repo.CountUnread(ctx, owner)
+	replay, replayErr := repo.ListAfter(ctx, owner, uuid.Nil, 10)
+
+	// Assert
+	if listErr != nil || countErr != nil || replayErr != nil {
+		t.Fatalf("list %v, count %v, replay %v", listErr, countErr, replayErr)
+	}
+	if len(listed) != 1 || listed[0].ID != mine.ID || count != 1 || len(replay) != 1 || replay[0].ID != mine.ID {
+		t.Fatalf("listed %d, unread %d, replayed %d, want only the owner's one notification", len(listed), count, len(replay))
+	}
+	if !errors.Is(getErr, store.ErrNotFound) {
+		t.Fatalf("Get of another owner's notification = %v, want ErrNotFound", getErr)
+	}
+}

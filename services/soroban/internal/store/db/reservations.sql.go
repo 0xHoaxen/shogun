@@ -70,6 +70,7 @@ type ListExpiredReservationIDsParams struct {
 	BatchSize int32
 }
 
+// owner-scope: internal expiry sweep across all owners
 func (q *Queries) ListExpiredReservationIDs(ctx context.Context, arg ListExpiredReservationIDsParams) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, listExpiredReservationIDs, arg.Now, arg.BatchSize)
 	if err != nil {
@@ -121,6 +122,7 @@ const lockReservationByID = `-- name: LockReservationByID :one
 SELECT id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at FROM reservations WHERE id = $1 FOR UPDATE
 `
 
+// owner-scope: internal expiry sweep; the id comes from ListExpiredReservationIDs
 // For the sweeper, which acts for no owner.
 func (q *Queries) LockReservationByID(ctx context.Context, id uuid.UUID) (Reservation, error) {
 	row := q.db.QueryRow(ctx, lockReservationByID, id)
@@ -149,6 +151,7 @@ type SetReservationStatusParams struct {
 	ID     uuid.UUID
 }
 
+// owner-scope: child reservation already locked with the owner
 func (q *Queries) SetReservationStatus(ctx context.Context, arg SetReservationStatusParams) error {
 	_, err := q.db.Exec(ctx, setReservationStatus, arg.Status, arg.ID)
 	return err

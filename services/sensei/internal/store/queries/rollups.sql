@@ -1,4 +1,5 @@
 -- name: DeleteRollupsFrom :exec
+-- owner-scope: internal rebuilds every owner's rollups in one transaction, then recomputes them all
 DELETE FROM daily_rollups WHERE day >= @from_day;
 
 -- name: RollupJobsAdded :exec
