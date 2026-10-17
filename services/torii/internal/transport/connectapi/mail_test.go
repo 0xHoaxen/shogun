@@ -41,6 +41,13 @@ func (f *fakeTsubame) CompleteConnect(_ context.Context, in *tsubamev1.CompleteC
 
 func newMailHarness(t *testing.T) (*fakeTsubame, apiv1connect.MailServiceClient, string) {
 	t.Helper()
+	return newMailHarnessFor(t, ownerEmail)
+}
+
+// newMailHarnessFor signs in the given email. ownerEmail is an admin, so it is
+// approved for Gmail; any other email is a member who is not.
+func newMailHarnessFor(t *testing.T, email string) (*fakeTsubame, apiv1connect.MailServiceClient, string) {
+	t.Helper()
 	now := time.Date(2026, 10, 6, 9, 0, 0, 0, time.UTC)
 	auth, err := app.NewAuth(apptest.NewMemSessions(), apptest.NewMemUsers(),
 		app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
@@ -48,7 +55,7 @@ func newMailHarness(t *testing.T) (*fakeTsubame, apiv1connect.MailServiceClient,
 	if err != nil {
 		t.Fatalf("NewAuth: %v", err)
 	}
-	token, _, err := auth.StartSession(context.Background(), app.Claims{Subject: "sub-1", Email: ownerEmail, EmailVerified: true})
+	token, _, err := auth.StartSession(context.Background(), app.Claims{Subject: "sub-1", Email: email, EmailVerified: true})
 	if err != nil {
 		t.Fatalf("StartSession: %v", err)
 	}
@@ -119,5 +126,27 @@ func TestMailCallsRequireASessionAndHideInternals(t *testing.T) {
 	}
 	if code, _ := codeAndReason(t, internal); code != connect.CodeInternal || strings.Contains(internal.Error(), "secret internals") {
 		t.Fatalf("got %v", internal)
+	}
+}
+
+func TestGmailConnectNeedsAdminApproval(t *testing.T) {
+	fake, client, token := newMailHarnessFor(t, "member@example.com")
+	fake.connect = func(*tsubamev1.ConnectAccountRequest) (*tsubamev1.ConnectAccountResponse, error) {
+		t.Error("tsubame was called for a user an admin has not approved")
+		return &tsubamev1.ConnectAccountResponse{}, nil
+	}
+	fake.complete = func(*tsubamev1.CompleteConnectRequest) (*tsubamev1.CompleteConnectResponse, error) {
+		t.Error("tsubame was called for a user an admin has not approved")
+		return &tsubamev1.CompleteConnectResponse{}, nil
+	}
+	ctx := context.Background()
+
+	_, connectErr := client.ConnectAccount(ctx, withCookie(connect.NewRequest(&apiv1.ConnectAccountRequest{}), token))
+	_, completeErr := client.CompleteConnect(ctx, withCookie(connect.NewRequest(&apiv1.CompleteConnectRequest{Code: "c", State: "s"}), token))
+
+	for name, err := range map[string]error{"ConnectAccount": connectErr, "CompleteConnect": completeErr} {
+		if connect.CodeOf(err) != connect.CodeFailedPrecondition || reasonOf(err) != "GMAIL_NOT_APPROVED" {
+			t.Errorf("%s: code %v reason %q, want FailedPrecondition GMAIL_NOT_APPROVED", name, connect.CodeOf(err), reasonOf(err))
+		}
 	}
 }

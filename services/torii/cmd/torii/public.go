@@ -174,6 +174,7 @@ func newPublicServer(
 	mux := http.NewServeMux()
 	mux.Handle("/auth/", httpmw.LimitBody(int64(s.MaxBodyBytes))(login.Routes()))
 	mux.Handle(apiv1connect.NewAuthServiceHandler(connectapi.NewAuthServer(auth, secure, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewAdminServiceHandler(connectapi.NewAdminServer(store.NewUsers(pool), log), handlerOpts...))
 	mux.Handle(apiv1connect.NewJobsServiceHandler(connectapi.NewJobsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewContactsServiceHandler(connectapi.NewContactsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewCostsServiceHandler(connectapi.NewCostsServer(soroban, log), handlerOpts...))

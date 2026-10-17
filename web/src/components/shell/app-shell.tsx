@@ -20,6 +20,7 @@ interface NavItem {
   // The strip's section code and the rail's rotated name for the page.
   section: string;
   railLabel: string;
+  adminOnly?: boolean;
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
@@ -33,6 +34,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { href: "/settings/mail", label: "Mail", section: "S9 / Settings", railLabel: "MAIL ACCOUNT" },
   { href: "/settings/spend", label: "Spend", section: "S9 / Settings", railLabel: "SPEND LEDGER" },
   { href: "/settings/notifications", label: "Alerts", section: "S9 / Settings", railLabel: "NOTIFICATION SETTINGS" },
+  { href: "/settings/users", label: "Users", section: "S9 / Settings", railLabel: "USER ADMIN", adminOnly: true },
 ];
 
 // The bell is not a tab, but its page still names itself in the strip and rail.
@@ -83,6 +85,8 @@ export function AppShell({ children }: AppShellProps) {
     ? BELL_PAGE
     : NAV_ITEMS.find((item) => pathname.startsWith(item.href));
   const email = session.data.session?.email ?? "";
+  const isAdmin = session.data.session?.role === "admin";
+  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
 
   return (
     <div className="grid min-h-screen grid-cols-[104px_minmax(0,1fr)] border border-ink bg-paper max-[860px]:grid-cols-1">
@@ -93,7 +97,7 @@ export function AppShell({ children }: AppShellProps) {
           <span>Shogun / Systems for career</span>
         </div>
         <nav aria-label="Shogun" className="flex flex-wrap border-b border-ink">
-          {NAV_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const active = item === current;
             return (
               <Link

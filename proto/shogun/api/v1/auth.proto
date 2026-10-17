@@ -17,6 +17,10 @@ message Session {
   string email = 1;
   string display_name = 2;
   google.protobuf.Timestamp expires_at = 3;
+  // role is "admin" or "member".
+  string role = 4;
+  // gmail_allowed is whether an admin approved this user to connect Gmail.
+  bool gmail_allowed = 5;
 }
 
 message GetSessionRequest {}
