@@ -76,6 +76,12 @@ export const SECTIONS = {
     does: "After an admin approves your account for Gmail, you connect it with Google. Shogun then reads job-related mail, classifies it, links it to your jobs and contacts, and sends the drafts you approve. It never sends anything you have not approved.",
     helps: "Replies and rejections update your board for you, and approved messages go out from your own address without copying and pasting.",
   },
+  github: {
+    id: "github",
+    role: "GitHub is the connection between Shogun and your GitHub account.",
+    does: "You connect it with GitHub and Shogun asks for no permissions beyond your public profile, so it can read only what anyone can see and can never change anything. It then looks at your public repositories and merged work to suggest resume and LinkedIn edits. Your token is stored encrypted, used only for your account, and deleted when you disconnect.",
+    helps: "Your resume and LinkedIn keep up with what you have actually built, without you remembering to update them. Until you connect, Profile has nothing to sync and everything else keeps working.",
+  },
   spend: {
     id: "spend",
     role: "Spend is the meter for the AI calls made on your behalf.",

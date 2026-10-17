@@ -18,6 +18,7 @@ const ROUTES: Record<keyof typeof SECTIONS, string> = {
   settings: "/settings",
   provider: "/settings/provider",
   mail: "/settings/mail",
+  github: "/settings/github",
   spend: "/settings/spend",
   alerts: "/settings/notifications",
   users: "/settings/users",

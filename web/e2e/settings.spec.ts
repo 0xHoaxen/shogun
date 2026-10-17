@@ -47,7 +47,7 @@ test("the Settings button opens the hub with the tabs a member may use", async (
   await expect(page).toHaveURL(/\/settings$/);
   await expect(page.getByRole("heading", { name: "Your keys and connections." })).toBeVisible();
   const tabs = page.getByRole("navigation", { name: "Settings" });
-  await expect(tabs.getByRole("link")).toHaveText(["AI provider", "Mail", "Spend", "Alerts"]);
+  await expect(tabs.getByRole("link")).toHaveText(["AI provider", "Mail", "GitHub", "Spend", "Alerts"]);
   await expect(page.getByRole("contentinfo", { name: "Utility" }).getByRole("link", { name: "Settings" })).toHaveAttribute(
     "aria-current",
     "page",
@@ -65,6 +65,7 @@ test("an admin also gets the Users tab", async ({ page }) => {
   await expect(page.getByRole("navigation", { name: "Settings" }).getByRole("link")).toHaveText([
     "AI provider",
     "Mail",
+    "GitHub",
     "Spend",
     "Alerts",
     "Users",

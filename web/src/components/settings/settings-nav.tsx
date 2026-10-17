@@ -15,8 +15,7 @@ export interface SettingsTab {
   adminOnly?: boolean;
 }
 
-// The Settings tabs, in order. The GitHub and Account tabs are added by their
-// own tasks.
+// The Settings tabs, in order. The Account tab is added by its own task.
 export const SETTINGS_TABS: readonly SettingsTab[] = [
   {
     href: "/settings/provider",
@@ -27,6 +26,11 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
     href: "/settings/mail",
     label: "Mail",
     summary: "Connect the Gmail account Shogun reads for job mail and sends approved drafts from.",
+  },
+  {
+    href: "/settings/github",
+    label: "GitHub",
+    summary: "Connect GitHub so Shogun can suggest resume and LinkedIn edits from your public work.",
   },
   {
     href: "/settings/spend",

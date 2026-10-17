@@ -854,8 +854,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Also: the state is sealed with `pkg/envelope`, expires in 10 minutes and is refused for any other owner before GitHub is called. All three settings are required in production; with none set elsewhere, connecting answers `GITHUB_NOT_CONFIGURED`. Added to `.env.example`, compose and the seal script. Reseal staging `katana.yaml` once the OAuth app exists.
   Done when: `make proto`, `cd services/katana && go test -race ./...`.
 
-- [ ] **P11.6c GitHub connect in torii and the web app** (M) Needs: P11.6b
-  Do: torii `ProfileService` gets connect, complete, disconnect and status; Settings > GitHub tab and callback page (like Gmail's); the Profile page's "not connected" text links to it; copy in `sections.ts`.
+- [x] **P11.6c GitHub connect in torii and the web app** (M) Needs: P11.6b
+  Done: torii `ProfileService` gets connect, complete, disconnect and status; Settings > GitHub tab and callback page (like Gmail's); the Profile page's "not connected" text links to it; copy in `sections.ts`. The callback is `/settings/github/callback`; the Profile sync error links to Settings when GitHub is not connected or was refused. The real-stack compose suite has no GitHub OAuth stub yet, so connecting is covered by the mocked specs only.
   Done when: `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [x] **P11.7 Owner-scoping audit** (M) Needs: P11.2

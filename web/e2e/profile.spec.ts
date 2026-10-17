@@ -139,7 +139,7 @@ test("a sync that cannot run says what is missing", async ({ page }) => {
 
   await page.getByRole("button", { name: "Sync GitHub" }).click();
 
-  await expect(page.locator("p[role=alert]")).toContainText("GitHub sync is not set up");
+  await expect(page.locator("p[role=alert]")).toContainText("Connecting GitHub is not set up");
 });
 
 test("a user who has not connected GitHub is told so instead of seeing anyone else's repositories", async ({ page }) => {

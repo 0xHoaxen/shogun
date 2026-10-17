@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/profile.proto.
  */
 export const file_shogun_api_v1_profile: GenFile = /*@__PURE__*/
-  fileDesc("ChtzaG9ndW4vYXBpL3YxL3Byb2ZpbGUucHJvdG8SDXNob2d1bi5hcGkudjEiMAoSU3VnZ2VzdGlvbkV2aWRlbmNlEg0KBWxhYmVsGAEgASgJEgsKA3VybBgCIAEoCSLUAgoRUHJvZmlsZVN1Z2dlc3Rpb24SCgoCaWQYASABKAkSLwoGdGFyZ2V0GAIgASgOMh8uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uVGFyZ2V0Eg8KB3NlY3Rpb24YAyABKAkSDgoGYmVmb3JlGAQgASgJEg0KBWFmdGVyGAUgASgJEg4KBnJlYXNvbhgGIAEoCRIzCghldmlkZW5jZRgHIAMoCzIhLnNob2d1bi5hcGkudjEuU3VnZ2VzdGlvbkV2aWRlbmNlEi0KBXN0YXRlGAggASgOMh4uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uU3RhdGUSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZGVjaWRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiEwoRU3luY0dpdEh1YlJlcXVlc3QiJQoSU3luY0dpdEh1YlJlc3BvbnNlEg8KB2NoYW5nZWQYASABKAgipgEKHUxpc3RQcm9maWxlU3VnZ2VzdGlvbnNSZXF1ZXN0Ei0KBXN0YXRlGAEgASgOMh4uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uU3RhdGUSLwoGdGFyZ2V0GAIgASgOMh8uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uVGFyZ2V0EhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJInAKHkxpc3RQcm9maWxlU3VnZ2VzdGlvbnNSZXNwb25zZRI1CgtzdWdnZXN0aW9ucxgBIAMoCzIgLnNob2d1bi5hcGkudjEuUHJvZmlsZVN1Z2dlc3Rpb24SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIiwKHkFjY2VwdFByb2ZpbGVTdWdnZXN0aW9uUmVxdWVzdBIKCgJpZBgBIAEoCSJXCh9BY2NlcHRQcm9maWxlU3VnZ2VzdGlvblJlc3BvbnNlEjQKCnN1Z2dlc3Rpb24YASABKAsyIC5zaG9ndW4uYXBpLnYxLlByb2ZpbGVTdWdnZXN0aW9uIi0KH0Rpc21pc3NQcm9maWxlU3VnZ2VzdGlvblJlcXVlc3QSCgoCaWQYASABKAkiWAogRGlzbWlzc1Byb2ZpbGVTdWdnZXN0aW9uUmVzcG9uc2USNAoKc3VnZ2VzdGlvbhgBIAEoCzIgLnNob2d1bi5hcGkudjEuUHJvZmlsZVN1Z2dlc3Rpb24qcwoQU3VnZ2VzdGlvblRhcmdldBIhCh1TVUdHRVNUSU9OX1RBUkdFVF9VTlNQRUNJRklFRBAAEhwKGFNVR0dFU1RJT05fVEFSR0VUX1JFU1VNRRABEh4KGlNVR0dFU1RJT05fVEFSR0VUX0xJTktFRElOEAIqjQEKD1N1Z2dlc3Rpb25TdGF0ZRIgChxTVUdHRVNUSU9OX1NUQVRFX1VOU1BFQ0lGSUVEEAASGQoVU1VHR0VTVElPTl9TVEFURV9PUEVOEAESHQoZU1VHR0VTVElPTl9TVEFURV9BQ0NFUFRFRBACEh4KGlNVR0dFU1RJT05fU1RBVEVfRElTTUlTU0VEEAMy0QMKDlByb2ZpbGVTZXJ2aWNlElEKClN5bmNHaXRIdWISIC5zaG9ndW4uYXBpLnYxLlN5bmNHaXRIdWJSZXF1ZXN0GiEuc2hvZ3VuLmFwaS52MS5TeW5jR2l0SHViUmVzcG9uc2USdQoWTGlzdFByb2ZpbGVTdWdnZXN0aW9ucxIsLnNob2d1bi5hcGkudjEuTGlzdFByb2ZpbGVTdWdnZXN0aW9uc1JlcXVlc3QaLS5zaG9ndW4uYXBpLnYxLkxpc3RQcm9maWxlU3VnZ2VzdGlvbnNSZXNwb25zZRJ4ChdBY2NlcHRQcm9maWxlU3VnZ2VzdGlvbhItLnNob2d1bi5hcGkudjEuQWNjZXB0UHJvZmlsZVN1Z2dlc3Rpb25SZXF1ZXN0Gi4uc2hvZ3VuLmFwaS52MS5BY2NlcHRQcm9maWxlU3VnZ2VzdGlvblJlc3BvbnNlEnsKGERpc21pc3NQcm9maWxlU3VnZ2VzdGlvbhIuLnNob2d1bi5hcGkudjEuRGlzbWlzc1Byb2ZpbGVTdWdnZXN0aW9uUmVxdWVzdBovLnNob2d1bi5hcGkudjEuRGlzbWlzc1Byb2ZpbGVTdWdnZXN0aW9uUmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChtzaG9ndW4vYXBpL3YxL3Byb2ZpbGUucHJvdG8SDXNob2d1bi5hcGkudjEiMAoSU3VnZ2VzdGlvbkV2aWRlbmNlEg0KBWxhYmVsGAEgASgJEgsKA3VybBgCIAEoCSLUAgoRUHJvZmlsZVN1Z2dlc3Rpb24SCgoCaWQYASABKAkSLwoGdGFyZ2V0GAIgASgOMh8uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uVGFyZ2V0Eg8KB3NlY3Rpb24YAyABKAkSDgoGYmVmb3JlGAQgASgJEg0KBWFmdGVyGAUgASgJEg4KBnJlYXNvbhgGIAEoCRIzCghldmlkZW5jZRgHIAMoCzIhLnNob2d1bi5hcGkudjEuU3VnZ2VzdGlvbkV2aWRlbmNlEi0KBXN0YXRlGAggASgOMh4uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uU3RhdGUSLgoKY3JlYXRlZF9hdBgJIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLgoKZGVjaWRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiEwoRU3luY0dpdEh1YlJlcXVlc3QiJQoSU3luY0dpdEh1YlJlc3BvbnNlEg8KB2NoYW5nZWQYASABKAgipgEKHUxpc3RQcm9maWxlU3VnZ2VzdGlvbnNSZXF1ZXN0Ei0KBXN0YXRlGAEgASgOMh4uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uU3RhdGUSLwoGdGFyZ2V0GAIgASgOMh8uc2hvZ3VuLmFwaS52MS5TdWdnZXN0aW9uVGFyZ2V0EhEKCXBhZ2Vfc2l6ZRgDIAEoBRISCgpwYWdlX3Rva2VuGAQgASgJInAKHkxpc3RQcm9maWxlU3VnZ2VzdGlvbnNSZXNwb25zZRI1CgtzdWdnZXN0aW9ucxgBIAMoCzIgLnNob2d1bi5hcGkudjEuUHJvZmlsZVN1Z2dlc3Rpb24SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIiwKHkFjY2VwdFByb2ZpbGVTdWdnZXN0aW9uUmVxdWVzdBIKCgJpZBgBIAEoCSJXCh9BY2NlcHRQcm9maWxlU3VnZ2VzdGlvblJlc3BvbnNlEjQKCnN1Z2dlc3Rpb24YASABKAsyIC5zaG9ndW4uYXBpLnYxLlByb2ZpbGVTdWdnZXN0aW9uIi0KH0Rpc21pc3NQcm9maWxlU3VnZ2VzdGlvblJlcXVlc3QSCgoCaWQYASABKAkiWAogRGlzbWlzc1Byb2ZpbGVTdWdnZXN0aW9uUmVzcG9uc2USNAoKc3VnZ2VzdGlvbhgBIAEoCzIgLnNob2d1bi5hcGkudjEuUHJvZmlsZVN1Z2dlc3Rpb24iFgoUQ29ubmVjdEdpdEh1YlJlcXVlc3QiKQoVQ29ubmVjdEdpdEh1YlJlc3BvbnNlEhAKCGF1dGhfdXJsGAEgASgJIjsKHENvbXBsZXRlR2l0SHViQ29ubmVjdFJlcXVlc3QSDAoEY29kZRgBIAEoCRINCgVzdGF0ZRgCIAEoCSIuCh1Db21wbGV0ZUdpdEh1YkNvbm5lY3RSZXNwb25zZRINCgVsb2dpbhgBIAEoCSIZChdHZXRHaXRIdWJBY2NvdW50UmVxdWVzdCI8ChhHZXRHaXRIdWJBY2NvdW50UmVzcG9uc2USEQoJY29ubmVjdGVkGAEgASgIEg0KBWxvZ2luGAIgASgJIhkKF0Rpc2Nvbm5lY3RHaXRIdWJSZXF1ZXN0IhoKGERpc2Nvbm5lY3RHaXRIdWJSZXNwb25zZSpzChBTdWdnZXN0aW9uVGFyZ2V0EiEKHVNVR0dFU1RJT05fVEFSR0VUX1VOU1BFQ0lGSUVEEAASHAoYU1VHR0VTVElPTl9UQVJHRVRfUkVTVU1FEAESHgoaU1VHR0VTVElPTl9UQVJHRVRfTElOS0VESU4QAiqNAQoPU3VnZ2VzdGlvblN0YXRlEiAKHFNVR0dFU1RJT05fU1RBVEVfVU5TUEVDSUZJRUQQABIZChVTVUdHRVNUSU9OX1NUQVRFX09QRU4QARIdChlTVUdHRVNUSU9OX1NUQVRFX0FDQ0VQVEVEEAISHgoaU1VHR0VTVElPTl9TVEFURV9ESVNNSVNTRUQQAzLrBgoOUHJvZmlsZVNlcnZpY2USUQoKU3luY0dpdEh1YhIgLnNob2d1bi5hcGkudjEuU3luY0dpdEh1YlJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLlN5bmNHaXRIdWJSZXNwb25zZRJ1ChZMaXN0UHJvZmlsZVN1Z2dlc3Rpb25zEiwuc2hvZ3VuLmFwaS52MS5MaXN0UHJvZmlsZVN1Z2dlc3Rpb25zUmVxdWVzdBotLnNob2d1bi5hcGkudjEuTGlzdFByb2ZpbGVTdWdnZXN0aW9uc1Jlc3BvbnNlEngKF0FjY2VwdFByb2ZpbGVTdWdnZXN0aW9uEi0uc2hvZ3VuLmFwaS52MS5BY2NlcHRQcm9maWxlU3VnZ2VzdGlvblJlcXVlc3QaLi5zaG9ndW4uYXBpLnYxLkFjY2VwdFByb2ZpbGVTdWdnZXN0aW9uUmVzcG9uc2USewoYRGlzbWlzc1Byb2ZpbGVTdWdnZXN0aW9uEi4uc2hvZ3VuLmFwaS52MS5EaXNtaXNzUHJvZmlsZVN1Z2dlc3Rpb25SZXF1ZXN0Gi8uc2hvZ3VuLmFwaS52MS5EaXNtaXNzUHJvZmlsZVN1Z2dlc3Rpb25SZXNwb25zZRJaCg1Db25uZWN0R2l0SHViEiMuc2hvZ3VuLmFwaS52MS5Db25uZWN0R2l0SHViUmVxdWVzdBokLnNob2d1bi5hcGkudjEuQ29ubmVjdEdpdEh1YlJlc3BvbnNlEnIKFUNvbXBsZXRlR2l0SHViQ29ubmVjdBIrLnNob2d1bi5hcGkudjEuQ29tcGxldGVHaXRIdWJDb25uZWN0UmVxdWVzdBosLnNob2d1bi5hcGkudjEuQ29tcGxldGVHaXRIdWJDb25uZWN0UmVzcG9uc2USYwoQR2V0R2l0SHViQWNjb3VudBImLnNob2d1bi5hcGkudjEuR2V0R2l0SHViQWNjb3VudFJlcXVlc3QaJy5zaG9ndW4uYXBpLnYxLkdldEdpdEh1YkFjY291bnRSZXNwb25zZRJjChBEaXNjb25uZWN0R2l0SHViEiYuc2hvZ3VuLmFwaS52MS5EaXNjb25uZWN0R2l0SHViUmVxdWVzdBonLnNob2d1bi5hcGkudjEuRGlzY29ubmVjdEdpdEh1YlJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message shogun.api.v1.SuggestionEvidence
@@ -257,6 +257,138 @@ export const DismissProfileSuggestionResponseSchema: GenMessage<DismissProfileSu
   messageDesc(file_shogun_api_v1_profile, 9);
 
 /**
+ * @generated from message shogun.api.v1.ConnectGitHubRequest
+ */
+export type ConnectGitHubRequest = Message<"shogun.api.v1.ConnectGitHubRequest"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.ConnectGitHubRequest.
+ * Use `create(ConnectGitHubRequestSchema)` to create a new message.
+ */
+export const ConnectGitHubRequestSchema: GenMessage<ConnectGitHubRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 10);
+
+/**
+ * @generated from message shogun.api.v1.ConnectGitHubResponse
+ */
+export type ConnectGitHubResponse = Message<"shogun.api.v1.ConnectGitHubResponse"> & {
+  /**
+   * @generated from field: string auth_url = 1;
+   */
+  authUrl: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.ConnectGitHubResponse.
+ * Use `create(ConnectGitHubResponseSchema)` to create a new message.
+ */
+export const ConnectGitHubResponseSchema: GenMessage<ConnectGitHubResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 11);
+
+/**
+ * @generated from message shogun.api.v1.CompleteGitHubConnectRequest
+ */
+export type CompleteGitHubConnectRequest = Message<"shogun.api.v1.CompleteGitHubConnectRequest"> & {
+  /**
+   * @generated from field: string code = 1;
+   */
+  code: string;
+
+  /**
+   * @generated from field: string state = 2;
+   */
+  state: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.CompleteGitHubConnectRequest.
+ * Use `create(CompleteGitHubConnectRequestSchema)` to create a new message.
+ */
+export const CompleteGitHubConnectRequestSchema: GenMessage<CompleteGitHubConnectRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 12);
+
+/**
+ * @generated from message shogun.api.v1.CompleteGitHubConnectResponse
+ */
+export type CompleteGitHubConnectResponse = Message<"shogun.api.v1.CompleteGitHubConnectResponse"> & {
+  /**
+   * @generated from field: string login = 1;
+   */
+  login: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.CompleteGitHubConnectResponse.
+ * Use `create(CompleteGitHubConnectResponseSchema)` to create a new message.
+ */
+export const CompleteGitHubConnectResponseSchema: GenMessage<CompleteGitHubConnectResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 13);
+
+/**
+ * @generated from message shogun.api.v1.GetGitHubAccountRequest
+ */
+export type GetGitHubAccountRequest = Message<"shogun.api.v1.GetGitHubAccountRequest"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.GetGitHubAccountRequest.
+ * Use `create(GetGitHubAccountRequestSchema)` to create a new message.
+ */
+export const GetGitHubAccountRequestSchema: GenMessage<GetGitHubAccountRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 14);
+
+/**
+ * @generated from message shogun.api.v1.GetGitHubAccountResponse
+ */
+export type GetGitHubAccountResponse = Message<"shogun.api.v1.GetGitHubAccountResponse"> & {
+  /**
+   * @generated from field: bool connected = 1;
+   */
+  connected: boolean;
+
+  /**
+   * login is set only when connected.
+   *
+   * @generated from field: string login = 2;
+   */
+  login: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.GetGitHubAccountResponse.
+ * Use `create(GetGitHubAccountResponseSchema)` to create a new message.
+ */
+export const GetGitHubAccountResponseSchema: GenMessage<GetGitHubAccountResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 15);
+
+/**
+ * @generated from message shogun.api.v1.DisconnectGitHubRequest
+ */
+export type DisconnectGitHubRequest = Message<"shogun.api.v1.DisconnectGitHubRequest"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.DisconnectGitHubRequest.
+ * Use `create(DisconnectGitHubRequestSchema)` to create a new message.
+ */
+export const DisconnectGitHubRequestSchema: GenMessage<DisconnectGitHubRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 16);
+
+/**
+ * @generated from message shogun.api.v1.DisconnectGitHubResponse
+ */
+export type DisconnectGitHubResponse = Message<"shogun.api.v1.DisconnectGitHubResponse"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.DisconnectGitHubResponse.
+ * Use `create(DisconnectGitHubResponseSchema)` to create a new message.
+ */
+export const DisconnectGitHubResponseSchema: GenMessage<DisconnectGitHubResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_profile, 17);
+
+/**
  * @generated from enum shogun.api.v1.SuggestionTarget
  */
 export enum SuggestionTarget {
@@ -360,6 +492,50 @@ export const ProfileService: GenService<{
     methodKind: "unary";
     input: typeof DismissProfileSuggestionRequestSchema;
     output: typeof DismissProfileSuggestionResponseSchema;
+  },
+  /**
+   * ConnectGitHub returns the GitHub address to send the browser to so the
+   * caller can grant read-only access. FailedPrecondition GITHUB_NOT_CONFIGURED
+   * when this server has no GitHub OAuth app.
+   *
+   * @generated from rpc shogun.api.v1.ProfileService.ConnectGitHub
+   */
+  connectGitHub: {
+    methodKind: "unary";
+    input: typeof ConnectGitHubRequestSchema;
+    output: typeof ConnectGitHubResponseSchema;
+  },
+  /**
+   * CompleteGitHubConnect finishes it with the code and state GitHub sent
+   * back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+   *
+   * @generated from rpc shogun.api.v1.ProfileService.CompleteGitHubConnect
+   */
+  completeGitHubConnect: {
+    methodKind: "unary";
+    input: typeof CompleteGitHubConnectRequestSchema;
+    output: typeof CompleteGitHubConnectResponseSchema;
+  },
+  /**
+   * GetGitHubAccount says whether the caller has connected GitHub. The token
+   * is never returned.
+   *
+   * @generated from rpc shogun.api.v1.ProfileService.GetGitHubAccount
+   */
+  getGitHubAccount: {
+    methodKind: "unary";
+    input: typeof GetGitHubAccountRequestSchema;
+    output: typeof GetGitHubAccountResponseSchema;
+  },
+  /**
+   * DisconnectGitHub deletes the caller's stored GitHub token.
+   *
+   * @generated from rpc shogun.api.v1.ProfileService.DisconnectGitHub
+   */
+  disconnectGitHub: {
+    methodKind: "unary";
+    input: typeof DisconnectGitHubRequestSchema;
+    output: typeof DisconnectGitHubResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_shogun_api_v1_profile, 0);

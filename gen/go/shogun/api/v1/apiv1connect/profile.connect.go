@@ -45,6 +45,18 @@ const (
 	// ProfileServiceDismissProfileSuggestionProcedure is the fully-qualified name of the
 	// ProfileService's DismissProfileSuggestion RPC.
 	ProfileServiceDismissProfileSuggestionProcedure = "/shogun.api.v1.ProfileService/DismissProfileSuggestion"
+	// ProfileServiceConnectGitHubProcedure is the fully-qualified name of the ProfileService's
+	// ConnectGitHub RPC.
+	ProfileServiceConnectGitHubProcedure = "/shogun.api.v1.ProfileService/ConnectGitHub"
+	// ProfileServiceCompleteGitHubConnectProcedure is the fully-qualified name of the ProfileService's
+	// CompleteGitHubConnect RPC.
+	ProfileServiceCompleteGitHubConnectProcedure = "/shogun.api.v1.ProfileService/CompleteGitHubConnect"
+	// ProfileServiceGetGitHubAccountProcedure is the fully-qualified name of the ProfileService's
+	// GetGitHubAccount RPC.
+	ProfileServiceGetGitHubAccountProcedure = "/shogun.api.v1.ProfileService/GetGitHubAccount"
+	// ProfileServiceDisconnectGitHubProcedure is the fully-qualified name of the ProfileService's
+	// DisconnectGitHub RPC.
+	ProfileServiceDisconnectGitHubProcedure = "/shogun.api.v1.ProfileService/DisconnectGitHub"
 )
 
 // ProfileServiceClient is a client for the shogun.api.v1.ProfileService service.
@@ -59,6 +71,18 @@ type ProfileServiceClient interface {
 	// SUGGESTION_ALREADY_DECIDED.
 	AcceptProfileSuggestion(context.Context, *connect.Request[v1.AcceptProfileSuggestionRequest]) (*connect.Response[v1.AcceptProfileSuggestionResponse], error)
 	DismissProfileSuggestion(context.Context, *connect.Request[v1.DismissProfileSuggestionRequest]) (*connect.Response[v1.DismissProfileSuggestionResponse], error)
+	// ConnectGitHub returns the GitHub address to send the browser to so the
+	// caller can grant read-only access. FailedPrecondition GITHUB_NOT_CONFIGURED
+	// when this server has no GitHub OAuth app.
+	ConnectGitHub(context.Context, *connect.Request[v1.ConnectGitHubRequest]) (*connect.Response[v1.ConnectGitHubResponse], error)
+	// CompleteGitHubConnect finishes it with the code and state GitHub sent
+	// back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+	CompleteGitHubConnect(context.Context, *connect.Request[v1.CompleteGitHubConnectRequest]) (*connect.Response[v1.CompleteGitHubConnectResponse], error)
+	// GetGitHubAccount says whether the caller has connected GitHub. The token
+	// is never returned.
+	GetGitHubAccount(context.Context, *connect.Request[v1.GetGitHubAccountRequest]) (*connect.Response[v1.GetGitHubAccountResponse], error)
+	// DisconnectGitHub deletes the caller's stored GitHub token.
+	DisconnectGitHub(context.Context, *connect.Request[v1.DisconnectGitHubRequest]) (*connect.Response[v1.DisconnectGitHubResponse], error)
 }
 
 // NewProfileServiceClient constructs a client for the shogun.api.v1.ProfileService service. By
@@ -96,6 +120,30 @@ func NewProfileServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(profileServiceMethods.ByName("DismissProfileSuggestion")),
 			connect.WithClientOptions(opts...),
 		),
+		connectGitHub: connect.NewClient[v1.ConnectGitHubRequest, v1.ConnectGitHubResponse](
+			httpClient,
+			baseURL+ProfileServiceConnectGitHubProcedure,
+			connect.WithSchema(profileServiceMethods.ByName("ConnectGitHub")),
+			connect.WithClientOptions(opts...),
+		),
+		completeGitHubConnect: connect.NewClient[v1.CompleteGitHubConnectRequest, v1.CompleteGitHubConnectResponse](
+			httpClient,
+			baseURL+ProfileServiceCompleteGitHubConnectProcedure,
+			connect.WithSchema(profileServiceMethods.ByName("CompleteGitHubConnect")),
+			connect.WithClientOptions(opts...),
+		),
+		getGitHubAccount: connect.NewClient[v1.GetGitHubAccountRequest, v1.GetGitHubAccountResponse](
+			httpClient,
+			baseURL+ProfileServiceGetGitHubAccountProcedure,
+			connect.WithSchema(profileServiceMethods.ByName("GetGitHubAccount")),
+			connect.WithClientOptions(opts...),
+		),
+		disconnectGitHub: connect.NewClient[v1.DisconnectGitHubRequest, v1.DisconnectGitHubResponse](
+			httpClient,
+			baseURL+ProfileServiceDisconnectGitHubProcedure,
+			connect.WithSchema(profileServiceMethods.ByName("DisconnectGitHub")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -105,6 +153,10 @@ type profileServiceClient struct {
 	listProfileSuggestions   *connect.Client[v1.ListProfileSuggestionsRequest, v1.ListProfileSuggestionsResponse]
 	acceptProfileSuggestion  *connect.Client[v1.AcceptProfileSuggestionRequest, v1.AcceptProfileSuggestionResponse]
 	dismissProfileSuggestion *connect.Client[v1.DismissProfileSuggestionRequest, v1.DismissProfileSuggestionResponse]
+	connectGitHub            *connect.Client[v1.ConnectGitHubRequest, v1.ConnectGitHubResponse]
+	completeGitHubConnect    *connect.Client[v1.CompleteGitHubConnectRequest, v1.CompleteGitHubConnectResponse]
+	getGitHubAccount         *connect.Client[v1.GetGitHubAccountRequest, v1.GetGitHubAccountResponse]
+	disconnectGitHub         *connect.Client[v1.DisconnectGitHubRequest, v1.DisconnectGitHubResponse]
 }
 
 // SyncGitHub calls shogun.api.v1.ProfileService.SyncGitHub.
@@ -127,6 +179,26 @@ func (c *profileServiceClient) DismissProfileSuggestion(ctx context.Context, req
 	return c.dismissProfileSuggestion.CallUnary(ctx, req)
 }
 
+// ConnectGitHub calls shogun.api.v1.ProfileService.ConnectGitHub.
+func (c *profileServiceClient) ConnectGitHub(ctx context.Context, req *connect.Request[v1.ConnectGitHubRequest]) (*connect.Response[v1.ConnectGitHubResponse], error) {
+	return c.connectGitHub.CallUnary(ctx, req)
+}
+
+// CompleteGitHubConnect calls shogun.api.v1.ProfileService.CompleteGitHubConnect.
+func (c *profileServiceClient) CompleteGitHubConnect(ctx context.Context, req *connect.Request[v1.CompleteGitHubConnectRequest]) (*connect.Response[v1.CompleteGitHubConnectResponse], error) {
+	return c.completeGitHubConnect.CallUnary(ctx, req)
+}
+
+// GetGitHubAccount calls shogun.api.v1.ProfileService.GetGitHubAccount.
+func (c *profileServiceClient) GetGitHubAccount(ctx context.Context, req *connect.Request[v1.GetGitHubAccountRequest]) (*connect.Response[v1.GetGitHubAccountResponse], error) {
+	return c.getGitHubAccount.CallUnary(ctx, req)
+}
+
+// DisconnectGitHub calls shogun.api.v1.ProfileService.DisconnectGitHub.
+func (c *profileServiceClient) DisconnectGitHub(ctx context.Context, req *connect.Request[v1.DisconnectGitHubRequest]) (*connect.Response[v1.DisconnectGitHubResponse], error) {
+	return c.disconnectGitHub.CallUnary(ctx, req)
+}
+
 // ProfileServiceHandler is an implementation of the shogun.api.v1.ProfileService service.
 type ProfileServiceHandler interface {
 	// SyncGitHub reads GitHub now and lets katana suggest from what is new. It
@@ -139,6 +211,18 @@ type ProfileServiceHandler interface {
 	// SUGGESTION_ALREADY_DECIDED.
 	AcceptProfileSuggestion(context.Context, *connect.Request[v1.AcceptProfileSuggestionRequest]) (*connect.Response[v1.AcceptProfileSuggestionResponse], error)
 	DismissProfileSuggestion(context.Context, *connect.Request[v1.DismissProfileSuggestionRequest]) (*connect.Response[v1.DismissProfileSuggestionResponse], error)
+	// ConnectGitHub returns the GitHub address to send the browser to so the
+	// caller can grant read-only access. FailedPrecondition GITHUB_NOT_CONFIGURED
+	// when this server has no GitHub OAuth app.
+	ConnectGitHub(context.Context, *connect.Request[v1.ConnectGitHubRequest]) (*connect.Response[v1.ConnectGitHubResponse], error)
+	// CompleteGitHubConnect finishes it with the code and state GitHub sent
+	// back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+	CompleteGitHubConnect(context.Context, *connect.Request[v1.CompleteGitHubConnectRequest]) (*connect.Response[v1.CompleteGitHubConnectResponse], error)
+	// GetGitHubAccount says whether the caller has connected GitHub. The token
+	// is never returned.
+	GetGitHubAccount(context.Context, *connect.Request[v1.GetGitHubAccountRequest]) (*connect.Response[v1.GetGitHubAccountResponse], error)
+	// DisconnectGitHub deletes the caller's stored GitHub token.
+	DisconnectGitHub(context.Context, *connect.Request[v1.DisconnectGitHubRequest]) (*connect.Response[v1.DisconnectGitHubResponse], error)
 }
 
 // NewProfileServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -172,6 +256,30 @@ func NewProfileServiceHandler(svc ProfileServiceHandler, opts ...connect.Handler
 		connect.WithSchema(profileServiceMethods.ByName("DismissProfileSuggestion")),
 		connect.WithHandlerOptions(opts...),
 	)
+	profileServiceConnectGitHubHandler := connect.NewUnaryHandler(
+		ProfileServiceConnectGitHubProcedure,
+		svc.ConnectGitHub,
+		connect.WithSchema(profileServiceMethods.ByName("ConnectGitHub")),
+		connect.WithHandlerOptions(opts...),
+	)
+	profileServiceCompleteGitHubConnectHandler := connect.NewUnaryHandler(
+		ProfileServiceCompleteGitHubConnectProcedure,
+		svc.CompleteGitHubConnect,
+		connect.WithSchema(profileServiceMethods.ByName("CompleteGitHubConnect")),
+		connect.WithHandlerOptions(opts...),
+	)
+	profileServiceGetGitHubAccountHandler := connect.NewUnaryHandler(
+		ProfileServiceGetGitHubAccountProcedure,
+		svc.GetGitHubAccount,
+		connect.WithSchema(profileServiceMethods.ByName("GetGitHubAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
+	profileServiceDisconnectGitHubHandler := connect.NewUnaryHandler(
+		ProfileServiceDisconnectGitHubProcedure,
+		svc.DisconnectGitHub,
+		connect.WithSchema(profileServiceMethods.ByName("DisconnectGitHub")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/shogun.api.v1.ProfileService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ProfileServiceSyncGitHubProcedure:
@@ -182,6 +290,14 @@ func NewProfileServiceHandler(svc ProfileServiceHandler, opts ...connect.Handler
 			profileServiceAcceptProfileSuggestionHandler.ServeHTTP(w, r)
 		case ProfileServiceDismissProfileSuggestionProcedure:
 			profileServiceDismissProfileSuggestionHandler.ServeHTTP(w, r)
+		case ProfileServiceConnectGitHubProcedure:
+			profileServiceConnectGitHubHandler.ServeHTTP(w, r)
+		case ProfileServiceCompleteGitHubConnectProcedure:
+			profileServiceCompleteGitHubConnectHandler.ServeHTTP(w, r)
+		case ProfileServiceGetGitHubAccountProcedure:
+			profileServiceGetGitHubAccountHandler.ServeHTTP(w, r)
+		case ProfileServiceDisconnectGitHubProcedure:
+			profileServiceDisconnectGitHubHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -205,4 +321,20 @@ func (UnimplementedProfileServiceHandler) AcceptProfileSuggestion(context.Contex
 
 func (UnimplementedProfileServiceHandler) DismissProfileSuggestion(context.Context, *connect.Request[v1.DismissProfileSuggestionRequest]) (*connect.Response[v1.DismissProfileSuggestionResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ProfileService.DismissProfileSuggestion is not implemented"))
+}
+
+func (UnimplementedProfileServiceHandler) ConnectGitHub(context.Context, *connect.Request[v1.ConnectGitHubRequest]) (*connect.Response[v1.ConnectGitHubResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ProfileService.ConnectGitHub is not implemented"))
+}
+
+func (UnimplementedProfileServiceHandler) CompleteGitHubConnect(context.Context, *connect.Request[v1.CompleteGitHubConnectRequest]) (*connect.Response[v1.CompleteGitHubConnectResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ProfileService.CompleteGitHubConnect is not implemented"))
+}
+
+func (UnimplementedProfileServiceHandler) GetGitHubAccount(context.Context, *connect.Request[v1.GetGitHubAccountRequest]) (*connect.Response[v1.GetGitHubAccountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ProfileService.GetGitHubAccount is not implemented"))
+}
+
+func (UnimplementedProfileServiceHandler) DisconnectGitHub(context.Context, *connect.Request[v1.DisconnectGitHubRequest]) (*connect.Response[v1.DisconnectGitHubResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ProfileService.DisconnectGitHub is not implemented"))
 }

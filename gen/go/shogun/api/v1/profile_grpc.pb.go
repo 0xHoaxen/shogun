@@ -23,6 +23,10 @@ const (
 	ProfileService_ListProfileSuggestions_FullMethodName   = "/shogun.api.v1.ProfileService/ListProfileSuggestions"
 	ProfileService_AcceptProfileSuggestion_FullMethodName  = "/shogun.api.v1.ProfileService/AcceptProfileSuggestion"
 	ProfileService_DismissProfileSuggestion_FullMethodName = "/shogun.api.v1.ProfileService/DismissProfileSuggestion"
+	ProfileService_ConnectGitHub_FullMethodName            = "/shogun.api.v1.ProfileService/ConnectGitHub"
+	ProfileService_CompleteGitHubConnect_FullMethodName    = "/shogun.api.v1.ProfileService/CompleteGitHubConnect"
+	ProfileService_GetGitHubAccount_FullMethodName         = "/shogun.api.v1.ProfileService/GetGitHubAccount"
+	ProfileService_DisconnectGitHub_FullMethodName         = "/shogun.api.v1.ProfileService/DisconnectGitHub"
 )
 
 // ProfileServiceClient is the client API for ProfileService service.
@@ -43,6 +47,18 @@ type ProfileServiceClient interface {
 	// SUGGESTION_ALREADY_DECIDED.
 	AcceptProfileSuggestion(ctx context.Context, in *AcceptProfileSuggestionRequest, opts ...grpc.CallOption) (*AcceptProfileSuggestionResponse, error)
 	DismissProfileSuggestion(ctx context.Context, in *DismissProfileSuggestionRequest, opts ...grpc.CallOption) (*DismissProfileSuggestionResponse, error)
+	// ConnectGitHub returns the GitHub address to send the browser to so the
+	// caller can grant read-only access. FailedPrecondition GITHUB_NOT_CONFIGURED
+	// when this server has no GitHub OAuth app.
+	ConnectGitHub(ctx context.Context, in *ConnectGitHubRequest, opts ...grpc.CallOption) (*ConnectGitHubResponse, error)
+	// CompleteGitHubConnect finishes it with the code and state GitHub sent
+	// back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+	CompleteGitHubConnect(ctx context.Context, in *CompleteGitHubConnectRequest, opts ...grpc.CallOption) (*CompleteGitHubConnectResponse, error)
+	// GetGitHubAccount says whether the caller has connected GitHub. The token
+	// is never returned.
+	GetGitHubAccount(ctx context.Context, in *GetGitHubAccountRequest, opts ...grpc.CallOption) (*GetGitHubAccountResponse, error)
+	// DisconnectGitHub deletes the caller's stored GitHub token.
+	DisconnectGitHub(ctx context.Context, in *DisconnectGitHubRequest, opts ...grpc.CallOption) (*DisconnectGitHubResponse, error)
 }
 
 type profileServiceClient struct {
@@ -93,6 +109,46 @@ func (c *profileServiceClient) DismissProfileSuggestion(ctx context.Context, in 
 	return out, nil
 }
 
+func (c *profileServiceClient) ConnectGitHub(ctx context.Context, in *ConnectGitHubRequest, opts ...grpc.CallOption) (*ConnectGitHubResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ConnectGitHubResponse)
+	err := c.cc.Invoke(ctx, ProfileService_ConnectGitHub_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) CompleteGitHubConnect(ctx context.Context, in *CompleteGitHubConnectRequest, opts ...grpc.CallOption) (*CompleteGitHubConnectResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CompleteGitHubConnectResponse)
+	err := c.cc.Invoke(ctx, ProfileService_CompleteGitHubConnect_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) GetGitHubAccount(ctx context.Context, in *GetGitHubAccountRequest, opts ...grpc.CallOption) (*GetGitHubAccountResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetGitHubAccountResponse)
+	err := c.cc.Invoke(ctx, ProfileService_GetGitHubAccount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *profileServiceClient) DisconnectGitHub(ctx context.Context, in *DisconnectGitHubRequest, opts ...grpc.CallOption) (*DisconnectGitHubResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DisconnectGitHubResponse)
+	err := c.cc.Invoke(ctx, ProfileService_DisconnectGitHub_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProfileServiceServer is the server API for ProfileService service.
 // All implementations must embed UnimplementedProfileServiceServer
 // for forward compatibility.
@@ -111,6 +167,18 @@ type ProfileServiceServer interface {
 	// SUGGESTION_ALREADY_DECIDED.
 	AcceptProfileSuggestion(context.Context, *AcceptProfileSuggestionRequest) (*AcceptProfileSuggestionResponse, error)
 	DismissProfileSuggestion(context.Context, *DismissProfileSuggestionRequest) (*DismissProfileSuggestionResponse, error)
+	// ConnectGitHub returns the GitHub address to send the browser to so the
+	// caller can grant read-only access. FailedPrecondition GITHUB_NOT_CONFIGURED
+	// when this server has no GitHub OAuth app.
+	ConnectGitHub(context.Context, *ConnectGitHubRequest) (*ConnectGitHubResponse, error)
+	// CompleteGitHubConnect finishes it with the code and state GitHub sent
+	// back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+	CompleteGitHubConnect(context.Context, *CompleteGitHubConnectRequest) (*CompleteGitHubConnectResponse, error)
+	// GetGitHubAccount says whether the caller has connected GitHub. The token
+	// is never returned.
+	GetGitHubAccount(context.Context, *GetGitHubAccountRequest) (*GetGitHubAccountResponse, error)
+	// DisconnectGitHub deletes the caller's stored GitHub token.
+	DisconnectGitHub(context.Context, *DisconnectGitHubRequest) (*DisconnectGitHubResponse, error)
 	mustEmbedUnimplementedProfileServiceServer()
 }
 
@@ -132,6 +200,18 @@ func (UnimplementedProfileServiceServer) AcceptProfileSuggestion(context.Context
 }
 func (UnimplementedProfileServiceServer) DismissProfileSuggestion(context.Context, *DismissProfileSuggestionRequest) (*DismissProfileSuggestionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DismissProfileSuggestion not implemented")
+}
+func (UnimplementedProfileServiceServer) ConnectGitHub(context.Context, *ConnectGitHubRequest) (*ConnectGitHubResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ConnectGitHub not implemented")
+}
+func (UnimplementedProfileServiceServer) CompleteGitHubConnect(context.Context, *CompleteGitHubConnectRequest) (*CompleteGitHubConnectResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CompleteGitHubConnect not implemented")
+}
+func (UnimplementedProfileServiceServer) GetGitHubAccount(context.Context, *GetGitHubAccountRequest) (*GetGitHubAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetGitHubAccount not implemented")
+}
+func (UnimplementedProfileServiceServer) DisconnectGitHub(context.Context, *DisconnectGitHubRequest) (*DisconnectGitHubResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DisconnectGitHub not implemented")
 }
 func (UnimplementedProfileServiceServer) mustEmbedUnimplementedProfileServiceServer() {}
 func (UnimplementedProfileServiceServer) testEmbeddedByValue()                        {}
@@ -226,6 +306,78 @@ func _ProfileService_DismissProfileSuggestion_Handler(srv interface{}, ctx conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProfileService_ConnectGitHub_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ConnectGitHubRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).ConnectGitHub(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_ConnectGitHub_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).ConnectGitHub(ctx, req.(*ConnectGitHubRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_CompleteGitHubConnect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CompleteGitHubConnectRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).CompleteGitHubConnect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_CompleteGitHubConnect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).CompleteGitHubConnect(ctx, req.(*CompleteGitHubConnectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_GetGitHubAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGitHubAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).GetGitHubAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_GetGitHubAccount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).GetGitHubAccount(ctx, req.(*GetGitHubAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ProfileService_DisconnectGitHub_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DisconnectGitHubRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProfileServiceServer).DisconnectGitHub(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProfileService_DisconnectGitHub_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProfileServiceServer).DisconnectGitHub(ctx, req.(*DisconnectGitHubRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProfileService_ServiceDesc is the grpc.ServiceDesc for ProfileService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -248,6 +400,22 @@ var ProfileService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DismissProfileSuggestion",
 			Handler:    _ProfileService_DismissProfileSuggestion_Handler,
+		},
+		{
+			MethodName: "ConnectGitHub",
+			Handler:    _ProfileService_ConnectGitHub_Handler,
+		},
+		{
+			MethodName: "CompleteGitHubConnect",
+			Handler:    _ProfileService_CompleteGitHubConnect_Handler,
+		},
+		{
+			MethodName: "GetGitHubAccount",
+			Handler:    _ProfileService_GetGitHubAccount_Handler,
+		},
+		{
+			MethodName: "DisconnectGitHub",
+			Handler:    _ProfileService_DisconnectGitHub_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
