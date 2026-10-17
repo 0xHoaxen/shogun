@@ -98,6 +98,8 @@ func TestLoadRejectsBadConfig(t *testing.T) {
 		{"default public url in production", func(e map[string]string) { e["ENVIRONMENT"] = "production" }, "must be https in production"},
 		{"zero ttl", func(e map[string]string) { e["SESSION_TTL"] = "0s" }, "SESSION_TTL"},
 		{"zero rate limit", func(e map[string]string) { e["TORII_RATE_LIMIT"] = "0" }, "TORII_RATE_LIMIT"},
+		{"zero address rate limit", func(e map[string]string) { e["TORII_IP_RATE_LIMIT"] = "0" }, "TORII_IP_RATE_LIMIT"},
+		{"zero address rate burst", func(e map[string]string) { e["TORII_IP_RATE_BURST"] = "0" }, "TORII_IP_RATE_BURST"},
 		{"zero body cap", func(e map[string]string) { e["TORII_MAX_BODY_BYTES"] = "0" }, "TORII_MAX_BODY_BYTES"},
 	}
 	for _, tt := range tests {
@@ -131,5 +133,16 @@ func TestLoadAcceptsAnHTTPSPublicURLInProductionWithSecureCookies(t *testing.T) 
 	}
 	if !s.SecureCookies() {
 		t.Error("SecureCookies = false for an https public URL")
+	}
+}
+
+func TestTheAddressFloodGuardSitsFarAboveTheOneUserLimit(t *testing.T) {
+	got, err := settings.Load(lookupOf(validEnv()))
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got.IPRateLimit < 10*got.RateLimit || got.IPRateBurst < 10*got.RateBurst {
+		t.Fatalf("address guard %d/%d vs user limit %d/%d: behind the proxy every user shares the address, so it must be much higher",
+			got.IPRateLimit, got.IPRateBurst, got.RateLimit, got.RateBurst)
 	}
 }
