@@ -35,6 +35,7 @@ type generation struct {
 	setup  jobs.Setup
 	queue  *jobs.RiverQueue
 	mailer app.Mailer
+	tester *app.ProviderTester
 	close  func()
 }
 
@@ -116,6 +117,7 @@ func newGeneration(
 	return &generation{
 		queue: queue, close: closeConns, setup: jobs.NewSetup(generator, sampleEmbedder, log),
 		mailer: tsubamemailer.New(tsubamev1.NewTsubameServiceClient(tsubameConn)),
+		tester: app.NewProviderTester(completer),
 	}, nil
 }
 

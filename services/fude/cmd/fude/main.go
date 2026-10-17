@@ -145,7 +145,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}, opts...)
 	register := func(s *grpc.Server) {
 		eventsv1.RegisterEventSinkServiceServer(s, sink)
-		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc, approver))
+		fudev1.RegisterFudeServiceServer(s, fudegrpc.New(svc, approver, gen.tester))
 	}
 	return server.Run(ctx, cfg, log, register, serverOpts...)
 }

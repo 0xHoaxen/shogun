@@ -11,7 +11,7 @@ func TestNewConfigListsOnlyTheServicesFeatures(t *testing.T) {
 		service  string
 		features []string
 	}{
-		{"fude", []string{"fude.cover_letter", "fude.outreach", "fude.post"}},
+		{"fude", []string{"fude.cover_letter", "fude.outreach", "fude.post", "fude.test_connection"}},
 		{"tsubame", []string{"tsubame.classify"}},
 		{"katana", []string{"katana.suggest"}},
 		{"shinobi", []string{"shinobi.score"}},

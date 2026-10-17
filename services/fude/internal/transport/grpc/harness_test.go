@@ -49,7 +49,10 @@ type harness struct {
 	hankoKey  ed25519.PublicKey
 }
 
-func newHarness(t *testing.T) *harness {
+func newHarness(t *testing.T) *harness { return newHarnessWith(t, nil) }
+
+// newHarnessWith is a harness whose server tests providers with tester.
+func newHarnessWith(t *testing.T, tester *app.ProviderTester) *harness {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "fude")
@@ -78,7 +81,7 @@ func newHarness(t *testing.T) *harness {
 		grpc.UnaryInterceptor(authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(authority.StreamServerInterceptor()),
 	)
-	fudev1.RegisterFudeServiceServer(srv, fudegrpc.New(app.NewService(pool, queue, nil), approver))
+	fudev1.RegisterFudeServiceServer(srv, fudegrpc.New(app.NewService(pool, queue, nil), approver, tester))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)

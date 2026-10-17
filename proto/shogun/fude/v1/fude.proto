@@ -26,6 +26,13 @@ service FudeService {
   // GetDraft returns the draft with all of its versions.
   rpc GetDraft(GetDraftRequest) returns (GetDraftResponse);
   rpc AddVoiceSample(AddVoiceSampleRequest) returns (AddVoiceSampleResponse);
+  // TestProvider makes one small, metered call with the caller's own AI provider
+  // to show whether address, model and key work. A provider that fails is an
+  // answer, not an error: ok is false and failure says why, in a few words that
+  // never carry the provider's own text. A caller with no provider is
+  // FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
+  // token cap is ResourceExhausted.
+  rpc TestProvider(TestProviderRequest) returns (TestProviderResponse);
 }
 
 enum DraftKind {
@@ -207,4 +214,31 @@ message AddVoiceSampleRequest {
 
 message AddVoiceSampleResponse {
   VoiceSample sample = 1;
+}
+
+// ProviderFailure says why a call to a user's provider failed.
+enum ProviderFailure {
+  PROVIDER_FAILURE_UNSPECIFIED = 0;
+  // The provider refused the key.
+  PROVIDER_FAILURE_REJECTED = 1;
+  PROVIDER_FAILURE_RATE_LIMITED = 2;
+  // The provider does not know the model, or the address path is wrong.
+  PROVIDER_FAILURE_NOT_FOUND = 3;
+  // No answer came: refused, no route, or too slow.
+  PROVIDER_FAILURE_UNREACHABLE = 4;
+  // The address names this machine or a private network, which is never called.
+  PROVIDER_FAILURE_NOT_PUBLIC = 5;
+  // The provider failed on its side.
+  PROVIDER_FAILURE_PROVIDER_ERROR = 6;
+  PROVIDER_FAILURE_OTHER = 7;
+}
+
+message TestProviderRequest {}
+
+message TestProviderResponse {
+  bool ok = 1;
+  // failure is unspecified when ok.
+  ProviderFailure failure = 2;
+  // model is the model that answered, when ok.
+  string model = 3;
 }
