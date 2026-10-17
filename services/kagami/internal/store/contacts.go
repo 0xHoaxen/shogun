@@ -112,9 +112,9 @@ func (r *Repo) UpdateContactStatus(ctx context.Context, arg db.UpdateContactStat
 	return c, nil
 }
 
-// ListContactsDueOn returns every owner's contacts whose follow-up is on date.
-func (r *Repo) ListContactsDueOn(ctx context.Context, date time.Time) ([]db.Contact, error) {
-	contacts, err := r.q.ListContactsDueOn(ctx, date)
+// ListContactsDueOn returns the owner's contacts whose follow-up is on date.
+func (r *Repo) ListContactsDueOn(ctx context.Context, owner uuid.UUID, date time.Time) ([]db.Contact, error) {
+	contacts, err := r.q.ListContactsDueOn(ctx, db.ListContactsDueOnParams{OwnerID: owner, DueOn: date})
 	if err != nil {
 		return nil, fmt.Errorf("list contacts due on %s: %w", date.Format(time.DateOnly), mapErr(err))
 	}

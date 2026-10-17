@@ -792,8 +792,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: a 15-minute `digest_tick` finds active owners whose local clock has reached 08:30 (`owners.DueAt`, new in `pkg/owners`) and enqueues `daily_digest` for `(owner_id, local date)`, unique by args; `Digester.RunFor` loads the owner's zone from the owners table and treats a day that is over in that zone as stale. Removed the hard-coded `Asia/Kolkata` and the now-unused `ListOwners` query. The other services reuse `owners.DueAt`.
   Done when: `cd services/taiko && go test -race ./...`.
 
-- [ ] **P11.4c kagami scans per owner** (M) Needs: P11.4a
-  Do: same tick for the follow-up and stale-application scans; scan queries take `owner_id` and the owner's local date.
+- [x] **P11.4c kagami scans per owner** (M) Needs: P11.4a
+  Do: a 15-minute `daily_scan_tick` queues one `daily_scan` per active owner and local date once their clock reaches 07:55; the job runs the stale scan and then the due scan for that owner, in that order. `ListJobsDueOn`, `ListContactsDueOn` and `ListStaleAppliedJobs` now filter on `owner_id`. Tightened `check-owner-scope.sh`: naming `owner_id` only in `ORDER BY` no longer counts as a filter, which showed these three, plus katana, sensei and shinobi queries that P11.4d–f replace (annotated for now).
   Done when: `cd services/kagami && go test -race ./...`.
 
 - [ ] **P11.4d katana GitHub sync per owner** (S) Needs: P11.4a

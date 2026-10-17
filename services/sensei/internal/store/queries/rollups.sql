@@ -3,6 +3,7 @@
 DELETE FROM daily_rollups WHERE day >= @from_day;
 
 -- name: RollupJobsAdded :exec
+-- owner-scope: internal rebuild across all owners; made per-owner in P11.4e
 -- Jobs added per day and source.
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
 SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date, 'jobs_added',
@@ -33,6 +34,7 @@ WHERE f.type = 'job.status_changed'
 GROUP BY 1, 2, 3, 4;
 
 -- name: RollupContacts :exec
+-- owner-scope: internal rebuild across all owners; made per-owner in P11.4e
 -- First contacts and replies per day and channel, and moves per day and status.
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
 SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date,
@@ -44,6 +46,7 @@ WHERE type = 'contact.status_changed' AND dimension->>'to' IN ('reached_out', 'r
 GROUP BY 1, 2, 3, 4;
 
 -- name: RollupContactMoves :exec
+-- owner-scope: internal rebuild across all owners; made per-owner in P11.4e
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
 SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date, 'contact_moves',
        'status=' || COALESCE(dimension->>'to', 'unknown'), count(*)

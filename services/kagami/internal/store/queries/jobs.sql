@@ -60,19 +60,19 @@ WHERE id = @id AND owner_id = @owner_id AND version = @version
 RETURNING *;
 
 -- name: ListJobsDueOn :many
--- Every owner's open jobs with a follow-up on exactly this date; the daily scan
+-- The owner's open jobs with a follow-up on exactly this date; the daily scan
 -- emits one event for each. Rejected jobs need no follow-up.
 SELECT * FROM jobs
-WHERE next_follow_up = @due_on::date AND archived_at IS NULL AND status <> 'rejected'
-ORDER BY owner_id, id;
+WHERE owner_id = @owner_id AND next_follow_up = @due_on::date AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY id;
 
 -- name: ListStaleAppliedJobs :many
--- Applied jobs with no follow-up planned that were applied for on or before
--- applied_by.
+-- The owner's applied jobs with no follow-up planned that were applied for on
+-- or before applied_by.
 SELECT * FROM jobs
-WHERE status = 'applied' AND applied_on <= @applied_by::date
+WHERE owner_id = @owner_id AND status = 'applied' AND applied_on <= @applied_by::date
   AND next_follow_up IS NULL AND archived_at IS NULL
-ORDER BY owner_id, id;
+ORDER BY id;
 
 -- name: MarkJobFollowUp :one
 -- owner-scope: internal stale-application scan; the job comes from the scan's own listing

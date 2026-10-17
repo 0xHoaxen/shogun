@@ -119,10 +119,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		return err
 	}
 
-	scheduled, err := jobs.NewSetup(service, time.Now, log)
-	if err != nil {
-		return err
-	}
+	scheduled := jobs.NewSetup(service, service, jobs.ContextEnqueuer{}, time.Now, log)
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err

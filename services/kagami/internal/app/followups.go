@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
@@ -57,16 +58,17 @@ func (s *Service) DueFollowUps(ctx context.Context, onOrBefore string) (DueFollo
 	return DueFollowUps{Jobs: jobs, Contacts: contacts}, nil
 }
 
-// ScanDueFollowUps emits job.follow_up_due and contact.follow_up_due for every
-// owner's item whose follow-up is exactly on date, and returns how many it
-// emitted. All events are written in one transaction, so a failed scan emits
-// nothing and a retry cannot double up. Running it once per date is the
-// caller's job; the River job's args carry the date to guarantee that.
-func (s *Service) ScanDueFollowUps(ctx context.Context, date time.Time) (int, error) {
+// ScanDueFollowUps emits job.follow_up_due and contact.follow_up_due for the
+// owner's items whose follow-up is exactly on date (the owner's local day), and
+// returns how many it emitted. All events are written in one transaction, so a
+// failed scan emits nothing and a retry cannot double up. Running it once per
+// owner and date is the caller's job; the River job's args carry both to
+// guarantee that.
+func (s *Service) ScanDueFollowUps(ctx context.Context, owner uuid.UUID, date time.Time) (int, error) {
 	dueOn := date.Format(dateLayout)
 	emitted := 0
 	err := s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
-		jobs, err := repo.ListJobsDueOn(ctx, date)
+		jobs, err := repo.ListJobsDueOn(ctx, owner, date)
 		if err != nil {
 			return err
 		}
@@ -77,7 +79,7 @@ func (s *Service) ScanDueFollowUps(ctx context.Context, date time.Time) (int, er
 				return fmt.Errorf("write %s event: %w", eventJobFollowUpDue, err)
 			}
 		}
-		contacts, err := repo.ListContactsDueOn(ctx, date)
+		contacts, err := repo.ListContactsDueOn(ctx, owner, date)
 		if err != nil {
 			return err
 		}
@@ -94,15 +96,16 @@ func (s *Service) ScanDueFollowUps(ctx context.Context, date time.Time) (int, er
 	return emitted, err
 }
 
-// ScanStaleApplications plans a follow-up on date for every applied job that
-// has had none for staleAfterDays, and returns how many it planned. It writes
-// a follow_up_set timeline entry but no outbox event: the due scan that runs
-// after it emits job.follow_up_due for these jobs along with the others.
-func (s *Service) ScanStaleApplications(ctx context.Context, date time.Time) (int, error) {
+// ScanStaleApplications plans a follow-up on date for each of the owner's
+// applied jobs that has had none for staleAfterDays, and returns how many it
+// planned. It writes a follow_up_set timeline entry but no outbox event: the
+// due scan that runs after it emits job.follow_up_due for these jobs along with
+// the others.
+func (s *Service) ScanStaleApplications(ctx context.Context, owner uuid.UUID, date time.Time) (int, error) {
 	appliedBy := date.AddDate(0, 0, -staleAfterDays)
 	planned := 0
 	err := s.inTx(ctx, func(_ pgx.Tx, repo *store.Repo) error {
-		stale, err := repo.ListStaleAppliedJobs(ctx, appliedBy)
+		stale, err := repo.ListStaleAppliedJobs(ctx, owner, appliedBy)
 		if err != nil {
 			return err
 		}

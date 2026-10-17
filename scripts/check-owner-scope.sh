@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Every sqlc query in a service must filter on owner_id, or say why it does not
+# Every sqlc query in a service must filter on owner_id (compare it or bind @owner_id;
+# naming it in ORDER BY or the select list does not count), or say why it does not
 # with a comment right under its "-- name:" line:
 #
 #   -- owner-scope: child <why>     reached only through an owner-checked parent row
@@ -20,7 +21,7 @@ for file in "$root"/services/*/internal/store/queries/*.sql; do
 		}
 		/^-- name:/ { flush(); name = $3; scoped = 0; annotated = 0; next }
 		/^-- owner-scope: (child|internal|global) [^ ]/ { annotated = 1; next }
-		/owner_id/ { scoped = 1 }
+		/@owner_id|owner_id[ ]*(=|<>|IN )/ { scoped = 1 }
 		END { flush() }
 	' "$file")
 	if [ -n "$offenders" ]; then

@@ -3,6 +3,7 @@ INSERT INTO sessions (id, owner_id, email, display_name, token_hash, expires_at)
 VALUES (@id, @owner_id, @email, @display_name, @token_hash, @expires_at);
 
 -- name: GetSessionByTokenHash :one
+-- owner-scope: global the secret token hash identifies the session
 SELECT id, owner_id, email, display_name, expires_at
 FROM sessions
 WHERE token_hash = @token_hash;
