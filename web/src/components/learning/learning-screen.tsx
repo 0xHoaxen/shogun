@@ -14,6 +14,7 @@ import { LogActivityDialog } from "@/components/learning/log-activity-dialog";
 import { PostDialog } from "@/components/learning/post-dialog";
 import { useLearningClient } from "@/components/learning/use-learning-client";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { ItemStatus, LearningService, type LearningItem } from "@/gen/shogun/api/v1/learning_pb";
 import { cn } from "@/lib/utils";
@@ -71,7 +72,7 @@ export function LearningScreen() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.learning}
         title="What you're learning."
         description="Courses, books, projects and skills, and what you did on them. Log it, and Shogun drafts a post for you to approve."
       >

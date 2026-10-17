@@ -820,8 +820,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: timezone picker, sign out everywhere, delete my data via `user.deleted`.
   Done when: `make test`.
 
-- [ ] **P11.11 Section explainers** (M) Needs: P11.10
-  Do: `PageHeader` `about` prop (responsibility, what it does, how it helps) with copy in `web/src/content/sections.ts` for every section and settings tab.
+- [x] **P11.11 Section explainers** (M) Needs: P11.10
+  Do: `PageHeader` `about` prop renders `AboutSection` (responsibility, what it does, how it helps; open by default, a closed choice is remembered in localStorage) with all copy in `web/src/content/sections.ts` for every section and settings tab. TODO(owner): review the copy. Later tasks add copy for the AI provider, GitHub and Account tabs.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [ ] **P11.9 Compliance** (S) Needs: P11.11

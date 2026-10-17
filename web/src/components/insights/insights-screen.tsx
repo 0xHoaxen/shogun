@@ -3,11 +3,12 @@
 import { FunnelPanel } from "@/components/insights/funnel-panel";
 import { OutreachPanel } from "@/components/insights/outreach-panel";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 
 export function InsightsScreen() {
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.insights}
         title="How it's going."
         description="Where your jobs stand and how your outreach is landing, counted by day in India time. Today's events show up after the nightly update."
       />

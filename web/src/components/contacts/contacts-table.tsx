@@ -7,6 +7,7 @@ import { AddContactDialog } from "@/components/contacts/add-contact-dialog";
 import { ImportDialog } from "@/components/contacts/import-dialog";
 import { FILTER_STATUSES, contactStatusLabel } from "@/components/contacts/status-labels";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { ContactStatus, ContactsService } from "@/gen/shogun/api/v1/contacts_pb";
 import { cn } from "@/lib/utils";
@@ -54,7 +55,7 @@ export function ContactsTable() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.contacts}
         title="Your people."
         description="Everyone you are in touch with, by status. Nothing is sent from this table."
       >

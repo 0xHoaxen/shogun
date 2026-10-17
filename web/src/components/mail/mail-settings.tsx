@@ -4,6 +4,7 @@ import { ConnectError } from "@connectrpc/connect";
 import { useMutation } from "@connectrpc/connect-query";
 
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { MailService } from "@/gen/shogun/api/v1/mail_pb";
 
@@ -31,7 +32,7 @@ export function MailSettings() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.mail}
         title="Your mail."
         description="Connect Gmail so Shogun can read your job mail and send the drafts you approve."
       />
