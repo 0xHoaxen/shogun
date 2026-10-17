@@ -178,6 +178,7 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewJobsServiceHandler(connectapi.NewJobsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewContactsServiceHandler(connectapi.NewContactsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewCostsServiceHandler(connectapi.NewCostsServer(soroban, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewProviderServiceHandler(connectapi.NewProviderServer(soroban, fude, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewDraftsServiceHandler(connectapi.NewDraftsServer(fude, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewMailServiceHandler(connectapi.NewMailServer(tsubame, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewNotificationsServiceHandler(connectapi.NewNotificationsServer(taiko, log), handlerOpts...))
