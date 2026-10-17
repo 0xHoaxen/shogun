@@ -866,9 +866,9 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Done: `AuthService.SetTimezone` (IANA names only; writes `user.updated` through the existing store method, so every service's days follow it) and `LogoutEverywhere` (`DeleteSessionsByOwner`, owner-scoped); `Session.timezone`; Settings > Account tab with a time zone picker (with a "use this browser's" shortcut) and a Sign out everywhere button; section copy and specs.
   Done when: `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
-- [ ] **P11.8b Delete my data: torii** (M) Needs: P11.8a
-  Do: `AuthService.DeleteAccount` (confirm by typing the account email): ends every session, marks the user deleted and writes `user.deleted` (event and `UserDeleted` proto already exist). Today the consumers only mark their local `owners` row deleted; they purge nothing. Extend the `user.deleted` route in `pkg/bus/routes.go` to every service that holds user data (fude, tsubame, dojo, soroban as well as the five that have it).
-  Done when: `cd services/torii && go test -race ./...`, `cd pkg && go test -race ./bus/...`.
+- [x] **P11.8b Delete my data: torii** (M) Needs: P11.8a
+  Done: `AuthService.DeleteAccount` (the user types their email; `CONFIRMATION_MISMATCH` otherwise): ends every session, archives the user (email and name removed, a tombstone kept so the owner id and version stay unique) and writes `user.deleted` in the same transaction. Signing in again afterwards makes a fresh member and writes `user.activated` with a higher version, so services do not ignore it. Consumers still only mark their local `owners` row deleted; the purge is P11.8c. Adding fude, tsubame, dojo and soroban to the `user.deleted` route moves to P11.8c, with their handlers, so no event is routed to a service that cannot handle it.
+  Done when: `cd services/torii && go test -race ./...`.
 
 - [ ] **P11.8c Delete my data: purge per service** (L, split per service when taken) Needs: P11.8b
   Do: each consumer deletes every row of that owner in its own schema when `user.deleted` arrives (idempotent; tested with an owner who has data and one who does not, and the other owner's rows untouched). tsubame also deletes sealed mail tokens, soroban the sealed AI provider key, katana the sealed GitHub token. One PR per service: kagami, tsubame, fude, taiko, dojo, katana, shinobi, sensei, soroban.

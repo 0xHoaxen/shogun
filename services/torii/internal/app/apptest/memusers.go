@@ -72,6 +72,21 @@ func (m *MemUsers) SetTimezone(_ context.Context, id uuid.UUID, timezone string)
 	return m.update(id, func(u domain.User) domain.User { u.Timezone = timezone; return u })
 }
 
+// Archive implements app.UserStore: the user is gone for every later lookup.
+func (m *MemUsers) Archive(_ context.Context, id uuid.UUID) (domain.User, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	user, ok := m.byID[id]
+	if !ok {
+		return domain.User{}, store.ErrNotFound
+	}
+	delete(m.byID, id)
+	delete(m.bySub, user.GoogleSub)
+	user.Email, user.DisplayName = "", ""
+	user.Version++
+	return user, nil
+}
+
 // SetStatus changes a user's status, for tests that disable a user.
 func (m *MemUsers) SetStatus(_ context.Context, id uuid.UUID, status domain.Status) (domain.User, error) {
 	return m.update(id, func(u domain.User) domain.User { u.Status = status; return u })

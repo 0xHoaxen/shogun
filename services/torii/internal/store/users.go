@@ -31,6 +31,7 @@ const eventSource = "torii"
 const (
 	eventUserActivated = "user.activated"
 	eventUserUpdated   = "user.updated"
+	eventUserDeleted   = "user.deleted"
 )
 
 // Users reads and writes torii's users table. A change other services care
@@ -50,6 +51,11 @@ func NewUsers(pool *pgxpool.Pool) *Users { return &Users{pool: pool, q: db.New(p
 func (u *Users) Upsert(ctx context.Context, user domain.User) (domain.User, error) {
 	var out domain.User
 	err := postgres.InTx(ctx, u.pool, func(tx pgx.Tx) error {
+		// A returning user whose account was deleted is a new sign-up to everyone else.
+		wasArchived, err := db.New(tx).IsUserArchived(ctx, user.GoogleSub)
+		if err != nil {
+			return fmt.Errorf("check archived user: %w", err)
+		}
 		row, err := db.New(tx).UpsertUser(ctx, db.UpsertUserParams{
 			ID:          user.ID,
 			GoogleSub:   user.GoogleSub,
@@ -64,7 +70,7 @@ func (u *Users) Upsert(ctx context.Context, user domain.User) (domain.User, erro
 			Role: row.Role, Status: row.Status, GmailAllowed: row.GmailAllowed, Timezone: row.Timezone,
 			Version: row.Version, CreatedAt: row.CreatedAt, UpdatedAt: row.UpdatedAt,
 		})
-		if !row.Inserted {
+		if !row.Inserted && !wasArchived {
 			return nil
 		}
 		return writeUserEvent(ctx, tx, eventUserActivated, out, &toriiv1.UserActivated{
@@ -226,4 +232,26 @@ func decodePageToken(token string) (time.Time, uuid.UUID, error) {
 		return time.Time{}, uuid.Nil, ErrBadPageToken
 	}
 	return createdAt, id, nil
+}
+
+// Archive deletes the account: it removes the email and name and keeps a
+// tombstone, so the owner id and its version stay unique. It writes
+// user.deleted in the same transaction, which tells every service to purge
+// the user's data. ErrNotFound when there is no such live account.
+func (u *Users) Archive(ctx context.Context, id uuid.UUID) (domain.User, error) {
+	var out domain.User
+	err := postgres.InTx(ctx, u.pool, func(tx pgx.Tx) error {
+		row, err := db.New(tx).ArchiveUser(ctx, id)
+		if err != nil {
+			return notFoundOr(err, "archive user")
+		}
+		out = toUser(row)
+		return writeUserEvent(ctx, tx, eventUserDeleted, out, &toriiv1.UserDeleted{
+			OwnerId: out.ID.String(), Version: out.Version,
+		})
+	})
+	if err != nil {
+		return domain.User{}, err
+	}
+	return out, nil
 }

@@ -12,6 +12,36 @@ import (
 	"github.com/google/uuid"
 )
 
+const archiveUser = `-- name: ArchiveUser :one
+UPDATE users
+SET archived_at = now(), email = '', display_name = '', role = 'member', gmail_allowed = false,
+    version = version + 1, updated_at = now()
+WHERE id = $1 AND archived_at IS NULL
+RETURNING id, google_sub, email, display_name, role, status, gmail_allowed, timezone, version, created_at, updated_at, archived_at
+`
+
+// owner-scope: global users are the tenants; a user archives only their own, by session id
+// Keeps a tombstone so the owner id and version stay unique, and removes what identifies the person.
+func (q *Queries) ArchiveUser(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, archiveUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.GoogleSub,
+		&i.Email,
+		&i.DisplayName,
+		&i.Role,
+		&i.Status,
+		&i.GmailAllowed,
+		&i.Timezone,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, google_sub, email, display_name, role, status, gmail_allowed, timezone, version, created_at, updated_at, archived_at FROM users WHERE id = $1 AND archived_at IS NULL
 `
@@ -35,6 +65,18 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.ArchivedAt,
 	)
 	return i, err
+}
+
+const isUserArchived = `-- name: IsUserArchived :one
+SELECT COALESCE((SELECT archived_at IS NOT NULL FROM users WHERE google_sub = $1), false)::boolean
+`
+
+// owner-scope: global users are the tenants; looked up by the Google subject at login
+func (q *Queries) IsUserArchived(ctx context.Context, googleSub string) (bool, error) {
+	row := q.db.QueryRow(ctx, isUserArchived, googleSub)
+	var column_1 bool
+	err := row.Scan(&column_1)
+	return column_1, err
 }
 
 const listUsers = `-- name: ListUsers :many
@@ -219,9 +261,12 @@ VALUES ($1, $2, $3, $4)
 ON CONFLICT (google_sub) DO UPDATE
 SET email = EXCLUDED.email,
     display_name = EXCLUDED.display_name,
-    version = CASE WHEN users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
+    -- Signing in again after deleting the account starts a fresh, active member.
+    archived_at = NULL,
+    status = CASE WHEN users.archived_at IS NOT NULL THEN 'active' ELSE users.status END,
+    version = CASE WHEN users.archived_at IS NOT NULL OR users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
                    THEN users.version + 1 ELSE users.version END,
-    updated_at = CASE WHEN users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
+    updated_at = CASE WHEN users.archived_at IS NOT NULL OR users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
                       THEN now() ELSE users.updated_at END
 RETURNING id, google_sub, email, display_name, role, status, gmail_allowed, timezone, version, created_at, updated_at, archived_at, (xmax = 0) AS inserted
 `

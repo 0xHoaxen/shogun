@@ -298,3 +298,49 @@ func TestSetTimezoneRefusesANameThatIsNotAZone(t *testing.T) {
 		t.Fatalf("code %v, reason %q, want InvalidArgument INVALID_TIMEZONE", connect.CodeOf(err), reasonOf(err))
 	}
 }
+
+func TestDeleteAccountDeletesItAndClearsTheCookie(t *testing.T) {
+	// Arrange
+	h := newHarness(t)
+	token := h.login(t)
+
+	// Act
+	resp, err := h.client.DeleteAccount(context.Background(), withCookie(connect.NewRequest(&apiv1.DeleteAccountRequest{ConfirmEmail: ownerEmail}), token))
+	_, afterErr := h.client.GetSession(context.Background(), withCookie(connect.NewRequest(&apiv1.GetSessionRequest{}), token))
+
+	// Assert
+	if err != nil {
+		t.Fatalf("DeleteAccount: %v", err)
+	}
+	if !strings.Contains(resp.Header().Get("Set-Cookie"), "Max-Age=0") {
+		t.Fatalf("Set-Cookie = %q, want a cleared cookie", resp.Header().Get("Set-Cookie"))
+	}
+	if connect.CodeOf(afterErr) != connect.CodeUnauthenticated || h.sessions.Len() != 0 {
+		t.Fatalf("after: code %v, %d sessions left", connect.CodeOf(afterErr), h.sessions.Len())
+	}
+}
+
+func TestDeleteAccountWithTheWrongEmailChangesNothing(t *testing.T) {
+	h := newHarness(t)
+	token := h.login(t)
+
+	_, err := h.client.DeleteAccount(context.Background(), withCookie(connect.NewRequest(&apiv1.DeleteAccountRequest{ConfirmEmail: "someone@else.com"}), token))
+	_, stillIn := h.client.GetSession(context.Background(), withCookie(connect.NewRequest(&apiv1.GetSessionRequest{}), token))
+
+	if connect.CodeOf(err) != connect.CodeInvalidArgument || reasonOf(err) != "CONFIRMATION_MISMATCH" {
+		t.Fatalf("code %v, reason %q", connect.CodeOf(err), reasonOf(err))
+	}
+	if stillIn != nil {
+		t.Fatalf("the user was signed out by a refused delete: %v", stillIn)
+	}
+}
+
+func TestDeleteAccountNeedsASession(t *testing.T) {
+	h := newHarness(t)
+
+	_, err := h.client.DeleteAccount(context.Background(), connect.NewRequest(&apiv1.DeleteAccountRequest{ConfirmEmail: ownerEmail}))
+
+	if connect.CodeOf(err) != connect.CodeUnauthenticated {
+		t.Fatalf("code = %v, want Unauthenticated", connect.CodeOf(err))
+	}
+}

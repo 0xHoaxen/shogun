@@ -21,6 +21,7 @@ type AuthBackend interface {
 	EndSession(ctx context.Context, token string) error
 	EndAllSessions(ctx context.Context, owner uuid.UUID) (int64, error)
 	SetTimezone(ctx context.Context, owner uuid.UUID, name string) (domain.User, error)
+	DeleteAccount(ctx context.Context, owner uuid.UUID, typedEmail string) (int64, error)
 }
 
 // AuthServer implements shogun.api.v1.AuthService.
@@ -109,4 +110,26 @@ func (s *AuthServer) SetTimezone(
 		return nil, newError(connect.CodeInternal, reasonInternal, "could not change the time zone")
 	}
 	return connect.NewResponse(&apiv1.SetTimezoneResponse{Timezone: user.Timezone}), nil
+}
+
+// DeleteAccount deletes the signed-in user's account and clears the cookie.
+// The confirmation email is never logged.
+func (s *AuthServer) DeleteAccount(
+	ctx context.Context, req *connect.Request[apiv1.DeleteAccountRequest],
+) (*connect.Response[apiv1.DeleteAccountResponse], error) {
+	session, ok := SessionFromContext(ctx)
+	if !ok {
+		return nil, newError(connect.CodeUnauthenticated, reasonUnauthenticated, "sign in required")
+	}
+	_, err := s.auth.DeleteAccount(ctx, session.OwnerID, req.Msg.GetConfirmEmail())
+	if errors.Is(err, app.ErrConfirmationMismatch) {
+		return nil, newError(connect.CodeInvalidArgument, reasonConfirmationMismatch, "the email does not match this account")
+	}
+	if err != nil {
+		s.log.ErrorContext(ctx, "delete account", slog.Any("error", err))
+		return nil, newError(connect.CodeInternal, reasonInternal, "could not delete the account")
+	}
+	resp := connect.NewResponse(&apiv1.DeleteAccountResponse{})
+	resp.Header().Add("Set-Cookie", httpauth.ClearedSessionCookie(s.secure).String())
+	return resp, nil
 }

@@ -25,6 +25,8 @@ var (
 	ErrUnauthenticated = errors.New("app: unauthenticated")
 	// ErrInvalidTimezone means the name is not an IANA time zone.
 	ErrInvalidTimezone = errors.New("app: not a valid time zone")
+	// ErrConfirmationMismatch means the email typed to confirm deleting the account is not the account's.
+	ErrConfirmationMismatch = errors.New("app: confirmation does not match the account email")
 )
 
 const tokenBytes = 32
@@ -49,6 +51,7 @@ type UserStore interface {
 	SetRole(ctx context.Context, id uuid.UUID, role domain.Role) (domain.User, error)
 	SetGmailAllowed(ctx context.Context, id uuid.UUID, allowed bool) (domain.User, error)
 	SetTimezone(ctx context.Context, id uuid.UUID, timezone string) (domain.User, error)
+	Archive(ctx context.Context, id uuid.UUID) (domain.User, error)
 }
 
 // Claims is what the identity provider vouches for after a successful login.
