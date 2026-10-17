@@ -210,8 +210,8 @@ services:
     environment:
       <<: *env
       DATABASE_URL: postgres://katana:${KATANA_DB_PASSWORD:?copy .env.example to .env}@postgres:5432/shogun
-      KATANA_GITHUB_USER: ${KATANA_GITHUB_USER:-}
-      KATANA_GITHUB_TOKEN: ${KATANA_GITHUB_TOKEN:-}
+      KATANA_SECRET_MASTER_KEY: ${KATANA_SECRET_MASTER_KEY:?copy .env.example to .env}
+      KATANA_SECRET_KEY_ID: ${KATANA_SECRET_KEY_ID:-katana-1}
       KATANA_GITHUB_API_BASE: ${KATANA_GITHUB_API_BASE:-}
     ports:
       - "127.0.0.1:8087:8080"

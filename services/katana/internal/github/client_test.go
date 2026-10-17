@@ -16,6 +16,8 @@ import (
 
 const token = "ghp_secret-token-value"
 
+var creds = domain.Credentials{Login: "octo", Token: token}
+
 const reposBody = `[
  {"name":"shogun","html_url":"https://github.com/o/shogun","language":"Go","stargazers_count":7,"pushed_at":"2026-10-06T10:00:00Z","fork":false,"archived":false},
  {"name":"forked","html_url":"https://github.com/o/forked","language":"C","stargazers_count":1,"pushed_at":"2026-10-01T10:00:00Z","fork":true,"archived":false},
@@ -74,7 +76,7 @@ func TestFetchReadsOwnReposAndMergedPullRequests(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	snap, err := github.New(srv.URL, "octo", token, nil).Fetch(context.Background(), "")
+	snap, err := github.New(srv.URL, nil).Fetch(context.Background(), creds, "")
 	if err != nil {
 		t.Fatalf("Fetch: %v", err)
 	}
@@ -102,7 +104,7 @@ func TestFetchSendsTheETagAndReadsNothingMoreOn304(t *testing.T) {
 	srv := httptest.NewServer(fake.handler())
 	defer srv.Close()
 
-	_, err := github.New(srv.URL, "octo", token, nil).Fetch(context.Background(), `W/"v1"`)
+	_, err := github.New(srv.URL, nil).Fetch(context.Background(), creds, `W/"v1"`)
 
 	if !errors.Is(err, domain.ErrNotModified) {
 		t.Fatalf("err = %v, want ErrNotModified", err)
@@ -139,7 +141,7 @@ func TestFetchMapsGitHubFailures(t *testing.T) {
 			srv := httptest.NewServer(tt.fake.handler())
 			defer srv.Close()
 
-			_, err := github.New(srv.URL, "octo", token, nil).Fetch(context.Background(), "")
+			_, err := github.New(srv.URL, nil).Fetch(context.Background(), creds, "")
 
 			if err == nil || !tt.check(err) || strings.Contains(err.Error(), token) {
 				t.Fatalf("err = %v", err)
@@ -153,7 +155,7 @@ func TestFetchErrorsNeverContainTheToken(t *testing.T) {
 	url := srv.URL
 	srv.Close() // nothing listens any more
 
-	_, err := github.New(url, "octo", token, nil).Fetch(context.Background(), "")
+	_, err := github.New(url, nil).Fetch(context.Background(), creds, "")
 
 	if !errors.Is(err, domain.ErrUnavailable) || strings.Contains(err.Error(), token) {
 		t.Fatalf("err = %v", err)

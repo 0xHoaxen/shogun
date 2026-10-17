@@ -72,7 +72,7 @@ cert="$fixture/deploy/infrastructure/sealed-secrets/certs/staging-pub-cert.pem"
 # A key the user supplies, with a value that must never reach the output or a sealed file.
 sentinel="sentinel-value-must-not-print"
 env_file="$work/staging.env"
-printf 'KATANA_GITHUB_USER=octocat\nKATANA_GITHUB_TOKEN=%s\n' "$sentinel" >"$env_file"
+printf 'TSUBAME_GMAIL_CLIENT_SECRET=%s\n' "$sentinel" >"$env_file"
 
 run --env-file "$env_file"
 check "refuses without an env" '[ "$code" -eq 2 ] && echo "$out" | grep -q -- "--env must be"'
@@ -109,7 +109,7 @@ check "postgres holds eleven passwords" '[ "$(keys postgres | wc -w | tr -d " ")
 check "torii keys" '[ "$(keys torii)" = "DATABASE_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET IDENTITY_SIGNING_KEY TORII_ADMIN_EMAILS TORII_PUBLIC_URL " ]'
 check "fude keys" '[ "$(keys fude)" = "DATABASE_URL FUDE_HANKO_KEY_ID FUDE_HANKO_SIGNING_KEY IDENTITY_SIGNING_KEY " ]'
 check "tsubame keys" '[ "$(keys tsubame)" = "DATABASE_URL IDENTITY_SIGNING_KEY TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS TSUBAME_TOKEN_KEY_ID TSUBAME_TOKEN_MASTER_KEY " ]'
-check "katana keys" '[ "$(keys katana)" = "DATABASE_URL IDENTITY_SIGNING_KEY KATANA_GITHUB_TOKEN KATANA_GITHUB_USER " ]'
+check "katana keys" '[ "$(keys katana)" = "DATABASE_URL IDENTITY_SIGNING_KEY KATANA_SECRET_KEY_ID KATANA_SECRET_MASTER_KEY " ]'
 check "soroban keys" '[ "$(keys soroban)" = "DATABASE_URL IDENTITY_SIGNING_KEY SOROBAN_SECRET_KEY_ID SOROBAN_SECRET_MASTER_KEY " ]'
 check "kagami has only the common keys" '[ "$(keys kagami)" = "DATABASE_URL IDENTITY_SIGNING_KEY " ]'
 

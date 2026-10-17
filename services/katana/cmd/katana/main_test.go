@@ -24,6 +24,8 @@ import (
 
 const (
 	testIdentityKey = "0123456789abcdef0123456789abcdef"
+	// testSecretKey is 32 bytes, base64, as KATANA_SECRET_MASTER_KEY is.
+	testSecretKey = "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="
 	// testSorobanAddr is never dialled: the connection is lazy and no test calls soroban.
 	testSorobanAddr = "127.0.0.1:1"
 	testConsumer    = "consumer"
@@ -39,10 +41,11 @@ func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
 func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 	// Arrange
 	env := map[string]string{
-		"ENVIRONMENT":          "test",
-		"DATABASE_URL":         postgrestest.NewDatabase(t),
-		"IDENTITY_SIGNING_KEY": testIdentityKey,
-		"SOROBAN_ADDR":         testSorobanAddr,
+		"ENVIRONMENT":              "test",
+		"DATABASE_URL":             postgrestest.NewDatabase(t),
+		"IDENTITY_SIGNING_KEY":     testIdentityKey,
+		"KATANA_SECRET_MASTER_KEY": testSecretKey,
+		"SOROBAN_ADDR":             testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -73,10 +76,11 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 func TestEveryRPCRequiresIdentity(t *testing.T) {
 	// Arrange
 	env := map[string]string{
-		"ENVIRONMENT":          "test",
-		"DATABASE_URL":         postgrestest.NewDatabase(t),
-		"IDENTITY_SIGNING_KEY": testIdentityKey,
-		"SOROBAN_ADDR":         testSorobanAddr,
+		"ENVIRONMENT":              "test",
+		"DATABASE_URL":             postgrestest.NewDatabase(t),
+		"IDENTITY_SIGNING_KEY":     testIdentityKey,
+		"KATANA_SECRET_MASTER_KEY": testSecretKey,
+		"SOROBAN_ADDR":             testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -118,6 +122,24 @@ func TestRunRejectsMissingIdentityKey(t *testing.T) {
 	}
 }
 
+func TestRunRefusesToStartWithoutTheSecretKeyOrWithABadOne(t *testing.T) {
+	for name, key := range map[string]string{"missing": "", "not base64": "!!!", "too short": "c2hvcnQ="} {
+		t.Run(name, func(t *testing.T) {
+			env := map[string]string{"ENVIRONMENT": "test", "DATABASE_URL": "postgres://unused", "IDENTITY_SIGNING_KEY": testIdentityKey}
+			if key != "" {
+				env["KATANA_SECRET_MASTER_KEY"] = key
+			}
+			lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
+
+			err := run(context.Background(), lookup, relayOverrides{})
+
+			if err == nil || !strings.Contains(err.Error(), "KATANA_SECRET_MASTER_KEY") || (key != "" && strings.Contains(err.Error(), key)) {
+				t.Fatalf("err = %v, want a refusal naming KATANA_SECRET_MASTER_KEY without repeating it", err)
+			}
+		})
+	}
+}
+
 // recordingBus is a bus.Bus that reports each delivery as "consumer/event-id".
 type recordingBus struct{ delivered chan string }
 
@@ -130,10 +152,11 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 	// Arrange
 	dbURL := postgrestest.NewDatabase(t)
 	env := map[string]string{
-		"ENVIRONMENT":          "test",
-		"DATABASE_URL":         dbURL,
-		"IDENTITY_SIGNING_KEY": testIdentityKey,
-		"SOROBAN_ADDR":         testSorobanAddr,
+		"ENVIRONMENT":              "test",
+		"DATABASE_URL":             dbURL,
+		"IDENTITY_SIGNING_KEY":     testIdentityKey,
+		"KATANA_SECRET_MASTER_KEY": testSecretKey,
+		"SOROBAN_ADDR":             testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

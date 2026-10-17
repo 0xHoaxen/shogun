@@ -90,7 +90,7 @@ service_keys() {
 	torii) echo "TORII_PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TORII_ADMIN_EMAILS" ;;
 	fude) echo "FUDE_HANKO_SIGNING_KEY FUDE_HANKO_KEY_ID" ;;
 	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS" ;;
-	katana) echo "KATANA_GITHUB_USER KATANA_GITHUB_TOKEN" ;;
+	katana) echo "KATANA_SECRET_MASTER_KEY KATANA_SECRET_KEY_ID" ;;
 	soroban) echo "SOROBAN_SECRET_MASTER_KEY SOROBAN_SECRET_KEY_ID" ;;
 	*) echo "" ;;
 	esac
@@ -111,6 +111,8 @@ fill_env() {
 	env_set_default "$file" TSUBAME_TOKEN_KEY_ID tsubame-1
 	env_set_default "$file" SOROBAN_SECRET_MASTER_KEY "$(openssl rand -base64 32)"
 	env_set_default "$file" SOROBAN_SECRET_KEY_ID soroban-1
+	env_set_default "$file" KATANA_SECRET_MASTER_KEY "$(openssl rand -base64 32)"
+	env_set_default "$file" KATANA_SECRET_KEY_ID katana-1
 	env_set_default "$file" TORII_PUBLIC_URL http://localhost:3000
 	env_set_default "$file" TSUBAME_GMAIL_REDIRECT_URL http://localhost:3000/mail/callback
 	env_set_default "$file" GOOGLE_CLIENT_ID "$PLACEHOLDER_ID"
@@ -136,11 +138,6 @@ warn_unset() {
 	if [ -z "$(env_get "$file" CLOUDFLARE_API_TOKEN)" ]; then
 		echo "seal-secrets: CLOUDFLARE_API_TOKEN is not set; no cloudflare-api-token is created, so no certificate is issued for the web host" >&2
 	fi
-	for key in KATANA_GITHUB_USER KATANA_GITHUB_TOKEN; do
-		if [ -z "$(env_get "$file" "$key")" ]; then
-			echo "seal-secrets: $key is not set; the service that uses it starts, but GitHub sync will fail" >&2
-		fi
-	done
 }
 
 # seal_secret CERT OUTDIR NAMESPACE NAME FILE seals one Secret built from an env

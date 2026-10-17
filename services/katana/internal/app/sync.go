@@ -38,8 +38,7 @@ func (s *Service) SyncFor(ctx context.Context, owner uuid.UUID) (SyncResult, err
 }
 
 // SyncableOwners lists the active owners whose GitHub the daily job may read:
-// those with a GitHub connection. Until each user connects their own account,
-// that is whoever has synced the account katana is configured with.
+// those who have connected a GitHub account of their own.
 func (s *Service) SyncableOwners(ctx context.Context) ([]owners.Owner, error) {
 	if s.github == nil {
 		return nil, nil
@@ -48,7 +47,7 @@ func (s *Service) SyncableOwners(ctx context.Context) ([]owners.Owner, error) {
 	if err != nil {
 		return nil, err
 	}
-	connected, err := store.New(s.pool).SnapshotOwners(ctx)
+	connected, err := store.New(s.pool).GitHubAccountOwners(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list connected owners: %w", err)
 	}
@@ -70,21 +69,19 @@ func (s *Service) syncOwner(ctx context.Context, owner uuid.UUID) (SyncResult, e
 		return SyncResult{}, ErrGitHubNotConfigured
 	}
 	repo := store.New(s.pool)
-	latest, err := repo.LatestSnapshots(ctx, owner, 1)
+	creds, err := s.credentialsOf(ctx, repo, owner)
 	if err != nil {
 		return SyncResult{}, err
 	}
-	// The one GitHub account katana is configured with belongs to whoever has
-	// synced it before. Anyone else would be handed that person's repositories,
-	// so they wait for a connection of their own.
-	if len(latest) == 0 {
-		return SyncResult{}, ErrGitHubNotConnected
+	latest, err := repo.LatestSnapshots(ctx, owner, 1)
+	if err != nil {
+		return SyncResult{}, err
 	}
 	etag := ""
 	if len(latest) > 0 && latest[0].Etag != nil {
 		etag = *latest[0].Etag
 	}
-	snap, err := s.github.Fetch(ctx, etag)
+	snap, err := s.github.Fetch(ctx, creds, etag)
 	if errors.Is(err, errNotModified) {
 		return SyncResult{}, nil
 	}
