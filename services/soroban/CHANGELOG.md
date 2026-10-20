@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/soroban/v1.0.0...services/soroban/v1.1.0) (2026-10-20)
+
+
+### Features
+
+* **fude:** test a user's AI provider with one small metered call ([64cf060](https://github.com/0xHoaxen/shogun/commit/64cf060f26dd65455dca73bb86619dee76be819f))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **root:** guard sqlc queries with an owner-scope check ([930c495](https://github.com/0xHoaxen/shogun/commit/930c495772179f1d41ef0d5f72ee9958aedd8b62))
+* **soroban:** optional monthly token cap per user ([97fdb4c](https://github.com/0xHoaxen/shogun/commit/97fdb4ce6132a84a7707d44b7ab5f6d75ce312c1))
+* **soroban:** reserve against the caller's own provider and hand it back ([80be81f](https://github.com/0xHoaxen/shogun/commit/80be81f52b6d85c474f8f7eb3c5f41f52d1a3ca9))
+* **soroban:** store each user's AI provider with a sealed key ([5563e98](https://github.com/0xHoaxen/shogun/commit/5563e98c513dea0d018f3aa5142ae0ba52c78f90))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/services/soroban/v0.0.1...services/soroban/v1.0.0) (2026-10-10)
 
 
