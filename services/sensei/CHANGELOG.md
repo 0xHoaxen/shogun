@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/sensei/v1.0.0...services/sensei/v1.1.0) (2026-10-20)
+
+
+### Features
+
+* **kagami:** scan each owner's follow-ups on their own clock ([fe868aa](https://github.com/0xHoaxen/shogun/commit/fe868aa0208b0be1d73a7a5289a11e196c1bf1ae))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **root:** guard sqlc queries with an owner-scope check ([930c495](https://github.com/0xHoaxen/shogun/commit/930c495772179f1d41ef0d5f72ee9958aedd8b62))
+* **sensei:** purge a deleted user's facts and rollups ([414cfa8](https://github.com/0xHoaxen/shogun/commit/414cfa8b5f04ccd57f951d6b914f8257593545bf))
+* **sensei:** roll up each owner's days in their own time zone ([8c9950b](https://github.com/0xHoaxen/shogun/commit/8c9950b315b0ceb9b5c932e2e705c3d3f763e43a))
+* **torii:** announce users to services and keep a local owners list ([10ffeb1](https://github.com/0xHoaxen/shogun/commit/10ffeb1a2fd0671448dbf2fbec7b559073f481dc))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/services/sensei/v0.0.1...services/sensei/v1.0.0) (2026-10-10)
 
 
