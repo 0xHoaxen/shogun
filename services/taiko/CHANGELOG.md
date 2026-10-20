@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/taiko/v1.0.0...services/taiko/v1.1.0) (2026-10-20)
+
+
+### Features
+
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **root:** guard sqlc queries with an owner-scope check ([930c495](https://github.com/0xHoaxen/shogun/commit/930c495772179f1d41ef0d5f72ee9958aedd8b62))
+* **taiko:** purge a deleted user's notifications and settings ([9214c06](https://github.com/0xHoaxen/shogun/commit/9214c06c09b61ee05a274e2c9d6140e361397a57))
+* **taiko:** send each owner's daily digest on their own clock ([68c2a57](https://github.com/0xHoaxen/shogun/commit/68c2a573677b3ef8202d7837cd35f86961e91c8f))
+* **torii:** announce users to services and keep a local owners list ([10ffeb1](https://github.com/0xHoaxen/shogun/commit/10ffeb1a2fd0671448dbf2fbec7b559073f481dc))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/services/taiko/v0.0.1...services/taiko/v1.0.0) (2026-10-10)
 
 
