@@ -11,7 +11,7 @@ SET email = EXCLUDED.email,
                    THEN users.version + 1 ELSE users.version END,
     updated_at = CASE WHEN users.email <> EXCLUDED.email OR users.display_name <> EXCLUDED.display_name
                       THEN now() ELSE users.updated_at END
-RETURNING *;
+RETURNING *, (xmax = 0) AS inserted;
 
 -- name: GetUser :one
 -- owner-scope: global users are the tenants; their id is the owner id; admin calls are role-checked in torii

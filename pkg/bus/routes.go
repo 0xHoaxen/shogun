@@ -28,6 +28,11 @@ var routes = map[string][]string{
 
 	"learning.activity_added": {"fude"},
 	"learning.item_completed": {"fude", "katana"},
+
+	// torii tells every service with a per-user schedule who its users are.
+	"user.activated": {"kagami", "katana", "sensei", "shinobi", "taiko"},
+	"user.updated":   {"kagami", "katana", "sensei", "shinobi", "taiko"},
+	"user.deleted":   {"kagami", "katana", "sensei", "shinobi", "taiko"},
 }
 
 // Consumers returns the services subscribed to eventType, or nil when there
