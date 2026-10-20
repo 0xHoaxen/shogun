@@ -12,6 +12,7 @@ import {
   draftStateLabel,
 } from "@/components/drafts/labels";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { DraftState, DraftsService } from "@/gen/shogun/api/v1/drafts_pb";
 import { cn } from "@/lib/utils";
@@ -41,7 +42,7 @@ export function DraftsQueue() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.drafts}
         title="Your drafts."
         description="Everything Shogun wrote for you. Nothing leaves until you approve the exact text."
       >

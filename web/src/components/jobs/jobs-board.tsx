@@ -21,6 +21,7 @@ import { AddJobDialog } from "@/components/jobs/add-job-dialog";
 import { boardQueryKey } from "@/components/jobs/board-key";
 import { statusLabel } from "@/components/jobs/status-labels";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import {
   GetBoardResponseSchema,
@@ -177,7 +178,7 @@ export function JobsBoard() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.jobs}
         title={title}
         description="Drag a card to another stage. Each move is logged on the job."
       >

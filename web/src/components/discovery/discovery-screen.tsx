@@ -6,6 +6,7 @@ import { PostingsPanel } from "@/components/discovery/postings-panel";
 import { PreferencesPanel } from "@/components/discovery/preferences-panel";
 import { SourcesPanel } from "@/components/discovery/sources-panel";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { cn } from "@/lib/utils";
 
 type View = "postings" | "sources" | "preferences";
@@ -20,7 +21,7 @@ export function DiscoveryScreen() {
   const [view, setView] = useState<View>("postings");
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.discovery}
         title="What's out there."
         description="Postings from the sources you add, scored against what you are looking for. Save the good ones to your job board."
       />
