@@ -1,6 +1,6 @@
 # torii, staging. image.tag is bumped by .github/workflows/deploy.yml.
 image:
-  tag: "1.1.0"
+  tag: "1.2.0"
 env:
   ENVIRONMENT: staging
   TORII_PUBLIC_ADDR: ":8081"
