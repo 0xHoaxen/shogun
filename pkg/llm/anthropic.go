@@ -2,6 +2,8 @@ package llm
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"math"
@@ -39,6 +41,9 @@ const (
 type AnthropicAPI struct {
 	http     *http.Client
 	settings anthropicSettings
+	// keyTag is a random per-process secret that keys the digest of an API key
+	// in clientFor. It never leaves the process.
+	keyTag []byte
 
 	mu      sync.Mutex
 	clients map[string]anthropic.Client
@@ -87,15 +92,27 @@ func NewAnthropicAPI(opts ...AnthropicOption) *AnthropicAPI {
 			IdleConnTimeout:       time.Minute,
 		}
 	}
-	return &AnthropicAPI{http: &http.Client{Transport: transport}, settings: s, clients: map[string]anthropic.Client{}}
+	// rand.Read never returns an error (Go 1.24+); it aborts the program if the
+	// system source of randomness fails.
+	keyTag := make([]byte, sha256.Size)
+	_, _ = rand.Read(keyTag)
+	return &AnthropicAPI{
+		http:     &http.Client{Transport: transport},
+		settings: s,
+		keyTag:   keyTag,
+		clients:  map[string]anthropic.Client{},
+	}
 }
 
 // clientFor returns the SDK client for an access, reusing one for the same
 // address and key so its connections are reused too. The key is never kept as
-// map key, only its hash.
+// map key, only a keyed digest of it. The digest is a lookup tag, not a stored
+// credential, so it is an HMAC under a random per-process key rather than a
+// bare hash.
 func (a *AnthropicAPI) clientFor(access Access) anthropic.Client {
-	sum := sha256.Sum256([]byte(access.APIKey))
-	id := access.BaseURL + "\x00" + hex.EncodeToString(sum[:])
+	mac := hmac.New(sha256.New, a.keyTag)
+	mac.Write([]byte(access.APIKey))
+	id := access.BaseURL + "\x00" + hex.EncodeToString(mac.Sum(nil))
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if c, ok := a.clients[id]; ok {
