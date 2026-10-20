@@ -780,8 +780,8 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: `shogun.api.v1.AdminService` (`ListUsers`, `SetUserStatus`, `SetGmailAllowed`); `/settings/users` page and an admin-only Users tab (the P11.10 hub links to it); `Session` carries `role` and `gmail_allowed`; Gmail connect refused with `GMAIL_NOT_APPROVED`. Judgement call: the setters are single-purpose toggles, so they skip the FieldMask and version check that AGENTS.md asks of general updates.
   Done when: `make proto`, `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
-- [ ] **P11.10 Settings button and hub** (M) Needs: P11.3
-  Do: Settings button bottom-left of the footer; `/settings` hub with AI provider, Integrations, Spend, Alerts, Account, Users (admin).
+- [x] **P11.10 Settings button and hub** (M) Needs: P11.3
+  Do: Settings button bottom-left of the footer; `/settings` hub with a left tab list (`SETTINGS_TABS` in `web/src/components/settings/settings-nav.tsx`): Mail, Spend, Alerts and Users (admin) today. The AI provider tab is added by P11.5e, GitHub by P11.6, Account by P11.8: each appends to `SETTINGS_TABS`. Mail, Spend and Alerts left the top tabs.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test` pass.
 
 - [ ] **P11.4 User directory and per-user timezone** (L) Needs: P11.3
