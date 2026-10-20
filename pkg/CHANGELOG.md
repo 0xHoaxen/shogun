@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.0](https://github.com/0xHoaxen/shogun/compare/pkg/v1.1.0...pkg/v1.2.0) (2026-10-20)
+
+
+### Features
+
+* **fude:** test a user's AI provider with one small metered call ([64cf060](https://github.com/0xHoaxen/shogun/commit/64cf060f26dd65455dca73bb86619dee76be819f))
+* **llm:** call each user's own provider and drop the shared Anthropic settings ([7d1ef65](https://github.com/0xHoaxen/shogun/commit/7d1ef65cb0319da08d4040b2aced3aa9fe413863))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **owners:** purge a user's rows when their deletion is recorded ([8046154](https://github.com/0xHoaxen/shogun/commit/8046154ad285336641aeaf58f61585d8f27fab6e))
+* **owners:** PurgeSQL and a test helper that every table is covered ([51b1962](https://github.com/0xHoaxen/shogun/commit/51b196233a9e785494b5c0bbec2ccdb3b7da9738))
+* **pkg:** mutual TLS between services ([cfefbb3](https://github.com/0xHoaxen/shogun/commit/cfefbb33babce45d99e69bad0c2b520cfdedb805))
+* **soroban:** optional monthly token cap per user ([97fdb4c](https://github.com/0xHoaxen/shogun/commit/97fdb4ce6132a84a7707d44b7ab5f6d75ce312c1))
+* **soroban:** reserve against the caller's own provider and hand it back ([80be81f](https://github.com/0xHoaxen/shogun/commit/80be81f52b6d85c474f8f7eb3c5f41f52d1a3ca9))
+* **soroban:** store each user's AI provider with a sealed key ([5563e98](https://github.com/0xHoaxen/shogun/commit/5563e98c513dea0d018f3aa5142ae0ba52c78f90))
+* **taiko:** send each owner's daily digest on their own clock ([68c2a57](https://github.com/0xHoaxen/shogun/commit/68c2a573677b3ef8202d7837cd35f86961e91c8f))
+* **torii:** announce users to services and keep a local owners list ([10ffeb1](https://github.com/0xHoaxen/shogun/commit/10ffeb1a2fd0671448dbf2fbec7b559073f481dc))
+
 ## [1.1.0](https://github.com/0xHoaxen/shogun/compare/pkg/v1.0.0...pkg/v1.1.0) (2026-10-12)
 
 
