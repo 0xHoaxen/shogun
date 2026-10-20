@@ -156,3 +156,28 @@ func TestLocalDateAndTimeFollowTheOwnersZone(t *testing.T) {
 		t.Fatal("ReachedLocalTime does not follow each owner's clock")
 	}
 }
+
+func TestDueAtListsOwnersWhoseClockHasReachedTheTimeWithTheirOwnDate(t *testing.T) {
+	// 2026-10-07 02:30 UTC: 08:00 in Kolkata, 11:30 in Tokyo, 22:30 on the 6th in New York.
+	now := time.Date(2026, 10, 7, 2, 30, 0, 0, time.UTC)
+	kolkata := owners.Owner{ID: uuid.New(), Timezone: "Asia/Kolkata"}
+	tokyo := owners.Owner{ID: uuid.New(), Timezone: "Asia/Tokyo"}
+	newYork := owners.Owner{ID: uuid.New(), Timezone: "America/New_York"}
+
+	got := owners.DueAt([]owners.Owner{kolkata, tokyo, newYork}, now, 8, 0)
+
+	want := []owners.Due{{Owner: kolkata, Date: "2026-10-07"}, {Owner: tokyo, Date: "2026-10-07"}, {Owner: newYork, Date: "2026-10-06"}}
+	if len(got) != 3 || got[0] != want[0] || got[1] != want[1] || got[2] != want[2] {
+		t.Fatalf("DueAt = %+v, want %+v", got, want)
+	}
+}
+
+func TestDueAtSkipsOwnersWhoseClockHasNotReachedTheTime(t *testing.T) {
+	// 01:00 UTC is 06:30 in Kolkata.
+	now := time.Date(2026, 10, 7, 1, 0, 0, 0, time.UTC)
+	kolkata := owners.Owner{ID: uuid.New(), Timezone: "Asia/Kolkata"}
+
+	if got := owners.DueAt([]owners.Owner{kolkata}, now, 8, 0); len(got) != 0 {
+		t.Fatalf("DueAt = %+v, want none before 08:00 local", got)
+	}
+}

@@ -74,33 +74,6 @@ func (q *Queries) InsertChannelSetting(ctx context.Context, arg InsertChannelSet
 	return i, err
 }
 
-const listOwners = `-- name: ListOwners :many
-SELECT owner_id FROM notifications
-UNION
-SELECT owner_id FROM channel_settings
-`
-
-// Every owner taiko has heard of: one with a notification or a setting.
-func (q *Queries) ListOwners(ctx context.Context) ([]uuid.UUID, error) {
-	rows, err := q.db.Query(ctx, listOwners)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []uuid.UUID{}
-	for rows.Next() {
-		var owner_id uuid.UUID
-		if err := rows.Scan(&owner_id); err != nil {
-			return nil, err
-		}
-		items = append(items, owner_id)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateChannelSetting = `-- name: UpdateChannelSetting :one
 UPDATE channel_settings SET
     enabled = $1,
