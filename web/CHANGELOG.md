@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.3.0](https://github.com/0xHoaxen/shogun/compare/web/v1.2.0...web/v1.3.0) (2026-10-20)
+
+
+### Features
+
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **torii:** admin RPCs, Gmail approval gate and Users page ([491da82](https://github.com/0xHoaxen/shogun/commit/491da8210bdb3764d36222456f20cdaf96679629))
+* **torii:** AI provider API that never returns or logs the key ([b2d1e8c](https://github.com/0xHoaxen/shogun/commit/b2d1e8c77911cdc74de62cb3dac0ebb80ce609e8))
+* **torii:** connect GitHub from Settings ([b6ccefb](https://github.com/0xHoaxen/shogun/commit/b6ccefb54b3abf7c6f5476b393d11de9ba359ec0))
+* **torii:** delete an account and announce it with user.deleted ([7768244](https://github.com/0xHoaxen/shogun/commit/776824413c62a69ddb8442d744c382a42bb98f10))
+* **torii:** set a time zone and sign out everywhere from Settings ([26efebd](https://github.com/0xHoaxen/shogun/commit/26efebd3fcc80e28f15080d806aa5a25e02008d8))
+* **web:** AI provider settings, notices and failure text, with provider setup in the compose specs ([33fba7b](https://github.com/0xHoaxen/shogun/commit/33fba7bb8941933fa144bb280914bce073ffb4d4))
+* **web:** explain every section's role, actions and benefit ([9567601](https://github.com/0xHoaxen/shogun/commit/9567601a71270fd3a5392e83e546a9672d77c654))
+* **web:** settings button and settings hub ([151985a](https://github.com/0xHoaxen/shogun/commit/151985ac81482c841cf18369c95670c82f065b0a))
+
+
+### Bug Fixes
+
+* **katana:** stop sharing one GitHub account across users and sync on each owner's clock ([9bbacbf](https://github.com/0xHoaxen/shogun/commit/9bbacbf6f2917dd1f5e5970d3a755ec10d583cb5))
+* **web:** show contacts CSV format and keep import errors inside the dialog ([027822d](https://github.com/0xHoaxen/shogun/commit/027822d050ae112183926a2d0926942aa1807eca))
+
 ## [1.2.0](https://github.com/0xHoaxen/shogun/compare/web/v1.1.0...web/v1.2.0) (2026-10-15)
 
 
