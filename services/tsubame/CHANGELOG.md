@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/tsubame/v1.0.0...services/tsubame/v1.1.0) (2026-10-20)
+
+
+### Features
+
+* **llm:** call each user's own provider and drop the shared Anthropic settings ([7d1ef65](https://github.com/0xHoaxen/shogun/commit/7d1ef65cb0319da08d4040b2aced3aa9fe413863))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **root:** guard sqlc queries with an owner-scope check ([930c495](https://github.com/0xHoaxen/shogun/commit/930c495772179f1d41ef0d5f72ee9958aedd8b62))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/services/tsubame/v0.0.1...services/tsubame/v1.0.0) (2026-10-10)
 
 
