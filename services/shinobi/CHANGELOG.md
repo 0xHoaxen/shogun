@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/0xHoaxen/shogun/compare/services/shinobi/v1.1.0...services/shinobi/v1.2.0) (2026-10-20)
+
+
+### Features
+
+* **kagami:** scan each owner's follow-ups on their own clock ([fe868aa](https://github.com/0xHoaxen/shogun/commit/fe868aa0208b0be1d73a7a5289a11e196c1bf1ae))
+* **llm:** call each user's own provider and drop the shared Anthropic settings ([7d1ef65](https://github.com/0xHoaxen/shogun/commit/7d1ef65cb0319da08d4040b2aced3aa9fe413863))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **root:** guard sqlc queries with an owner-scope check ([930c495](https://github.com/0xHoaxen/shogun/commit/930c495772179f1d41ef0d5f72ee9958aedd8b62))
+* **shinobi:** purge a deleted user's sources, postings and scores ([6fe4c4e](https://github.com/0xHoaxen/shogun/commit/6fe4c4e17dc8d2cc95ec7dfe8ac366d8bee8c871))
+* **shinobi:** read each owner's source schedules in their own time zone ([91a4c48](https://github.com/0xHoaxen/shogun/commit/91a4c48b4c482e2225beaaeea828e96759eb4a01))
+* **torii:** announce users to services and keep a local owners list ([10ffeb1](https://github.com/0xHoaxen/shogun/commit/10ffeb1a2fd0671448dbf2fbec7b559073f481dc))
+
 ## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/shinobi/v1.0.0...services/shinobi/v1.1.0) (2026-10-15)
 
 

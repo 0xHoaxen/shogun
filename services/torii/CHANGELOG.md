@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0](https://github.com/0xHoaxen/shogun/compare/services/torii/v1.1.0...services/torii/v1.2.0) (2026-10-20)
+
+
+### Features
+
+* **kagami:** scan each owner's follow-ups on their own clock ([fe868aa](https://github.com/0xHoaxen/shogun/commit/fe868aa0208b0be1d73a7a5289a11e196c1bf1ae))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **root:** guard sqlc queries with an owner-scope check ([930c495](https://github.com/0xHoaxen/shogun/commit/930c495772179f1d41ef0d5f72ee9958aedd8b62))
+* **torii:** add users table and store ([2d9edd6](https://github.com/0xHoaxen/shogun/commit/2d9edd6166aaecede6056289885cde0ef161d434))
+* **torii:** admin RPCs, Gmail approval gate and Users page ([491da82](https://github.com/0xHoaxen/shogun/commit/491da8210bdb3764d36222456f20cdaf96679629))
+* **torii:** AI provider API that never returns or logs the key ([b2d1e8c](https://github.com/0xHoaxen/shogun/commit/b2d1e8c77911cdc74de62cb3dac0ebb80ce609e8))
+* **torii:** announce users to services and keep a local owners list ([10ffeb1](https://github.com/0xHoaxen/shogun/commit/10ffeb1a2fd0671448dbf2fbec7b559073f481dc))
+* **torii:** connect GitHub from Settings ([b6ccefb](https://github.com/0xHoaxen/shogun/commit/b6ccefb54b3abf7c6f5476b393d11de9ba359ec0))
+* **torii:** delete an account and announce it with user.deleted ([7768244](https://github.com/0xHoaxen/shogun/commit/776824413c62a69ddb8442d744c382a42bb98f10))
+* **torii:** open Google sign-up with admin bootstrap ([bf3b8f7](https://github.com/0xHoaxen/shogun/commit/bf3b8f7dd01e4a5ec27b63bc68b042c6eaae43c2))
+* **torii:** rate limit each signed-in user separately ([6a46686](https://github.com/0xHoaxen/shogun/commit/6a46686f46299af314b46f81bd29b606cc129f3b))
+* **torii:** set a time zone and sign out everywhere from Settings ([26efebd](https://github.com/0xHoaxen/shogun/commit/26efebd3fcc80e28f15080d806aa5a25e02008d8))
+
 ## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/torii/v1.0.0...services/torii/v1.1.0) (2026-10-15)
 
 
