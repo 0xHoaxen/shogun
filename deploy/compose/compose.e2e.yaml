@@ -52,7 +52,7 @@ services:
       GOOGLE_ISSUER_URL: http://mock-oauth2:8080/default
       GOOGLE_CLIENT_ID: e2e-client
       GOOGLE_CLIENT_SECRET: e2e-secret
-      TORII_ALLOWED_EMAILS: ${TORII_E2E_EMAIL:-owner@example.com}
+      TORII_ADMIN_EMAILS: ${TORII_E2E_EMAIL:-owner@example.com}
 
   # Stand-in for Anthropic and Gmail (see stubs/mock-apis.mjs). fude and
   # tsubame call it instead of the real services; the spec reads what it was

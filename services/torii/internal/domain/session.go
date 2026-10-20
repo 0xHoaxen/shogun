@@ -12,7 +12,9 @@ type Session struct {
 	OwnerID     uuid.UUID
 	Email       string
 	DisplayName string
-	ExpiresAt   time.Time
+	// Role is the user's current role. It is not stored on the session row; Authenticate fills it in.
+	Role      Role
+	ExpiresAt time.Time
 }
 
 // Expired reports whether the session is no longer valid at now.

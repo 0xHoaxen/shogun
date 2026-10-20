@@ -768,12 +768,12 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: update README, AGENTS.md, DDL and deploy docs for users, providers, github_accounts, roles; add this phase.
   Done when: `grep -rn "single-user" README.md AGENTS.md` returns nothing.
 
-- [ ] **P11.1 torii users table** (M) Needs: P11.0
-  Do: `users` migration, sqlc queries, store, upsert on login, `user.activated` event.
+- [x] **P11.1 torii users table** (M) Needs: P11.0
+  Do: `users` migration, sqlc queries, `domain.User`, `store.Users` (upsert, get, list, role, status, Gmail approval, timezone). Login upsert and the `user.activated` event land in P11.2.
   Done when: `cd services/torii && go test -race ./...` passes.
 
-- [ ] **P11.2 Open sign-up** (M) Needs: P11.1
-  Do: remove `TORII_ALLOWED_EMAILS`; add required `TORII_ADMIN_EMAILS`; any verified Google account becomes a member; disabled users refused; rate limit the callback.
+- [x] **P11.2 Open sign-up** (M) Needs: P11.1
+  Do: remove `TORII_ALLOWED_EMAILS`; add required `TORII_ADMIN_EMAILS`; any verified Google account becomes a member; disabled users refused at login and on every request. The existing global rate limiter already covers `/auth/*`. The `user.activated` event moves to P11.4 with the rest of the `user.*` events. Follow-up for the owner: reseal `deploy/infrastructure/sealed-secrets/secrets/staging/torii.yaml` with `TORII_ADMIN_EMAILS` (it still holds the old sealed key) and update the production values.
   Done when: `cd services/torii && go test -race ./...` passes and no `TORII_ALLOWED_EMAILS` remains outside the protected production values.
 
 - [ ] **P11.3 Admin RPCs and page** (M) Needs: P11.2

@@ -42,8 +42,8 @@ func (f *fakeTsubame) CompleteConnect(_ context.Context, in *tsubamev1.CompleteC
 func newMailHarness(t *testing.T) (*fakeTsubame, apiv1connect.MailServiceClient, string) {
 	t.Helper()
 	now := time.Date(2026, 10, 6, 9, 0, 0, 0, time.UTC)
-	auth, err := app.NewAuth(apptest.NewMemSessions(),
-		app.AuthConfig{AllowedEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
+	auth, err := app.NewAuth(apptest.NewMemSessions(), apptest.NewMemUsers(),
+		app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
 		app.WithClock(func() time.Time { return now }))
 	if err != nil {
 		t.Fatalf("NewAuth: %v", err)
