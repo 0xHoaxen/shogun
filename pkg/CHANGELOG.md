@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/0xHoaxen/shogun/compare/pkg/v1.2.0...pkg/v1.2.1) (2026-10-20)
+
+
+### Bug Fixes
+
+* **llm:** key the API key digest with a per-process HMAC ([7331e1d](https://github.com/0xHoaxen/shogun/commit/7331e1de741fa8f8c44e20c20134bce893150441))
+* **llm:** key the API key digest with a per-process HMAC ([d4f79a2](https://github.com/0xHoaxen/shogun/commit/d4f79a2e6ad9a9314234d63f7c87ffd433a2e850))
+
 ## [1.2.0](https://github.com/0xHoaxen/shogun/compare/pkg/v1.1.0...pkg/v1.2.0) (2026-10-20)
 
 
