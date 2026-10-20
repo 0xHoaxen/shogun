@@ -758,6 +758,76 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
 
 ---
 
+---
+
+## Phase 11: Multi-user
+
+Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin and member. Each user brings their own Anthropic-compatible provider and GitHub connection. Gmail connect is enabled per user by an admin until the Google app is verified. The global `TORII_ALLOWED_EMAILS`, `ANTHROPIC_*` and `KATANA_GITHUB_USER/TOKEN` settings are removed.
+
+- [x] **P11.0 Docs and phase** (S) Needs: none
+  Do: update README, AGENTS.md, DDL and deploy docs for users, providers, github_accounts, roles; add this phase.
+  Done when: `grep -rn "single-user" README.md AGENTS.md` returns nothing.
+
+- [ ] **P11.1 torii users table** (M) Needs: P11.0
+  Do: `users` migration, sqlc queries, store, upsert on login, `user.activated` event.
+  Done when: `cd services/torii && go test -race ./...` passes.
+
+- [ ] **P11.2 Open sign-up** (M) Needs: P11.1
+  Do: remove `TORII_ALLOWED_EMAILS`; add required `TORII_ADMIN_EMAILS`; any verified Google account becomes a member; disabled users refused; rate limit the callback.
+  Done when: `cd services/torii && go test -race ./...` passes and no `TORII_ALLOWED_EMAILS` remains outside the protected production values.
+
+- [ ] **P11.3 Admin RPCs and page** (M) Needs: P11.2
+  Do: `ListUsers`, `SetUserStatus`, `SetGmailAllowed`; admin page; Gmail connect refused with `GMAIL_NOT_APPROVED`.
+  Done when: `make proto`, `cd services/torii && go test -race ./...`, `cd web && npm test`.
+
+- [ ] **P11.10 Settings button and hub** (M) Needs: P11.3
+  Do: Settings button bottom-left of the footer; `/settings` hub with AI provider, Integrations, Spend, Alerts, Account, Users (admin).
+  Done when: `cd web && npm test` and the Playwright shell spec pass.
+
+- [ ] **P11.4 User directory and per-user timezone** (L) Needs: P11.3
+  Do: torii `user.*` events; local `owners` tables; per-owner fan-out and timezone in kagami, katana, sensei, shinobi, taiko jobs. Split per service.
+  Done when: `make test`.
+
+- [ ] **P11.5a soroban providers** (M) Needs: P11.4
+  Do: `providers` table, encrypted key, Set/Get/Delete/Test RPCs, SSRF-safe base URL validation.
+  Done when: `cd services/soroban && go test -race ./...`.
+
+- [ ] **P11.5b Reserve returns the provider** (M) Needs: P11.5a
+  Do: provider fields on `ReserveResponse`; `AI_PROVIDER_NOT_CONFIGURED`.
+  Done when: `make proto`, `cd services/soroban && go test -race ./...`.
+
+- [ ] **P11.5c pkg/llm per-call provider** (M) Needs: P11.5b
+  Do: build the client from the reserved provider; delete `ANTHROPIC_*` env from fude, katana, shinobi, tsubame, pkg/llm, env files and docs.
+  Done when: `cd pkg && go test -race ./llm/...` and `make build`.
+
+- [ ] **P11.5d Pricing and user caps** (S) Needs: P11.5c
+  Do: custom model prices, token-only usage when unpriced, user-editable budgets.
+  Done when: `cd services/soroban && go test -race ./...`.
+
+- [ ] **P11.5e AI provider settings UI** (M) Needs: P11.5d, P11.10
+  Do: Settings AI provider form and "add your provider" prompts.
+  Done when: `cd web && npm test`.
+
+- [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4, P11.10
+  Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.
+  Done when: `cd services/katana && go test -race ./...`.
+
+- [ ] **P11.7 Owner-scoping audit** (M) Needs: P11.4
+  Do: fix queries missing `owner_id`; cross-tenant store test per service; `scripts/check-owner-scope.sh` in `make lint`.
+  Done when: `make lint` and `make test`.
+
+- [ ] **P11.8 Account settings** (M) Needs: P11.10, P11.4
+  Do: timezone picker, sign out everywhere, delete my data via `user.deleted`.
+  Done when: `make test`.
+
+- [ ] **P11.11 Section explainers** (M) Needs: P11.10
+  Do: `PageHeader` `about` prop (responsibility, what it does, how it helps) with copy in `web/src/content/sections.ts` for every section and settings tab.
+  Done when: `cd web && npm test`.
+
+- [ ] **P11.9 Compliance** (S) Needs: P11.11
+  Do: privacy and terms for many users and BYO keys; Google verification notes in `docs/deploy.md`.
+  Done when: `cd web && npm test`.
+
 ## Later (not scheduled)
 
-Interview prep, resume tailoring per job, post scheduling calendar, Outlook provider for `tsubame`, NATS JetStream behind `pkg/bus`, row-level security for multi-user.
+Interview prep, resume tailoring per job, post scheduling calendar, Outlook provider for `tsubame`, NATS JetStream behind `pkg/bus`, row-level security for multi-user (Postgres RLS on top of Phase 11).
