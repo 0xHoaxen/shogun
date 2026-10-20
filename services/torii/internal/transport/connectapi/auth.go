@@ -42,9 +42,11 @@ func (s *AuthServer) GetSession(
 		return nil, newError(connect.CodeUnauthenticated, reasonUnauthenticated, "sign in required")
 	}
 	return connect.NewResponse(&apiv1.GetSessionResponse{Session: &apiv1.Session{
-		Email:       session.Email,
-		DisplayName: session.DisplayName,
-		ExpiresAt:   timestamppb.New(session.ExpiresAt),
+		Email:        session.Email,
+		DisplayName:  session.DisplayName,
+		ExpiresAt:    timestamppb.New(session.ExpiresAt),
+		Role:         string(session.Role),
+		GmailAllowed: session.GmailAllowed,
 	}}), nil
 }
 

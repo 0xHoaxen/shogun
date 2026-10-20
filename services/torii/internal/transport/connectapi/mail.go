@@ -35,6 +35,9 @@ func NewMailServer(backend MailBackend, log *slog.Logger) *MailServer {
 func (s *MailServer) ConnectAccount(
 	ctx context.Context, _ *connect.Request[apiv1.ConnectAccountRequest],
 ) (*connect.Response[apiv1.ConnectAccountResponse], error) {
+	if err := requireGmailApproval(ctx); err != nil {
+		return nil, err
+	}
 	resp, err := s.tsubame.ConnectAccount(ctx, &tsubamev1.ConnectAccountRequest{Provider: tsubamev1.MailProvider_MAIL_PROVIDER_GMAIL})
 	if err != nil {
 		return nil, fromGRPC(ctx, s.log, err)
@@ -47,9 +50,25 @@ func (s *MailServer) ConnectAccount(
 func (s *MailServer) CompleteConnect(
 	ctx context.Context, req *connect.Request[apiv1.CompleteConnectRequest],
 ) (*connect.Response[apiv1.CompleteConnectResponse], error) {
+	if err := requireGmailApproval(ctx); err != nil {
+		return nil, err
+	}
 	resp, err := s.tsubame.CompleteConnect(ctx, &tsubamev1.CompleteConnectRequest{Code: req.Msg.GetCode(), State: req.Msg.GetState()})
 	if err != nil {
 		return nil, fromGRPC(ctx, s.log, err)
 	}
 	return connect.NewResponse(&apiv1.CompleteConnectResponse{Address: resp.GetAccount().GetAddress()}), nil
+}
+
+// requireGmailApproval refuses users an admin has not approved for Gmail, so
+// the unverified Google app stays within its test-user limit.
+func requireGmailApproval(ctx context.Context) error {
+	session, ok := SessionFromContext(ctx)
+	if !ok {
+		return newError(connect.CodeUnauthenticated, reasonUnauthenticated, "sign in required")
+	}
+	if !session.GmailAllowed {
+		return newError(connect.CodeFailedPrecondition, reasonGmailNotApproved, messageGmailNotApproved)
+	}
+	return nil
 }

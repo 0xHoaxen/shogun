@@ -776,13 +776,13 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: remove `TORII_ALLOWED_EMAILS`; add required `TORII_ADMIN_EMAILS`; any verified Google account becomes a member; disabled users refused at login and on every request. The existing global rate limiter already covers `/auth/*`. The `user.activated` event moves to P11.4 with the rest of the `user.*` events. Follow-up for the owner: reseal `deploy/infrastructure/sealed-secrets/secrets/staging/torii.yaml` with `TORII_ADMIN_EMAILS` (it still holds the old sealed key) and update the production values.
   Done when: `cd services/torii && go test -race ./...` passes and no `TORII_ALLOWED_EMAILS` remains outside the protected production values.
 
-- [ ] **P11.3 Admin RPCs and page** (M) Needs: P11.2
-  Do: `ListUsers`, `SetUserStatus`, `SetGmailAllowed`; admin page; Gmail connect refused with `GMAIL_NOT_APPROVED`.
-  Done when: `make proto`, `cd services/torii && go test -race ./...`, `cd web && npm test`.
+- [x] **P11.3 Admin RPCs and page** (M) Needs: P11.2
+  Do: `shogun.api.v1.AdminService` (`ListUsers`, `SetUserStatus`, `SetGmailAllowed`); `/settings/users` page and an admin-only Users tab (the P11.10 hub links to it); `Session` carries `role` and `gmail_allowed`; Gmail connect refused with `GMAIL_NOT_APPROVED`. Judgement call: the setters are single-purpose toggles, so they skip the FieldMask and version check that AGENTS.md asks of general updates.
+  Done when: `make proto`, `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [ ] **P11.10 Settings button and hub** (M) Needs: P11.3
   Do: Settings button bottom-left of the footer; `/settings` hub with AI provider, Integrations, Spend, Alerts, Account, Users (admin).
-  Done when: `cd web && npm test` and the Playwright shell spec pass.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test` pass.
 
 - [ ] **P11.4 User directory and per-user timezone** (L) Needs: P11.3
   Do: torii `user.*` events; local `owners` tables; per-owner fan-out and timezone in kagami, katana, sensei, shinobi, taiko jobs. Split per service.
@@ -806,7 +806,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
 
 - [ ] **P11.5e AI provider settings UI** (M) Needs: P11.5d, P11.10
   Do: Settings AI provider form and "add your provider" prompts.
-  Done when: `cd web && npm test`.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [ ] **P11.6 Per-user GitHub OAuth** (M) Needs: P11.4, P11.10
   Do: `github_accounts`, connect flow, per-owner sync; delete `KATANA_GITHUB_USER/TOKEN`.
@@ -822,11 +822,11 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
 
 - [ ] **P11.11 Section explainers** (M) Needs: P11.10
   Do: `PageHeader` `about` prop (responsibility, what it does, how it helps) with copy in `web/src/content/sections.ts` for every section and settings tab.
-  Done when: `cd web && npm test`.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 - [ ] **P11.9 Compliance** (S) Needs: P11.11
   Do: privacy and terms for many users and BYO keys; Google verification notes in `docs/deploy.md`.
-  Done when: `cd web && npm test`.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 
 ## Later (not scheduled)
 

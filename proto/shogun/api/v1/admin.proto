@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// AdminService lets admins manage who can use Shogun. Every RPC is
+// PermissionDenied with reason ADMIN_REQUIRED for a member. Admins see accounts
+// only, never another user's jobs, contacts, mail or drafts.
+service AdminService {
+  // ListUsers pages through all users, oldest first.
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  // SetUserStatus enables or disables a user. A disabled user is signed out at
+  // once and cannot sign in. An admin cannot disable themselves
+  // (FailedPrecondition, reason ADMIN_CANNOT_DISABLE_SELF).
+  rpc SetUserStatus(SetUserStatusRequest) returns (SetUserStatusResponse);
+  // SetGmailAllowed approves or withdraws a user's right to connect Gmail,
+  // which is limited while the Google app is unverified.
+  rpc SetGmailAllowed(SetGmailAllowedRequest) returns (SetGmailAllowedResponse);
+}
+
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_MEMBER = 1;
+  USER_ROLE_ADMIN = 2;
+}
+
+enum UserStatus {
+  USER_STATUS_UNSPECIFIED = 0;
+  USER_STATUS_ACTIVE = 1;
+  USER_STATUS_DISABLED = 2;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string display_name = 3;
+  UserRole role = 4;
+  UserStatus status = 5;
+  bool gmail_allowed = 6;
+  string timezone = 7;
+  int32 version = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message ListUsersRequest {
+  // page_size defaults to 50 and is capped at 200.
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  // next_page_token is empty on the last page.
+  string next_page_token = 2;
+}
+
+message SetUserStatusRequest {
+  string id = 1;
+  UserStatus status = 2;
+}
+
+message SetUserStatusResponse {
+  User user = 1;
+}
+
+message SetGmailAllowedRequest {
+  string id = 1;
+  bool gmail_allowed = 2;
+}
+
+message SetGmailAllowedResponse {
+  User user = 1;
+}
