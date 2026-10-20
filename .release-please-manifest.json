@@ -1,5 +1,5 @@
 {
-  "gen/go": "1.1.0",
+  "gen/go": "1.2.0",
   "pkg": "1.2.0",
   "services/torii": "1.2.0",
   "services/tsubame": "1.1.0",
