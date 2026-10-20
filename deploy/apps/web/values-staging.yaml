@@ -1,6 +1,6 @@
 # web, staging. image.tag is bumped by .github/workflows/deploy.yml.
 image:
-  tag: "1.2.0"
+  tag: "1.3.0"
 # The public entry, behind Cloudflare's proxy and Access (docs/deploy.md section 2).
 # TORII_PUBLIC_URL and TSUBAME_GMAIL_REDIRECT_URL in .secrets/staging.env and the
 # Google redirect URIs must use https://shogun.sboy99.xyz.
