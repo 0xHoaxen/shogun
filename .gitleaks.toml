@@ -36,3 +36,22 @@ targetRules = ["generic-api-key"]
 condition = "AND"
 paths = ['''^deploy-guide\.md$''']
 regexes = ['''^Ag[A-Za-z0-9+/]+\.\.\.$''']
+
+[[allowlists]]
+description = "fake provider keys that tests and e2e mocks use to prove a key is never logged or echoed"
+targetRules = ["generic-api-key"]
+# Both must match: only these exact fake values in these files pass, any other key still fails.
+condition = "AND"
+paths = [
+  '''^web/e2e-compose/provider\.ts$''',
+  '''^web/e2e/provider\.spec\.ts$''',
+  '''^services/torii/internal/transport/connectapi/providers_test\.go$''',
+  '''^services/soroban/internal/transport/grpc/provider_test\.go$''',
+  '''^pkg/llm/anthropic_test\.go$''',
+]
+regexes = [
+  '''^e2e-key-0123456789$''',
+  '''^sk-live-0123456789-SECRET$''',
+  '''^sk-test-0123456789-SECRETWXYZ$''',
+  '''^sk-very-secret-key-123456$''',
+]

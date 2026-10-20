@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -14,10 +13,10 @@ import (
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/app"
-	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/jobs"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail/gmail"
 	kagamisource "github.com/0xHoaxen/shogun/services/tsubame/internal/transport/kagami"
@@ -36,8 +35,6 @@ const (
 
 	sorobanAddrEnv = "SOROBAN_ADDR"
 	kagamiAddrEnv  = "KAGAMI_ADDR"
-	apiKeyEnv      = "ANTHROPIC_API_KEY"
-	baseURLEnv     = "ANTHROPIC_BASE_URL"
 
 	// Optional overrides of Google's addresses, for the end-to-end stack only.
 	gmailAPIBaseEnv  = "TSUBAME_GMAIL_API_BASE"
@@ -123,8 +120,8 @@ type mailServices struct {
 
 // newMailServices wires account connection, the scheduled sync and message
 // classification. Classification calls kagami to link mail and soroban to meter
-// the model; with no ANTHROPIC_API_KEY (allowed outside production) the rules
-// still run and only mail they are unsure about fails to classify.
+// the model, which is each user's own; for a user with no AI provider the rules
+// still run and only mail they are unsure about stays unclassified.
 func newMailServices(
 	ctx context.Context,
 	lookup config.LookupFunc,
@@ -146,10 +143,6 @@ func newMailServices(
 	if err != nil {
 		return nil, err
 	}
-	apiKey := config.String(lookup, apiKeyEnv, "")
-	if apiKey == "" && cfg.IsProduction() {
-		return nil, errNoAPIKey
-	}
 	queue, err := jobs.NewRiverQueue(pool)
 	if err != nil {
 		return nil, err
@@ -166,7 +159,7 @@ func newMailServices(
 	}
 	closeConns := func() { _ = sorobanConn.Close(); _ = kagamiConn.Close() }
 
-	completer, err := newCompleter(lookup, apiKey, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
+	completer, err := newCompleter(cfg, sorobanv1.NewSorobanServiceClient(sorobanConn), log)
 	if err != nil {
 		closeConns()
 		return nil, err
@@ -192,25 +185,12 @@ func newMailServices(
 	}, nil
 }
 
-// errNoAPIKey is what classification fails with while no API key is set.
-var errNoAPIKey = errors.New(apiKeyEnv + " is not set")
-
-// newCompleter returns the metered Claude client, or one that fails every call
-// when there is no API key.
-func newCompleter(lookup config.LookupFunc, apiKey string, meter llm.Meter, log *slog.Logger) (app.Completer, error) {
-	if apiKey == "" {
-		log.Warn("model classification is off: " + errNoAPIKey.Error())
-		return noKeyCompleter{}, nil
-	}
-	cfg, err := llm.NewConfig(serviceName, lookup)
+// newCompleter returns the metered model client. It holds no credentials: every
+// call is made with the provider of the user it is for.
+func newCompleter(cfg config.Base, meter llm.Meter, log *slog.Logger) (app.Completer, error) {
+	llmCfg, err := llm.NewConfig(serviceName)
 	if err != nil {
 		return nil, err
 	}
-	return llm.New(cfg, llm.NewAnthropicAPI(apiKey, llm.AnthropicBaseURL(config.String(lookup, baseURLEnv, ""))), meter, llm.WithLogger(log))
-}
-
-type noKeyCompleter struct{}
-
-func (noKeyCompleter) Complete(context.Context, string, llm.Request) (llm.Response, error) {
-	return llm.Response{}, errNoAPIKey
+	return llm.New(llmCfg, llm.NewAnthropicAPI(llm.ForEnvironment(cfg.Environment)...), meter, llm.WithLogger(log))
 }

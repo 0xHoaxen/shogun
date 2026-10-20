@@ -28,6 +28,7 @@ type InsertApprovalParams struct {
 	ExpiresAt  time.Time
 }
 
+// owner-scope: child draft already loaded with GetDraft(owner, id) by Approve
 func (q *Queries) InsertApproval(ctx context.Context, arg InsertApprovalParams) (Approval, error) {
 	row := q.db.QueryRow(ctx, insertApproval,
 		arg.ID,

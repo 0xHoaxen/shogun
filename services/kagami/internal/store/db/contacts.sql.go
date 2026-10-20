@@ -284,6 +284,7 @@ type InsertContactEventParams struct {
 	OccurredAt    time.Time
 }
 
+// owner-scope: child contact already loaded with the owner
 func (q *Queries) InsertContactEvent(ctx context.Context, arg InsertContactEventParams) (ContactEvent, error) {
 	row := q.db.QueryRow(ctx, insertContactEvent,
 		arg.ID,
@@ -319,6 +320,7 @@ ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
 LIMIT 1
 `
 
+// owner-scope: child contact already loaded with the owner
 // See LatestJobStatusAnchor.
 func (q *Queries) LatestContactStatusAnchor(ctx context.Context, contactID uuid.UUID) (time.Time, error) {
 	row := q.db.QueryRow(ctx, latestContactStatusAnchor, contactID)
@@ -331,6 +333,7 @@ const listContactEvents = `-- name: ListContactEvents :many
 SELECT id, contact_id, kind, channel, from_status, to_status, source_event_id, payload, occurred_at FROM contact_events WHERE contact_id = $1 ORDER BY occurred_at DESC, id DESC
 `
 
+// owner-scope: child only after GetContact(owner, id)
 func (q *Queries) ListContactEvents(ctx context.Context, contactID uuid.UUID) ([]ContactEvent, error) {
 	rows, err := q.db.Query(ctx, listContactEvents, contactID)
 	if err != nil {
@@ -451,13 +454,18 @@ func (q *Queries) ListContacts(ctx context.Context, arg ListContactsParams) ([]C
 
 const listContactsDueOn = `-- name: ListContactsDueOn :many
 SELECT id, owner_id, full_name, company_id, role, email, linkedin_url, x_handle, phone, relationship, how_we_met, status, preferred_channel, last_contacted, next_follow_up, target_role, job_id, tags, notes, idempotency_key, version, created_at, updated_at, archived_at FROM contacts
-WHERE next_follow_up = $1::date AND archived_at IS NULL
-ORDER BY owner_id, id
+WHERE owner_id = $1 AND next_follow_up = $2::date AND archived_at IS NULL
+ORDER BY id
 `
 
-// Every owner's contacts with a follow-up on exactly this date.
-func (q *Queries) ListContactsDueOn(ctx context.Context, dueOn time.Time) ([]Contact, error) {
-	rows, err := q.db.Query(ctx, listContactsDueOn, dueOn)
+type ListContactsDueOnParams struct {
+	OwnerID uuid.UUID
+	DueOn   time.Time
+}
+
+// The owner's contacts with a follow-up on exactly this date.
+func (q *Queries) ListContactsDueOn(ctx context.Context, arg ListContactsDueOnParams) ([]Contact, error) {
+	rows, err := q.db.Query(ctx, listContactsDueOn, arg.OwnerID, arg.DueOn)
 	if err != nil {
 		return nil, err
 	}

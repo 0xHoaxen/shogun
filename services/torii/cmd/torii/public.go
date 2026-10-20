@@ -62,9 +62,9 @@ func newPublicServer(
 	if err != nil {
 		return nil, nil, err
 	}
-	auth, err := app.NewAuth(store.NewSessions(pool), app.AuthConfig{
-		AllowedEmails: s.AllowedEmails,
-		SessionTTL:    s.SessionTTL,
+	auth, err := app.NewAuth(store.NewSessions(pool), store.NewUsers(pool), app.AuthConfig{
+		AdminEmails: s.AdminEmails,
+		SessionTTL:  s.SessionTTL,
 	})
 	if err != nil {
 		return nil, nil, err
@@ -165,6 +165,7 @@ func newPublicServer(
 		Auth:          auth,
 		SecureCookies: secure,
 		Open:          []string{apiv1connect.AuthServiceLogoutProcedure},
+		Limiter:       httpmw.NewRateLimiter(s.RateLimit, s.RateBurst),
 		Log:           log,
 	})
 	handlerOpts := []connect.HandlerOption{
@@ -174,9 +175,11 @@ func newPublicServer(
 	mux := http.NewServeMux()
 	mux.Handle("/auth/", httpmw.LimitBody(int64(s.MaxBodyBytes))(login.Routes()))
 	mux.Handle(apiv1connect.NewAuthServiceHandler(connectapi.NewAuthServer(auth, secure, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewAdminServiceHandler(connectapi.NewAdminServer(store.NewUsers(pool), log), handlerOpts...))
 	mux.Handle(apiv1connect.NewJobsServiceHandler(connectapi.NewJobsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewContactsServiceHandler(connectapi.NewContactsServer(kagami, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewCostsServiceHandler(connectapi.NewCostsServer(soroban, log), handlerOpts...))
+	mux.Handle(apiv1connect.NewProviderServiceHandler(connectapi.NewProviderServer(soroban, fude, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewDraftsServiceHandler(connectapi.NewDraftsServer(fude, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewMailServiceHandler(connectapi.NewMailServer(tsubame, log), handlerOpts...))
 	mux.Handle(apiv1connect.NewNotificationsServiceHandler(connectapi.NewNotificationsServer(taiko, log), handlerOpts...))
@@ -186,7 +189,7 @@ func newPublicServer(
 	mux.Handle(apiv1connect.NewInsightsServiceHandler(connectapi.NewInsightsServer(sensei, log), handlerOpts...))
 
 	srv := &http.Server{
-		Handler:           httpmw.NewRateLimiter(s.RateLimit, s.RateBurst).Middleware(mux),
+		Handler:           httpmw.NewRateLimiter(s.IPRateLimit, s.IPRateBurst).Middleware(mux),
 		ReadHeaderTimeout: publicReadHeaderTimeout,
 		IdleTimeout:       publicIdleTimeout,
 	}

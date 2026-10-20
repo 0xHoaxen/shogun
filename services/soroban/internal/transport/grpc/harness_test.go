@@ -20,6 +20,7 @@ import (
 
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/app"
@@ -40,10 +41,46 @@ type harness struct {
 	client    sorobanv1.SorobanServiceClient
 	pool      *pgxpool.Pool
 	authority *authz.Authority
+	svc       *app.Service
 	owner     string
 }
 
+// newHarness is a harness whose owner has set an AI provider, which is what a
+// caller of Reserve needs. The model is claude-opus-5-5, priced in the table.
 func newHarness(t *testing.T) *harness {
+	t.Helper()
+	h := newBareHarness(t)
+	h.useProvider(t, h.owner, "claude-opus-5-5")
+	return h
+}
+
+// useProvider gives owner a provider with that model, at a public address.
+func (h *harness) useProvider(t *testing.T, owner, model string) {
+	t.Helper()
+	_, err := h.svc.SetProvider(appCtx(owner), app.ProviderInput{BaseURL: "https://llm.example.com/v1", Model: model, APIKey: secretKey})
+	if err != nil {
+		t.Fatalf("useProvider: %v", err)
+	}
+}
+
+// switchModel changes the model of the harness owner's provider, keeping its
+// address and key, as a user would when they move to another model.
+func (h *harness) switchModel(t *testing.T, model string) {
+	t.Helper()
+	cur, err := h.svc.GetProvider(appCtx(h.owner))
+	if err != nil {
+		t.Fatalf("GetProvider: %v", err)
+	}
+	if _, err := h.svc.SetProvider(appCtx(h.owner), app.ProviderInput{
+		BaseURL: cur.BaseURL, Model: model, Version: cur.Version,
+		InputMicrosPerMTok: cur.InputMicrosPerMTok, OutputMicrosPerMTok: cur.OutputMicrosPerMTok,
+	}); err != nil {
+		t.Fatalf("switchModel: %v", err)
+	}
+}
+
+// newBareHarness is a harness whose owner has no AI provider.
+func newBareHarness(t *testing.T) *harness {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "soroban")
@@ -63,7 +100,12 @@ func newHarness(t *testing.T) *harness {
 		grpc.UnaryInterceptor(authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(authority.StreamServerInterceptor()),
 	)
-	sorobanv1.RegisterSorobanServiceServer(srv, sorobangrpc.New(app.NewService(pool, func() time.Time { return fixedNow })))
+	keys, err := envelope.NewKeyring("soroban-test", map[string][]byte{"soroban-test": bytes.Repeat([]byte("m"), envelope.KeySize)})
+	if err != nil {
+		t.Fatalf("keyring: %v", err)
+	}
+	svc := app.NewService(pool, func() time.Time { return fixedNow }, app.WithKeyring(keys))
+	sorobanv1.RegisterSorobanServiceServer(srv, sorobangrpc.New(svc))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
@@ -81,6 +123,7 @@ func newHarness(t *testing.T) *harness {
 		client:    sorobanv1.NewSorobanServiceClient(conn),
 		pool:      pool,
 		authority: authority,
+		svc:       svc,
 		owner:     uuid.NewString(),
 	}
 }

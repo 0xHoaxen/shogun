@@ -12,6 +12,11 @@ var (
 	ErrNotModified = errors.New("github: not modified")
 	// ErrNotConfigured means no GitHub user or token is set.
 	ErrNotConfigured = errors.New("github: user or token not configured")
+	// ErrNotConnected means the owner has not connected a GitHub account of their own.
+	ErrNotConnected = errors.New("github: not connected for this owner")
+	// ErrCodeRefused means GitHub refused the authorization code: it was wrong,
+	// expired or already used.
+	ErrCodeRefused = errors.New("github: authorization code refused")
 	// ErrUnauthorized means GitHub refused the token.
 	ErrUnauthorized = errors.New("github: token refused")
 	// ErrUnavailable means GitHub could not be reached or failed.
@@ -55,4 +60,11 @@ type Snapshot struct {
 	Contributions Contributions
 	// ETag validates Repos on the next read.
 	ETag string
+}
+
+// Credentials is whose GitHub activity to read: the login to look up and the
+// token to read it with. The token is a secret and is never logged.
+type Credentials struct {
+	Login string
+	Token string
 }

@@ -37,6 +37,14 @@ const (
 	AuthServiceGetSessionProcedure = "/shogun.api.v1.AuthService/GetSession"
 	// AuthServiceLogoutProcedure is the fully-qualified name of the AuthService's Logout RPC.
 	AuthServiceLogoutProcedure = "/shogun.api.v1.AuthService/Logout"
+	// AuthServiceLogoutEverywhereProcedure is the fully-qualified name of the AuthService's
+	// LogoutEverywhere RPC.
+	AuthServiceLogoutEverywhereProcedure = "/shogun.api.v1.AuthService/LogoutEverywhere"
+	// AuthServiceSetTimezoneProcedure is the fully-qualified name of the AuthService's SetTimezone RPC.
+	AuthServiceSetTimezoneProcedure = "/shogun.api.v1.AuthService/SetTimezone"
+	// AuthServiceDeleteAccountProcedure is the fully-qualified name of the AuthService's DeleteAccount
+	// RPC.
+	AuthServiceDeleteAccountProcedure = "/shogun.api.v1.AuthService/DeleteAccount"
 )
 
 // AuthServiceClient is a client for the shogun.api.v1.AuthService service.
@@ -45,6 +53,18 @@ type AuthServiceClient interface {
 	GetSession(context.Context, *connect.Request[v1.GetSessionRequest]) (*connect.Response[v1.GetSessionResponse], error)
 	// Logout ends the current session and clears its cookie.
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
+	// LogoutEverywhere ends every session of the signed-in user, this one
+	// included, and clears this browser's cookie.
+	LogoutEverywhere(context.Context, *connect.Request[v1.LogoutEverywhereRequest]) (*connect.Response[v1.LogoutEverywhereResponse], error)
+	// SetTimezone changes the zone the user's days are counted in, which their
+	// follow-up scans, digests and rollups follow. InvalidArgument
+	// INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+	SetTimezone(context.Context, *connect.Request[v1.SetTimezoneRequest]) (*connect.Response[v1.SetTimezoneResponse], error)
+	// DeleteAccount deletes the signed-in user's account and, through the
+	// user.deleted event, all of their data in every service. confirm_email must
+	// be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+	// every session and clears this browser's cookie. It cannot be undone.
+	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 }
 
 // NewAuthServiceClient constructs a client for the shogun.api.v1.AuthService service. By default,
@@ -70,13 +90,34 @@ func NewAuthServiceClient(httpClient connect.HTTPClient, baseURL string, opts ..
 			connect.WithSchema(authServiceMethods.ByName("Logout")),
 			connect.WithClientOptions(opts...),
 		),
+		logoutEverywhere: connect.NewClient[v1.LogoutEverywhereRequest, v1.LogoutEverywhereResponse](
+			httpClient,
+			baseURL+AuthServiceLogoutEverywhereProcedure,
+			connect.WithSchema(authServiceMethods.ByName("LogoutEverywhere")),
+			connect.WithClientOptions(opts...),
+		),
+		setTimezone: connect.NewClient[v1.SetTimezoneRequest, v1.SetTimezoneResponse](
+			httpClient,
+			baseURL+AuthServiceSetTimezoneProcedure,
+			connect.WithSchema(authServiceMethods.ByName("SetTimezone")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteAccount: connect.NewClient[v1.DeleteAccountRequest, v1.DeleteAccountResponse](
+			httpClient,
+			baseURL+AuthServiceDeleteAccountProcedure,
+			connect.WithSchema(authServiceMethods.ByName("DeleteAccount")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // authServiceClient implements AuthServiceClient.
 type authServiceClient struct {
-	getSession *connect.Client[v1.GetSessionRequest, v1.GetSessionResponse]
-	logout     *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
+	getSession       *connect.Client[v1.GetSessionRequest, v1.GetSessionResponse]
+	logout           *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
+	logoutEverywhere *connect.Client[v1.LogoutEverywhereRequest, v1.LogoutEverywhereResponse]
+	setTimezone      *connect.Client[v1.SetTimezoneRequest, v1.SetTimezoneResponse]
+	deleteAccount    *connect.Client[v1.DeleteAccountRequest, v1.DeleteAccountResponse]
 }
 
 // GetSession calls shogun.api.v1.AuthService.GetSession.
@@ -89,12 +130,39 @@ func (c *authServiceClient) Logout(ctx context.Context, req *connect.Request[v1.
 	return c.logout.CallUnary(ctx, req)
 }
 
+// LogoutEverywhere calls shogun.api.v1.AuthService.LogoutEverywhere.
+func (c *authServiceClient) LogoutEverywhere(ctx context.Context, req *connect.Request[v1.LogoutEverywhereRequest]) (*connect.Response[v1.LogoutEverywhereResponse], error) {
+	return c.logoutEverywhere.CallUnary(ctx, req)
+}
+
+// SetTimezone calls shogun.api.v1.AuthService.SetTimezone.
+func (c *authServiceClient) SetTimezone(ctx context.Context, req *connect.Request[v1.SetTimezoneRequest]) (*connect.Response[v1.SetTimezoneResponse], error) {
+	return c.setTimezone.CallUnary(ctx, req)
+}
+
+// DeleteAccount calls shogun.api.v1.AuthService.DeleteAccount.
+func (c *authServiceClient) DeleteAccount(ctx context.Context, req *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
+	return c.deleteAccount.CallUnary(ctx, req)
+}
+
 // AuthServiceHandler is an implementation of the shogun.api.v1.AuthService service.
 type AuthServiceHandler interface {
 	// GetSession returns the signed-in owner; Unauthenticated without a session.
 	GetSession(context.Context, *connect.Request[v1.GetSessionRequest]) (*connect.Response[v1.GetSessionResponse], error)
 	// Logout ends the current session and clears its cookie.
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
+	// LogoutEverywhere ends every session of the signed-in user, this one
+	// included, and clears this browser's cookie.
+	LogoutEverywhere(context.Context, *connect.Request[v1.LogoutEverywhereRequest]) (*connect.Response[v1.LogoutEverywhereResponse], error)
+	// SetTimezone changes the zone the user's days are counted in, which their
+	// follow-up scans, digests and rollups follow. InvalidArgument
+	// INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+	SetTimezone(context.Context, *connect.Request[v1.SetTimezoneRequest]) (*connect.Response[v1.SetTimezoneResponse], error)
+	// DeleteAccount deletes the signed-in user's account and, through the
+	// user.deleted event, all of their data in every service. confirm_email must
+	// be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+	// every session and clears this browser's cookie. It cannot be undone.
+	DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error)
 }
 
 // NewAuthServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -116,12 +184,36 @@ func NewAuthServiceHandler(svc AuthServiceHandler, opts ...connect.HandlerOption
 		connect.WithSchema(authServiceMethods.ByName("Logout")),
 		connect.WithHandlerOptions(opts...),
 	)
+	authServiceLogoutEverywhereHandler := connect.NewUnaryHandler(
+		AuthServiceLogoutEverywhereProcedure,
+		svc.LogoutEverywhere,
+		connect.WithSchema(authServiceMethods.ByName("LogoutEverywhere")),
+		connect.WithHandlerOptions(opts...),
+	)
+	authServiceSetTimezoneHandler := connect.NewUnaryHandler(
+		AuthServiceSetTimezoneProcedure,
+		svc.SetTimezone,
+		connect.WithSchema(authServiceMethods.ByName("SetTimezone")),
+		connect.WithHandlerOptions(opts...),
+	)
+	authServiceDeleteAccountHandler := connect.NewUnaryHandler(
+		AuthServiceDeleteAccountProcedure,
+		svc.DeleteAccount,
+		connect.WithSchema(authServiceMethods.ByName("DeleteAccount")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/shogun.api.v1.AuthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AuthServiceGetSessionProcedure:
 			authServiceGetSessionHandler.ServeHTTP(w, r)
 		case AuthServiceLogoutProcedure:
 			authServiceLogoutHandler.ServeHTTP(w, r)
+		case AuthServiceLogoutEverywhereProcedure:
+			authServiceLogoutEverywhereHandler.ServeHTTP(w, r)
+		case AuthServiceSetTimezoneProcedure:
+			authServiceSetTimezoneHandler.ServeHTTP(w, r)
+		case AuthServiceDeleteAccountProcedure:
+			authServiceDeleteAccountHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -137,4 +229,16 @@ func (UnimplementedAuthServiceHandler) GetSession(context.Context, *connect.Requ
 
 func (UnimplementedAuthServiceHandler) Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.AuthService.Logout is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) LogoutEverywhere(context.Context, *connect.Request[v1.LogoutEverywhereRequest]) (*connect.Response[v1.LogoutEverywhereResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.AuthService.LogoutEverywhere is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) SetTimezone(context.Context, *connect.Request[v1.SetTimezoneRequest]) (*connect.Response[v1.SetTimezoneResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.AuthService.SetTimezone is not implemented"))
+}
+
+func (UnimplementedAuthServiceHandler) DeleteAccount(context.Context, *connect.Request[v1.DeleteAccountRequest]) (*connect.Response[v1.DeleteAccountResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.AuthService.DeleteAccount is not implemented"))
 }

@@ -20,12 +20,14 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/logger"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/app"
 	kagamievents "github.com/0xHoaxen/shogun/services/kagami/internal/events"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/kagami/internal/store"
 	kagamigrpc "github.com/0xHoaxen/shogun/services/kagami/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/kagami/migrations"
 )
@@ -113,15 +115,12 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 
 	service := app.NewService(pool, nil)
-	sink, err := bus.NewSinkServer(pool, kagamievents.Handlers(service, log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(kagamievents.Handlers(service, log), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}
 
-	scheduled, err := jobs.NewSetup(service, time.Now, log)
-	if err != nil {
-		return err
-	}
+	scheduled := jobs.NewSetup(service, service, jobs.ContextEnqueuer{}, time.Now, log)
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {
 		return err

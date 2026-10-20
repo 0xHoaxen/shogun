@@ -29,24 +29,23 @@ const (
 	defaultResetWait = time.Minute
 )
 
-// Client reads one user's public activity. It never logs or returns the token.
+// Client reads a user's public activity with that user's own credentials, given
+// on each call. It holds none itself, and never logs or returns a token.
 type Client struct {
 	baseURL string
-	user    string
-	token   string
 	http    *http.Client
 }
 
-// New returns a Client for user. baseURL empty means the public API; a nil
-// httpClient means a client with a timeout.
-func New(baseURL, user, token string, httpClient *http.Client) *Client {
+// New returns a Client. baseURL empty means the public API; a nil httpClient
+// means a client with a timeout.
+func New(baseURL string, httpClient *http.Client) *Client {
 	if baseURL == "" {
 		baseURL = DefaultBaseURL
 	}
 	if httpClient == nil {
 		httpClient = &http.Client{Timeout: requestTimeout}
 	}
-	return &Client{baseURL: strings.TrimRight(baseURL, "/"), user: user, token: token, http: httpClient}
+	return &Client{baseURL: strings.TrimRight(baseURL, "/"), http: httpClient}
 }
 
 type repoJSON struct {
@@ -73,16 +72,16 @@ type searchJSON struct {
 // Fetch reads the user's repositories and merged pull requests. etag is the one
 // from the last snapshot; when the repository list has not changed since, Fetch
 // returns domain.ErrNotModified and reads nothing else.
-func (c *Client) Fetch(ctx context.Context, etag string) (domain.Snapshot, error) {
+func (c *Client) Fetch(ctx context.Context, creds domain.Credentials, etag string) (domain.Snapshot, error) {
 	var repos []repoJSON
-	newETag, err := c.get(ctx, "/users/"+url.PathEscape(c.user)+"/repos",
+	newETag, err := c.get(ctx, creds.Token, "/users/"+url.PathEscape(creds.Login)+"/repos",
 		url.Values{"type": {"owner"}, "sort": {"pushed"}, "per_page": {strconv.Itoa(reposPerPage)}}, etag, &repos)
 	if err != nil {
 		return domain.Snapshot{}, err
 	}
 	var found searchJSON
-	if _, err := c.get(ctx, "/search/issues", url.Values{
-		"q":        {fmt.Sprintf("author:%s type:pr is:merged", c.user)},
+	if _, err := c.get(ctx, creds.Token, "/search/issues", url.Values{
+		"q":        {fmt.Sprintf("author:%s type:pr is:merged", creds.Login)},
 		"sort":     {"updated"},
 		"per_page": {strconv.Itoa(prsPerPage)},
 	}, "", &found); err != nil {
@@ -120,7 +119,7 @@ func repoName(repositoryURL string) string {
 
 // get reads path into out and returns the response's ETag. Errors carry the
 // status and never the request, so the token cannot leak through them.
-func (c *Client) get(ctx context.Context, path string, query url.Values, etag string, out any) (string, error) {
+func (c *Client) get(ctx context.Context, token, path string, query url.Values, etag string, out any) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+path+"?"+query.Encode(), nil)
 	if err != nil {
 		return "", fmt.Errorf("github: build request: %w", domain.ErrUnavailable)
@@ -128,8 +127,8 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, etag st
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", apiVersion)
 	req.Header.Set("User-Agent", "shogun-katana")
-	if c.token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.token)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if etag != "" {
 		req.Header.Set("If-None-Match", etag)

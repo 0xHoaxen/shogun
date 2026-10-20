@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/domain"
 	"github.com/0xHoaxen/shogun/services/soroban/internal/store"
@@ -29,14 +30,33 @@ type Service struct {
 	pool *pgxpool.Pool
 	now  func() time.Time
 	loc  *time.Location
+	// keys seals the API keys users store. Without it providers cannot be stored.
+	keys *envelope.Keyring
+	// insecureProviders lets a provider be plain http or on a private address,
+	// for local development and tests only.
+	insecureProviders bool
 }
 
+// Option customises a Service.
+type Option func(*Service)
+
+// WithKeyring sets the master keys that seal users' API keys.
+func WithKeyring(keys *envelope.Keyring) Option { return func(s *Service) { s.keys = keys } }
+
+// WithInsecureProviders lets a user's provider be plain http or on a private
+// address, so a fake provider on localhost works. Never use it in production.
+func WithInsecureProviders() Option { return func(s *Service) { s.insecureProviders = true } }
+
 // NewService returns a Service on pool. A nil now means time.Now.
-func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
+func NewService(pool *pgxpool.Pool, now func() time.Time, opts ...Option) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{pool: pool, now: now, loc: domain.Location()}
+	s := &Service{pool: pool, now: now, loc: domain.Location()}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // inTx runs fn in one transaction with a Repo bound to it.

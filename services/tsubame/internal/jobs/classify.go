@@ -76,6 +76,11 @@ func (w *classifyWorker) Work(ctx context.Context, job *river.Job[ClassifyArgs])
 	case errors.Is(err, store.ErrNotFound):
 		return river.JobCancel(fmt.Errorf("message is gone: %w", err))
 	}
+	if errors.Is(err, llm.ErrProviderNotConfigured) {
+		// The message stays as it is until the user adds a provider; retrying cannot help.
+		w.log.Info("classification is off: no AI provider", slog.String("owner_id", job.Args.OwnerID.String()))
+		return river.JobCancel(err)
+	}
 	var budget *llm.BudgetError
 	if errors.As(err, &budget) {
 		wait := minSnooze

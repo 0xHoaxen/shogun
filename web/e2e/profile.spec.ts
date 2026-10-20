@@ -131,7 +131,7 @@ test("syncing GitHub tells the owner whether anything was new", async ({ page })
   expect(syncs).toHaveLength(2);
 });
 
-test("a sync that cannot run says what to fix", async ({ page }) => {
+test("a sync that cannot run says what is missing", async ({ page }) => {
   await signIn(page);
   await mockRpc(page, ProfileService.method.listProfileSuggestions, { suggestions: [] });
   await mockRpcError(page, ProfileService.method.syncGitHub, "failed_precondition", "x", "GITHUB_NOT_CONFIGURED");
@@ -139,7 +139,18 @@ test("a sync that cannot run says what to fix", async ({ page }) => {
 
   await page.getByRole("button", { name: "Sync GitHub" }).click();
 
-  await expect(page.locator("p[role=alert]")).toContainText("GitHub is not connected");
+  await expect(page.locator("p[role=alert]")).toContainText("Connecting GitHub is not set up");
+});
+
+test("a user who has not connected GitHub is told so instead of seeing anyone else's repositories", async ({ page }) => {
+  await signIn(page);
+  await mockRpc(page, ProfileService.method.listProfileSuggestions, { suggestions: [] });
+  await mockRpcError(page, ProfileService.method.syncGitHub, "failed_precondition", "x", "GITHUB_NOT_CONNECTED");
+  await page.goto("/profile");
+
+  await page.getByRole("button", { name: "Sync GitHub" }).click();
+
+  await expect(page.locator("p[role=alert]")).toContainText("Your GitHub account is not connected yet");
 });
 
 test("only web links are shown as evidence", async ({ page }) => {

@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { addProvider } from "./provider";
+
 // The chain under test: dojo writes learning.activity_added, fude consumes it
 // and writes a post with the stubbed Claude, and the draft reaches the queue.
 const CHAIN_TIMEOUT_MS = 45_000;
@@ -8,6 +10,8 @@ async function signIn(page: Page) {
   await page.goto("/login");
   await page.getByRole("link", { name: "Sign in with Google" }).click();
   await expect(page).toHaveURL(/\/jobs$/);
+  // The AI provider is each user's own; without one no post is written.
+  await addProvider(page);
 }
 
 // pendingPosts counts the LinkedIn posts waiting for approval in the queue.

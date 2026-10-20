@@ -28,11 +28,13 @@ import (
 type fakeKatana struct {
 	err error
 
-	sync    *katanav1.SyncGitHubRequest
-	list    *katanav1.ListSuggestionsRequest
-	accept  *katanav1.AcceptSuggestionRequest
-	dismiss *katanav1.DismissSuggestionRequest
-	changed bool
+	sync      *katanav1.SyncGitHubRequest
+	list      *katanav1.ListSuggestionsRequest
+	accept    *katanav1.AcceptSuggestionRequest
+	dismiss   *katanav1.DismissSuggestionRequest
+	complete  *katanav1.CompleteGitHubConnectRequest
+	connected bool
+	changed   bool
 }
 
 var cannedSuggestion = &katanav1.Suggestion{
@@ -62,11 +64,28 @@ func (f *fakeKatana) DismissSuggestion(_ context.Context, in *katanav1.DismissSu
 	return &katanav1.DismissSuggestionResponse{Suggestion: cannedSuggestion}, f.err
 }
 
+func (f *fakeKatana) ConnectGitHub(context.Context, *katanav1.ConnectGitHubRequest, ...grpc.CallOption) (*katanav1.ConnectGitHubResponse, error) {
+	return &katanav1.ConnectGitHubResponse{AuthorizationUrl: "https://github.com/login/oauth/authorize?state=s"}, f.err
+}
+
+func (f *fakeKatana) CompleteGitHubConnect(_ context.Context, in *katanav1.CompleteGitHubConnectRequest, _ ...grpc.CallOption) (*katanav1.CompleteGitHubConnectResponse, error) {
+	f.complete = in
+	return &katanav1.CompleteGitHubConnectResponse{Login: "octocat"}, f.err
+}
+
+func (f *fakeKatana) GetGitHubAccount(context.Context, *katanav1.GetGitHubAccountRequest, ...grpc.CallOption) (*katanav1.GetGitHubAccountResponse, error) {
+	return &katanav1.GetGitHubAccountResponse{Connected: f.connected, Login: "octocat"}, f.err
+}
+
+func (f *fakeKatana) DisconnectGitHub(context.Context, *katanav1.DisconnectGitHubRequest, ...grpc.CallOption) (*katanav1.DisconnectGitHubResponse, error) {
+	return &katanav1.DisconnectGitHubResponse{}, f.err
+}
+
 func newProfileHarness(t *testing.T) (*fakeKatana, apiv1connect.ProfileServiceClient, string) {
 	t.Helper()
 	now := time.Date(2026, 10, 7, 9, 0, 0, 0, time.UTC)
-	auth, err := app.NewAuth(apptest.NewMemSessions(),
-		app.AuthConfig{AllowedEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
+	auth, err := app.NewAuth(apptest.NewMemSessions(), apptest.NewMemUsers(),
+		app.AuthConfig{AdminEmails: []string{ownerEmail}, SessionTTL: sessionTTL},
 		app.WithClock(func() time.Time { return now }))
 	if err != nil {
 		t.Fatalf("NewAuth: %v", err)
@@ -168,5 +187,39 @@ func TestProfileCallsRequireASession(t *testing.T) {
 
 	if code, _ := codeAndReason(t, err); code != connect.CodeUnauthenticated || fake.list != nil {
 		t.Fatalf("got %v, katana called: %v", err, fake.list != nil)
+	}
+}
+
+func TestGitHubConnectRPCsPassTheCodeAndStateOnAndNeverTheToken(t *testing.T) {
+	fake, client, token := newProfileHarness(t)
+	fake.connected = true
+
+	start, startErr := client.ConnectGitHub(context.Background(), withCookie(connect.NewRequest(&apiv1.ConnectGitHubRequest{}), token))
+	done, doneErr := client.CompleteGitHubConnect(context.Background(), withCookie(connect.NewRequest(&apiv1.CompleteGitHubConnectRequest{Code: "c", State: "s"}), token))
+	got, getErr := client.GetGitHubAccount(context.Background(), withCookie(connect.NewRequest(&apiv1.GetGitHubAccountRequest{}), token))
+	_, discErr := client.DisconnectGitHub(context.Background(), withCookie(connect.NewRequest(&apiv1.DisconnectGitHubRequest{}), token))
+
+	if startErr != nil || start.Msg.GetAuthUrl() == "" {
+		t.Fatalf("ConnectGitHub: %v, %v", start, startErr)
+	}
+	if doneErr != nil || done.Msg.GetLogin() != "octocat" || fake.complete.GetCode() != "c" || fake.complete.GetState() != "s" {
+		t.Fatalf("CompleteGitHubConnect: %v, %v, katana got %+v", done, doneErr, fake.complete)
+	}
+	if getErr != nil || !got.Msg.GetConnected() || got.Msg.GetLogin() != "octocat" {
+		t.Fatalf("GetGitHubAccount: %v, %v", got, getErr)
+	}
+	if discErr != nil {
+		t.Fatalf("DisconnectGitHub: %v", discErr)
+	}
+}
+
+func TestGitHubConnectFailuresKeepTheirReason(t *testing.T) {
+	fake, client, token := newProfileHarness(t)
+	fake.err = status.Error(codes.InvalidArgument, "state is invalid")
+
+	_, err := client.CompleteGitHubConnect(context.Background(), withCookie(connect.NewRequest(&apiv1.CompleteGitHubConnectRequest{Code: "c", State: "bad"}), token))
+
+	if connect.CodeOf(err) != connect.CodeInvalidArgument {
+		t.Fatalf("code = %v, want InvalidArgument (err %v)", connect.CodeOf(err), err)
 	}
 }

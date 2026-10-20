@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/domain"
@@ -111,8 +112,16 @@ func TestUpdateSourceKeepsItsKind(t *testing.T) {
 	}
 }
 
+// know makes shinobi aware of an owner in a time zone, as torii's user.activated would.
+func know(t *testing.T, pool *pgxpool.Pool, owner uuid.UUID, timezone, status string) {
+	t.Helper()
+	if err := owners.Upsert(context.Background(), pool, owners.Owner{ID: owner, Timezone: timezone, Status: status, Version: 1}); err != nil {
+		t.Fatalf("know owner: %v", err)
+	}
+}
+
 func TestListAndEnabledSources(t *testing.T) {
-	repo, _ := newRepo(t)
+	repo, pool := newRepo(t)
 	ctx := context.Background()
 	owner := uuid.New()
 	b := addSource(t, repo, owner, "b")
@@ -122,7 +131,13 @@ func TestListAndEnabledSources(t *testing.T) {
 	if _, err := repo.InsertSource(ctx, store.NewSource{ID: store.NewID(), OwnerID: owner, Input: off}); err != nil {
 		t.Fatalf("insert: %v", err)
 	}
-	addSource(t, repo, uuid.New(), "someone else's")
+	other := uuid.New()
+	addSource(t, repo, other, "someone else's")
+	stranger := uuid.New() // torii has not announced this owner yet
+	addSource(t, repo, stranger, "not announced")
+	for _, id := range []uuid.UUID{owner, other} {
+		know(t, pool, id, "Europe/Berlin", owners.StatusActive)
+	}
 
 	listed, err := repo.ListSources(ctx, owner)
 	enabled, enabledErr := repo.EnabledSources(ctx)
@@ -131,7 +146,12 @@ func TestListAndEnabledSources(t *testing.T) {
 		t.Fatalf("listed %+v, %v; want a, b, off by name", listed, err)
 	}
 	if enabledErr != nil || len(enabled) != 3 {
-		t.Fatalf("enabled = %d, %v; want the two of owner and the other's", len(enabled), enabledErr)
+		t.Fatalf("enabled = %d, %v; want the two of owner and the other's, not the unannounced owner's", len(enabled), enabledErr)
+	}
+	for _, src := range enabled {
+		if src.Timezone != "Europe/Berlin" {
+			t.Fatalf("source %s carries zone %q, want its owner's", src.Name, src.Timezone)
+		}
 	}
 }
 

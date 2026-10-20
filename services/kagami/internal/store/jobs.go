@@ -93,19 +93,19 @@ func (r *Repo) UpdateJobStatus(ctx context.Context, arg db.UpdateJobStatusParams
 	return j, nil
 }
 
-// ListJobsDueOn returns every owner's open jobs whose follow-up is on date.
-func (r *Repo) ListJobsDueOn(ctx context.Context, date time.Time) ([]db.Job, error) {
-	jobs, err := r.q.ListJobsDueOn(ctx, date)
+// ListJobsDueOn returns the owner's open jobs whose follow-up is on date.
+func (r *Repo) ListJobsDueOn(ctx context.Context, owner uuid.UUID, date time.Time) ([]db.Job, error) {
+	jobs, err := r.q.ListJobsDueOn(ctx, db.ListJobsDueOnParams{OwnerID: owner, DueOn: date})
 	if err != nil {
 		return nil, fmt.Errorf("list jobs due on %s: %w", date.Format(time.DateOnly), mapErr(err))
 	}
 	return jobs, nil
 }
 
-// ListStaleAppliedJobs returns applied jobs with no follow-up planned that
-// were applied for on or before appliedBy.
-func (r *Repo) ListStaleAppliedJobs(ctx context.Context, appliedBy time.Time) ([]db.Job, error) {
-	jobs, err := r.q.ListStaleAppliedJobs(ctx, appliedBy)
+// ListStaleAppliedJobs returns the owner's applied jobs with no follow-up
+// planned that were applied for on or before appliedBy.
+func (r *Repo) ListStaleAppliedJobs(ctx context.Context, owner uuid.UUID, appliedBy time.Time) ([]db.Job, error) {
+	jobs, err := r.q.ListStaleAppliedJobs(ctx, db.ListStaleAppliedJobsParams{OwnerID: owner, AppliedBy: appliedBy})
 	if err != nil {
 		return nil, fmt.Errorf("list stale applied jobs: %w", mapErr(err))
 	}

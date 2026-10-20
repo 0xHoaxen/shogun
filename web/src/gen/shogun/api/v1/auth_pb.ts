@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/auth.proto.
  */
 export const file_shogun_api_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChhzaG9ndW4vYXBpL3YxL2F1dGgucHJvdG8SDXNob2d1bi5hcGkudjEiXgoHU2Vzc2lvbhINCgVlbWFpbBgBIAEoCRIUCgxkaXNwbGF5X25hbWUYAiABKAkSLgoKZXhwaXJlc19hdBgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAiEwoRR2V0U2Vzc2lvblJlcXVlc3QiPQoSR2V0U2Vzc2lvblJlc3BvbnNlEicKB3Nlc3Npb24YASABKAsyFi5zaG9ndW4uYXBpLnYxLlNlc3Npb24iDwoNTG9nb3V0UmVxdWVzdCIQCg5Mb2dvdXRSZXNwb25zZTKnAQoLQXV0aFNlcnZpY2USUQoKR2V0U2Vzc2lvbhIgLnNob2d1bi5hcGkudjEuR2V0U2Vzc2lvblJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkdldFNlc3Npb25SZXNwb25zZRJFCgZMb2dvdXQSHC5zaG9ndW4uYXBpLnYxLkxvZ291dFJlcXVlc3QaHS5zaG9ndW4uYXBpLnYxLkxvZ291dFJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("ChhzaG9ndW4vYXBpL3YxL2F1dGgucHJvdG8SDXNob2d1bi5hcGkudjEilQEKB1Nlc3Npb24SDQoFZW1haWwYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEi4KCmV4cGlyZXNfYXQYAyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEgwKBHJvbGUYBCABKAkSFQoNZ21haWxfYWxsb3dlZBgFIAEoCBIQCgh0aW1lem9uZRgGIAEoCSITChFHZXRTZXNzaW9uUmVxdWVzdCI9ChJHZXRTZXNzaW9uUmVzcG9uc2USJwoHc2Vzc2lvbhgBIAEoCzIWLnNob2d1bi5hcGkudjEuU2Vzc2lvbiIPCg1Mb2dvdXRSZXF1ZXN0IhAKDkxvZ291dFJlc3BvbnNlIhkKF0xvZ291dEV2ZXJ5d2hlcmVSZXF1ZXN0IikKGExvZ291dEV2ZXJ5d2hlcmVSZXNwb25zZRINCgVlbmRlZBgBIAEoAyImChJTZXRUaW1lem9uZVJlcXVlc3QSEAoIdGltZXpvbmUYASABKAkiJwoTU2V0VGltZXpvbmVSZXNwb25zZRIQCgh0aW1lem9uZRgBIAEoCSItChREZWxldGVBY2NvdW50UmVxdWVzdBIVCg1jb25maXJtX2VtYWlsGAEgASgJIhcKFURlbGV0ZUFjY291bnRSZXNwb25zZTK+AwoLQXV0aFNlcnZpY2USUQoKR2V0U2Vzc2lvbhIgLnNob2d1bi5hcGkudjEuR2V0U2Vzc2lvblJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkdldFNlc3Npb25SZXNwb25zZRJFCgZMb2dvdXQSHC5zaG9ndW4uYXBpLnYxLkxvZ291dFJlcXVlc3QaHS5zaG9ndW4uYXBpLnYxLkxvZ291dFJlc3BvbnNlEmMKEExvZ291dEV2ZXJ5d2hlcmUSJi5zaG9ndW4uYXBpLnYxLkxvZ291dEV2ZXJ5d2hlcmVSZXF1ZXN0Gicuc2hvZ3VuLmFwaS52MS5Mb2dvdXRFdmVyeXdoZXJlUmVzcG9uc2USVAoLU2V0VGltZXpvbmUSIS5zaG9ndW4uYXBpLnYxLlNldFRpbWV6b25lUmVxdWVzdBoiLnNob2d1bi5hcGkudjEuU2V0VGltZXpvbmVSZXNwb25zZRJaCg1EZWxldGVBY2NvdW50EiMuc2hvZ3VuLmFwaS52MS5EZWxldGVBY2NvdW50UmVxdWVzdBokLnNob2d1bi5hcGkudjEuRGVsZXRlQWNjb3VudFJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message shogun.api.v1.Session
@@ -32,6 +32,27 @@ export type Session = Message<"shogun.api.v1.Session"> & {
    * @generated from field: google.protobuf.Timestamp expires_at = 3;
    */
   expiresAt?: Timestamp | undefined;
+
+  /**
+   * role is "admin" or "member".
+   *
+   * @generated from field: string role = 4;
+   */
+  role: string;
+
+  /**
+   * gmail_allowed is whether an admin approved this user to connect Gmail.
+   *
+   * @generated from field: bool gmail_allowed = 5;
+   */
+  gmailAllowed: boolean;
+
+  /**
+   * timezone is the user's IANA zone, such as Asia/Kolkata.
+   *
+   * @generated from field: string timezone = 6;
+   */
+  timezone: string;
 };
 
 /**
@@ -98,6 +119,102 @@ export const LogoutResponseSchema: GenMessage<LogoutResponse> = /*@__PURE__*/
   messageDesc(file_shogun_api_v1_auth, 4);
 
 /**
+ * @generated from message shogun.api.v1.LogoutEverywhereRequest
+ */
+export type LogoutEverywhereRequest = Message<"shogun.api.v1.LogoutEverywhereRequest"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.LogoutEverywhereRequest.
+ * Use `create(LogoutEverywhereRequestSchema)` to create a new message.
+ */
+export const LogoutEverywhereRequestSchema: GenMessage<LogoutEverywhereRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 5);
+
+/**
+ * @generated from message shogun.api.v1.LogoutEverywhereResponse
+ */
+export type LogoutEverywhereResponse = Message<"shogun.api.v1.LogoutEverywhereResponse"> & {
+  /**
+   * ended is how many sessions were ended.
+   *
+   * @generated from field: int64 ended = 1;
+   */
+  ended: bigint;
+};
+
+/**
+ * Describes the message shogun.api.v1.LogoutEverywhereResponse.
+ * Use `create(LogoutEverywhereResponseSchema)` to create a new message.
+ */
+export const LogoutEverywhereResponseSchema: GenMessage<LogoutEverywhereResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 6);
+
+/**
+ * @generated from message shogun.api.v1.SetTimezoneRequest
+ */
+export type SetTimezoneRequest = Message<"shogun.api.v1.SetTimezoneRequest"> & {
+  /**
+   * @generated from field: string timezone = 1;
+   */
+  timezone: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.SetTimezoneRequest.
+ * Use `create(SetTimezoneRequestSchema)` to create a new message.
+ */
+export const SetTimezoneRequestSchema: GenMessage<SetTimezoneRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 7);
+
+/**
+ * @generated from message shogun.api.v1.SetTimezoneResponse
+ */
+export type SetTimezoneResponse = Message<"shogun.api.v1.SetTimezoneResponse"> & {
+  /**
+   * @generated from field: string timezone = 1;
+   */
+  timezone: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.SetTimezoneResponse.
+ * Use `create(SetTimezoneResponseSchema)` to create a new message.
+ */
+export const SetTimezoneResponseSchema: GenMessage<SetTimezoneResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 8);
+
+/**
+ * @generated from message shogun.api.v1.DeleteAccountRequest
+ */
+export type DeleteAccountRequest = Message<"shogun.api.v1.DeleteAccountRequest"> & {
+  /**
+   * @generated from field: string confirm_email = 1;
+   */
+  confirmEmail: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.DeleteAccountRequest.
+ * Use `create(DeleteAccountRequestSchema)` to create a new message.
+ */
+export const DeleteAccountRequestSchema: GenMessage<DeleteAccountRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 9);
+
+/**
+ * @generated from message shogun.api.v1.DeleteAccountResponse
+ */
+export type DeleteAccountResponse = Message<"shogun.api.v1.DeleteAccountResponse"> & {
+};
+
+/**
+ * Describes the message shogun.api.v1.DeleteAccountResponse.
+ * Use `create(DeleteAccountResponseSchema)` to create a new message.
+ */
+export const DeleteAccountResponseSchema: GenMessage<DeleteAccountResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_auth, 10);
+
+/**
  * AuthService is the session surface of the web app. Login itself is the
  * browser redirect flow under /auth/*; these RPCs only read and end a session.
  *
@@ -123,6 +240,42 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof LogoutRequestSchema;
     output: typeof LogoutResponseSchema;
+  },
+  /**
+   * LogoutEverywhere ends every session of the signed-in user, this one
+   * included, and clears this browser's cookie.
+   *
+   * @generated from rpc shogun.api.v1.AuthService.LogoutEverywhere
+   */
+  logoutEverywhere: {
+    methodKind: "unary";
+    input: typeof LogoutEverywhereRequestSchema;
+    output: typeof LogoutEverywhereResponseSchema;
+  },
+  /**
+   * SetTimezone changes the zone the user's days are counted in, which their
+   * follow-up scans, digests and rollups follow. InvalidArgument
+   * INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+   *
+   * @generated from rpc shogun.api.v1.AuthService.SetTimezone
+   */
+  setTimezone: {
+    methodKind: "unary";
+    input: typeof SetTimezoneRequestSchema;
+    output: typeof SetTimezoneResponseSchema;
+  },
+  /**
+   * DeleteAccount deletes the signed-in user's account and, through the
+   * user.deleted event, all of their data in every service. confirm_email must
+   * be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+   * every session and clears this browser's cookie. It cannot be undone.
+   *
+   * @generated from rpc shogun.api.v1.AuthService.DeleteAccount
+   */
+  deleteAccount: {
+    methodKind: "unary";
+    input: typeof DeleteAccountRequestSchema;
+    output: typeof DeleteAccountResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_shogun_api_v1_auth, 0);

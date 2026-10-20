@@ -87,11 +87,11 @@ hanko_public_key() {
 # IDENTITY_SIGNING_KEY (see .env.example).
 service_keys() {
 	case $1 in
-	torii) echo "TORII_PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TORII_ALLOWED_EMAILS" ;;
-	fude) echo "FUDE_HANKO_SIGNING_KEY FUDE_HANKO_KEY_ID ANTHROPIC_API_KEY" ;;
-	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS ANTHROPIC_API_KEY" ;;
-	katana) echo "KATANA_GITHUB_USER KATANA_GITHUB_TOKEN ANTHROPIC_API_KEY" ;;
-	shinobi) echo "ANTHROPIC_API_KEY" ;;
+	torii) echo "TORII_PUBLIC_URL GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET TORII_ADMIN_EMAILS" ;;
+	fude) echo "FUDE_HANKO_SIGNING_KEY FUDE_HANKO_KEY_ID" ;;
+	tsubame) echo "TSUBAME_TOKEN_MASTER_KEY TSUBAME_TOKEN_KEY_ID TSUBAME_GMAIL_CLIENT_ID TSUBAME_GMAIL_CLIENT_SECRET TSUBAME_GMAIL_REDIRECT_URL TSUBAME_HANKO_VERIFY_KEYS" ;;
+	katana) echo "KATANA_SECRET_MASTER_KEY KATANA_SECRET_KEY_ID KATANA_GITHUB_CLIENT_ID KATANA_GITHUB_CLIENT_SECRET KATANA_GITHUB_REDIRECT_URL" ;;
+	soroban) echo "SOROBAN_SECRET_MASTER_KEY SOROBAN_SECRET_KEY_ID" ;;
 	*) echo "" ;;
 	esac
 }
@@ -109,11 +109,18 @@ fill_env() {
 	env_set_default "$file" FUDE_HANKO_SIGNING_KEY "$(openssl rand -base64 32)"
 	env_set_default "$file" FUDE_HANKO_KEY_ID fude-1
 	env_set_default "$file" TSUBAME_TOKEN_KEY_ID tsubame-1
+	env_set_default "$file" SOROBAN_SECRET_MASTER_KEY "$(openssl rand -base64 32)"
+	env_set_default "$file" SOROBAN_SECRET_KEY_ID soroban-1
+	env_set_default "$file" KATANA_SECRET_MASTER_KEY "$(openssl rand -base64 32)"
+	env_set_default "$file" KATANA_SECRET_KEY_ID katana-1
 	env_set_default "$file" TORII_PUBLIC_URL http://localhost:3000
 	env_set_default "$file" TSUBAME_GMAIL_REDIRECT_URL http://localhost:3000/mail/callback
+	env_set_default "$file" KATANA_GITHUB_REDIRECT_URL http://localhost:3000/settings/github/callback
+	env_set_default "$file" KATANA_GITHUB_CLIENT_ID "$PLACEHOLDER_ID"
+	env_set_default "$file" KATANA_GITHUB_CLIENT_SECRET "$PLACEHOLDER_SECRET"
 	env_set_default "$file" GOOGLE_CLIENT_ID "$PLACEHOLDER_ID"
 	env_set_default "$file" GOOGLE_CLIENT_SECRET "$PLACEHOLDER_SECRET"
-	env_set_default "$file" TORII_ALLOWED_EMAILS "$PLACEHOLDER_EMAIL"
+	env_set_default "$file" TORII_ADMIN_EMAILS "$PLACEHOLDER_EMAIL"
 	env_set_default "$file" TSUBAME_GMAIL_CLIENT_ID "$PLACEHOLDER_ID"
 	env_set_default "$file" TSUBAME_GMAIL_CLIENT_SECRET "$PLACEHOLDER_SECRET"
 }
@@ -125,8 +132,8 @@ warn_unset() {
 		replace-me*) echo "seal-secrets: $key is a placeholder; the service starts but Google sign-in or Gmail will not work" >&2 ;;
 		esac
 	done
-	if [ "$(env_get "$file" TORII_ALLOWED_EMAILS)" = "$PLACEHOLDER_EMAIL" ]; then
-		echo "seal-secrets: TORII_ALLOWED_EMAILS is a placeholder; nobody can sign in" >&2
+	if [ "$(env_get "$file" TORII_ADMIN_EMAILS)" = "$PLACEHOLDER_EMAIL" ]; then
+		echo "seal-secrets: TORII_ADMIN_EMAILS is a placeholder; nobody will be an admin" >&2
 	fi
 	if [ -z "$(env_get "$file" GHCR_TOKEN)" ]; then
 		echo "seal-secrets: GHCR_TOKEN is not set; no pull secret is created, so private ghcr.io images cannot be pulled" >&2
@@ -134,11 +141,6 @@ warn_unset() {
 	if [ -z "$(env_get "$file" CLOUDFLARE_API_TOKEN)" ]; then
 		echo "seal-secrets: CLOUDFLARE_API_TOKEN is not set; no cloudflare-api-token is created, so no certificate is issued for the web host" >&2
 	fi
-	for key in ANTHROPIC_API_KEY KATANA_GITHUB_USER KATANA_GITHUB_TOKEN; do
-		if [ -z "$(env_get "$file" "$key")" ]; then
-			echo "seal-secrets: $key is not set; the services that use it start, but drafts or GitHub sync will fail" >&2
-		fi
-	done
 }
 
 # seal_secret CERT OUTDIR NAMESPACE NAME FILE seals one Secret built from an env

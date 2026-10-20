@@ -758,6 +758,170 @@ Each of P9.1 to P9.4 was split into small tasks; do them in the order listed.
 
 ---
 
+---
+
+## Phase 11: Multi-user
+
+Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin and member. Each user brings their own Anthropic-compatible provider and GitHub connection. Gmail connect is enabled per user by an admin until the Google app is verified. The global `TORII_ALLOWED_EMAILS`, `ANTHROPIC_*` and `KATANA_GITHUB_USER/TOKEN` settings are removed.
+
+- [x] **P11.0 Docs and phase** (S) Needs: none
+  Do: update README, AGENTS.md, DDL and deploy docs for users, providers, github_accounts, roles; add this phase.
+  Done when: `grep -rn "single-user" README.md AGENTS.md` returns nothing.
+
+- [x] **P11.1 torii users table** (M) Needs: P11.0
+  Do: `users` migration, sqlc queries, `domain.User`, `store.Users` (upsert, get, list, role, status, Gmail approval, timezone). Login upsert and the `user.activated` event land in P11.2.
+  Done when: `cd services/torii && go test -race ./...` passes.
+
+- [x] **P11.2 Open sign-up** (M) Needs: P11.1
+  Do: remove `TORII_ALLOWED_EMAILS`; add required `TORII_ADMIN_EMAILS`; any verified Google account becomes a member; disabled users refused at login and on every request. The existing global rate limiter already covers `/auth/*`. The `user.activated` event moves to P11.4 with the rest of the `user.*` events. Follow-up for the owner: reseal `deploy/infrastructure/sealed-secrets/secrets/staging/torii.yaml` with `TORII_ADMIN_EMAILS` (it still holds the old sealed key) and update the production values.
+  Done when: `cd services/torii && go test -race ./...` passes and no `TORII_ALLOWED_EMAILS` remains outside the protected production values.
+
+- [x] **P11.3 Admin RPCs and page** (M) Needs: P11.2
+  Do: `shogun.api.v1.AdminService` (`ListUsers`, `SetUserStatus`, `SetGmailAllowed`); `/settings/users` page and an admin-only Users tab (the P11.10 hub links to it); `Session` carries `role` and `gmail_allowed`; Gmail connect refused with `GMAIL_NOT_APPROVED`. Judgement call: the setters are single-purpose toggles, so they skip the FieldMask and version check that AGENTS.md asks of general updates.
+  Done when: `make proto`, `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [x] **P11.10 Settings button and hub** (M) Needs: P11.3
+  Do: Settings button bottom-left of the footer; `/settings` hub with a left tab list (`SETTINGS_TABS` in `web/src/components/settings/settings-nav.tsx`): Mail, Spend, Alerts and Users (admin) today. The AI provider tab is added by P11.5e, GitHub by P11.6, Account by P11.8: each appends to `SETTINGS_TABS`. Mail, Spend and Alerts left the top tabs.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test` pass.
+
+- [x] **P11.4a User directory** (M) Needs: P11.3
+  Do: `shogun.torii.v1` `UserActivated`, `UserUpdated`, `UserDeleted` events (routes in `pkg/bus/routes.go` to kagami, katana, sensei, shinobi, taiko); torii writes `user.activated` on first login and `user.updated` on a status or time zone change, in the same transaction as the change (`store.Users`); new `pkg/owners` holds the `owners(id, timezone, status, version)` migration snippet, the store (`Upsert` ignores old versions, `ListActive`, `Get`), `Owner.Location/LocalDate/ReachedLocalTime`, and `WithHandlers`, which the five consumers add to their sink with a copy of the snippet as a migration. `user.deleted` is produced by P11.8. A user's row reaches a service the next time they log in, since existing users have no `users` row until then.
+  Done when: `cd pkg && go test -race ./owners/... ./bus/...`, `cd services/torii && go test -race ./...`, and each consumer's `go test -race ./...` pass.
+
+- [x] **P11.4b taiko daily digest per owner** (M) Needs: P11.4a
+  Do: a 15-minute `digest_tick` finds active owners whose local clock has reached 08:30 (`owners.DueAt`, new in `pkg/owners`) and enqueues `daily_digest` for `(owner_id, local date)`, unique by args; `Digester.RunFor` loads the owner's zone from the owners table and treats a day that is over in that zone as stale. Removed the hard-coded `Asia/Kolkata` and the now-unused `ListOwners` query. The other services reuse `owners.DueAt`.
+  Done when: `cd services/taiko && go test -race ./...`.
+
+- [x] **P11.4c kagami scans per owner** (M) Needs: P11.4a
+  Do: a 15-minute `daily_scan_tick` queues one `daily_scan` per active owner and local date once their clock reaches 07:55; the job runs the stale scan and then the due scan for that owner, in that order. `ListJobsDueOn`, `ListContactsDueOn` and `ListStaleAppliedJobs` now filter on `owner_id`. Tightened `check-owner-scope.sh`: naming `owner_id` only in `ORDER BY` no longer counts as a filter, which showed these three, plus katana, sensei and shinobi queries that P11.4d–f replace (annotated for now).
+  Done when: `cd services/kagami && go test -race ./...`.
+
+- [x] **P11.4d katana GitHub sync per owner** (S) Needs: P11.4a
+  Do: a 15-minute `github_sync_tick` queues one `github_sync` per syncable owner and local date once their clock reaches 02:00 (`Service.SyncableOwners`, `Service.SyncFor` replace `SyncAll`). **Security fix found on the way:** katana has one global GitHub account and `ProfileService.SyncGitHub` is open to every signed-in user, so with open sign-up a new user could have synced the operator's repositories into their own account. Until P11.6 gives each user their own connection, `syncOwner` refuses any owner with no snapshot (`ErrGitHubNotConnected`, reason `GITHUB_NOT_CONNECTED`), so only the owner who already synced can use the shared account; the schedule follows the same rule. Reworded the Profile page's GitHub errors, which told users to set operator env vars. Do not deploy Phase 11 without P11.6 if anyone but that owner needs GitHub sync.
+  Done when: `cd services/katana && go test -race ./...`.
+
+- [x] **P11.4e sensei rollup per owner** (M) Needs: P11.4a
+  Do: a 15-minute `rollup_tick` queues one `rollup` per active owner and local date once their clock reaches 01:00. `Service.Rollup(ctx, owner)` loads the owner's zone from the owners table (default zone if torii has not announced them yet; a deleted owner is skipped) and rebuilds only their rollups; the rollup SQL takes `@owner_id` and `@tz` instead of the hard-coded `'Asia/Kolkata'`. `GetFunnel` and `GetOutreachStats` default their range to the owner's today. Owners with facts but no owners row are rolled up only once they are announced, which happens at their next login.
+  Done when: `cd services/sensei && go test -race ./...`.
+
+- [x] **P11.4f shinobi source schedules per owner** (S) Needs: P11.4a
+  Do: `DueSources` reads each source's schedule in its owner's own zone (`ListEnabledSources` joins the owners table, so a disabled, deleted or not-yet-announced owner's sources are not read). shinobi's fetcher already refuses non-public addresses at connect time, which matters now that many users add sources. Deploy note for P11.4a–f: sessions that predate the `users` table are ended once (no matching user), so each existing user signs in again, which creates their row and announces them to the services; their jobs resume from then.
+  Done when: `cd services/shinobi && go test -race ./...`.
+
+- [x] **P11.5pre Internal mTLS** (M) Needs: P11.4a
+  Do: `pkg/internaltls` (TLS 1.3, mutual, certificate and key re-read on every handshake) wired into `server.Run` and `grpcclient.Dial`; outside `local` and `test` both refuse to start or dial without `INTERNAL_TLS_CA_FILE`, `INTERNAL_TLS_CERT_FILE` and `INTERNAL_TLS_KEY_FILE`, and a half-set configuration is an error everywhere. The microservice chart gets a cert-manager `Certificate` per service, the mount and the env (`internalTLS`, on for every Go service in `deploy/apps/common.yaml`, off for web); a `shogun-internal` CA ClusterIssuer joins the issuers. Prerequisite for P11.5a–e, which sends users' API keys between services.
+  Done when: `cd pkg && go test -race ./internaltls/... ./server/... ./grpcclient/...`, `make lint`, `make test`, and `helm template` of torii shows the Certificate and `INTERNAL_TLS_*`, of web shows neither.
+
+- [x] **P11.5a soroban providers** (M) Needs: P11.4a, P11.5pre
+  Do: `providers` table (migration `00004`); `SetProvider`, `GetProvider`, `DeleteProvider` on `SorobanService` (the key is sealed with `pkg/envelope`, moved from tsubame, bound to the owner so a copied row will not open, and only its last four characters come back); `Service.ProviderSecret` opens it for P11.5b. Address rules in `domain.NormalizeBaseURL`: https only, no credentials, query or fragment, no private, loopback or metadata address, no internal-looking name; plain http and private hosts are allowed only when soroban runs in `local` or `test`, so a fake provider on localhost works. `pkg/netguard` (extracted from shinobi) is the dial-time guard that P11.5c puts on the provider calls, since a name can resolve anywhere. soroban now needs `SOROBAN_SECRET_MASTER_KEY` (and `SOROBAN_SECRET_KEY_ID`) at startup: added to `.env.example`, compose and `scripts/seal-secrets.sh`. There is no "test connection" RPC here: soroban makes no outbound calls, so P11.5e tests a provider through `pkg/llm`, which holds the guarded client. Reseal staging before deploy: `deploy/infrastructure/sealed-secrets/secrets/staging/soroban.yaml` does not have the new keys.
+  Done when: `cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./envelope/... ./netguard/...`, `scripts/seal-secrets_test.sh`, `make lint`.
+
+- [x] **P11.5b Reserve returns the provider** (M) Needs: P11.5a
+  Do: `Reserve` takes the model from the caller's provider (the request's `model` is deprecated and ignored), refuses a caller with none with `AI_PROVIDER_NOT_CONFIGURED` before writing anything, and returns the provider (`ReserveResponse.provider`: address, model, opened key) over the mTLS hop. Pricing for the provider's model: the price the user entered with the provider, else the shared price table, else none; a model with no price reserves and commits at cost 0 with its tokens still recorded (the token cap is P11.5d). `Commit` prices the reservation's model the same way. The harness gives its owner a provider (`newHarness`; `newBareHarness` has none). Design change for P11.5c: `pkg/llm` can no longer call `CountTokens` before reserving, because that needs the key; it will estimate input tokens locally, reserve first, then call the provider it is handed. Third-party providers often have no token-counting endpoint at all.
+  Done when: `cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`.
+
+- [x] **P11.5c pkg/llm per-call provider** (M) Needs: P11.5b
+  Do: `llm.API.Create` takes the `Access` (address, model, key) soroban hands back with the reservation; `Client.Complete` reserves first, estimates input tokens locally (`llm.EstimateInputTokens`, no provider call), then calls the provider, and gives the hold back if the answer has no provider. `AnthropicAPI` holds no credentials: one shared HTTP client that only connects to public addresses (`pkg/netguard`; `AllowPrivateAddresses`/`llm.ForEnvironment` lift that in `local` and `test` only), SDK clients pooled by address and a hash of the key, and provider errors scrubbed of the key. The cache key now includes the owner: before, two users sending the same request would have shared one answer (and one bill). `ErrProviderNotConfigured` is handled as an expected state: fude fails the draft with reason `provider_not_configured`, katana and tsubame cancel the job without retrying, shinobi keeps the rule score. Removed `ANTHROPIC_API_KEY`, `ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL` and `LLM_MODEL_*` from the code, `.env.example`, both compose files, the seal script and its example. One model per user for every feature, so `FeatureConfig` no longer has a model. Known gap: `web/e2e-compose` specs relied on the removed variables pointing fude and tsubame at the mock; P11.5e must seed a provider for the test user (the mock is at `http://mock-apis:8090`, allowed because the stack runs `local`). A cached answer can be served for up to 24 hours after a user deletes their provider. Reseal staging: its Secrets still hold a now-unused `ANTHROPIC_API_KEY`.
+  Done when: `cd pkg && go test -race ./llm/...`, each of fude, katana, shinobi, tsubame `go test -race ./...`, `scripts/seal-secrets_test.sh`, `make lint`, `make test`, and `grep -rn "ANTHROPIC_\|LLM_MODEL_" --include='*.go' .` prints nothing.
+
+- [x] **P11.5d Token cap and budgets** (S) Needs: P11.5c
+  Do: an optional monthly token cap on the user's provider (`monthly_token_cap`, unset means unlimited; migration `00005`), set through `SetProvider` and shown in `GetProvider` with `tokens_this_month`. `Reserve` refuses a call that would take the user past it, counting tokens already used this month and those held by calls still in flight (`reservations.est_tokens`), with `TOKEN_CAP_EXHAUSTED` and `resets_at`; the provider row is locked for the check, so racing calls cannot pass the cap (tested: 20 calls of 1000 against a 10000 cap give exactly 10). The cap counts tokens, so it works for a model with no price, and applies to priced models too. `pkg/llm` already turns the refusal into a `BudgetError` with a reset time, so workers wait out the month. Token counts per service, feature and model were already in `GetSpend`; the Spend screen shows them in P11.5e. Users already edit only their own budgets (`SetBudget`/`ListBudgets` are scoped to the caller; tested against editing another user's by id). The all-owners cap from the first plan is dropped: users pay for their own AI. Known limits: months are counted in India time for everyone, as budgets are, since soroban does not yet get the per-user time zone; a fude draft refused by the cap shows reason `budget_exhausted`.
+  Done when: `cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`, `make test`.
+
+- [x] **P11.5e1 Test a provider** (M) Needs: P11.5d
+  Do: `llm.ClassifyFailure` names why a call to a provider failed (`rejected`, `rate_limited`, `not_found`, `unreachable`, `not_public`, `provider_error`, `other`), seeing through any wrapping and never passing on the provider's own words, which can echo the key; fude's new `TestProvider` RPC makes one tiny metered call (feature `fude.test_connection`, 16 output tokens, default soft daily budget row in soroban `00006`) with the caller's own provider. A provider that fails is a result (`ok=false` and a `ProviderFailure`); no provider, a spent budget or cap, and metering down are errors with their own reasons. fude's gRPC layer now maps `AI_PROVIDER_NOT_CONFIGURED`, `BUDGET_EXHAUSTED` (with `resets_at`) and `METERING_UNAVAILABLE`.
+  Done when: `cd pkg && go test -race ./llm/...`, `cd services/fude && go test -race ./...`, `cd services/soroban && go test -race ./...`, `make lint`.
+
+- [x] **P11.5e2 AI provider API in torii** (M) Needs: P11.5e1
+  Do: `shogun.api.v1.ProviderService` (`GetProvider`, `SetProvider`, `DeleteProvider`, `TestProvider`) mapped onto soroban and fude. The key is write-only: the API has no field that returns it, torii never logs a request, and any downstream error is scrubbed of the key before it is logged or returned (tested with a downstream that leaks it). Errors keep their reasons. Note for the screen: torii's error mapping drops ErrorInfo metadata, so `resets_at` of a spent budget or cap is only in the message text; show a generic "try again later" there, or add metadata pass-through later.
+  Done when: `make proto`, `cd services/torii && go test -race ./...`.
+
+- [ ] **P11.5e3 AI provider settings screen** (M) Needs: P11.5e2, P11.10
+  Status: built and committed (Settings > AI provider tab, notices on the four AI pages, plain-language draft failures, 164 Playwright specs pass, compose specs add a provider through Settings). **Not done:** the real-stack suite (`npm run test:e2e:compose`, run by `run-e2e` style script against `compose.e2e.yaml`) passes 3 of 3 on `main` but only about 3 of 5 on this branch; the failing test varies (learning.spec.ts, "Can't reach Shogun" or a missing row) and the cause is not found. Not rate limiting alone (P11.12 did not fix it and the failing run's logs hold no 429). One lead: torii logs `authenticate session: get user: context canceled` when a browser aborts a request, from the per-request user lookup added in P11.2. Find it before ticking this box.
+  Do: Settings > AI provider tab (address, model, write-only key with last four shown, optional prices and monthly token cap, Test connection, remove) with copy in `web/src/content/sections.ts`; Spend shows token counts for models with no price; every AI action explains "add your AI provider in Settings" for `AI_PROVIDER_NOT_CONFIGURED` and fude's `provider_not_configured`; `web/e2e-compose` seeds a provider for its test user (mock at `http://mock-apis:8090`).
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [x] **P11.12 Rate limit per user** (S) Needs: P11.2
+  Found while chasing the e2e flake: torii limited requests per remote address, and behind the web app's proxy that is one address for every browser, so with many users they would all share one bucket of 20 requests a second. Now each signed-in user has their own bucket (`TORII_RATE_LIMIT`/`TORII_RATE_BURST`, applied in the session interceptor after authentication, answer `RATE_LIMITED`), and the per-address limit is only a flood guard far above it (`TORII_IP_RATE_LIMIT`/`TORII_IP_RATE_BURST`, default 500 and 1000). Requests with no valid session spend nobody's limit. The web app shows no special text for `RATE_LIMITED` yet.
+  Done when: `cd services/torii && go test -race ./...`.
+
+- [x] **P11.6a Per-user GitHub token storage** (M) Needs: P11.4a, P11.10
+  Do: `github_accounts` (migration `00004`): one row per user, the token sealed with `pkg/envelope` and bound to the owner so a copied row will not open. `Fetch` now takes the credentials of the owner it reads (`domain.Credentials`) and the client holds none; the daily and manual sync read each owner with their own login and token, and only owners who have connected are synced. Added `SaveGitHubAccount`, `GitHubAccount` and `DisconnectGitHub` to the app layer. Removed `KATANA_GITHUB_USER` and `KATANA_GITHUB_TOKEN` from the code, `.env.example`, compose, the seal script and the sealed example; katana now needs `KATANA_SECRET_MASTER_KEY` (and `KATANA_SECRET_KEY_ID`) at startup. Replaces the interim "only the owner who synced before" rule from P11.4d. Reseal staging: `katana.yaml` has neither the new key nor a use for the old ones. No way to connect yet: that is P11.6b.
+  Done when: `cd services/katana && go test -race ./...`, `scripts/seal-secrets_test.sh`, `make lint`, `make test`.
+
+- [x] **P11.6b GitHub OAuth connect flow** (M) Needs: P11.6a
+  Done: katana `ConnectGitHub` (sealed, expiring `state` bound to the owner, like tsubame's) and `CompleteGitHubConnect` (exchange the code with the GitHub OAuth app, read the login, save) and `DisconnectGitHub`/`GetGitHubAccount` RPCs; `KATANA_GITHUB_CLIENT_ID`, `KATANA_GITHUB_CLIENT_SECRET`, `KATANA_GITHUB_REDIRECT_URL` (the OAuth app, not a user credential); no scope is requested, so only public data is readable. TODO(owner): create the GitHub OAuth app and set its callback to `<TORII_PUBLIC_URL>/settings/github/callback`.
+  Also: the state is sealed with `pkg/envelope`, expires in 10 minutes and is refused for any other owner before GitHub is called. All three settings are required in production; with none set elsewhere, connecting answers `GITHUB_NOT_CONFIGURED`. Added to `.env.example`, compose and the seal script. Reseal staging `katana.yaml` once the OAuth app exists.
+  Done when: `make proto`, `cd services/katana && go test -race ./...`.
+
+- [x] **P11.6c GitHub connect in torii and the web app** (M) Needs: P11.6b
+  Done: torii `ProfileService` gets connect, complete, disconnect and status; Settings > GitHub tab and callback page (like Gmail's); the Profile page's "not connected" text links to it; copy in `sections.ts`. The callback is `/settings/github/callback`; the Profile sync error links to Settings when GitHub is not connected or was refused. The real-stack compose suite has no GitHub OAuth stub yet, so connecting is covered by the mocked specs only.
+  Done when: `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [x] **P11.7 Owner-scoping audit** (M) Needs: P11.2
+  Do: audited every sqlc query without `owner_id`; each is now annotated `-- owner-scope: child|internal|global <why>` and `scripts/check-owner-scope.sh` (tested by `scripts/check-owner-scope_test.sh`, wired into `make lint` and `make deploy-test`) fails any new query that has neither. Removed shinobi's unused `GetPostingByID`, which returned a posting whatever its owner. Added cross-owner tests for sensei rollups and taiko notifications; kagami, fude, tsubame, dojo, katana, shinobi and soroban already had them. Moved ahead of P11.4 because open sign-up (P11.2) made cross-tenant reads reachable.
+  Done when: `make lint` and `make test`.
+
+- [x] **P11.8a Time zone and sign out everywhere** (M) Needs: P11.10, P11.4a
+  Done: `AuthService.SetTimezone` (IANA names only; writes `user.updated` through the existing store method, so every service's days follow it) and `LogoutEverywhere` (`DeleteSessionsByOwner`, owner-scoped); `Session.timezone`; Settings > Account tab with a time zone picker (with a "use this browser's" shortcut) and a Sign out everywhere button; section copy and specs.
+  Done when: `cd services/torii && go test -race ./...`, `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [x] **P11.8b Delete my data: torii** (M) Needs: P11.8a
+  Done: `AuthService.DeleteAccount` (the user types their email; `CONFIRMATION_MISMATCH` otherwise): ends every session, archives the user (email and name removed, a tombstone kept so the owner id and version stay unique) and writes `user.deleted` in the same transaction. Signing in again afterwards makes a fresh member and writes `user.activated` with a higher version, so services do not ignore it. Consumers still only mark their local `owners` row deleted; the purge is P11.8c. Adding fude, tsubame, dojo and soroban to the `user.deleted` route moves to P11.8c, with their handlers, so no event is routed to a service that cannot handle it.
+  Done when: `cd services/torii && go test -race ./...`.
+
+- [x] **P11.8c0 Purge hook in pkg/owners** (S) Needs: P11.8b
+  Done: `owners.WithPurge(fn)` option for `WithHandlers`: `fn` runs in the same transaction as the tombstone, once per deletion (a repeated or older `user.deleted` is skipped, so it cannot wipe an account made again later); a failing purge fails the event so it is retried.
+  Done when: `cd pkg && go test -race ./owners/...`.
+
+- [x] **P11.8c1 Purge: kagami** (S) Needs: P11.8c0
+  Done: `store.PurgeStatements` (children first) wired with `owners.WithPurge`; tested with two owners' rows in every table, an owner with no data, and a check that every table of the schema is covered.
+  Done when: `cd services/kagami && go test -race ./...`.
+
+- [ ] **P11.8c2 Purge: tsubame** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Also removes sealed mail tokens (the `accounts` rows) and adds tsubame to the `user.deleted` route with the `owners` table and handler it lacks.
+  Done when: `cd services/tsubame && go test -race ./...`.
+
+- [ ] **P11.8c3 Purge: fude** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Adds fude to the `user.deleted` route with the `owners` table and handler it lacks.
+  Done when: `cd services/fude && go test -race ./...`.
+
+- [x] **P11.8c4 Purge: taiko** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`.
+  Done when: `cd services/taiko && go test -race ./...`.
+
+- [ ] **P11.8c5 Purge: dojo** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Adds dojo to the `user.deleted` route with the `owners` table and handler it lacks.
+  Done when: `cd services/dojo && go test -race ./...`.
+
+- [x] **P11.8c6 Purge: katana** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`; the sealed GitHub token (`github_accounts`) goes too.
+  Done when: `cd services/katana && go test -race ./...`.
+
+- [x] **P11.8c7 Purge: shinobi** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`; scores are reached through their posting.
+  Done when: `cd services/shinobi && go test -race ./...`.
+
+- [x] **P11.8c8 Purge: sensei** (S) Needs: P11.8c0
+  Done: the same as kagami, using `ownerstest.RequirePurgeIsolated`.
+  Done when: `cd services/sensei && go test -race ./...`.
+
+- [ ] **P11.8c9 Purge: soroban** (S) Needs: P11.8c0
+  Do: the same as kagami: `PurgeStatements`, `owners.WithPurge`, tests with two owners and a coverage check. Also removes the sealed AI provider key (`providers`). Adds soroban to the `user.deleted` route with the `owners` table and handler it lacks; leave the shared `prices` table alone.
+  Done when: `cd services/soroban && go test -race ./...`.
+
+- [ ] **P11.8d Delete my data: web** (S) Needs: P11.8b
+  Do: Account tab gets a "Delete my data" section: says what is removed, asks for the email to confirm, signs out and shows a goodbye page. Copy in `sections.ts`; Playwright spec.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [x] **P11.11 Section explainers** (M) Needs: P11.10
+  Do: `PageHeader` `about` prop renders `AboutSection` (responsibility, what it does, how it helps; open by default, a closed choice is remembered in localStorage) with all copy in `web/src/content/sections.ts` for every section and settings tab. TODO(owner): review the copy. Later tasks add copy for the AI provider, GitHub and Account tabs.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [ ] **P11.9 Compliance** (S) Needs: P11.11
+  Do: privacy and terms for many users and BYO keys; Google verification notes in `docs/deploy.md`.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
 ## Later (not scheduled)
 
-Interview prep, resume tailoring per job, post scheduling calendar, Outlook provider for `tsubame`, NATS JetStream behind `pkg/bus`, row-level security for multi-user.
+Interview prep, resume tailoring per job, post scheduling calendar, Outlook provider for `tsubame`, NATS JetStream behind `pkg/bus`, row-level security for multi-user (Postgres RLS on top of Phase 11).

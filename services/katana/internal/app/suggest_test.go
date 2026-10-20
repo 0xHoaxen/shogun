@@ -92,7 +92,7 @@ const (
 func newSuggester(t *testing.T, model *fakeLLM) (*app.Service, *pgxpool.Pool) {
 	t.Helper()
 	pool := newPool(t)
-	svc := app.NewService(pool, nil, func() time.Time { return testNow },
+	svc := newSvc(t, pool, nil, func() time.Time { return testNow },
 		app.WithSuggestions(&fakeQueue{}, model, slog.New(slog.DiscardHandler)))
 	return svc, pool
 }
@@ -288,7 +288,7 @@ func TestSuggestFailsAndStoresNothingOnAnUnreadableAnswerOrAModelError(t *testin
 }
 
 func TestSuggestIsOffWithoutAModel(t *testing.T) {
-	_, err := app.NewService(newPool(t), nil, nil).Suggest(context.Background(), app.SuggestInput{OwnerID: uuid.New()})
+	_, err := newSvc(t, newPool(t), nil, nil).Suggest(context.Background(), app.SuggestInput{OwnerID: uuid.New()})
 
 	if !errors.Is(err, app.ErrSuggestOff) {
 		t.Fatalf("err = %v", err)
@@ -297,9 +297,10 @@ func TestSuggestIsOffWithoutAModel(t *testing.T) {
 
 func TestSyncStartsOneRunForTheSnapshotInTheSameTransaction(t *testing.T) {
 	pool, owner := newPool(t), uuid.New()
+	connect(t, pool, owner)
 	queue := &fakeQueue{}
 	gh := &fakeGitHub{snap: snapshot(`W/"a"`)}
-	svc := app.NewService(pool, gh, func() time.Time { return testNow }, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))
+	svc := newSvc(t, pool, gh, func() time.Time { return testNow }, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))
 
 	res, err := svc.SyncGitHub(asOwner(owner))
 	again, againErr := svc.SyncGitHub(asOwner(owner)) // not modified
@@ -315,7 +316,7 @@ func TestSyncStartsOneRunForTheSnapshotInTheSameTransaction(t *testing.T) {
 func TestSyncStoresNoSnapshotWhenTheRunCannotBeQueued(t *testing.T) {
 	pool := newPool(t)
 	queue := &fakeQueue{err: errors.New("queue down")}
-	svc := app.NewService(pool, &fakeGitHub{snap: snapshot("e")}, nil, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))
+	svc := newSvc(t, pool, &fakeGitHub{snap: snapshot("e")}, nil, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))
 
 	_, err := svc.SyncGitHub(asOwner(uuid.New()))
 
@@ -327,7 +328,7 @@ func TestSyncStoresNoSnapshotWhenTheRunCannotBeQueued(t *testing.T) {
 func TestLearnedItemQueuesARunInTheCallersTransaction(t *testing.T) {
 	pool, owner := newPool(t), uuid.New()
 	queue := &fakeQueue{}
-	svc := app.NewService(pool, nil, nil, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))
+	svc := newSvc(t, pool, nil, nil, app.WithSuggestions(queue, &fakeLLM{}, slog.New(slog.DiscardHandler)))
 	tx, err := pool.Begin(context.Background())
 	if err != nil {
 		t.Fatal(err)

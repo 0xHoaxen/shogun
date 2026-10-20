@@ -28,6 +28,7 @@ const (
 	FudeService_ListQueue_FullMethodName      = "/shogun.fude.v1.FudeService/ListQueue"
 	FudeService_GetDraft_FullMethodName       = "/shogun.fude.v1.FudeService/GetDraft"
 	FudeService_AddVoiceSample_FullMethodName = "/shogun.fude.v1.FudeService/AddVoiceSample"
+	FudeService_TestProvider_FullMethodName   = "/shogun.fude.v1.FudeService/TestProvider"
 )
 
 // FudeServiceClient is the client API for FudeService service.
@@ -56,6 +57,13 @@ type FudeServiceClient interface {
 	// GetDraft returns the draft with all of its versions.
 	GetDraft(ctx context.Context, in *GetDraftRequest, opts ...grpc.CallOption) (*GetDraftResponse, error)
 	AddVoiceSample(ctx context.Context, in *AddVoiceSampleRequest, opts ...grpc.CallOption) (*AddVoiceSampleResponse, error)
+	// TestProvider makes one small, metered call with the caller's own AI provider
+	// to show whether address, model and key work. A provider that fails is an
+	// answer, not an error: ok is false and failure says why, in a few words that
+	// never carry the provider's own text. A caller with no provider is
+	// FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
+	// token cap is ResourceExhausted.
+	TestProvider(ctx context.Context, in *TestProviderRequest, opts ...grpc.CallOption) (*TestProviderResponse, error)
 }
 
 type fudeServiceClient struct {
@@ -156,6 +164,16 @@ func (c *fudeServiceClient) AddVoiceSample(ctx context.Context, in *AddVoiceSamp
 	return out, nil
 }
 
+func (c *fudeServiceClient) TestProvider(ctx context.Context, in *TestProviderRequest, opts ...grpc.CallOption) (*TestProviderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TestProviderResponse)
+	err := c.cc.Invoke(ctx, FudeService_TestProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FudeServiceServer is the server API for FudeService service.
 // All implementations must embed UnimplementedFudeServiceServer
 // for forward compatibility.
@@ -182,6 +200,13 @@ type FudeServiceServer interface {
 	// GetDraft returns the draft with all of its versions.
 	GetDraft(context.Context, *GetDraftRequest) (*GetDraftResponse, error)
 	AddVoiceSample(context.Context, *AddVoiceSampleRequest) (*AddVoiceSampleResponse, error)
+	// TestProvider makes one small, metered call with the caller's own AI provider
+	// to show whether address, model and key work. A provider that fails is an
+	// answer, not an error: ok is false and failure says why, in a few words that
+	// never carry the provider's own text. A caller with no provider is
+	// FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
+	// token cap is ResourceExhausted.
+	TestProvider(context.Context, *TestProviderRequest) (*TestProviderResponse, error)
 	mustEmbedUnimplementedFudeServiceServer()
 }
 
@@ -218,6 +243,9 @@ func (UnimplementedFudeServiceServer) GetDraft(context.Context, *GetDraftRequest
 }
 func (UnimplementedFudeServiceServer) AddVoiceSample(context.Context, *AddVoiceSampleRequest) (*AddVoiceSampleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddVoiceSample not implemented")
+}
+func (UnimplementedFudeServiceServer) TestProvider(context.Context, *TestProviderRequest) (*TestProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TestProvider not implemented")
 }
 func (UnimplementedFudeServiceServer) mustEmbedUnimplementedFudeServiceServer() {}
 func (UnimplementedFudeServiceServer) testEmbeddedByValue()                     {}
@@ -402,6 +430,24 @@ func _FudeService_AddVoiceSample_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FudeService_TestProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TestProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FudeServiceServer).TestProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: FudeService_TestProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FudeServiceServer).TestProvider(ctx, req.(*TestProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FudeService_ServiceDesc is the grpc.ServiceDesc for FudeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -444,6 +490,10 @@ var FudeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddVoiceSample",
 			Handler:    _FudeService_AddVoiceSample_Handler,
+		},
+		{
+			MethodName: "TestProvider",
+			Handler:    _FudeService_TestProvider_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

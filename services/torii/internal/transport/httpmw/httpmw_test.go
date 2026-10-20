@@ -99,3 +99,20 @@ func TestLimitBodyFailsReadsPastTheCap(t *testing.T) {
 		})
 	}
 }
+
+func TestAllowKeepsEachKeyInItsOwnBucket(t *testing.T) {
+	// Arrange: two requests a second with a burst of two, per key.
+	l := httpmw.NewRateLimiter(2, 2)
+
+	// Act
+	first := []bool{l.Allow("ada"), l.Allow("ada"), l.Allow("ada")}
+	other := l.Allow("bob")
+
+	// Assert
+	if !first[0] || !first[1] || first[2] {
+		t.Fatalf("ada got %v, want two allowed then refused", first)
+	}
+	if !other {
+		t.Fatal("bob was refused because ada used her bucket")
+	}
+}

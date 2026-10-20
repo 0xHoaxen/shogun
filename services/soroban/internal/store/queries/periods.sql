@@ -1,26 +1,32 @@
 -- name: InsertPeriodIfAbsent :exec
+-- owner-scope: child budget period of a budget matched with the owner
 INSERT INTO budget_periods (id, budget_id, period_start, period_end)
 VALUES (@id, @budget_id, @period_start, @period_end)
 ON CONFLICT (budget_id, period_start) DO NOTHING;
 
 -- name: LockPeriod :one
+-- owner-scope: child budget period of a budget matched with the owner
 SELECT * FROM budget_periods
 WHERE budget_id = @budget_id AND period_start = @period_start
 FOR UPDATE;
 
 -- name: AddReserved :exec
+-- owner-scope: child budget period of a budget matched with the owner
 UPDATE budget_periods SET reserved_micros = reserved_micros + @delta WHERE id = @id;
 
 -- name: MarkThresholdNotified :exec
+-- owner-scope: child budget period of a budget matched with the owner
 UPDATE budget_periods
 SET notified_thresholds = array_append(notified_thresholds, @threshold::int)
 WHERE id = @id AND NOT (@threshold::int = ANY (notified_thresholds));
 
 -- name: LockPeriodsByID :many
+-- owner-scope: child period ids come from a reservation locked with the owner
 -- Ordered by budget id, the order Reserve locks in, so the two cannot deadlock.
 SELECT * FROM budget_periods WHERE id = ANY (@ids::uuid[]) ORDER BY budget_id FOR UPDATE;
 
 -- name: SettlePeriod :exec
+-- owner-scope: child period ids come from a reservation locked with the owner
 UPDATE budget_periods
 SET reserved_micros = reserved_micros - @release_micros,
     spent_micros = spent_micros + @spend_micros

@@ -18,11 +18,15 @@ import (
 
 // Errors the transport layer maps to HTTP and Connect codes.
 var (
-	// ErrNotAllowed means the signed-in Google account is not on the allowlist
-	// or its email is not verified.
+	// ErrNotAllowed means the signed-in Google account has no verified email or
+	// was disabled by an admin.
 	ErrNotAllowed = errors.New("app: account not allowed")
 	// ErrUnauthenticated means the session token is missing, unknown or expired.
 	ErrUnauthenticated = errors.New("app: unauthenticated")
+	// ErrInvalidTimezone means the name is not an IANA time zone.
+	ErrInvalidTimezone = errors.New("app: not a valid time zone")
+	// ErrConfirmationMismatch means the email typed to confirm deleting the account is not the account's.
+	ErrConfirmationMismatch = errors.New("app: confirmation does not match the account email")
 )
 
 const tokenBytes = 32
@@ -37,6 +41,17 @@ type SessionStore interface {
 	ByTokenHash(ctx context.Context, tokenHash []byte) (domain.Session, error)
 	Extend(ctx context.Context, id uuid.UUID, expiresAt time.Time) error
 	Delete(ctx context.Context, tokenHash []byte) error
+	DeleteByOwner(ctx context.Context, owner uuid.UUID) (int64, error)
+}
+
+// UserStore is the persistence the auth use cases need for users.
+type UserStore interface {
+	Upsert(ctx context.Context, user domain.User) (domain.User, error)
+	ByID(ctx context.Context, id uuid.UUID) (domain.User, error)
+	SetRole(ctx context.Context, id uuid.UUID, role domain.Role) (domain.User, error)
+	SetGmailAllowed(ctx context.Context, id uuid.UUID, allowed bool) (domain.User, error)
+	SetTimezone(ctx context.Context, id uuid.UUID, timezone string) (domain.User, error)
+	Archive(ctx context.Context, id uuid.UUID) (domain.User, error)
 }
 
 // Claims is what the identity provider vouches for after a successful login.
@@ -49,18 +64,21 @@ type Claims struct {
 
 // AuthConfig configures the auth use cases.
 type AuthConfig struct {
-	// AllowedEmails is the owner allowlist. It must not be empty.
-	AllowedEmails []string
+	// AdminEmails are the accounts that become admins, with Gmail approval, when
+	// they sign in. It does not gate sign-in and it must not be empty, so there
+	// is always someone to administer users.
+	AdminEmails []string
 	// SessionTTL is how long a session lasts, and the sliding renewal window.
 	SessionTTL time.Duration
 }
 
 // Auth starts, checks and ends sessions.
 type Auth struct {
-	store   SessionStore
-	allowed map[string]struct{}
-	ttl     time.Duration
-	now     func() time.Time
+	store  SessionStore
+	users  UserStore
+	admins map[string]struct{}
+	ttl    time.Duration
+	now    func() time.Time
 }
 
 // AuthOption customises an Auth.
@@ -74,37 +92,50 @@ func WithClock(now func() time.Time) AuthOption {
 	}
 }
 
-// NewAuth returns an Auth. It fails closed on an empty allowlist or a
+// NewAuth returns an Auth. It fails closed on an empty admin list or a
 // non-positive TTL.
-func NewAuth(sessions SessionStore, cfg AuthConfig, opts ...AuthOption) (*Auth, error) {
-	allowed := make(map[string]struct{}, len(cfg.AllowedEmails))
-	for _, email := range cfg.AllowedEmails {
+func NewAuth(sessions SessionStore, users UserStore, cfg AuthConfig, opts ...AuthOption) (*Auth, error) {
+	admins := make(map[string]struct{}, len(cfg.AdminEmails))
+	for _, email := range cfg.AdminEmails {
 		if normalised := normaliseEmail(email); normalised != "" {
-			allowed[normalised] = struct{}{}
+			admins[normalised] = struct{}{}
 		}
 	}
-	if len(allowed) == 0 {
-		return nil, errors.New("app: allowlist is empty")
+	if len(admins) == 0 {
+		return nil, errors.New("app: admin email list is empty")
 	}
 	if cfg.SessionTTL <= 0 {
 		return nil, errors.New("app: session TTL must be positive")
 	}
-	a := Auth{store: sessions, allowed: allowed, ttl: cfg.SessionTTL, now: time.Now}
+	a := Auth{store: sessions, users: users, admins: admins, ttl: cfg.SessionTTL, now: time.Now}
 	for _, opt := range opts {
 		a = opt(a)
 	}
 	return &a, nil
 }
 
-// StartSession checks claims against the allowlist and, if they pass, creates
-// a session. It returns the plaintext token to put in the cookie and the
-// session; only the token's hash is stored.
+// StartSession signs the user up on first login, applies the admin bootstrap
+// and, unless the user is disabled, creates a session. It returns the
+// plaintext token to put in the cookie and the session; only the token's hash
+// is stored.
 func (a *Auth) StartSession(ctx context.Context, claims Claims) (string, domain.Session, error) {
-	if !claims.EmailVerified || claims.Subject == "" {
+	email := normaliseEmail(claims.Email)
+	if !claims.EmailVerified || claims.Subject == "" || email == "" {
 		return "", domain.Session{}, ErrNotAllowed
 	}
-	email := normaliseEmail(claims.Email)
-	if _, ok := a.allowed[email]; !ok {
+	user, err := a.users.Upsert(ctx, domain.User{
+		ID:          uuid.NewSHA1(ownerNamespace, []byte("google:"+claims.Subject)),
+		GoogleSub:   claims.Subject,
+		Email:       email,
+		DisplayName: claims.DisplayName,
+	})
+	if err != nil {
+		return "", domain.Session{}, fmt.Errorf("upsert user: %w", err)
+	}
+	if user, err = a.applyAdminBootstrap(ctx, user); err != nil {
+		return "", domain.Session{}, err
+	}
+	if user.Status != domain.StatusActive {
 		return "", domain.Session{}, ErrNotAllowed
 	}
 	token, err := newToken()
@@ -112,16 +143,38 @@ func (a *Auth) StartSession(ctx context.Context, claims Claims) (string, domain.
 		return "", domain.Session{}, err
 	}
 	session := domain.Session{
-		ID:          store.NewID(),
-		OwnerID:     uuid.NewSHA1(ownerNamespace, []byte("google:"+claims.Subject)),
-		Email:       email,
-		DisplayName: claims.DisplayName,
-		ExpiresAt:   a.now().Add(a.ttl),
+		ID:           store.NewID(),
+		OwnerID:      user.ID,
+		Email:        user.Email,
+		DisplayName:  user.DisplayName,
+		Role:         user.Role,
+		GmailAllowed: user.GmailAllowed,
+		ExpiresAt:    a.now().Add(a.ttl),
 	}
 	if err := a.store.Insert(ctx, session, hashToken(token)); err != nil {
 		return "", domain.Session{}, err
 	}
 	return token, session, nil
+}
+
+// applyAdminBootstrap makes a user whose email is in AdminEmails an admin with
+// Gmail approval on every login. It never demotes anyone.
+func (a *Auth) applyAdminBootstrap(ctx context.Context, user domain.User) (domain.User, error) {
+	if _, ok := a.admins[user.Email]; !ok {
+		return user, nil
+	}
+	var err error
+	if user.Role != domain.RoleAdmin {
+		if user, err = a.users.SetRole(ctx, user.ID, domain.RoleAdmin); err != nil {
+			return domain.User{}, fmt.Errorf("promote admin: %w", err)
+		}
+	}
+	if !user.GmailAllowed {
+		if user, err = a.users.SetGmailAllowed(ctx, user.ID, true); err != nil {
+			return domain.User{}, fmt.Errorf("approve admin gmail: %w", err)
+		}
+	}
+	return user, nil
 }
 
 // Authenticate resolves a session token. The bool reports whether the expiry
@@ -141,6 +194,20 @@ func (a *Auth) Authenticate(ctx context.Context, token string) (domain.Session, 
 	if session.Expired(now) {
 		return domain.Session{}, false, ErrUnauthenticated
 	}
+	user, err := a.users.ByID(ctx, session.OwnerID)
+	if errors.Is(err, store.ErrNotFound) || (err == nil && user.Status != domain.StatusActive) {
+		// A disabled or removed user loses the session at once, not at expiry.
+		if delErr := a.store.Delete(ctx, hashToken(token)); delErr != nil {
+			return domain.Session{}, false, delErr
+		}
+		return domain.Session{}, false, ErrUnauthenticated
+	}
+	if err != nil {
+		return domain.Session{}, false, err
+	}
+	session.Role = user.Role
+	session.GmailAllowed = user.GmailAllowed
+	session.Timezone = user.Timezone
 	renewed, ok := session.Renewed(now, a.ttl)
 	if !ok {
 		return session, false, nil

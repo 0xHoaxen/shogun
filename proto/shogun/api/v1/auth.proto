@@ -11,12 +11,30 @@ service AuthService {
   rpc GetSession(GetSessionRequest) returns (GetSessionResponse);
   // Logout ends the current session and clears its cookie.
   rpc Logout(LogoutRequest) returns (LogoutResponse);
+  // LogoutEverywhere ends every session of the signed-in user, this one
+  // included, and clears this browser's cookie.
+  rpc LogoutEverywhere(LogoutEverywhereRequest) returns (LogoutEverywhereResponse);
+  // SetTimezone changes the zone the user's days are counted in, which their
+  // follow-up scans, digests and rollups follow. InvalidArgument
+  // INVALID_TIMEZONE when the name is not an IANA zone such as Europe/Berlin.
+  rpc SetTimezone(SetTimezoneRequest) returns (SetTimezoneResponse);
+  // DeleteAccount deletes the signed-in user's account and, through the
+  // user.deleted event, all of their data in every service. confirm_email must
+  // be the account's email, else InvalidArgument CONFIRMATION_MISMATCH. It ends
+  // every session and clears this browser's cookie. It cannot be undone.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
 }
 
 message Session {
   string email = 1;
   string display_name = 2;
   google.protobuf.Timestamp expires_at = 3;
+  // role is "admin" or "member".
+  string role = 4;
+  // gmail_allowed is whether an admin approved this user to connect Gmail.
+  bool gmail_allowed = 5;
+  // timezone is the user's IANA zone, such as Asia/Kolkata.
+  string timezone = 6;
 }
 
 message GetSessionRequest {}
@@ -28,3 +46,24 @@ message GetSessionResponse {
 message LogoutRequest {}
 
 message LogoutResponse {}
+
+message LogoutEverywhereRequest {}
+
+message LogoutEverywhereResponse {
+  // ended is how many sessions were ended.
+  int64 ended = 1;
+}
+
+message SetTimezoneRequest {
+  string timezone = 1;
+}
+
+message SetTimezoneResponse {
+  string timezone = 1;
+}
+
+message DeleteAccountRequest {
+  string confirm_email = 1;
+}
+
+message DeleteAccountResponse {}

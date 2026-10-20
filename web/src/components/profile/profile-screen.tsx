@@ -2,6 +2,7 @@
 
 import { useInfiniteQuery } from "@connectrpc/connect-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useState } from "react";
 
 import { profileErrorText } from "@/components/profile/errors";
@@ -9,14 +10,23 @@ import { STATE_FILTERS, suggestionStateLabel } from "@/components/profile/labels
 import { suggestionsKey } from "@/components/profile/profile-key";
 import { SuggestionCard } from "@/components/profile/suggestion-card";
 import { useProfileClient } from "@/components/profile/use-profile-client";
+import { AiProviderNotice } from "@/components/provider/ai-provider-notice";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { Button } from "@/components/ui/button";
 import { ProfileService, SuggestionState } from "@/gen/shogun/api/v1/profile_pb";
+import { reasonOf } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
 
 type Decision = "accept" | "dismiss";
+
+// needsGitHub is true when a sync failed because GitHub is not connected, or
+// was refused, which Settings fixes.
+function needsGitHub(error: unknown): boolean {
+  return ["GITHUB_NOT_CONNECTED", "GITHUB_UNAUTHORIZED"].includes(reasonOf(error));
+}
 
 export function ProfileScreen() {
   const client = useProfileClient();
@@ -55,7 +65,7 @@ export function ProfileScreen() {
 
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.profile}
         title="Your profile."
         description="Edits to your resume and LinkedIn that Shogun found in your GitHub activity and what you finished learning. You make the edits; accepting only records your choice."
       >
@@ -63,10 +73,16 @@ export function ProfileScreen() {
           Sync GitHub
         </Button>
       </PageHeader>
+      <AiProviderNotice />
 
       {sync.isError ? (
         <p role="alert" className="border-b border-ink p-[22px]">
-          {profileErrorText(sync.error, "Couldn't sync GitHub. Try again.")}
+          {profileErrorText(sync.error, "Couldn't sync GitHub. Try again.")}{" "}
+          {needsGitHub(sync.error) ? (
+            <Link href="/settings/github" className="font-bold underline">
+              Connect GitHub in Settings
+            </Link>
+          ) : null}
         </p>
       ) : null}
       {syncNote ? (

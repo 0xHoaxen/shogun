@@ -43,6 +43,7 @@ sqlc: ## generate internal/store/db in each service
 lint: ## golangci-lint on every module, buf lint
 	@for m in $(MODULES); do echo "==> lint $$m"; (cd $$m && $(BIN)/golangci-lint run ./...) || exit 1; done
 	$(BIN)/buf lint
+	scripts/check-owner-scope.sh
 
 test: ## go test -race on every module
 	@for m in $(MODULES); do echo "==> test $$m"; (cd $$m && go test -race ./...) || exit 1; done
@@ -128,3 +129,4 @@ seal: ## seal a cluster's Secrets offline from .secrets/<env>.env: make seal ENV
 
 deploy-test: ## tests for the deploy scripts
 	scripts/seal-secrets_test.sh
+	scripts/check-owner-scope_test.sh

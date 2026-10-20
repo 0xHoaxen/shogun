@@ -19,7 +19,9 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/bus/relay"
 	"github.com/0xHoaxen/shogun/pkg/config"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/logger"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
@@ -27,6 +29,7 @@ import (
 	"github.com/0xHoaxen/shogun/services/katana/internal/events"
 	"github.com/0xHoaxen/shogun/services/katana/internal/github"
 	"github.com/0xHoaxen/shogun/services/katana/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/katana/internal/store"
 	katanagrpc "github.com/0xHoaxen/shogun/services/katana/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/katana/migrations"
 )
@@ -37,9 +40,12 @@ const (
 	migrateOnStartDflt = "true"
 	migrateCommand     = "migrate"
 
-	githubUserEnv    = "KATANA_GITHUB_USER"
-	githubTokenEnv   = "KATANA_GITHUB_TOKEN"
 	githubAPIBaseEnv = "KATANA_GITHUB_API_BASE"
+
+	// secretKeyEnv is the master key that seals users' GitHub tokens: 32 bytes, base64.
+	secretKeyEnv    = "KATANA_SECRET_MASTER_KEY"
+	secretKeyIDEnv  = "KATANA_SECRET_KEY_ID"
+	secretKeyIDDflt = "katana-1"
 )
 
 func main() {
@@ -105,6 +111,12 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}
 	defer flushTelemetry(log, cfg.ShutdownTimeout, shutdownTelemetry)
 
+	// Users' GitHub tokens are sealed with this key, so there is no starting without it.
+	keys, err := envelope.KeyringFromEnv(lookup, secretKeyEnv, secretKeyIDEnv, secretKeyIDDflt)
+	if err != nil {
+		return err
+	}
+
 	pool, err := postgres.Connect(ctx, cfg.DatabaseURL, serviceName)
 	if err != nil {
 		return err
@@ -117,23 +129,24 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	gh, err := newGitHub(lookup, cfg, log)
-	if err != nil {
-		return err
-	}
+	gh := github.New(config.String(lookup, githubAPIBaseEnv, ""), nil)
 	suggest, err := newSuggestions(ctx, lookup, cfg, pool, authority, log)
 	if err != nil {
 		return err
 	}
 	defer suggest.close()
-	svc := app.NewService(pool, gh, nil, suggest.option)
-	loc, err := jobs.Location()
+	oauth, err := newGitHubOAuth(lookup, cfg.IsProduction())
 	if err != nil {
 		return err
 	}
-	scheduled := jobs.NewSetup(svc, svc, loc, time.Now, log)
+	appOpts := []app.Option{app.WithKeyring(keys), suggest.option}
+	if oauth != nil {
+		appOpts = append(appOpts, app.WithOAuth(oauth))
+	}
+	svc := app.NewService(pool, gh, nil, appOpts...)
+	scheduled := jobs.NewSetup(svc, svc, svc, jobs.ContextEnqueuer{}, time.Now, log)
 
-	sink, err := bus.NewSinkServer(pool, events.Handlers(svc, log), log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}
@@ -169,27 +182,4 @@ func flushTelemetry(log *slog.Logger, timeout time.Duration, shutdown func(conte
 	if err := shutdown(ctx); err != nil {
 		log.Error("telemetry shutdown", slog.Any("error", err))
 	}
-}
-
-// errNoGitHub means production has no GitHub user or token.
-var errNoGitHub = fmt.Errorf("%s and %s are required in production", githubUserEnv, githubTokenEnv)
-
-// newGitHub builds the GitHub client from the environment. Both the user and
-// the token are required in production; elsewhere a missing one is logged, the
-// service still starts, and syncing says GitHub is not configured. A nil
-// client is returned for that case, which app.NewService accepts.
-//
-// TODO(owner): set KATANA_GITHUB_USER and KATANA_GITHUB_TOKEN (a token that can
-// read your repositories) as secrets in the staging and production helm values.
-func newGitHub(lookup config.LookupFunc, cfg config.Base, log *slog.Logger) (app.GitHub, error) {
-	user := config.String(lookup, githubUserEnv, "")
-	token := config.String(lookup, githubTokenEnv, "")
-	if user == "" || token == "" {
-		if cfg.IsProduction() {
-			return nil, errNoGitHub
-		}
-		log.Warn("github sync is off: no github user or token configured")
-		return nil, nil //nolint:nilnil // no client is how an unconfigured GitHub is passed on
-	}
-	return github.New(config.String(lookup, githubAPIBaseEnv, ""), user, token, nil), nil
 }

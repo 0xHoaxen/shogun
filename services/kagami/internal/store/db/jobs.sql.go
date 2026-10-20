@@ -276,6 +276,7 @@ type InsertJobEventParams struct {
 	OccurredAt    time.Time
 }
 
+// owner-scope: child job already loaded with the owner
 func (q *Queries) InsertJobEvent(ctx context.Context, arg InsertJobEventParams) (JobEvent, error) {
 	row := q.db.QueryRow(ctx, insertJobEvent,
 		arg.ID,
@@ -309,6 +310,7 @@ ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
 LIMIT 1
 `
 
+// owner-scope: child job already loaded with the owner
 // When the job's status last changed, as an event time: a change made from
 // mail carries the time of the mail event in its payload; any other change is
 // anchored at the moment it was made. A mail event that occurred before this
@@ -376,6 +378,7 @@ const listJobEvents = `-- name: ListJobEvents :many
 SELECT id, job_id, kind, from_status, to_status, source_event_id, payload, occurred_at FROM job_events WHERE job_id = $1 ORDER BY occurred_at DESC, id DESC
 `
 
+// owner-scope: child only after GetJob(owner, id)
 func (q *Queries) ListJobEvents(ctx context.Context, jobID uuid.UUID) ([]JobEvent, error) {
 	rows, err := q.db.Query(ctx, listJobEvents, jobID)
 	if err != nil {
@@ -480,14 +483,19 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, erro
 
 const listJobsDueOn = `-- name: ListJobsDueOn :many
 SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
-WHERE next_follow_up = $1::date AND archived_at IS NULL AND status <> 'rejected'
-ORDER BY owner_id, id
+WHERE owner_id = $1 AND next_follow_up = $2::date AND archived_at IS NULL AND status <> 'rejected'
+ORDER BY id
 `
 
-// Every owner's open jobs with a follow-up on exactly this date; the daily scan
+type ListJobsDueOnParams struct {
+	OwnerID uuid.UUID
+	DueOn   time.Time
+}
+
+// The owner's open jobs with a follow-up on exactly this date; the daily scan
 // emits one event for each. Rejected jobs need no follow-up.
-func (q *Queries) ListJobsDueOn(ctx context.Context, dueOn time.Time) ([]Job, error) {
-	rows, err := q.db.Query(ctx, listJobsDueOn, dueOn)
+func (q *Queries) ListJobsDueOn(ctx context.Context, arg ListJobsDueOnParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listJobsDueOn, arg.OwnerID, arg.DueOn)
 	if err != nil {
 		return nil, err
 	}
@@ -526,15 +534,20 @@ func (q *Queries) ListJobsDueOn(ctx context.Context, dueOn time.Time) ([]Job, er
 
 const listStaleAppliedJobs = `-- name: ListStaleAppliedJobs :many
 SELECT id, owner_id, company_id, title, url, source, status, applied_on, next_follow_up, location, salary_text, description, idempotency_key, version, created_at, updated_at, archived_at FROM jobs
-WHERE status = 'applied' AND applied_on <= $1::date
+WHERE owner_id = $1 AND status = 'applied' AND applied_on <= $2::date
   AND next_follow_up IS NULL AND archived_at IS NULL
-ORDER BY owner_id, id
+ORDER BY id
 `
 
-// Applied jobs with no follow-up planned that were applied for on or before
-// applied_by.
-func (q *Queries) ListStaleAppliedJobs(ctx context.Context, appliedBy time.Time) ([]Job, error) {
-	rows, err := q.db.Query(ctx, listStaleAppliedJobs, appliedBy)
+type ListStaleAppliedJobsParams struct {
+	OwnerID   uuid.UUID
+	AppliedBy time.Time
+}
+
+// The owner's applied jobs with no follow-up planned that were applied for on
+// or before applied_by.
+func (q *Queries) ListStaleAppliedJobs(ctx context.Context, arg ListStaleAppliedJobsParams) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listStaleAppliedJobs, arg.OwnerID, arg.AppliedBy)
 	if err != nil {
 		return nil, err
 	}
@@ -582,6 +595,7 @@ type MarkJobFollowUpParams struct {
 	ID           uuid.UUID
 }
 
+// owner-scope: internal stale-application scan; the job comes from the scan's own listing
 // Plans a follow-up for a job that has none. Returns no row when one is set.
 func (q *Queries) MarkJobFollowUp(ctx context.Context, arg MarkJobFollowUpParams) (Job, error) {
 	row := q.db.QueryRow(ctx, markJobFollowUp, arg.NextFollowUp, arg.ID)

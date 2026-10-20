@@ -2,7 +2,6 @@ package jobs
 
 import (
 	"context"
-	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -19,37 +18,6 @@ import (
 )
 
 func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
-
-func mustLocation(t *testing.T) *time.Location {
-	t.Helper()
-	loc, err := time.LoadLocation(scanLocation)
-	if err != nil {
-		t.Fatalf("load location: %v", err)
-	}
-	return loc
-}
-
-func TestScanDateUsesTheLocalCalendar(t *testing.T) {
-	loc := mustLocation(t)
-	// 20:00 UTC on 3 Oct is 01:30 on 4 Oct in India.
-	if got := scanDate(time.Date(2026, 10, 3, 20, 0, 0, 0, time.UTC), loc); got != "2026-10-04" {
-		t.Fatalf("got %s, want 2026-10-04", got)
-	}
-}
-
-func TestNewSetupRegistersBothScansOnOneQueue(t *testing.T) {
-	setup, err := NewSetup(nil, time.Now, slog.New(slog.DiscardHandler))
-	if err != nil {
-		t.Fatalf("setup: %v", err)
-	}
-	if len(setup.PeriodicJobs) != 2 || setup.Queues[Queue].MaxWorkers != 1 || setup.Workers == nil {
-		t.Fatalf("got %+v", setup)
-	}
-	opts := FollowUpScanArgs{}.InsertOpts()
-	if opts.Queue != Queue || !opts.UniqueOpts.ByArgs {
-		t.Fatalf("scan jobs must be unique by their date: %+v", opts)
-	}
-}
 
 // scanEnv is a migrated schema with a service on a clock the test moves.
 type scanEnv struct {
@@ -110,7 +78,7 @@ func (e *scanEnv) outboxCount(t *testing.T, eventType string) int {
 	return n
 }
 
-func TestDueScanEmitsOneEventPerDueItemAcrossOwners(t *testing.T) {
+func TestDueScanEmitsOnlyTheScannedOwnersDueItems(t *testing.T) {
 	env := newScanEnv(t)
 	owner, other := uuid.New(), uuid.New()
 	due := env.addJob(t, owner, "Due today", domain.JobSaved)
@@ -131,22 +99,28 @@ func TestDueScanEmitsOneEventPerDueItemAcrossOwners(t *testing.T) {
 		t.Fatalf("add contact: %v", err)
 	}
 
-	emitted, err := env.svc.ScanDueFollowUps(context.Background(), time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC))
+	today := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
+	emitted, err := env.svc.ScanDueFollowUps(context.Background(), owner, today)
 	if err != nil {
 		t.Fatalf("scan: %v", err)
 	}
 
-	if emitted != 3 {
-		t.Fatalf("emitted %d, want 3: two jobs and one contact", emitted)
+	if emitted != 2 {
+		t.Fatalf("emitted %d, want 2: one job and one contact of this owner, not the rejected job or the other owner's", emitted)
 	}
-	if n := env.outboxCount(t, "job.follow_up_due"); n != 2 {
-		t.Fatalf("got %d job.follow_up_due rows, want 2", n)
+	if n := env.outboxCount(t, "job.follow_up_due"); n != 1 {
+		t.Fatalf("got %d job.follow_up_due rows, want 1", n)
 	}
 	if n := env.outboxCount(t, "contact.follow_up_due"); n != 1 {
 		t.Fatalf("got %d contact.follow_up_due rows for %s, want 1", n, contact.ID)
 	}
 
-	tomorrow, err := env.svc.ScanDueFollowUps(context.Background(), time.Date(2026, 10, 4, 0, 0, 0, 0, time.UTC))
+	theirs, err := env.svc.ScanDueFollowUps(context.Background(), other, today)
+	if err != nil || theirs != 1 {
+		t.Fatalf("other owner's scan emitted %d, %v; want their one job", theirs, err)
+	}
+
+	tomorrow, err := env.svc.ScanDueFollowUps(context.Background(), owner, today.AddDate(0, 0, 1))
 	if err != nil || tomorrow != 1 {
 		t.Fatalf("next day emitted %d, %v; want only the item due that day", tomorrow, err)
 	}
@@ -166,7 +140,7 @@ func TestStaleScanPlansAFollowUpThatTheDueScanThenEmits(t *testing.T) {
 	env.now = time.Date(2026, 10, 3, 3, 0, 0, 0, time.UTC)
 	date := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
 
-	count, err := env.svc.ScanStaleApplications(context.Background(), date)
+	count, err := env.svc.ScanStaleApplications(context.Background(), owner, date)
 	if err != nil || count != 1 {
 		t.Fatalf("planned %d, %v; want 1", count, err)
 	}
@@ -184,12 +158,12 @@ func TestStaleScanPlansAFollowUpThatTheDueScanThenEmits(t *testing.T) {
 		t.Fatalf("the stale scan wrote %d job.follow_up_due rows, want none", n)
 	}
 
-	again, err := env.svc.ScanStaleApplications(context.Background(), date)
+	again, err := env.svc.ScanStaleApplications(context.Background(), owner, date)
 	if err != nil || again != 0 {
 		t.Fatalf("second stale scan planned %d, %v; want 0", again, err)
 	}
 
-	emitted, err := env.svc.ScanDueFollowUps(context.Background(), date)
+	emitted, err := env.svc.ScanDueFollowUps(context.Background(), owner, date)
 	if err != nil || emitted != 1 {
 		t.Fatalf("due scan emitted %d, %v; want 1", emitted, err)
 	}
@@ -204,7 +178,7 @@ func TestScanPayloadNamesTheItemAndTheDueDate(t *testing.T) {
 	id := env.addJob(t, owner, "Due today", domain.JobSaved)
 	env.setJobFollowUp(t, owner, id, "2026-10-03")
 
-	if _, err := env.svc.ScanDueFollowUps(context.Background(), time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)); err != nil {
+	if _, err := env.svc.ScanDueFollowUps(context.Background(), owner, time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)); err != nil {
 		t.Fatalf("scan: %v", err)
 	}
 

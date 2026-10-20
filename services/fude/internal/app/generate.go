@@ -35,10 +35,12 @@ const (
 
 	ReasonBudgetExhausted     = "budget_exhausted"
 	ReasonMeteringUnavailable = "metering_unavailable"
-	ReasonModelRefused        = "model_refused"
-	ReasonContextUnavailable  = "context_unavailable"
-	ReasonEmptyDraft          = "empty_draft"
-	ReasonGenerationFailed    = "generation_failed"
+	// ReasonProviderNotConfigured says the user has not added an AI provider yet.
+	ReasonProviderNotConfigured = "provider_not_configured"
+	ReasonModelRefused          = "model_refused"
+	ReasonContextUnavailable    = "context_unavailable"
+	ReasonEmptyDraft            = "empty_draft"
+	ReasonGenerationFailed      = "generation_failed"
 )
 
 // Completer is the part of *llm.Client generation needs.
@@ -306,6 +308,8 @@ func FailureReason(err error) string {
 	switch {
 	case errors.Is(err, llm.ErrBudgetExhausted):
 		return ReasonBudgetExhausted
+	case errors.Is(err, llm.ErrProviderNotConfigured):
+		return ReasonProviderNotConfigured
 	case errors.Is(err, llm.ErrMeteringUnavailable):
 		return ReasonMeteringUnavailable
 	case errors.Is(err, llm.ErrRefused):

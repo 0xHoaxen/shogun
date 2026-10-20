@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"testing"
 	"time"
@@ -66,6 +67,17 @@ func TestClassifyWorkRetriesOtherFailures(t *testing.T) {
 		if err == nil || errors.As(err, &snooze) || errors.As(err, &cancel) {
 			t.Fatalf("attempt %d: got %v, want a plain error River retries", attempt, err)
 		}
+	}
+}
+
+func TestClassifyWorkCancelsForAUserWithoutAProvider(t *testing.T) {
+	c := &fakeClassifier{err: fmt.Errorf("classify with model: %w", llm.ErrProviderNotConfigured)}
+
+	err := newClassifyWorker(c).Work(context.Background(), classifyJob(1))
+
+	var cancel *rivertype.JobCancelError
+	if !errors.As(err, &cancel) {
+		t.Fatalf("got %v, want a cancel: retrying cannot help until the user adds a provider", err)
 	}
 }
 

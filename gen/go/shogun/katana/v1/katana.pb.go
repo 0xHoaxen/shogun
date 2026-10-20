@@ -678,6 +678,359 @@ func (x *DismissSuggestionResponse) GetSuggestion() *Suggestion {
 	return nil
 }
 
+type ConnectGitHubRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ConnectGitHubRequest) Reset() {
+	*x = ConnectGitHubRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConnectGitHubRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectGitHubRequest) ProtoMessage() {}
+
+func (x *ConnectGitHubRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectGitHubRequest.ProtoReflect.Descriptor instead.
+func (*ConnectGitHubRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{10}
+}
+
+type ConnectGitHubResponse struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AuthorizationUrl string                 `protobuf:"bytes,1,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ConnectGitHubResponse) Reset() {
+	*x = ConnectGitHubResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ConnectGitHubResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ConnectGitHubResponse) ProtoMessage() {}
+
+func (x *ConnectGitHubResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ConnectGitHubResponse.ProtoReflect.Descriptor instead.
+func (*ConnectGitHubResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ConnectGitHubResponse) GetAuthorizationUrl() string {
+	if x != nil {
+		return x.AuthorizationUrl
+	}
+	return ""
+}
+
+type CompleteGitHubConnectRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteGitHubConnectRequest) Reset() {
+	*x = CompleteGitHubConnectRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteGitHubConnectRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteGitHubConnectRequest) ProtoMessage() {}
+
+func (x *CompleteGitHubConnectRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteGitHubConnectRequest.ProtoReflect.Descriptor instead.
+func (*CompleteGitHubConnectRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *CompleteGitHubConnectRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *CompleteGitHubConnectRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+type CompleteGitHubConnectResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Login         string                 `protobuf:"bytes,1,opt,name=login,proto3" json:"login,omitempty"`
+	ConnectedAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=connected_at,json=connectedAt,proto3" json:"connected_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CompleteGitHubConnectResponse) Reset() {
+	*x = CompleteGitHubConnectResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CompleteGitHubConnectResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CompleteGitHubConnectResponse) ProtoMessage() {}
+
+func (x *CompleteGitHubConnectResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CompleteGitHubConnectResponse.ProtoReflect.Descriptor instead.
+func (*CompleteGitHubConnectResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *CompleteGitHubConnectResponse) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *CompleteGitHubConnectResponse) GetConnectedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ConnectedAt
+	}
+	return nil
+}
+
+type GetGitHubAccountRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetGitHubAccountRequest) Reset() {
+	*x = GetGitHubAccountRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGitHubAccountRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGitHubAccountRequest) ProtoMessage() {}
+
+func (x *GetGitHubAccountRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetGitHubAccountRequest.ProtoReflect.Descriptor instead.
+func (*GetGitHubAccountRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{14}
+}
+
+type GetGitHubAccountResponse struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Connected bool                   `protobuf:"varint,1,opt,name=connected,proto3" json:"connected,omitempty"`
+	// login and connected_at are set only when connected.
+	Login         string                 `protobuf:"bytes,2,opt,name=login,proto3" json:"login,omitempty"`
+	ConnectedAt   *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=connected_at,json=connectedAt,proto3" json:"connected_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetGitHubAccountResponse) Reset() {
+	*x = GetGitHubAccountResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGitHubAccountResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGitHubAccountResponse) ProtoMessage() {}
+
+func (x *GetGitHubAccountResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetGitHubAccountResponse.ProtoReflect.Descriptor instead.
+func (*GetGitHubAccountResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *GetGitHubAccountResponse) GetConnected() bool {
+	if x != nil {
+		return x.Connected
+	}
+	return false
+}
+
+func (x *GetGitHubAccountResponse) GetLogin() string {
+	if x != nil {
+		return x.Login
+	}
+	return ""
+}
+
+func (x *GetGitHubAccountResponse) GetConnectedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ConnectedAt
+	}
+	return nil
+}
+
+type DisconnectGitHubRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisconnectGitHubRequest) Reset() {
+	*x = DisconnectGitHubRequest{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisconnectGitHubRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisconnectGitHubRequest) ProtoMessage() {}
+
+func (x *DisconnectGitHubRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisconnectGitHubRequest.ProtoReflect.Descriptor instead.
+func (*DisconnectGitHubRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{16}
+}
+
+type DisconnectGitHubResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DisconnectGitHubResponse) Reset() {
+	*x = DisconnectGitHubResponse{}
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DisconnectGitHubResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisconnectGitHubResponse) ProtoMessage() {}
+
+func (x *DisconnectGitHubResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_katana_v1_katana_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisconnectGitHubResponse.ProtoReflect.Descriptor instead.
+func (*DisconnectGitHubResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_katana_v1_katana_proto_rawDescGZIP(), []int{17}
+}
+
 var File_shogun_katana_v1_katana_proto protoreflect.FileDescriptor
 
 const file_shogun_katana_v1_katana_proto_rawDesc = "" +
@@ -726,7 +1079,23 @@ const file_shogun_katana_v1_katana_proto_rawDesc = "" +
 	"\x19DismissSuggestionResponse\x12<\n" +
 	"\n" +
 	"suggestion\x18\x01 \x01(\v2\x1c.shogun.katana.v1.SuggestionR\n" +
-	"suggestion*s\n" +
+	"suggestion\"\x16\n" +
+	"\x14ConnectGitHubRequest\"D\n" +
+	"\x15ConnectGitHubResponse\x12+\n" +
+	"\x11authorization_url\x18\x01 \x01(\tR\x10authorizationUrl\"H\n" +
+	"\x1cCompleteGitHubConnectRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
+	"\x05state\x18\x02 \x01(\tR\x05state\"t\n" +
+	"\x1dCompleteGitHubConnectResponse\x12\x14\n" +
+	"\x05login\x18\x01 \x01(\tR\x05login\x12=\n" +
+	"\fconnected_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\vconnectedAt\"\x19\n" +
+	"\x17GetGitHubAccountRequest\"\x8d\x01\n" +
+	"\x18GetGitHubAccountResponse\x12\x1c\n" +
+	"\tconnected\x18\x01 \x01(\bR\tconnected\x12\x14\n" +
+	"\x05login\x18\x02 \x01(\tR\x05login\x12=\n" +
+	"\fconnected_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\vconnectedAt\"\x19\n" +
+	"\x17DisconnectGitHubRequest\"\x1a\n" +
+	"\x18DisconnectGitHubResponse*s\n" +
 	"\x10SuggestionTarget\x12!\n" +
 	"\x1dSUGGESTION_TARGET_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18SUGGESTION_TARGET_RESUME\x10\x01\x12\x1e\n" +
@@ -735,13 +1104,17 @@ const file_shogun_katana_v1_katana_proto_rawDesc = "" +
 	"\x1cSUGGESTION_STATE_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15SUGGESTION_STATE_OPEN\x10\x01\x12\x1d\n" +
 	"\x19SUGGESTION_STATE_ACCEPTED\x10\x02\x12\x1e\n" +
-	"\x1aSUGGESTION_STATE_DISMISSED\x10\x032\xa9\x03\n" +
+	"\x1aSUGGESTION_STATE_DISMISSED\x10\x032\xdb\x06\n" +
 	"\rKatanaService\x12W\n" +
 	"\n" +
 	"SyncGitHub\x12#.shogun.katana.v1.SyncGitHubRequest\x1a$.shogun.katana.v1.SyncGitHubResponse\x12f\n" +
 	"\x0fListSuggestions\x12(.shogun.katana.v1.ListSuggestionsRequest\x1a).shogun.katana.v1.ListSuggestionsResponse\x12i\n" +
 	"\x10AcceptSuggestion\x12).shogun.katana.v1.AcceptSuggestionRequest\x1a*.shogun.katana.v1.AcceptSuggestionResponse\x12l\n" +
-	"\x11DismissSuggestion\x12*.shogun.katana.v1.DismissSuggestionRequest\x1a+.shogun.katana.v1.DismissSuggestionResponseB\xc2\x01\n" +
+	"\x11DismissSuggestion\x12*.shogun.katana.v1.DismissSuggestionRequest\x1a+.shogun.katana.v1.DismissSuggestionResponse\x12`\n" +
+	"\rConnectGitHub\x12&.shogun.katana.v1.ConnectGitHubRequest\x1a'.shogun.katana.v1.ConnectGitHubResponse\x12x\n" +
+	"\x15CompleteGitHubConnect\x12..shogun.katana.v1.CompleteGitHubConnectRequest\x1a/.shogun.katana.v1.CompleteGitHubConnectResponse\x12i\n" +
+	"\x10GetGitHubAccount\x12).shogun.katana.v1.GetGitHubAccountRequest\x1a*.shogun.katana.v1.GetGitHubAccountResponse\x12i\n" +
+	"\x10DisconnectGitHub\x12).shogun.katana.v1.DisconnectGitHubRequest\x1a*.shogun.katana.v1.DisconnectGitHubResponseB\xc2\x01\n" +
 	"\x14com.shogun.katana.v1B\vKatanaProtoP\x01Z;github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1;katanav1\xa2\x02\x03SKX\xaa\x02\x10Shogun.Katana.V1\xca\x02\x10Shogun\\Katana\\V1\xe2\x02\x1cShogun\\Katana\\V1\\GPBMetadata\xea\x02\x12Shogun::Katana::V1b\x06proto3"
 
 var (
@@ -757,46 +1130,64 @@ func file_shogun_katana_v1_katana_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_katana_v1_katana_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_shogun_katana_v1_katana_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_shogun_katana_v1_katana_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_shogun_katana_v1_katana_proto_goTypes = []any{
-	(SuggestionTarget)(0),             // 0: shogun.katana.v1.SuggestionTarget
-	(SuggestionState)(0),              // 1: shogun.katana.v1.SuggestionState
-	(*Evidence)(nil),                  // 2: shogun.katana.v1.Evidence
-	(*Suggestion)(nil),                // 3: shogun.katana.v1.Suggestion
-	(*SyncGitHubRequest)(nil),         // 4: shogun.katana.v1.SyncGitHubRequest
-	(*SyncGitHubResponse)(nil),        // 5: shogun.katana.v1.SyncGitHubResponse
-	(*ListSuggestionsRequest)(nil),    // 6: shogun.katana.v1.ListSuggestionsRequest
-	(*ListSuggestionsResponse)(nil),   // 7: shogun.katana.v1.ListSuggestionsResponse
-	(*AcceptSuggestionRequest)(nil),   // 8: shogun.katana.v1.AcceptSuggestionRequest
-	(*AcceptSuggestionResponse)(nil),  // 9: shogun.katana.v1.AcceptSuggestionResponse
-	(*DismissSuggestionRequest)(nil),  // 10: shogun.katana.v1.DismissSuggestionRequest
-	(*DismissSuggestionResponse)(nil), // 11: shogun.katana.v1.DismissSuggestionResponse
-	(*timestamppb.Timestamp)(nil),     // 12: google.protobuf.Timestamp
+	(SuggestionTarget)(0),                 // 0: shogun.katana.v1.SuggestionTarget
+	(SuggestionState)(0),                  // 1: shogun.katana.v1.SuggestionState
+	(*Evidence)(nil),                      // 2: shogun.katana.v1.Evidence
+	(*Suggestion)(nil),                    // 3: shogun.katana.v1.Suggestion
+	(*SyncGitHubRequest)(nil),             // 4: shogun.katana.v1.SyncGitHubRequest
+	(*SyncGitHubResponse)(nil),            // 5: shogun.katana.v1.SyncGitHubResponse
+	(*ListSuggestionsRequest)(nil),        // 6: shogun.katana.v1.ListSuggestionsRequest
+	(*ListSuggestionsResponse)(nil),       // 7: shogun.katana.v1.ListSuggestionsResponse
+	(*AcceptSuggestionRequest)(nil),       // 8: shogun.katana.v1.AcceptSuggestionRequest
+	(*AcceptSuggestionResponse)(nil),      // 9: shogun.katana.v1.AcceptSuggestionResponse
+	(*DismissSuggestionRequest)(nil),      // 10: shogun.katana.v1.DismissSuggestionRequest
+	(*DismissSuggestionResponse)(nil),     // 11: shogun.katana.v1.DismissSuggestionResponse
+	(*ConnectGitHubRequest)(nil),          // 12: shogun.katana.v1.ConnectGitHubRequest
+	(*ConnectGitHubResponse)(nil),         // 13: shogun.katana.v1.ConnectGitHubResponse
+	(*CompleteGitHubConnectRequest)(nil),  // 14: shogun.katana.v1.CompleteGitHubConnectRequest
+	(*CompleteGitHubConnectResponse)(nil), // 15: shogun.katana.v1.CompleteGitHubConnectResponse
+	(*GetGitHubAccountRequest)(nil),       // 16: shogun.katana.v1.GetGitHubAccountRequest
+	(*GetGitHubAccountResponse)(nil),      // 17: shogun.katana.v1.GetGitHubAccountResponse
+	(*DisconnectGitHubRequest)(nil),       // 18: shogun.katana.v1.DisconnectGitHubRequest
+	(*DisconnectGitHubResponse)(nil),      // 19: shogun.katana.v1.DisconnectGitHubResponse
+	(*timestamppb.Timestamp)(nil),         // 20: google.protobuf.Timestamp
 }
 var file_shogun_katana_v1_katana_proto_depIdxs = []int32{
 	0,  // 0: shogun.katana.v1.Suggestion.target:type_name -> shogun.katana.v1.SuggestionTarget
 	2,  // 1: shogun.katana.v1.Suggestion.evidence:type_name -> shogun.katana.v1.Evidence
 	1,  // 2: shogun.katana.v1.Suggestion.state:type_name -> shogun.katana.v1.SuggestionState
-	12, // 3: shogun.katana.v1.Suggestion.created_at:type_name -> google.protobuf.Timestamp
-	12, // 4: shogun.katana.v1.Suggestion.decided_at:type_name -> google.protobuf.Timestamp
+	20, // 3: shogun.katana.v1.Suggestion.created_at:type_name -> google.protobuf.Timestamp
+	20, // 4: shogun.katana.v1.Suggestion.decided_at:type_name -> google.protobuf.Timestamp
 	1,  // 5: shogun.katana.v1.ListSuggestionsRequest.state:type_name -> shogun.katana.v1.SuggestionState
 	0,  // 6: shogun.katana.v1.ListSuggestionsRequest.target:type_name -> shogun.katana.v1.SuggestionTarget
 	3,  // 7: shogun.katana.v1.ListSuggestionsResponse.suggestions:type_name -> shogun.katana.v1.Suggestion
 	3,  // 8: shogun.katana.v1.AcceptSuggestionResponse.suggestion:type_name -> shogun.katana.v1.Suggestion
 	3,  // 9: shogun.katana.v1.DismissSuggestionResponse.suggestion:type_name -> shogun.katana.v1.Suggestion
-	4,  // 10: shogun.katana.v1.KatanaService.SyncGitHub:input_type -> shogun.katana.v1.SyncGitHubRequest
-	6,  // 11: shogun.katana.v1.KatanaService.ListSuggestions:input_type -> shogun.katana.v1.ListSuggestionsRequest
-	8,  // 12: shogun.katana.v1.KatanaService.AcceptSuggestion:input_type -> shogun.katana.v1.AcceptSuggestionRequest
-	10, // 13: shogun.katana.v1.KatanaService.DismissSuggestion:input_type -> shogun.katana.v1.DismissSuggestionRequest
-	5,  // 14: shogun.katana.v1.KatanaService.SyncGitHub:output_type -> shogun.katana.v1.SyncGitHubResponse
-	7,  // 15: shogun.katana.v1.KatanaService.ListSuggestions:output_type -> shogun.katana.v1.ListSuggestionsResponse
-	9,  // 16: shogun.katana.v1.KatanaService.AcceptSuggestion:output_type -> shogun.katana.v1.AcceptSuggestionResponse
-	11, // 17: shogun.katana.v1.KatanaService.DismissSuggestion:output_type -> shogun.katana.v1.DismissSuggestionResponse
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	20, // 10: shogun.katana.v1.CompleteGitHubConnectResponse.connected_at:type_name -> google.protobuf.Timestamp
+	20, // 11: shogun.katana.v1.GetGitHubAccountResponse.connected_at:type_name -> google.protobuf.Timestamp
+	4,  // 12: shogun.katana.v1.KatanaService.SyncGitHub:input_type -> shogun.katana.v1.SyncGitHubRequest
+	6,  // 13: shogun.katana.v1.KatanaService.ListSuggestions:input_type -> shogun.katana.v1.ListSuggestionsRequest
+	8,  // 14: shogun.katana.v1.KatanaService.AcceptSuggestion:input_type -> shogun.katana.v1.AcceptSuggestionRequest
+	10, // 15: shogun.katana.v1.KatanaService.DismissSuggestion:input_type -> shogun.katana.v1.DismissSuggestionRequest
+	12, // 16: shogun.katana.v1.KatanaService.ConnectGitHub:input_type -> shogun.katana.v1.ConnectGitHubRequest
+	14, // 17: shogun.katana.v1.KatanaService.CompleteGitHubConnect:input_type -> shogun.katana.v1.CompleteGitHubConnectRequest
+	16, // 18: shogun.katana.v1.KatanaService.GetGitHubAccount:input_type -> shogun.katana.v1.GetGitHubAccountRequest
+	18, // 19: shogun.katana.v1.KatanaService.DisconnectGitHub:input_type -> shogun.katana.v1.DisconnectGitHubRequest
+	5,  // 20: shogun.katana.v1.KatanaService.SyncGitHub:output_type -> shogun.katana.v1.SyncGitHubResponse
+	7,  // 21: shogun.katana.v1.KatanaService.ListSuggestions:output_type -> shogun.katana.v1.ListSuggestionsResponse
+	9,  // 22: shogun.katana.v1.KatanaService.AcceptSuggestion:output_type -> shogun.katana.v1.AcceptSuggestionResponse
+	11, // 23: shogun.katana.v1.KatanaService.DismissSuggestion:output_type -> shogun.katana.v1.DismissSuggestionResponse
+	13, // 24: shogun.katana.v1.KatanaService.ConnectGitHub:output_type -> shogun.katana.v1.ConnectGitHubResponse
+	15, // 25: shogun.katana.v1.KatanaService.CompleteGitHubConnect:output_type -> shogun.katana.v1.CompleteGitHubConnectResponse
+	17, // 26: shogun.katana.v1.KatanaService.GetGitHubAccount:output_type -> shogun.katana.v1.GetGitHubAccountResponse
+	19, // 27: shogun.katana.v1.KatanaService.DisconnectGitHub:output_type -> shogun.katana.v1.DisconnectGitHubResponse
+	20, // [20:28] is the sub-list for method output_type
+	12, // [12:20] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_shogun_katana_v1_katana_proto_init() }
@@ -810,7 +1201,7 @@ func file_shogun_katana_v1_katana_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_katana_v1_katana_proto_rawDesc), len(file_shogun_katana_v1_katana_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   10,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

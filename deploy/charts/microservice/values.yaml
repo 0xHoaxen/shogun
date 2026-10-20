@@ -79,6 +79,20 @@ probes:
     periodSeconds: 5
     failureThreshold: 3
 
+# Mutual TLS between services. When enabled the chart asks cert-manager for a
+# certificate for this service from the internal CA, mounts it read-only and
+# points INTERNAL_TLS_CA_FILE, INTERNAL_TLS_CERT_FILE and INTERNAL_TLS_KEY_FILE at
+# it. The service then serves and dials gRPC over mTLS and renews without a
+# restart. Off for the web app, which has no gRPC.
+internalTLS:
+  enabled: false
+  # The cert-manager ClusterIssuer of the internal CA
+  # (deploy/infrastructure/cert-manager/issuers/shogun-internal-ca.yaml).
+  issuer: shogun-internal
+  mountPath: /etc/shogun/tls
+  duration: 720h
+  renewBefore: 240h
+
 # Extra writable paths for a read-only root filesystem.
 volumes: []
 volumeMounts: []

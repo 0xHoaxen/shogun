@@ -29,7 +29,6 @@ func (s *Server) Reserve(ctx context.Context, req *sorobanv1.ReserveRequest) (*s
 	res, err := s.svc.Reserve(ctx, app.ReserveInput{
 		Service:         req.GetService(),
 		Feature:         req.GetFeature(),
-		Model:           req.GetModel(),
 		EstInputTokens:  req.GetEstInputTokens(),
 		EstOutputTokens: req.GetEstOutputTokens(),
 	})
@@ -40,6 +39,11 @@ func (s *Server) Reserve(ctx context.Context, req *sorobanv1.ReserveRequest) (*s
 		ReservationId: res.ReservationID.String(),
 		ExpiresAt:     timestamppb.New(res.ExpiresAt),
 		EstMicros:     res.EstMicros,
+		Provider: &sorobanv1.ProviderAccess{
+			BaseUrl: res.Provider.BaseURL,
+			Model:   res.Provider.Model,
+			ApiKey:  res.Provider.APIKey,
+		},
 	}, nil
 }
 

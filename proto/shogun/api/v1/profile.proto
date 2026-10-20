@@ -18,6 +18,19 @@ service ProfileService {
   // SUGGESTION_ALREADY_DECIDED.
   rpc AcceptProfileSuggestion(AcceptProfileSuggestionRequest) returns (AcceptProfileSuggestionResponse);
   rpc DismissProfileSuggestion(DismissProfileSuggestionRequest) returns (DismissProfileSuggestionResponse);
+
+  // ConnectGitHub returns the GitHub address to send the browser to so the
+  // caller can grant read-only access. FailedPrecondition GITHUB_NOT_CONFIGURED
+  // when this server has no GitHub OAuth app.
+  rpc ConnectGitHub(ConnectGitHubRequest) returns (ConnectGitHubResponse);
+  // CompleteGitHubConnect finishes it with the code and state GitHub sent
+  // back. InvalidArgument INVALID_STATE or INVALID_CODE means start again.
+  rpc CompleteGitHubConnect(CompleteGitHubConnectRequest) returns (CompleteGitHubConnectResponse);
+  // GetGitHubAccount says whether the caller has connected GitHub. The token
+  // is never returned.
+  rpc GetGitHubAccount(GetGitHubAccountRequest) returns (GetGitHubAccountResponse);
+  // DisconnectGitHub deletes the caller's stored GitHub token.
+  rpc DisconnectGitHub(DisconnectGitHubRequest) returns (DisconnectGitHubResponse);
 }
 
 enum SuggestionTarget {
@@ -87,3 +100,30 @@ message DismissProfileSuggestionRequest {
 message DismissProfileSuggestionResponse {
   ProfileSuggestion suggestion = 1;
 }
+
+message ConnectGitHubRequest {}
+
+message ConnectGitHubResponse {
+  string auth_url = 1;
+}
+
+message CompleteGitHubConnectRequest {
+  string code = 1;
+  string state = 2;
+}
+
+message CompleteGitHubConnectResponse {
+  string login = 1;
+}
+
+message GetGitHubAccountRequest {}
+
+message GetGitHubAccountResponse {
+  bool connected = 1;
+  // login is set only when connected.
+  string login = 2;
+}
+
+message DisconnectGitHubRequest {}
+
+message DisconnectGitHubResponse {}

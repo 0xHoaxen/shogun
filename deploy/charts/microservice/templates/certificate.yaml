@@ -1,0 +1,32 @@
+{{- if .Values.internalTLS.enabled }}
+# This service's identity on the internal network. It is valid as a server and
+# as a client, and names every address peers use to reach it.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "microservice.name" . }}-internal-tls
+  labels:
+    {{- include "microservice.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "microservice.tlsSecretName" . }}
+  duration: {{ .Values.internalTLS.duration }}
+  renewBefore: {{ .Values.internalTLS.renewBefore }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages:
+    - digital signature
+    - server auth
+    - client auth
+  commonName: {{ include "microservice.name" . }}
+  dnsNames:
+    - {{ include "microservice.name" . }}
+    - {{ include "microservice.name" . }}.{{ .Release.Namespace }}
+    - {{ include "microservice.name" . }}.{{ .Release.Namespace }}.svc
+    - {{ include "microservice.name" . }}.{{ .Release.Namespace }}.svc.cluster.local
+  issuerRef:
+    name: {{ .Values.internalTLS.issuer }}
+    kind: ClusterIssuer
+    group: cert-manager.io
+{{- end }}

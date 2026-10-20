@@ -19,16 +19,12 @@ import (
 	"github.com/riverqueue/river/riverdriver/riverpgxv5"
 
 	"github.com/0xHoaxen/shogun/pkg/postgres"
-	_ "github.com/0xHoaxen/shogun/pkg/schedule" // embeds the time zone database Location needs
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/app"
 )
 
 const (
 	// Queue is the River queue of shinobi's own jobs.
 	Queue = "shinobi"
-
-	// locationName is the zone the owner's source schedules are read in.
-	locationName = "Asia/Kolkata"
 
 	kindDueSources = "due_sources"
 	kindRunSource  = "run_source"
@@ -41,7 +37,7 @@ const (
 
 // Scheduler finds the sources that are due.
 type Scheduler interface {
-	DueSources(ctx context.Context, now time.Time, loc *time.Location) ([]app.DueRun, error)
+	DueSources(ctx context.Context, now time.Time) ([]app.DueRun, error)
 }
 
 // Runner reads one source for its owner.
@@ -90,7 +86,6 @@ type dueWorker struct {
 	river.WorkerDefaults[DueSourcesArgs]
 	scheduler Scheduler
 	enqueuer  Enqueuer
-	loc       *time.Location
 	now       func() time.Time
 	log       *slog.Logger
 }
@@ -98,7 +93,7 @@ type dueWorker struct {
 // Work implements river.Worker. A source that cannot be queued does not stop
 // the others; the failures are returned together.
 func (w *dueWorker) Work(ctx context.Context, _ *river.Job[DueSourcesArgs]) error {
-	due, err := w.scheduler.DueSources(ctx, w.now(), w.loc)
+	due, err := w.scheduler.DueSources(ctx, w.now())
 	if err != nil {
 		return fmt.Errorf("find due sources: %w", err)
 	}
@@ -148,15 +143,6 @@ type Setup struct {
 	PeriodicJobs []*river.PeriodicJob
 }
 
-// Location loads the zone source schedules are read in.
-func Location() (*time.Location, error) {
-	loc, err := time.LoadLocation(locationName)
-	if err != nil {
-		return nil, fmt.Errorf("load %s: %w", locationName, err)
-	}
-	return loc, nil
-}
-
 func dueArgs(now func() time.Time) func() (river.JobArgs, *river.InsertOpts) {
 	return func() (river.JobArgs, *river.InsertOpts) {
 		return DueSourcesArgs{Minute: now().UTC().Format(minuteLayout)}, nil
@@ -164,10 +150,10 @@ func dueArgs(now func() time.Time) func() (river.JobArgs, *river.InsertOpts) {
 }
 
 // NewSetup builds the jobs. now is the clock, injected for tests.
-func NewSetup(scheduler Scheduler, runner Runner, scorer Scorer, enqueuer Enqueuer, loc *time.Location, now func() time.Time, log *slog.Logger) Setup {
+func NewSetup(scheduler Scheduler, runner Runner, scorer Scorer, enqueuer Enqueuer, now func() time.Time, log *slog.Logger) Setup {
 	return Setup{
 		Workers: func(ws *river.Workers) {
-			river.AddWorker(ws, &dueWorker{scheduler: scheduler, enqueuer: enqueuer, loc: loc, now: now, log: log})
+			river.AddWorker(ws, &dueWorker{scheduler: scheduler, enqueuer: enqueuer, now: now, log: log})
 			river.AddWorker(ws, &runWorker{runner: runner, log: log})
 			river.AddWorker(ws, &scoreWorker{scorer: scorer, now: now, log: log})
 		},

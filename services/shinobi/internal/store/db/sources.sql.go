@@ -107,19 +107,37 @@ func (q *Queries) InsertSource(ctx context.Context, arg InsertSourceParams) (Sou
 }
 
 const listEnabledSources = `-- name: ListEnabledSources :many
-SELECT id, owner_id, name, kind, config, schedule, enabled, last_run_at, last_error FROM sources WHERE enabled ORDER BY owner_id, id
+SELECT s.id, s.owner_id, s.name, s.kind, s.config, s.schedule, s.enabled, s.last_run_at, s.last_error, o.timezone AS owner_timezone
+FROM sources s JOIN owners o ON o.id = s.owner_id
+WHERE s.enabled AND o.status = 'active'
+ORDER BY s.owner_id, s.id
 `
 
-// Every owner's enabled sources, for the scheduler.
-func (q *Queries) ListEnabledSources(ctx context.Context) ([]Source, error) {
+type ListEnabledSourcesRow struct {
+	ID            uuid.UUID
+	OwnerID       uuid.UUID
+	Name          string
+	Kind          string
+	Config        []byte
+	Schedule      string
+	Enabled       bool
+	LastRunAt     *time.Time
+	LastError     *string
+	OwnerTimezone string
+}
+
+// owner-scope: internal the scheduler scans every active owner's sources; each run is then queued for its own owner
+// Every active owner's enabled sources with that owner's time zone, for the
+// scheduler. A disabled or deleted owner's sources are not read.
+func (q *Queries) ListEnabledSources(ctx context.Context) ([]ListEnabledSourcesRow, error) {
 	rows, err := q.db.Query(ctx, listEnabledSources)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Source{}
+	items := []ListEnabledSourcesRow{}
 	for rows.Next() {
-		var i Source
+		var i ListEnabledSourcesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.OwnerID,
@@ -130,6 +148,7 @@ func (q *Queries) ListEnabledSources(ctx context.Context) ([]Source, error) {
 			&i.Enabled,
 			&i.LastRunAt,
 			&i.LastError,
+			&i.OwnerTimezone,
 		); err != nil {
 			return nil, err
 		}
@@ -186,6 +205,7 @@ type MarkSourceRunParams struct {
 	ID        uuid.UUID
 }
 
+// owner-scope: child source already loaded with the owner by RunSourceFor
 func (q *Queries) MarkSourceRun(ctx context.Context, arg MarkSourceRunParams) error {
 	_, err := q.db.Exec(ctx, markSourceRun, arg.LastRunAt, arg.LastError, arg.ID)
 	return err

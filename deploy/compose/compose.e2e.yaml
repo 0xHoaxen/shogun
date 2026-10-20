@@ -52,7 +52,7 @@ services:
       GOOGLE_ISSUER_URL: http://mock-oauth2:8080/default
       GOOGLE_CLIENT_ID: e2e-client
       GOOGLE_CLIENT_SECRET: e2e-secret
-      TORII_ALLOWED_EMAILS: ${TORII_E2E_EMAIL:-owner@example.com}
+      TORII_ADMIN_EMAILS: ${TORII_E2E_EMAIL:-owner@example.com}
 
   # Stand-in for Anthropic and Gmail (see stubs/mock-apis.mjs). fude and
   # tsubame call it instead of the real services; the spec reads what it was
@@ -77,17 +77,12 @@ services:
     depends_on:
       mock-apis:
         condition: service_healthy
-    environment:
-      ANTHROPIC_API_KEY: e2e-key
-      ANTHROPIC_BASE_URL: http://mock-apis:8090
 
   tsubame:
     depends_on:
       mock-apis:
         condition: service_healthy
     environment:
-      ANTHROPIC_API_KEY: e2e-key
-      ANTHROPIC_BASE_URL: http://mock-apis:8090
       TSUBAME_GMAIL_API_BASE: http://mock-apis:8090
       TSUBAME_GMAIL_TOKEN_URL: http://mock-apis:8090/token
       # https because the web app follows nothing else; the spec intercepts it.

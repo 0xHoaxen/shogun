@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/services/katana/internal/domain"
 )
 
@@ -17,10 +18,10 @@ import (
 // UUID. Transport maps it to PermissionDenied.
 var ErrNoOwner = errors.New("app: call has no valid owner")
 
-// GitHub reads the owner's activity. Fetch returns domain.ErrNotModified when
-// nothing changed since etag.
+// GitHub reads a user's activity with that user's own credentials. Fetch returns
+// domain.ErrNotModified when nothing changed since etag.
 type GitHub interface {
-	Fetch(ctx context.Context, etag string) (domain.Snapshot, error)
+	Fetch(ctx context.Context, creds domain.Credentials, etag string) (domain.Snapshot, error)
 }
 
 // Service runs the katana use cases.
@@ -29,15 +30,21 @@ type Service struct {
 	github GitHub
 	now    func() time.Time
 
+	// keys seals the GitHub tokens users connect. Without it none can be stored.
+	keys *envelope.Keyring
+
+	// oauth is the GitHub OAuth app users connect through. Nil means connecting is off.
+	oauth OAuth
+
 	// Set by WithSuggestions.
 	queue Queue
 	llm   Completer
 	log   *slog.Logger
 }
 
-// NewService returns a Service on pool. github may be nil when no GitHub user
-// and token are configured; syncing then fails with domain.ErrNotConfigured.
-// now is the clock; nil means time.Now.
+// NewService returns a Service on pool. github may be nil when GitHub is not
+// set up; syncing then fails with domain.ErrNotConfigured. now is the clock; nil
+// means time.Now.
 func NewService(pool *pgxpool.Pool, github GitHub, now func() time.Time, opts ...Option) *Service {
 	if now == nil {
 		now = time.Now

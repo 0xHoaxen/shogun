@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/0xHoaxen/shogun/services/tsubame/internal/envelope"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/mail"
 	"github.com/0xHoaxen/shogun/services/tsubame/internal/store/db"
 )

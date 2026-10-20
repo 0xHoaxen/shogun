@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/0xHoaxen/shogun/services/torii/internal/app"
+	"github.com/0xHoaxen/shogun/services/torii/internal/app/apptest"
 	"github.com/0xHoaxen/shogun/services/torii/internal/domain"
 	"github.com/0xHoaxen/shogun/services/torii/internal/store"
 )
@@ -59,10 +60,21 @@ func (f *fakeSessions) Delete(_ context.Context, hash []byte) error {
 	return nil
 }
 
-func newAuth(t *testing.T, sessions *fakeSessions, now time.Time) *app.Auth {
+func (f *fakeSessions) DeleteByOwner(_ context.Context, owner uuid.UUID) (int64, error) {
+	var n int64
+	for hash, s := range f.byHash {
+		if s.OwnerID == owner {
+			delete(f.byHash, hash)
+			n++
+		}
+	}
+	return n, nil
+}
+
+func newAuth(t *testing.T, sessions *fakeSessions, users *apptest.MemUsers, now time.Time) *app.Auth {
 	t.Helper()
-	auth, err := app.NewAuth(sessions,
-		app.AuthConfig{AllowedEmails: []string{" " + ownerEmail + " "}, SessionTTL: sessionTTL},
+	auth, err := app.NewAuth(sessions, users,
+		app.AuthConfig{AdminEmails: []string{" " + ownerEmail + " "}, SessionTTL: sessionTTL},
 		app.WithClock(func() time.Time { return now }),
 	)
 	if err != nil {
@@ -80,14 +92,14 @@ func TestNewAuthFailsClosed(t *testing.T) {
 		name string
 		cfg  app.AuthConfig
 	}{
-		{"empty allowlist", app.AuthConfig{SessionTTL: sessionTTL}},
-		{"blank allowlist entry", app.AuthConfig{AllowedEmails: []string{"  "}, SessionTTL: sessionTTL}},
-		{"zero ttl", app.AuthConfig{AllowedEmails: []string{ownerEmail}}},
+		{"no admins", app.AuthConfig{SessionTTL: sessionTTL}},
+		{"blank admin entry", app.AuthConfig{AdminEmails: []string{"  "}, SessionTTL: sessionTTL}},
+		{"zero ttl", app.AuthConfig{AdminEmails: []string{ownerEmail}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			_, err := app.NewAuth(newFakeSessions(), tt.cfg)
+			_, err := app.NewAuth(newFakeSessions(), apptest.NewMemUsers(), tt.cfg)
 
 			// Assert
 			if err == nil {
@@ -103,17 +115,18 @@ func TestStartSession(t *testing.T) {
 		claims  app.Claims
 		wantErr error
 	}{
-		{"allowed email", ownerClaims(), nil},
-		{"allowed email in other case", app.Claims{Subject: ownerSub, Email: "OWNER@example.COM", EmailVerified: true}, nil},
-		{"email not on the allowlist", app.Claims{Subject: ownerSub, Email: "other@example.com", EmailVerified: true}, app.ErrNotAllowed},
-		{"allowed email but unverified", app.Claims{Subject: ownerSub, Email: "owner@example.com"}, app.ErrNotAllowed},
+		{"admin email", ownerClaims(), nil},
+		{"admin email in other case", app.Claims{Subject: ownerSub, Email: "OWNER@example.COM", EmailVerified: true}, nil},
+		{"any other verified email", app.Claims{Subject: "google-subject-2", Email: "stranger@example.com", EmailVerified: true}, nil},
+		{"unverified email", app.Claims{Subject: ownerSub, Email: "owner@example.com"}, app.ErrNotAllowed},
 		{"missing subject", app.Claims{Email: "owner@example.com", EmailVerified: true}, app.ErrNotAllowed},
+		{"missing email", app.Claims{Subject: ownerSub, EmailVerified: true}, app.ErrNotAllowed},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			sessions := newFakeSessions()
-			auth := newAuth(t, sessions, authNow)
+			auth := newAuth(t, sessions, apptest.NewMemUsers(), authNow)
 
 			// Act
 			token, session, err := auth.StartSession(context.Background(), tt.claims)
@@ -138,7 +151,7 @@ func TestStartSession(t *testing.T) {
 func TestStartSessionStoresOnlyTheTokenHash(t *testing.T) {
 	// Arrange
 	sessions := newFakeSessions()
-	auth := newAuth(t, sessions, authNow)
+	auth := newAuth(t, sessions, apptest.NewMemUsers(), authNow)
 
 	// Act
 	token, _, err := auth.StartSession(context.Background(), ownerClaims())
@@ -153,7 +166,7 @@ func TestStartSessionStoresOnlyTheTokenHash(t *testing.T) {
 
 func TestOwnerIDIsStableAcrossLogins(t *testing.T) {
 	// Arrange
-	auth := newAuth(t, newFakeSessions(), authNow)
+	auth := newAuth(t, newFakeSessions(), apptest.NewMemUsers(), authNow)
 
 	// Act
 	_, first, errFirst := auth.StartSession(context.Background(), ownerClaims())
@@ -186,11 +199,12 @@ func TestAuthenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			sessions := newFakeSessions()
-			token, _, err := newAuth(t, sessions, authNow).StartSession(context.Background(), ownerClaims())
+			users := apptest.NewMemUsers()
+			token, _, err := newAuth(t, sessions, users, authNow).StartSession(context.Background(), ownerClaims())
 			if err != nil {
 				t.Fatalf("StartSession: %v", err)
 			}
-			checker := newAuth(t, sessions, tt.checkAt)
+			checker := newAuth(t, sessions, users, tt.checkAt)
 
 			// Act
 			session, renewed, err := checker.Authenticate(context.Background(), tt.token(token))
@@ -212,7 +226,7 @@ func TestAuthenticate(t *testing.T) {
 func TestEndSessionLogsOut(t *testing.T) {
 	// Arrange
 	sessions := newFakeSessions()
-	auth := newAuth(t, sessions, authNow)
+	auth := newAuth(t, sessions, apptest.NewMemUsers(), authNow)
 	token, _, err := auth.StartSession(context.Background(), ownerClaims())
 	if err != nil {
 		t.Fatalf("StartSession: %v", err)
@@ -233,3 +247,116 @@ func TestEndSessionLogsOut(t *testing.T) {
 }
 
 func same(token string) string { return token }
+
+func strangerClaims() app.Claims {
+	return app.Claims{Subject: "google-subject-2", Email: "Stranger@Example.com", EmailVerified: true, DisplayName: "Stranger"}
+}
+
+func TestSignUpIsOpenAndStrangersAreMembers(t *testing.T) {
+	// Arrange
+	users := apptest.NewMemUsers()
+	auth := newAuth(t, newFakeSessions(), users, authNow)
+
+	// Act
+	_, session, err := auth.StartSession(context.Background(), strangerClaims())
+	// Assert
+	if err != nil {
+		t.Fatalf("StartSession: %v", err)
+	}
+	user, err := users.ByID(context.Background(), session.OwnerID)
+	if err != nil {
+		t.Fatalf("user not created: %v", err)
+	}
+	if user.Role != domain.RoleMember || user.GmailAllowed || user.Email != "stranger@example.com" {
+		t.Fatalf("user = %+v, want a member without Gmail approval and a normalised email", user)
+	}
+	if session.Role != domain.RoleMember {
+		t.Fatalf("session role = %q, want member", session.Role)
+	}
+}
+
+func TestAdminEmailsBootstrapAdminsWithGmailApproval(t *testing.T) {
+	// Arrange
+	users := apptest.NewMemUsers()
+	auth := newAuth(t, newFakeSessions(), users, authNow)
+
+	// Act
+	_, session, err := auth.StartSession(context.Background(), ownerClaims())
+	// Assert
+	if err != nil {
+		t.Fatalf("StartSession: %v", err)
+	}
+	user, _ := users.ByID(context.Background(), session.OwnerID)
+	if user.Role != domain.RoleAdmin || !user.GmailAllowed || session.Role != domain.RoleAdmin {
+		t.Fatalf("user %+v, session role %q, want an admin with Gmail approval", user, session.Role)
+	}
+}
+
+func TestDisabledUserCannotStartASession(t *testing.T) {
+	// Arrange
+	users := apptest.NewMemUsers()
+	sessions := newFakeSessions()
+	auth := newAuth(t, sessions, users, authNow)
+	_, first, err := auth.StartSession(context.Background(), strangerClaims())
+	if err != nil {
+		t.Fatalf("StartSession: %v", err)
+	}
+	if _, err := users.SetStatus(context.Background(), first.OwnerID, domain.StatusDisabled); err != nil {
+		t.Fatalf("SetStatus: %v", err)
+	}
+	before := len(sessions.byHash)
+
+	// Act
+	token, _, err := auth.StartSession(context.Background(), strangerClaims())
+
+	// Assert
+	if !errors.Is(err, app.ErrNotAllowed) || token != "" || len(sessions.byHash) != before {
+		t.Fatalf("err = %v, token %q, sessions %d->%d, want ErrNotAllowed and no new session", err, token, before, len(sessions.byHash))
+	}
+}
+
+func TestDisablingAUserEndsTheirSessions(t *testing.T) {
+	// Arrange
+	users := apptest.NewMemUsers()
+	sessions := newFakeSessions()
+	auth := newAuth(t, sessions, users, authNow)
+	token, session, err := auth.StartSession(context.Background(), strangerClaims())
+	if err != nil {
+		t.Fatalf("StartSession: %v", err)
+	}
+	if _, err := users.SetStatus(context.Background(), session.OwnerID, domain.StatusDisabled); err != nil {
+		t.Fatalf("SetStatus: %v", err)
+	}
+
+	// Act
+	_, _, err = auth.Authenticate(context.Background(), token)
+
+	// Assert
+	if !errors.Is(err, app.ErrUnauthenticated) {
+		t.Fatalf("err = %v, want ErrUnauthenticated", err)
+	}
+	if len(sessions.byHash) != 0 {
+		t.Fatalf("%d sessions left after the user was disabled, want 0", len(sessions.byHash))
+	}
+}
+
+func TestAuthenticateReportsTheCurrentRole(t *testing.T) {
+	// Arrange
+	users := apptest.NewMemUsers()
+	auth := newAuth(t, newFakeSessions(), users, authNow)
+	token, session, err := auth.StartSession(context.Background(), strangerClaims())
+	if err != nil {
+		t.Fatalf("StartSession: %v", err)
+	}
+	if _, err := users.SetRole(context.Background(), session.OwnerID, domain.RoleAdmin); err != nil {
+		t.Fatalf("SetRole: %v", err)
+	}
+
+	// Act
+	got, _, err := auth.Authenticate(context.Background(), token)
+
+	// Assert
+	if err != nil || got.Role != domain.RoleAdmin {
+		t.Fatalf("role = %q, err = %v, want admin without a new login", got.Role, err)
+	}
+}

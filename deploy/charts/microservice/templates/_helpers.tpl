@@ -38,6 +38,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 - name: {{ $key }}
   value: {{ $value | quote }}
 {{- end }}
+{{- if .Values.internalTLS.enabled }}
+- name: INTERNAL_TLS_CA_FILE
+  value: {{ printf "%s/ca.crt" .Values.internalTLS.mountPath | quote }}
+- name: INTERNAL_TLS_CERT_FILE
+  value: {{ printf "%s/tls.crt" .Values.internalTLS.mountPath | quote }}
+- name: INTERNAL_TLS_KEY_FILE
+  value: {{ printf "%s/tls.key" .Values.internalTLS.mountPath | quote }}
+{{- end }}
 {{- if .Values.serviceEnv }}
 {{- range $peer := .Values.peers }}
 - name: {{ upper $peer }}_ADDR
@@ -75,4 +83,22 @@ imagePullSecrets:
 {{- end }}
 securityContext:
   {{- toYaml .Values.podSecurityContext | nindent 2 }}
+{{- end }}
+
+{{/* The certificate Secret cert-manager fills for this service. */}}
+{{- define "microservice.tlsSecretName" -}}
+{{ include "microservice.name" . }}-internal-tls
+{{- end }}
+
+{{- define "microservice.tlsVolumes" -}}
+- name: internal-tls
+  secret:
+    secretName: {{ include "microservice.tlsSecretName" . }}
+    defaultMode: 0440
+{{- end }}
+
+{{- define "microservice.tlsVolumeMounts" -}}
+- name: internal-tls
+  mountPath: {{ .Values.internalTLS.mountPath }}
+  readOnly: true
 {{- end }}

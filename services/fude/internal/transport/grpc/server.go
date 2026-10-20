@@ -7,7 +7,11 @@ import (
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	fudev1 "github.com/0xHoaxen/shogun/gen/go/shogun/fude/v1"
+	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/fude/internal/app"
 	"github.com/0xHoaxen/shogun/services/fude/internal/domain"
 	"github.com/0xHoaxen/shogun/services/fude/internal/wire"
@@ -19,11 +23,13 @@ type Server struct {
 	fudev1.UnimplementedFudeServiceServer
 	svc      *app.Service
 	approver *app.Approver
+	tester   *app.ProviderTester
 }
 
-// New returns a Server that runs its calls on svc, and approvals on approver.
-func New(svc *app.Service, approver *app.Approver) *Server {
-	return &Server{svc: svc, approver: approver}
+// New returns a Server that runs its calls on svc, approvals on approver and
+// provider tests on tester. A nil tester leaves TestProvider unimplemented.
+func New(svc *app.Service, approver *app.Approver, tester *app.ProviderTester) *Server {
+	return &Server{svc: svc, approver: approver, tester: tester}
 }
 
 func badEnum(field string) error {
@@ -142,4 +148,39 @@ func (s *Server) Approve(ctx context.Context, req *fudev1.ApproveRequest) (*fude
 		return nil, toStatus(err)
 	}
 	return &fudev1.ApproveResponse{Draft: draftToProto(res.Draft), CopyReady: res.CopyReady}, nil
+}
+
+// TestProvider implements fude.v1.FudeService.
+func (s *Server) TestProvider(ctx context.Context, _ *fudev1.TestProviderRequest) (*fudev1.TestProviderResponse, error) {
+	if s.tester == nil {
+		return nil, status.Error(codes.Unimplemented, "provider tests are not set up")
+	}
+	res, err := s.tester.Test(ctx)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &fudev1.TestProviderResponse{Ok: res.OK, Failure: failureToProto(res.Failure), Model: res.Model}, nil
+}
+
+// failureToProto maps a failure kind to the wire enum. A kind added later and
+// not yet mapped shows as other.
+func failureToProto(kind llm.FailureKind) fudev1.ProviderFailure {
+	switch kind {
+	case "":
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_UNSPECIFIED
+	case llm.FailureRejected:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_REJECTED
+	case llm.FailureRateLimited:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_RATE_LIMITED
+	case llm.FailureNotFound:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_NOT_FOUND
+	case llm.FailureUnreachable:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_UNREACHABLE
+	case llm.FailureNotPublic:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_NOT_PUBLIC
+	case llm.FailureProviderError:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR
+	default:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_OTHER
+	}
 }

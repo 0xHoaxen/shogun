@@ -19,6 +19,7 @@ import (
 
 	katanav1 "github.com/0xHoaxen/shogun/gen/go/shogun/katana/v1"
 	"github.com/0xHoaxen/shogun/pkg/authz"
+	"github.com/0xHoaxen/shogun/pkg/envelope"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
@@ -30,11 +31,15 @@ import (
 func TestMain(m *testing.M) { os.Exit(postgrestest.Run(m)) }
 
 type fakeGitHub struct {
-	snap domain.Snapshot
-	err  error
+	snap  domain.Snapshot
+	err   error
+	etags []string
 }
 
-func (f *fakeGitHub) Fetch(context.Context, string) (domain.Snapshot, error) { return f.snap, f.err }
+func (f *fakeGitHub) Fetch(_ context.Context, _ domain.Credentials, etag string) (domain.Snapshot, error) {
+	f.etags = append(f.etags, etag)
+	return f.snap, f.err
+}
 
 type harness struct {
 	pool      *pgxpool.Pool
@@ -44,7 +49,7 @@ type harness struct {
 	owner     string
 }
 
-func newHarness(t *testing.T, configured bool) *harness {
+func newHarness(t *testing.T, configured bool, opts ...app.Option) *harness {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "katana")
@@ -64,8 +69,18 @@ func newHarness(t *testing.T, configured bool) *harness {
 	if configured {
 		source = gh
 	}
+	owner := uuid.NewString()
+	keys, err := envelope.NewKeyring("k", map[string][]byte{"k": bytes.Repeat([]byte("k"), envelope.KeySize)})
+	if err != nil {
+		t.Fatalf("keyring: %v", err)
+	}
+	service := app.NewService(pool, source, nil, append([]app.Option{app.WithKeyring(keys)}, opts...)...)
+	// The harness owner has connected a GitHub account of their own.
+	if _, err := service.SaveGitHubAccount(authz.WithIdentity(ctx, authz.Identity{OwnerID: owner}), "octo", "ghp_harness-token-1"); err != nil {
+		t.Fatalf("connect github: %v", err)
+	}
 	srv := grpc.NewServer(grpc.UnaryInterceptor(authority.UnaryServerInterceptor()))
-	katanav1.RegisterKatanaServiceServer(srv, katanagrpc.New(app.NewService(pool, source, nil)))
+	katanav1.RegisterKatanaServiceServer(srv, katanagrpc.New(service))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
@@ -76,7 +91,7 @@ func newHarness(t *testing.T, configured bool) *harness {
 		t.Fatalf("dial: %v", err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
-	return &harness{pool: pool, client: katanav1.NewKatanaServiceClient(conn), authority: authority, gh: gh, owner: uuid.NewString()}
+	return &harness{pool: pool, client: katanav1.NewKatanaServiceClient(conn), authority: authority, gh: gh, owner: owner}
 }
 
 func (h *harness) ctx(t *testing.T) context.Context {
@@ -159,5 +174,17 @@ func TestSyncGitHubRequiresAnIdentity(t *testing.T) {
 
 	if got := status.Code(err); got != codes.Unauthenticated {
 		t.Fatalf("code = %s, want Unauthenticated", got)
+	}
+}
+
+func TestSyncGitHubForAnOwnerWhoHasNotConnectedSaysSoAndNeverReadsGitHub(t *testing.T) {
+	h := newHarness(t, true)
+	h.owner = uuid.NewString() // a user who signed up later and has no GitHub connection
+
+	_, err := h.client.SyncGitHub(h.ctx(t), &katanav1.SyncGitHubRequest{})
+
+	requireStatus(t, err, codes.FailedPrecondition, "GITHUB_NOT_CONNECTED")
+	if len(h.gh.etags) != 0 {
+		t.Fatalf("GitHub was read %d times for an owner with no connection", len(h.gh.etags))
 	}
 }

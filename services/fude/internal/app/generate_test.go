@@ -220,6 +220,7 @@ func TestGenerateReturnsFailuresWithoutChangingTheDraft(t *testing.T) {
 		{"budget exhausted", fakeSource{}, budget, "x", app.ReasonBudgetExhausted},
 		{"metering down", fakeSource{}, llm.ErrMeteringUnavailable, "x", app.ReasonMeteringUnavailable},
 		{"model refused", fakeSource{}, llm.ErrRefused, "x", app.ReasonModelRefused},
+		{"no AI provider", fakeSource{}, llm.ErrProviderNotConfigured, "x", app.ReasonProviderNotConfigured},
 		{"other model error", fakeSource{}, errors.New("boom"), "x", app.ReasonGenerationFailed},
 		{"target unreadable", fakeSource{err: errors.New("kagami down")}, nil, "x", app.ReasonContextUnavailable},
 		{"empty answer", fakeSource{}, nil, "Subject: only", app.ReasonEmptyDraft},

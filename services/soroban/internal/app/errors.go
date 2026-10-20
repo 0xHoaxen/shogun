@@ -36,6 +36,25 @@ func invalid(reason, format string, args ...any) error {
 	return &InvalidArgumentError{Reason: reason, Msg: fmt.Sprintf(format, args...)}
 }
 
+// Errors about a user's AI provider. Transport maps both to FailedPrecondition.
+var (
+	// ErrProviderStorageOff means soroban has no master key to seal API keys, so
+	// providers cannot be stored or opened.
+	ErrProviderStorageOff = errors.New("app: provider storage is not configured")
+	// ErrProviderNotConfigured means the caller has not set an AI provider, so
+	// their AI features are off.
+	ErrProviderNotConfigured = errors.New("app: no AI provider is configured")
+)
+
+// Reasons of the InvalidArgumentError the provider use cases return.
+const (
+	ReasonInvalidProviderURL   = "INVALID_PROVIDER_URL"
+	ReasonInvalidProviderModel = "INVALID_PROVIDER_MODEL"
+	ReasonInvalidAPIKey        = "INVALID_API_KEY"
+	ReasonAPIKeyRequired       = "API_KEY_REQUIRED"
+	ReasonInvalidTokenCap      = "INVALID_TOKEN_CAP"
+)
+
 // Reasons of the InvalidArgumentError the admin use cases return.
 const (
 	ReasonInvalidBudget = "INVALID_BUDGET"

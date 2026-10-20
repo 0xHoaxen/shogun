@@ -5,7 +5,9 @@ import { useState } from "react";
 import { PostingsPanel } from "@/components/discovery/postings-panel";
 import { PreferencesPanel } from "@/components/discovery/preferences-panel";
 import { SourcesPanel } from "@/components/discovery/sources-panel";
+import { AiProviderNotice } from "@/components/provider/ai-provider-notice";
 import { PageHeader } from "@/components/shell/page-header";
+import { SECTIONS } from "@/content/sections";
 import { cn } from "@/lib/utils";
 
 type View = "postings" | "sources" | "preferences";
@@ -20,10 +22,11 @@ export function DiscoveryScreen() {
   const [view, setView] = useState<View>("postings");
   return (
     <>
-      <PageHeader
+      <PageHeader about={SECTIONS.discovery}
         title="What's out there."
         description="Postings from the sources you add, scored against what you are looking for. Save the good ones to your job board."
       />
+      <AiProviderNotice />
       <div role="group" aria-label="View" className="flex flex-wrap border-b border-ink p-[22px] pb-[23px]">
         {VIEWS.map((v) => (
           <button

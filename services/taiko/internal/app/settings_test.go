@@ -81,10 +81,10 @@ func TestASavedQuietWindowHoldsTheNextDigestBack(t *testing.T) {
 	window := domain.ChannelSettings{InAppEnabled: true, Quiet: &domain.QuietHours{From: hours(8, 0), To: hours(9, 0)}}
 
 	saved, err := svc.SaveChannelSettings(asOwner(owner), window, 0)
-	wait, runErr := e.digester.Run(context.Background(), digestDay)
+	wait, runErr := e.digester.RunFor(context.Background(), owner, digestDate)
 	heldDigests := len(e.digests(t, owner))
 	_, clearErr := svc.SaveChannelSettings(asOwner(owner), domain.DefaultChannelSettings(), saved.Version)
-	rerun, rerunErr := e.digester.Run(context.Background(), digestDay)
+	rerun, rerunErr := e.digester.RunFor(context.Background(), owner, digestDate)
 
 	if err != nil || runErr != nil || clearErr != nil || rerunErr != nil {
 		t.Fatalf("errors %v, %v, %v, %v", err, runErr, clearErr, rerunErr)

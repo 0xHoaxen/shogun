@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
 
+import { failureReasonText, SETTINGS_HINT_REASONS } from "@/components/drafts/failure";
 import { approveErrorMessage } from "@/components/drafts/approve-error";
 import { ApprovePanel, CopyPanel, VersionList } from "@/components/drafts/draft-panels";
 import { draftKey, draftsQueueKey } from "@/components/drafts/drafts-key";
@@ -168,7 +169,13 @@ export function DraftDetail({ id }: DraftDetailProps) {
 
       {draft.state === DraftState.FAILED ? (
         <p role="alert" className="border-b border-ink p-[22px]">
-          This draft could not be written{draft.failureReason ? ` (${draft.failureReason})` : ""}. Nothing was sent.
+          This draft could not be written
+          {failureReasonText(draft.failureReason) ? `: ${failureReasonText(draft.failureReason)}` : ""}. Nothing was sent.{" "}
+          {SETTINGS_HINT_REASONS.has(draft.failureReason) ? (
+            <Link href="/settings/provider" className="font-bold underline">
+              Check your AI provider
+            </Link>
+          ) : null}
         </p>
       ) : null}
       {draft.state === DraftState.GENERATING ? (

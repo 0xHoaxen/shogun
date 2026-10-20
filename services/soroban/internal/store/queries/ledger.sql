@@ -6,6 +6,7 @@ VALUES (@id, @owner_id, @reservation_id, @service, @feature, @model, @input_toke
 RETURNING *;
 
 -- name: GetLedgerEntryByReservation :one
+-- owner-scope: child reservation already locked with the owner
 SELECT * FROM ledger WHERE reservation_id = @reservation_id;
 
 -- name: SumSpend :many
@@ -25,3 +26,9 @@ FROM ledger
 WHERE owner_id = @owner_id AND occurred_at >= @from_time AND occurred_at < @to_time
 GROUP BY 1
 ORDER BY 1;
+
+-- name: SumLedgerTokens :one
+-- Every token the owner used in a period: input, output and both cache kinds.
+SELECT COALESCE(sum(input_tokens + output_tokens + cache_read_tokens + cache_write_tokens), 0)::bigint AS tokens
+FROM ledger
+WHERE owner_id = @owner_id AND occurred_at >= @from_time AND occurred_at < @to_time;

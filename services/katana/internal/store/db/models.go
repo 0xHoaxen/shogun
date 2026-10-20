@@ -10,6 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type GithubAccount struct {
+	OwnerID         uuid.UUID
+	Login           string
+	TokenCiphertext []byte
+	KeyID           string
+	ConnectedAt     time.Time
+}
+
 type GithubSnapshot struct {
 	ID            uuid.UUID
 	OwnerID       uuid.UUID
@@ -33,6 +41,14 @@ type Outbox struct {
 	Traceparent string
 	CreatedAt   time.Time
 	DeliveredAt *time.Time
+}
+
+type Owner struct {
+	ID        uuid.UUID
+	Timezone  string
+	Status    string
+	Version   int32
+	UpdatedAt time.Time
 }
 
 type Suggestion struct {

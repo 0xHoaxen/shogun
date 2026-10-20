@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strings"
 	"testing"
 	"time"
 
@@ -11,17 +12,21 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/0xHoaxen/shogun/pkg/authz"
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/pkg/llm/llmtest"
 )
 
 const feature = "fude.cover_letter"
 
-func noEnv(string) (string, bool) { return "", false }
+// ownerCtx is a context acting for owner, as torii's signed identity would make it.
+func ownerCtx(owner string) context.Context {
+	return authz.WithIdentity(context.Background(), authz.Identity{OwnerID: owner, RequestID: "r"})
+}
 
 func newClient(t *testing.T, api *llmtest.API, meter *llmtest.Meter, opts ...llm.Option) *llm.Client {
 	t.Helper()
-	cfg, err := llm.NewConfig("fude", noEnv)
+	cfg, err := llm.NewConfig("fude")
 	if err != nil {
 		t.Fatalf("config: %v", err)
 	}
@@ -38,7 +43,6 @@ func userRequest(text string) llm.Request {
 
 func okAPI() *llmtest.API {
 	return &llmtest.API{
-		Tokens: 1000,
 		Result: llm.CallResult{Text: "Dear team", StopReason: "end_turn", Usage: llm.Usage{InputTokens: 900, OutputTokens: 120, CacheReadTokens: 50}},
 	}
 }
@@ -65,14 +69,18 @@ func TestCompleteReservesCallsThenCommitsRealUsage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Complete: %v", err)
 	}
-	if resp.Text != "Dear team" || resp.Model != "claude-opus-5-5" || resp.FromCache {
+	if resp.Text != "Dear team" || resp.Model != llmtest.DefaultModel || resp.FromCache {
 		t.Errorf("response = %+v", resp)
+	}
+	if len(api.Accesses) != 1 || api.Accesses[0].BaseURL != llmtest.DefaultBaseURL || api.Accesses[0].Model != llmtest.DefaultModel ||
+		api.Accesses[0].APIKey != llmtest.DefaultAPIKey {
+		t.Errorf("the call was made with %+v, want the provider soroban handed back", api.Accesses)
 	}
 	if len(meter.Reserved) != 1 || len(api.Created) != 1 || len(meter.Committed) != 1 || len(meter.Released) != 0 {
 		t.Fatalf("calls: %d reserves, %d creates, %d commits, %d releases", len(meter.Reserved), len(api.Created), len(meter.Committed), len(meter.Released))
 	}
 	reserve := meter.Reserved[0]
-	if reserve.GetService() != "fude" || reserve.GetFeature() != feature || reserve.GetModel() != "claude-opus-5-5" {
+	if reserve.GetService() != "fude" || reserve.GetFeature() != feature {
 		t.Errorf("reserve = %v", reserve)
 	}
 	if reserve.GetEstOutputTokens() != 4096 {
@@ -85,20 +93,23 @@ func TestCompleteReservesCallsThenCommitsRealUsage(t *testing.T) {
 	}
 }
 
-func TestCompleteEstimatesInputWithCacheWriteMargin(t *testing.T) {
+func TestCompleteEstimatesInputLocallyWithCacheWriteMargin(t *testing.T) {
 	tests := []struct {
 		name   string
 		system string
+		text   string
 		want   int32
 	}{
-		{"without a system prompt the count is exact", "", 1000},
-		{"with a system prompt a quarter is added for a cache write", "You write in my voice.", 1250},
+		// 3000 bytes at 3 per token is 1000, plus 8 for the message.
+		{"without a system prompt it is the text and the message overhead", "", strings.Repeat("a", 3000), 1008},
+		// 3022 bytes is 1008 plus 8 is 1016, and a quarter more for a cache write.
+		{"with a system prompt a quarter is added for a cache write", "You write in my voice.", strings.Repeat("a", 3000), 1270},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			api, meter := okAPI(), &llmtest.Meter{}
 			c := newClient(t, api, meter)
-			req := userRequest("hello")
+			req := userRequest(tt.text)
 			req.System = tt.system
 
 			if _, err := c.Complete(context.Background(), feature, req); err != nil {
@@ -109,6 +120,16 @@ func TestCompleteEstimatesInputWithCacheWriteMargin(t *testing.T) {
 				t.Errorf("estimated input = %d, want %d", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestEstimateInputTokensNeverUndercountsPlainText(t *testing.T) {
+	// English runs about four bytes a token, so three per token is a safe overestimate.
+	for _, n := range []int{0, 1, 2, 3, 100, 12345} {
+		got := llm.EstimateInputTokens("", []llm.Message{{Role: llm.RoleUser, Content: strings.Repeat("x", n)}})
+		if int(got) < n/4 {
+			t.Errorf("%d bytes estimated as %d tokens, below the real count", n, got)
+		}
 	}
 }
 
@@ -181,15 +202,43 @@ func TestCompleteFailsClosedWhenSorobanIsDown(t *testing.T) {
 	}
 }
 
-func TestCompleteFailsWhenTheEstimateCannotBeMade(t *testing.T) {
-	api, meter := okAPI(), &llmtest.Meter{}
-	api.CountErr = errors.New("count_tokens down")
+func TestCompleteWithoutAProviderIsRefusedAndNeverCallsTheModel(t *testing.T) {
+	// Arrange: soroban answers that the caller has not set a provider.
+	st, err := status.New(codes.FailedPrecondition, "no provider").WithDetails(&errdetails.ErrorInfo{Reason: "AI_PROVIDER_NOT_CONFIGURED"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	api, meter := okAPI(), &llmtest.Meter{ReserveErr: st.Err()}
+	c := newClient(t, api, meter)
+
+	// Act
+	_, callErr := c.Complete(context.Background(), feature, userRequest("hi"))
+
+	// Assert
+	if !errors.Is(callErr, llm.ErrProviderNotConfigured) {
+		t.Fatalf("got %v, want ErrProviderNotConfigured", callErr)
+	}
+	if errors.Is(callErr, llm.ErrMeteringUnavailable) || errors.Is(callErr, llm.ErrBudgetExhausted) {
+		t.Errorf("a missing provider must not look like an outage or a spent budget: %v", callErr)
+	}
+	if len(api.Created) != 0 {
+		t.Errorf("the model was called %d times with no provider", len(api.Created))
+	}
+}
+
+func TestCompleteFailsClosedWhenSorobanHandsBackNoProvider(t *testing.T) {
+	// An older soroban that reserved without a provider must not make the call
+	// with some other credentials.
+	api, meter := okAPI(), &llmtest.Meter{ReservationID: "res-3", NoProvider: true}
 	c := newClient(t, api, meter)
 
 	_, err := c.Complete(context.Background(), feature, userRequest("hi"))
 
-	if err == nil || len(meter.Reserved) != 0 || len(api.Created) != 0 {
-		t.Fatalf("err = %v, %d reserves, %d creates; want an error and neither", err, len(meter.Reserved), len(api.Created))
+	if !errors.Is(err, llm.ErrProviderNotConfigured) || len(api.Created) != 0 {
+		t.Fatalf("err = %v, %d model calls; want ErrProviderNotConfigured and none", err, len(api.Created))
+	}
+	if len(meter.Released) != 1 || meter.Released[0].GetReservationId() != "res-3" {
+		t.Errorf("released %v, want the hold given back", meter.Released)
 	}
 }
 
@@ -309,16 +358,17 @@ func TestCompleteServesAnIdenticalRequestFromCache(t *testing.T) {
 	req.Cache = true
 
 	// Act
-	first, err := c.Complete(context.Background(), feature, req)
+	ctx := ownerCtx("owner-a")
+	first, err := c.Complete(ctx, feature, req)
 	if err != nil {
 		t.Fatalf("first: %v", err)
 	}
-	second, err := c.Complete(context.Background(), feature, req)
+	second, err := c.Complete(ctx, feature, req)
 	if err != nil {
 		t.Fatalf("second: %v", err)
 	}
 	now = now.Add(llm.DefaultCacheTTL + time.Second)
-	third, err := c.Complete(context.Background(), feature, req)
+	third, err := c.Complete(ctx, feature, req)
 	if err != nil {
 		t.Fatalf("third: %v", err)
 	}
@@ -329,6 +379,50 @@ func TestCompleteServesAnIdenticalRequestFromCache(t *testing.T) {
 	}
 	if len(meter.Reserved) != 2 || len(api.Created) != 2 {
 		t.Errorf("%d reserves and %d model calls, want 2 and 2: the hit costs nothing", len(meter.Reserved), len(api.Created))
+	}
+}
+
+func TestTwoUsersNeverShareACacheEntry(t *testing.T) {
+	// Arrange: the same request from two users, which a shared cache would answer
+	// with the first user's text and a bill the second user never saw.
+	cache := llm.NewMemoryCache(nil)
+	api, meter := okAPI(), &llmtest.Meter{}
+	c := newClient(t, api, meter, llm.WithCache(cache))
+	req := userRequest("classify this")
+	req.Cache = true
+
+	// Act
+	a1, errA := c.Complete(ownerCtx("owner-a"), feature, req)
+	b1, errB := c.Complete(ownerCtx("owner-b"), feature, req)
+	a2, errA2 := c.Complete(ownerCtx("owner-a"), feature, req)
+
+	// Assert
+	if errA != nil || errB != nil || errA2 != nil {
+		t.Fatalf("errors: %v %v %v", errA, errB, errA2)
+	}
+	if a1.FromCache || b1.FromCache || !a2.FromCache {
+		t.Errorf("FromCache = %v, %v, %v; want false, false, true", a1.FromCache, b1.FromCache, a2.FromCache)
+	}
+	if len(api.Created) != 2 || len(meter.Reserved) != 2 {
+		t.Errorf("%d model calls and %d reserves, want one each for the two users", len(api.Created), len(meter.Reserved))
+	}
+}
+
+func TestACallWithNoIdentityIsNeverCached(t *testing.T) {
+	cache := llm.NewMemoryCache(nil)
+	api, meter := okAPI(), &llmtest.Meter{}
+	c := newClient(t, api, meter, llm.WithCache(cache))
+	req := userRequest("same")
+	req.Cache = true
+
+	for range 2 {
+		if _, err := c.Complete(context.Background(), feature, req); err != nil {
+			t.Fatalf("Complete: %v", err)
+		}
+	}
+
+	if len(api.Created) != 2 {
+		t.Errorf("%d model calls, want 2: nobody owns the entry, so it must not be stored", len(api.Created))
 	}
 }
 
@@ -356,12 +450,40 @@ func TestDifferentRequestsDoNotShareACacheEntry(t *testing.T) {
 	a.Cache, b.Cache = true, true
 
 	for _, req := range []llm.Request{a, b} {
-		if _, err := c.Complete(context.Background(), feature, req); err != nil {
+		if _, err := c.Complete(ownerCtx("owner-a"), feature, req); err != nil {
 			t.Fatalf("Complete: %v", err)
 		}
 	}
 
 	if len(api.Created) != 2 {
 		t.Errorf("%d model calls, want 2", len(api.Created))
+	}
+}
+
+func TestATokenCapRefusalWaitsForTheMonthLikeABudgetDoes(t *testing.T) {
+	// Arrange: soroban's refusal carries only when the month ends, not a budget id.
+	st, err := status.New(codes.ResourceExhausted, "cap").WithDetails(&errdetails.ErrorInfo{
+		Reason:   "TOKEN_CAP_EXHAUSTED",
+		Metadata: map[string]string{"resets_at": "2026-10-31T18:30:00Z"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	api, meter := okAPI(), &llmtest.Meter{ReserveErr: st.Err()}
+	c := newClient(t, api, meter)
+
+	// Act
+	_, callErr := c.Complete(context.Background(), feature, userRequest("hi"))
+
+	// Assert
+	var refusal *llm.BudgetError
+	if !errors.Is(callErr, llm.ErrBudgetExhausted) || !errors.As(callErr, &refusal) {
+		t.Fatalf("got %v, want a refusal callers can wait out", callErr)
+	}
+	if want := time.Date(2026, 10, 31, 18, 30, 0, 0, time.UTC); !refusal.ResetsAt.Equal(want) || refusal.BudgetID != "" {
+		t.Errorf("refusal = %+v, want it to reset at %s with no budget id", refusal, want)
+	}
+	if len(api.Created) != 0 {
+		t.Errorf("the model was called %d times after a refusal", len(api.Created))
 	}
 }

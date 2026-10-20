@@ -22,12 +22,14 @@ import (
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/logger"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/server"
 	"github.com/0xHoaxen/shogun/pkg/telemetry"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/app"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/fetch"
 	"github.com/0xHoaxen/shogun/services/shinobi/internal/jobs"
+	"github.com/0xHoaxen/shogun/services/shinobi/internal/store"
 	shinobigrpc "github.com/0xHoaxen/shogun/services/shinobi/internal/transport/grpc"
 	"github.com/0xHoaxen/shogun/services/shinobi/migrations"
 )
@@ -115,7 +117,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	sink, err := bus.NewSinkServer(pool, map[string]bus.Handler{}, log)
+	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(map[string]bus.Handler{}, log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err
 	}
@@ -144,11 +146,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 	}()
 	svc := app.NewService(pool, fetch.New(), nil, log,
 		app.WithScoring(queue, model.completer), app.WithTracker(kagamiv1.NewKagamiServiceClient(kagamiConn)))
-	loc, err := jobs.Location()
-	if err != nil {
-		return err
-	}
-	scheduled := jobs.NewSetup(svc, svc, svc, queue, loc, time.Now, log)
+	scheduled := jobs.NewSetup(svc, svc, svc, queue, time.Now, log)
 
 	stopRelay, err := startRelay(ctx, pool, log, lookup, authority, cfg.ShutdownTimeout, scheduled, overrides)
 	if err != nil {

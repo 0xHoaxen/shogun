@@ -3,66 +3,102 @@ package llm_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"sync"
 	"testing"
 
-	"github.com/anthropics/anthropic-sdk-go/option"
-
 	"github.com/0xHoaxen/shogun/pkg/llm"
+	"github.com/0xHoaxen/shogun/pkg/netguard"
 )
 
-// fakeAnthropic answers the two endpoints AnthropicAPI uses and records the
-// bodies it was sent, by path.
-func fakeAnthropic(t *testing.T, stopReason string) (*httptest.Server, map[string]map[string]any) {
+// seenRequest is one request a fake provider received.
+type seenRequest struct {
+	path string
+	key  string
+	body map[string]any
+}
+
+// fakeAnthropic answers the messages endpoint and records what it was sent.
+func fakeAnthropic(t *testing.T, stopReason string) (*httptest.Server, func() []seenRequest) {
 	t.Helper()
-	bodies := map[string]map[string]any{}
+	var (
+		mu       sync.Mutex
+		received []seenRequest
+	)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		raw, _ := io.ReadAll(r.Body)
 		var body map[string]any
 		_ = json.Unmarshal(raw, &body)
-		bodies[r.URL.Path] = body
+		mu.Lock()
+		received = append(received, seenRequest{r.URL.Path, r.Header.Get("X-Api-Key"), body})
+		mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/v1/messages/count_tokens":
-			_, _ = io.WriteString(w, `{"input_tokens": 321}`)
-		case "/v1/messages":
-			_, _ = io.WriteString(w, `{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5",
-				"content":[{"type":"text","text":"Hello "},{"type":"text","text":"world"}],
-				"stop_reason":"`+stopReason+`","stop_sequence":null,
-				"usage":{"input_tokens":10,"output_tokens":5,"cache_creation_input_tokens":2,"cache_read_input_tokens":3}}`)
-		default:
+		if r.URL.Path != "/v1/messages" {
 			http.NotFound(w, r)
+			return
 		}
+		_, _ = io.WriteString(w, `{"id":"msg_1","type":"message","role":"assistant","model":"claude-opus-5-5",
+			"content":[{"type":"text","text":"Hello "},{"type":"text","text":"world"}],
+			"stop_reason":"`+stopReason+`","stop_sequence":null,
+			"usage":{"input_tokens":10,"output_tokens":5,"cache_creation_input_tokens":2,"cache_read_input_tokens":3}}`)
 	}))
 	t.Cleanup(srv.Close)
-	return srv, bodies
+	return srv, func() []seenRequest {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]seenRequest(nil), received...)
+	}
 }
 
-func TestAnthropicAPICountsTokens(t *testing.T) {
-	srv, bodies := fakeAnthropic(t, "end_turn")
-	api := llm.NewAnthropicAPI("test-key", option.WithBaseURL(srv.URL))
+func accessFor(srv *httptest.Server, key string) llm.Access {
+	return llm.Access{BaseURL: srv.URL, Model: "claude-opus-5-5", APIKey: key}
+}
 
-	got, err := api.CountTokens(context.Background(), llm.CallRequest{
-		Model: "claude-opus-5-5", System: "Be brief.",
-		Messages: []llm.Message{{Role: llm.RoleUser, Content: "hi"}},
+func TestAnthropicAPICreateUsesTheAccessItIsGiven(t *testing.T) {
+	srv, requests := fakeAnthropic(t, "end_turn")
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses())
+
+	_, err := api.Create(context.Background(), llm.Access{BaseURL: srv.URL, Model: "my-model-7", APIKey: "key-of-ada"}, llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
 	})
 
-	if err != nil || got != 321 {
-		t.Fatalf("got %d, %v; want 321", got, err)
+	got := requests()
+	if err != nil || len(got) != 1 || got[0].key != "key-of-ada" || got[0].body["model"] != "my-model-7" {
+		t.Fatalf("err %v, requests %+v; want the key and model of the access on the wire", err, got)
 	}
-	if bodies["/v1/messages/count_tokens"]["model"] != "claude-opus-5-5" {
-		t.Errorf("body = %v", bodies["/v1/messages/count_tokens"])
+}
+
+func TestOneAPIServesManyUsersWithoutMixingTheirKeys(t *testing.T) {
+	srv, requests := fakeAnthropic(t, "end_turn")
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses())
+	call := llm.CallRequest{MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}}}
+
+	for _, key := range []string{"key-of-ada", "key-of-bob", "key-of-ada", "key-of-cy"} {
+		if _, err := api.Create(context.Background(), accessFor(srv, key), call); err != nil {
+			t.Fatalf("Create: %v", err)
+		}
+	}
+
+	var keys []string
+	for _, r := range requests() {
+		keys = append(keys, r.key)
+	}
+	if strings.Join(keys, ",") != "key-of-ada,key-of-bob,key-of-ada,key-of-cy" {
+		t.Fatalf("keys on the wire = %v; each call must carry its own user's key", keys)
 	}
 }
 
 func TestAnthropicAPICreateCachesTheSystemPromptAndMapsUsage(t *testing.T) {
-	srv, bodies := fakeAnthropic(t, "end_turn")
-	api := llm.NewAnthropicAPI("test-key", option.WithBaseURL(srv.URL))
+	srv, requests := fakeAnthropic(t, "end_turn")
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses())
 
-	got, err := api.Create(context.Background(), llm.CallRequest{
-		Model: "claude-opus-5-5", System: "You write in my voice.", MaxTokens: 700,
+	got, err := api.Create(context.Background(), accessFor(srv, "k"), llm.CallRequest{
+		System: "You write in my voice.", MaxTokens: 700,
 		Messages: []llm.Message{{Role: llm.RoleUser, Content: "draft"}, {Role: llm.RoleAssistant, Content: "ok"}, {Role: llm.RoleUser, Content: "more"}},
 	})
 	if err != nil {
@@ -75,7 +111,7 @@ func TestAnthropicAPICreateCachesTheSystemPromptAndMapsUsage(t *testing.T) {
 	if got != want {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
-	body := bodies["/v1/messages"]
+	body := requests()[0].body
 	if body["max_tokens"] != float64(700) {
 		t.Errorf("max_tokens = %v, want 700", body["max_tokens"])
 	}
@@ -95,10 +131,10 @@ func TestAnthropicAPICreateCachesTheSystemPromptAndMapsUsage(t *testing.T) {
 
 func TestAnthropicAPIFlagsARefusal(t *testing.T) {
 	srv, _ := fakeAnthropic(t, "refusal")
-	api := llm.NewAnthropicAPI("test-key", option.WithBaseURL(srv.URL))
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses())
 
-	got, err := api.Create(context.Background(), llm.CallRequest{
-		Model: "claude-opus-5-5", MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	got, err := api.Create(context.Background(), accessFor(srv, "k"), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
 	})
 
 	if err != nil || !got.Refused || got.StopReason != "refusal" {
@@ -106,31 +142,163 @@ func TestAnthropicAPIFlagsARefusal(t *testing.T) {
 	}
 }
 
-func TestAnthropicBaseURLSendsCallsToTheGivenHost(t *testing.T) {
-	// Arrange
-	srv, bodies := fakeAnthropic(t, "end_turn")
-	api := llm.NewAnthropicAPI("test-key", llm.AnthropicBaseURL(srv.URL))
+func TestAProviderOnThisMachineIsRefusedUnlessPrivateAddressesAreAllowed(t *testing.T) {
+	// Arrange: a "provider" on loopback is how a user would try to reach services
+	// inside the network through this one.
+	srv, requests := fakeAnthropic(t, "end_turn")
+	api := llm.NewAnthropicAPI()
 
 	// Act
-	got, err := api.CountTokens(context.Background(), llm.CallRequest{
-		Model: "claude-opus-5-5", Messages: []llm.Message{{Role: llm.RoleUser, Content: "hi"}},
+	_, err := api.Create(context.Background(), accessFor(srv, "k"), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
 	})
 
 	// Assert
-	if err != nil || got != 321 {
-		t.Fatalf("CountTokens = %d, %v; want 321, nil", got, err)
+	if !errors.Is(err, netguard.ErrNotPublic) {
+		t.Fatalf("err = %v, want ErrNotPublic", err)
 	}
-	if _, ok := bodies["/v1/messages/count_tokens"]; !ok {
-		t.Fatal("the stub was not called")
+	if got := requests(); len(got) != 0 {
+		t.Fatalf("the provider on this machine was reached %d times", len(got))
 	}
 }
 
-func TestAnthropicBaseURLEmptyKeepsTheDefaultHost(t *testing.T) {
-	// Arrange: an empty URL must not break client construction or redirect calls.
-	api := llm.NewAnthropicAPI("test-key", llm.AnthropicBaseURL(""))
+func TestAnErrorFromTheProviderNeverContainsTheKey(t *testing.T) {
+	// A provider that echoes the credentials it was sent must not put them in our logs.
+	const key = "sk-very-secret-key-123456"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = io.WriteString(w, `{"type":"error","error":{"type":"authentication_error","message":"bad key `+r.Header.Get("X-Api-Key")+`"}}`)
+	}))
+	defer srv.Close()
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses())
 
-	// Assert
-	if api == nil {
-		t.Fatal("NewAnthropicAPI returned nil")
+	_, err := api.Create(context.Background(), accessFor(srv, key), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+
+	if err == nil {
+		t.Fatal("want the provider's refusal")
+	}
+	if strings.Contains(err.Error(), key) {
+		t.Fatalf("the error repeats the key: %v", err)
+	}
+}
+
+func TestAnthropicAPIRefusesAnIncompleteAccess(t *testing.T) {
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses())
+	call := llm.CallRequest{MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}}}
+	for name, access := range map[string]llm.Access{
+		"no address": {Model: "m", APIKey: "k"},
+		"no model":   {BaseURL: "https://llm.example.com", APIKey: "k"},
+		"no key":     {BaseURL: "https://llm.example.com", Model: "m"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := api.Create(context.Background(), access, call); !errors.Is(err, llm.ErrProviderNotConfigured) {
+				t.Fatalf("err = %v, want ErrProviderNotConfigured", err)
+			}
+		})
+	}
+}
+
+func TestPrivateAddressesAreAllowedOnlyInLocalDevelopmentAndTests(t *testing.T) {
+	srv, requests := fakeAnthropic(t, "end_turn")
+	call := llm.CallRequest{MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}}}
+	for environment, allowed := range map[string]bool{"local": true, "test": true, "staging": false, "production": false, "": false} {
+		t.Run(environment, func(t *testing.T) {
+			before := len(requests())
+
+			_, err := llm.NewAnthropicAPI(llm.ForEnvironment(environment)...).Create(context.Background(), accessFor(srv, "k"), call)
+
+			if allowed && err != nil {
+				t.Fatalf("a fake provider on localhost was refused in %q: %v", environment, err)
+			}
+			if !allowed && (!errors.Is(err, netguard.ErrNotPublic) || len(requests()) != before) {
+				t.Fatalf("err = %v in %q, want ErrNotPublic and no request", err, environment)
+			}
+		})
+	}
+}
+
+// replyWith is a provider that always answers with the given status.
+func replyWith(t *testing.T, status int) llm.Access {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_, _ = io.WriteString(w, `{"type":"error","error":{"type":"x","message":"secret detail from the provider"}}`)
+	}))
+	t.Cleanup(srv.Close)
+	return accessFor(srv, "k")
+}
+
+func TestClassifyFailureNamesWhatWentWrongWithoutTheProvidersWords(t *testing.T) {
+	call := llm.CallRequest{MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}}}
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.MaxRetries(0))
+	tests := []struct {
+		status int
+		want   llm.FailureKind
+	}{
+		{http.StatusUnauthorized, llm.FailureRejected},
+		{http.StatusForbidden, llm.FailureRejected},
+		{http.StatusTooManyRequests, llm.FailureRateLimited},
+		{http.StatusNotFound, llm.FailureNotFound},
+		{http.StatusBadRequest, llm.FailureNotFound},
+		{http.StatusInternalServerError, llm.FailureProviderError},
+		{http.StatusBadGateway, llm.FailureProviderError},
+	}
+	for _, tt := range tests {
+		t.Run(http.StatusText(tt.status), func(t *testing.T) {
+			_, err := api.Create(context.Background(), replyWith(t, tt.status), call)
+
+			if got := llm.ClassifyFailure(err); got != tt.want {
+				t.Fatalf("ClassifyFailure = %q for status %d (err %v), want %q", got, tt.status, err, tt.want)
+			}
+		})
+	}
+}
+
+func TestClassifyFailureSeesThroughTheClientsWrapping(t *testing.T) {
+	// Complete wraps the provider's error, and a draft job wraps that again.
+	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.MaxRetries(0))
+	_, err := api.Create(context.Background(), replyWith(t, http.StatusUnauthorized), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+
+	wrapped := fmt.Errorf("draft job: %w", fmt.Errorf("claude call: %w", err))
+
+	if got := llm.ClassifyFailure(wrapped); got != llm.FailureRejected {
+		t.Fatalf("ClassifyFailure = %q, want rejected", got)
+	}
+}
+
+func TestClassifyFailureForNetworkProblems(t *testing.T) {
+	// Not public: the guard refused the address.
+	srv, _ := fakeAnthropic(t, "end_turn")
+	_, notPublic := llm.NewAnthropicAPI().Create(context.Background(), accessFor(srv, "k"), llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+	// Unreachable: nothing listens there.
+	closed := httptest.NewServer(http.NotFoundHandler())
+	access := accessFor(closed, "k")
+	closed.Close()
+	_, unreachable := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.MaxRetries(0)).Create(context.Background(), access, llm.CallRequest{
+		MaxTokens: 10, Messages: []llm.Message{{Role: llm.RoleUser, Content: "x"}},
+	})
+
+	if got := llm.ClassifyFailure(notPublic); got != llm.FailureNotPublic {
+		t.Errorf("a guarded address = %q, want not_public", got)
+	}
+	if got := llm.ClassifyFailure(unreachable); got != llm.FailureUnreachable {
+		t.Errorf("a closed port = %q (err %v), want unreachable", got, unreachable)
+	}
+	if got := llm.ClassifyFailure(context.DeadlineExceeded); got != llm.FailureUnreachable {
+		t.Errorf("a timeout = %q, want unreachable", got)
+	}
+	if got := llm.ClassifyFailure(errors.New("something else")); got != llm.FailureOther {
+		t.Errorf("an unknown error = %q, want other", got)
+	}
+	if got := llm.ClassifyFailure(nil); got != "" {
+		t.Errorf("no error = %q, want empty", got)
 	}
 }

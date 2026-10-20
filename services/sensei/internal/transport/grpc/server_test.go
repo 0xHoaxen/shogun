@@ -109,7 +109,7 @@ func TestGetFunnelReturnsRowsTotalsAndRates(t *testing.T) {
 	h.seed(h.owner, "job.status_changed", map[string]string{"job_id": "j", "to": "applied"}, at(2))
 	h.seed(h.owner, "job.status_changed", map[string]string{"job_id": "j", "to": "interview"}, at(3))
 	h.seed(uuid.NewString(), "job.added", map[string]string{"source": "other", "job_id": "z"}, at(1))
-	if err := h.svc.Rollup(context.Background()); err != nil {
+	if err := h.svc.Rollup(context.Background(), uuid.MustParse(h.owner)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -131,7 +131,7 @@ func TestGetOutreachStatsReturnsSentRepliesAndTheRate(t *testing.T) {
 		h.seed(h.owner, "contact.status_changed", map[string]string{"to": "reached_out", "channel": "email"}, at(d))
 	}
 	h.seed(h.owner, "contact.status_changed", map[string]string{"to": "replied", "channel": "email"}, at(5))
-	if err := h.svc.Rollup(context.Background()); err != nil {
+	if err := h.svc.Rollup(context.Background(), uuid.MustParse(h.owner)); err != nil {
 		t.Fatal(err)
 	}
 

@@ -1,5 +1,5 @@
 // Package settings reads the environment variables only torii uses: the public
-// API listener, Google login, the owner allowlist and request limits. The
+// API listener, Google login, the admin list and request limits. The
 // variables every service shares live in pkg/config.
 package settings
 
@@ -20,7 +20,12 @@ const (
 	defaultSessionTTL = 7 * 24 * time.Hour
 	defaultRateLimit  = 20
 	defaultRateBurst  = 40
-	defaultMaxBody    = 8 << 20
+	// The per-address limit is a flood guard. Behind the web app's proxy every
+	// browser shares one address, so it must sit far above what a few dozen users
+	// make together; each signed-in user is limited separately by RateLimit.
+	defaultIPRateLimit = 500
+	defaultIPRateBurst = 1000
+	defaultMaxBody     = 8 << 20
 )
 
 // Settings is torii's own configuration.
@@ -34,7 +39,9 @@ type Settings struct {
 	GoogleClientSecret string
 	// GoogleIssuerURL is Google's issuer; tests point it at a fake provider.
 	GoogleIssuerURL string
-	AllowedEmails   []string
+	// AdminEmails become admins when they sign in. Anyone else with a verified
+	// Google account may sign up as a member.
+	AdminEmails []string
 	// KagamiAddr is the gRPC address of kagami, which owns jobs and contacts.
 	KagamiAddr string
 	// FudeAddr is the gRPC address of fude, which owns drafts and approvals.
@@ -54,9 +61,13 @@ type Settings struct {
 	// SorobanAddr is the gRPC address of soroban, which meters Claude spend.
 	SorobanAddr string
 	SessionTTL  time.Duration
-	// RateLimit is requests per second per client; RateBurst the burst size.
+	// RateLimit is requests per second per signed-in user; RateBurst the burst size.
 	RateLimit int
 	RateBurst int
+	// IPRateLimit is requests per second per remote address, and IPRateBurst the
+	// burst size. It is a flood guard shared by every browser behind the proxy.
+	IPRateLimit int
+	IPRateBurst int
 	// MaxBodyBytes caps a request body; the CSV import is the largest.
 	MaxBodyBytes int
 }
@@ -81,7 +92,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	clientSecret, err := config.Required(lookup, "GOOGLE_CLIENT_SECRET")
 	collect(err)
-	emails, err := config.Required(lookup, "TORII_ALLOWED_EMAILS")
+	emails, err := config.Required(lookup, "TORII_ADMIN_EMAILS")
 	collect(err)
 	kagamiAddr, err := config.Required(lookup, "KAGAMI_ADDR")
 	collect(err)
@@ -107,6 +118,10 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 	collect(err)
 	rateBurst, err := config.Int(lookup, "TORII_RATE_BURST", defaultRateBurst)
 	collect(err)
+	ipRateLimit, err := config.Int(lookup, "TORII_IP_RATE_LIMIT", defaultIPRateLimit)
+	collect(err)
+	ipRateBurst, err := config.Int(lookup, "TORII_IP_RATE_BURST", defaultIPRateBurst)
+	collect(err)
 	maxBody, err := config.Int(lookup, "TORII_MAX_BODY_BYTES", defaultMaxBody)
 	collect(err)
 
@@ -116,7 +131,7 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		GoogleClientID:     clientID,
 		GoogleClientSecret: clientSecret,
 		GoogleIssuerURL:    config.String(lookup, "GOOGLE_ISSUER_URL", defaultIssuer),
-		AllowedEmails:      splitList(emails),
+		AdminEmails:        splitList(emails),
 		KagamiAddr:         kagamiAddr,
 		FudeAddr:           fudeAddr,
 		TsubameAddr:        tsubameAddr,
@@ -129,6 +144,8 @@ func Load(lookup config.LookupFunc) (Settings, error) {
 		SessionTTL:         ttl,
 		RateLimit:          rateLimit,
 		RateBurst:          rateBurst,
+		IPRateLimit:        ipRateLimit,
+		IPRateBurst:        ipRateBurst,
 		MaxBodyBytes:       maxBody,
 	}
 	collect(s.validate())
@@ -147,11 +164,14 @@ func (s Settings) validate() error {
 	if u, err := url.Parse(s.PublicURL); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		errs = append(errs, fmt.Errorf("settings: TORII_PUBLIC_URL %q must be an http(s) URL", s.PublicURL))
 	}
-	if len(s.AllowedEmails) == 0 && s.GoogleClientID != "" {
-		errs = append(errs, errors.New("settings: TORII_ALLOWED_EMAILS has no addresses"))
+	if len(s.AdminEmails) == 0 && s.GoogleClientID != "" {
+		errs = append(errs, errors.New("settings: TORII_ADMIN_EMAILS has no addresses"))
 	}
 	if s.SessionTTL <= 0 {
 		errs = append(errs, errors.New("settings: SESSION_TTL must be positive"))
+	}
+	if s.IPRateLimit <= 0 || s.IPRateBurst <= 0 {
+		errs = append(errs, errors.New("settings: TORII_IP_RATE_LIMIT and TORII_IP_RATE_BURST must be positive"))
 	}
 	if s.RateLimit <= 0 || s.RateBurst <= 0 {
 		errs = append(errs, errors.New("settings: TORII_RATE_LIMIT and TORII_RATE_BURST must be positive"))

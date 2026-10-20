@@ -17,10 +17,16 @@ WHERE owner_id = @owner_id AND id = @id
 RETURNING *;
 
 -- name: ListEnabledSources :many
--- Every owner's enabled sources, for the scheduler.
-SELECT * FROM sources WHERE enabled ORDER BY owner_id, id;
+-- owner-scope: internal the scheduler scans every active owner's sources; each run is then queued for its own owner
+-- Every active owner's enabled sources with that owner's time zone, for the
+-- scheduler. A disabled or deleted owner's sources are not read.
+SELECT s.*, o.timezone AS owner_timezone
+FROM sources s JOIN owners o ON o.id = s.owner_id
+WHERE s.enabled AND o.status = 'active'
+ORDER BY s.owner_id, s.id;
 
 -- name: MarkSourceRun :exec
+-- owner-scope: child source already loaded with the owner by RunSourceFor
 UPDATE sources SET last_run_at = @last_run_at, last_error = @last_error
 WHERE id = @id;
 

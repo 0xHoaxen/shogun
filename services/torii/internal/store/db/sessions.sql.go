@@ -16,6 +16,7 @@ const deleteExpiredSessions = `-- name: DeleteExpiredSessions :execrows
 DELETE FROM sessions WHERE expires_at <= $1
 `
 
+// owner-scope: global housekeeping over expired sessions
 func (q *Queries) DeleteExpiredSessions(ctx context.Context, now time.Time) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteExpiredSessions, now)
 	if err != nil {
@@ -28,9 +29,22 @@ const deleteSessionByTokenHash = `-- name: DeleteSessionByTokenHash :exec
 DELETE FROM sessions WHERE token_hash = $1
 `
 
+// owner-scope: global the secret token hash identifies the session
 func (q *Queries) DeleteSessionByTokenHash(ctx context.Context, tokenHash []byte) error {
 	_, err := q.db.Exec(ctx, deleteSessionByTokenHash, tokenHash)
 	return err
+}
+
+const deleteSessionsByOwner = `-- name: DeleteSessionsByOwner :execrows
+DELETE FROM sessions WHERE owner_id = $1
+`
+
+func (q *Queries) DeleteSessionsByOwner(ctx context.Context, ownerID uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteSessionsByOwner, ownerID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const extendSession = `-- name: ExtendSession :execrows
@@ -44,6 +58,7 @@ type ExtendSessionParams struct {
 	ID        uuid.UUID
 }
 
+// owner-scope: global session id comes from a session just resolved by its token hash
 func (q *Queries) ExtendSession(ctx context.Context, arg ExtendSessionParams) (int64, error) {
 	result, err := q.db.Exec(ctx, extendSession, arg.ExpiresAt, arg.ID)
 	if err != nil {
@@ -66,6 +81,7 @@ type GetSessionByTokenHashRow struct {
 	ExpiresAt   time.Time
 }
 
+// owner-scope: global the secret token hash identifies the session
 func (q *Queries) GetSessionByTokenHash(ctx context.Context, tokenHash []byte) (GetSessionByTokenHashRow, error) {
 	row := q.db.QueryRow(ctx, getSessionByTokenHash, tokenHash)
 	var i GetSessionByTokenHashRow

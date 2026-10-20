@@ -76,6 +76,7 @@ type ListOpenSendsParams struct {
 	RowLimit      int32
 }
 
+// owner-scope: internal reconcile job across all owners
 // Sends that were started and never finished, oldest first.
 func (q *Queries) ListOpenSends(ctx context.Context, arg ListOpenSendsParams) ([]Send, error) {
 	rows, err := q.db.Query(ctx, listOpenSends, arg.StartedBefore, arg.RowLimit)
@@ -122,6 +123,7 @@ type MarkSendFailedParams struct {
 	ID    uuid.UUID
 }
 
+// owner-scope: child send row loaded by the send or reconcile job
 func (q *Queries) MarkSendFailed(ctx context.Context, arg MarkSendFailedParams) (int64, error) {
 	result, err := q.db.Exec(ctx, markSendFailed, arg.Error, arg.ID)
 	if err != nil {
@@ -141,6 +143,7 @@ type MarkSendSentParams struct {
 	ID                uuid.UUID
 }
 
+// owner-scope: child send row loaded by the send or reconcile job
 func (q *Queries) MarkSendSent(ctx context.Context, arg MarkSendSentParams) (int64, error) {
 	result, err := q.db.Exec(ctx, markSendSent, arg.ProviderMessageID, arg.SentAt, arg.ID)
 	if err != nil {

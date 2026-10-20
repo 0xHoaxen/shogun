@@ -11,10 +11,6 @@ RETURNING id, owner_id, source_id, external_id, title, company, url, location, p
 -- name: GetPosting :one
 SELECT * FROM postings WHERE owner_id = @owner_id AND id = @id;
 
--- name: GetPostingByID :one
--- For a job that works for an owner it already knows.
-SELECT * FROM postings WHERE id = @id;
-
 -- name: ListPostings :many
 -- Best score first, unscored last. Keyset pagination on (score, id), where an
 -- unscored posting counts as -1; a NULL after_id means the first page.
@@ -33,6 +29,7 @@ ORDER BY COALESCE(s.score, -1)::real DESC, p.id DESC
 LIMIT @row_limit;
 
 -- name: ListUnscoredPostingIDs :many
+-- owner-scope: internal scoring job; the source id comes from the owner's own run
 SELECT p.id FROM postings p
 LEFT JOIN scores s ON s.posting_id = p.id
 WHERE p.source_id = @source_id AND s.posting_id IS NULL
@@ -45,15 +42,18 @@ WHERE owner_id = @owner_id AND id = @id AND saved_job_id IS NULL
 RETURNING *;
 
 -- name: UpsertScore :exec
+-- owner-scope: child posting already loaded with the owner by ScorePosting
 INSERT INTO scores (posting_id, score, reasons, scored_by, created_at)
 VALUES (@posting_id, @score, @reasons, @scored_by, @created_at)
 ON CONFLICT (posting_id) DO UPDATE SET
     score = EXCLUDED.score, reasons = EXCLUDED.reasons, scored_by = EXCLUDED.scored_by, created_at = EXCLUDED.created_at;
 
 -- name: GetScore :one
+-- owner-scope: child posting already loaded with the owner
 SELECT * FROM scores WHERE posting_id = @posting_id;
 
 -- name: MarkMatched :one
+-- owner-scope: child posting already loaded with the owner by ScorePosting
 -- Sets matched_at once. It returns a row only the first time, so the caller
 -- emits the match event exactly then.
 UPDATE scores SET matched_at = @matched_at

@@ -20,3 +20,8 @@ peers:
   - sensei
   - soroban
   # peers end
+
+# Mutual TLS on the gRPC hops between services. The web app has no gRPC and
+# turns it off in its own values. Needs the shogun-internal ClusterIssuer.
+internalTLS:
+  enabled: true

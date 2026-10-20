@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package shogun.api.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ProviderService is the Settings > AI provider screen. Every user brings their
+// own Anthropic-compatible provider: an address, a model and an API key. Torii
+// maps it onto soroban, which seals the key, and fude, which tests it. The key
+// only ever goes in; nothing here returns it.
+service ProviderService {
+  // GetProvider returns the caller's provider without its key, or none, and the
+  // tokens they have used this month.
+  rpc GetProvider(GetProviderRequest) returns (GetProviderResponse);
+  // SetProvider stores the provider. With version 0 it creates one and api_key
+  // is required (API_KEY_REQUIRED); otherwise it updates it if version matches
+  // (a stale one is Aborted with reason VERSION_CONFLICT), and an empty api_key
+  // keeps the stored key. A bad address is INVALID_PROVIDER_URL, a bad model
+  // INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price
+  // INVALID_PRICE and a cap of 0 or less INVALID_TOKEN_CAP.
+  rpc SetProvider(SetProviderRequest) returns (SetProviderResponse);
+  // DeleteProvider removes the provider and its key. Their AI features are then
+  // off. Having none is not an error.
+  rpc DeleteProvider(DeleteProviderRequest) returns (DeleteProviderResponse);
+  // TestProvider makes one small call with the caller's provider, counted
+  // against their budgets, to show whether it works. A provider that fails is a
+  // result (ok false and a failure), not an error. No provider is
+  // FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
+  // token cap is ResourceExhausted with reason BUDGET_EXHAUSTED.
+  rpc TestProvider(TestProviderRequest) returns (TestProviderResponse);
+}
+
+// Provider is the caller's provider as it is shown back: everything except the
+// key, of which only the last four characters are kept.
+message Provider {
+  string base_url = 1;
+  string model = 2;
+  string key_last4 = 3;
+  // Prices in micro-dollars per million tokens, for a model with no shared
+  // price. Both are set or neither is.
+  optional int64 input_micros_per_mtok = 4;
+  optional int64 output_micros_per_mtok = 5;
+  // monthly_token_cap, when set, stops AI calls once the month's tokens would
+  // pass it. Unset means unlimited.
+  optional int64 monthly_token_cap = 6;
+  int32 version = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message GetProviderRequest {}
+
+message GetProviderResponse {
+  // provider is unset when the caller has none.
+  Provider provider = 1;
+  // tokens_this_month is every token used so far this month, priced or not.
+  int64 tokens_this_month = 2;
+}
+
+message SetProviderRequest {
+  string base_url = 1;
+  string model = 2;
+  // api_key is write-only.
+  string api_key = 3;
+  optional int64 input_micros_per_mtok = 4;
+  optional int64 output_micros_per_mtok = 5;
+  optional int64 monthly_token_cap = 6;
+  int32 version = 7;
+}
+
+message SetProviderResponse {
+  Provider provider = 1;
+}
+
+message DeleteProviderRequest {}
+
+message DeleteProviderResponse {}
+
+// ProviderFailure says why a provider that was called did not work.
+enum ProviderFailure {
+  PROVIDER_FAILURE_UNSPECIFIED = 0;
+  // The provider refused the key.
+  PROVIDER_FAILURE_REJECTED = 1;
+  PROVIDER_FAILURE_RATE_LIMITED = 2;
+  // The provider does not know the model, or the address path is wrong.
+  PROVIDER_FAILURE_NOT_FOUND = 3;
+  // No answer came: refused, no route, or too slow.
+  PROVIDER_FAILURE_UNREACHABLE = 4;
+  // The address names this machine or a private network, which is never called.
+  PROVIDER_FAILURE_NOT_PUBLIC = 5;
+  // The provider failed on its side.
+  PROVIDER_FAILURE_PROVIDER_ERROR = 6;
+  PROVIDER_FAILURE_OTHER = 7;
+}
+
+message TestProviderRequest {}
+
+message TestProviderResponse {
+  bool ok = 1;
+  // failure is unspecified when ok.
+  ProviderFailure failure = 2;
+  // model is the model that answered, when ok.
+  string model = 3;
+}

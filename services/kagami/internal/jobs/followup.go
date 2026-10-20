@@ -1,106 +1,144 @@
-// Package jobs holds the kagami River workers: the daily follow-up scans.
+// Package jobs holds the kagami River workers: the daily follow-up scan.
 //
-// The scans share the outbox relay's River client (see relay.Config), so they
-// are handed over as a Setup rather than started here.
+// The scan shares the outbox relay's River client (see relay.Config), so it is
+// handed over as a Setup rather than started here.
+//
+// Each owner is scanned at scanHour:scanMinute on their own clock. A tick every
+// tickEvery asks who has reached that time and queues one daily_scan job per
+// owner and local date, unique by args, so an owner is scanned once a day
+// whatever their time zone.
 package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
 
-	"github.com/0xHoaxen/shogun/pkg/schedule"
+	"github.com/0xHoaxen/shogun/pkg/owners"
 )
 
 const (
 	// Queue is the River queue of kagami's own jobs.
 	Queue = "kagami"
 
-	// scanLocation is the zone the owner's days are counted in.
-	scanLocation = "Asia/Kolkata"
+	kindDailyScan = "daily_scan"
+	kindScanTick  = "daily_scan_tick"
 
-	kindFollowUpScan = "follow_up_scan"
-	kindStaleScan    = "stale_application_scan"
+	// The scan runs at 07:55 so the follow-ups its stale step plans for today are
+	// emitted by its own due step straight after.
+	scanHour, scanMinute = 7, 55
+
+	// tickEvery is how often kagami looks for owners whose scan time has come.
+	tickEvery = 15 * time.Minute
+
+	minuteLayout = "2006-01-02T15:04"
 )
 
-// The stale scan runs shortly before the due scan so that the follow-ups it
-// plans for today are emitted by the same morning's due scan.
-const (
-	staleScanHour, staleScanMinute       = 7, 55
-	followUpScanHour, followUpScanMinute = 8, 0
-)
-
-// Scanner is what the scans need from the use cases.
+// Scanner is what the scan needs from the use cases. Both calls act on one
+// owner and a day in that owner's zone.
 type Scanner interface {
-	ScanDueFollowUps(ctx context.Context, date time.Time) (int, error)
-	ScanStaleApplications(ctx context.Context, date time.Time) (int, error)
+	ScanStaleApplications(ctx context.Context, owner uuid.UUID, date time.Time) (int, error)
+	ScanDueFollowUps(ctx context.Context, owner uuid.UUID, date time.Time) (int, error)
 }
 
-// FollowUpScanArgs are the args of follow_up_scan. Date is the local calendar
-// date, YYYY-MM-DD; with unique-by-args it makes the job run once per date.
-type FollowUpScanArgs struct {
-	Date string `json:"date"`
+// OwnerLister lists the owners whose scan may be due.
+type OwnerLister interface {
+	ActiveOwners(ctx context.Context) ([]owners.Owner, error)
+}
+
+// Enqueuer queues the scan of one owner for one local date.
+type Enqueuer interface {
+	EnqueueScan(ctx context.Context, owner uuid.UUID, date string) error
+}
+
+// DailyScanArgs are the args of daily_scan. Date is the owner's local calendar
+// date, YYYY-MM-DD; with unique-by-args it makes the job run once per owner and
+// date.
+type DailyScanArgs struct {
+	OwnerID string `json:"owner_id"`
+	Date    string `json:"date"`
 }
 
 // Kind implements river.JobArgs.
-func (FollowUpScanArgs) Kind() string { return kindFollowUpScan }
+func (DailyScanArgs) Kind() string { return kindDailyScan }
 
 // InsertOpts implements river.JobArgsWithInsertOpts.
-func (FollowUpScanArgs) InsertOpts() river.InsertOpts { return scanInsertOpts() }
+func (DailyScanArgs) InsertOpts() river.InsertOpts { return scanInsertOpts() }
 
-// StaleApplicationScanArgs are the args of stale_application_scan.
-type StaleApplicationScanArgs struct {
-	Date string `json:"date"`
+// ScanTickArgs are the args of daily_scan_tick; Minute is the UTC minute it was
+// queued for, so a tick is queued once however many replicas run.
+type ScanTickArgs struct {
+	Minute string `json:"minute"`
 }
 
 // Kind implements river.JobArgs.
-func (StaleApplicationScanArgs) Kind() string { return kindStaleScan }
+func (ScanTickArgs) Kind() string { return kindScanTick }
 
 // InsertOpts implements river.JobArgsWithInsertOpts.
-func (StaleApplicationScanArgs) InsertOpts() river.InsertOpts { return scanInsertOpts() }
+func (ScanTickArgs) InsertOpts() river.InsertOpts { return scanInsertOpts() }
 
 func scanInsertOpts() river.InsertOpts {
 	return river.InsertOpts{Queue: Queue, UniqueOpts: river.UniqueOpts{ByArgs: true}}
 }
 
-type followUpWorker struct {
-	river.WorkerDefaults[FollowUpScanArgs]
+type tickWorker struct {
+	river.WorkerDefaults[ScanTickArgs]
+	owners   OwnerLister
+	enqueuer Enqueuer
+	now      func() time.Time
+}
+
+// Work implements river.Worker. An owner whose scan cannot be queued does not
+// stop the others; the failures are returned together so the tick is retried.
+func (w *tickWorker) Work(ctx context.Context, _ *river.Job[ScanTickArgs]) error {
+	list, err := w.owners.ActiveOwners(ctx)
+	if err != nil {
+		return fmt.Errorf("list owners: %w", err)
+	}
+	var errs []error
+	for _, due := range owners.DueAt(list, w.now(), scanHour, scanMinute) {
+		if err := w.enqueuer.EnqueueScan(ctx, due.Owner.ID, due.Date); err != nil {
+			errs = append(errs, fmt.Errorf("owner %s: %w", due.Owner.ID, err))
+		}
+	}
+	return errors.Join(errs...)
+}
+
+type scanWorker struct {
+	river.WorkerDefaults[DailyScanArgs]
 	scanner Scanner
 	log     *slog.Logger
 }
 
-func (w *followUpWorker) Work(ctx context.Context, job *river.Job[FollowUpScanArgs]) error {
+// Work implements river.Worker. It first plans follow-ups for stale
+// applications, then emits everything due that day, so a follow-up planned
+// this morning is announced this morning. An owner id or date that is not one
+// can never succeed, so the job is cancelled.
+func (w *scanWorker) Work(ctx context.Context, job *river.Job[DailyScanArgs]) error {
+	owner, err := uuid.Parse(job.Args.OwnerID)
+	if err != nil {
+		return river.JobCancel(fmt.Errorf("scan owner %q is not a uuid: %w", job.Args.OwnerID, err))
+	}
 	date, err := parseScanDate(job.Args.Date)
 	if err != nil {
 		return river.JobCancel(err)
 	}
-	emitted, err := w.scanner.ScanDueFollowUps(ctx, date)
-	if err != nil {
-		return fmt.Errorf("follow-up scan for %s: %w", job.Args.Date, err)
-	}
-	w.log.Info("follow-up scan done", slog.String("date", job.Args.Date), slog.Int("events", emitted))
-	return nil
-}
-
-type staleWorker struct {
-	river.WorkerDefaults[StaleApplicationScanArgs]
-	scanner Scanner
-	log     *slog.Logger
-}
-
-func (w *staleWorker) Work(ctx context.Context, job *river.Job[StaleApplicationScanArgs]) error {
-	date, err := parseScanDate(job.Args.Date)
-	if err != nil {
-		return river.JobCancel(err)
-	}
-	planned, err := w.scanner.ScanStaleApplications(ctx, date)
+	planned, err := w.scanner.ScanStaleApplications(ctx, owner, date)
 	if err != nil {
 		return fmt.Errorf("stale application scan for %s: %w", job.Args.Date, err)
 	}
-	w.log.Info("stale application scan done", slog.String("date", job.Args.Date), slog.Int("planned", planned))
+	emitted, err := w.scanner.ScanDueFollowUps(ctx, owner, date)
+	if err != nil {
+		return fmt.Errorf("follow-up scan for %s: %w", job.Args.Date, err)
+	}
+	w.log.Info("daily scan done", slog.String("date", job.Args.Date),
+		slog.Int("planned", planned), slog.Int("events", emitted))
 	return nil
 }
 
@@ -120,29 +158,35 @@ type Setup struct {
 	PeriodicJobs []*river.PeriodicJob
 }
 
-// NewSetup builds the scheduled jobs. now is the clock, injected for tests.
-func NewSetup(scanner Scanner, now func() time.Time, log *slog.Logger) (Setup, error) {
-	loc, err := time.LoadLocation(scanLocation)
-	if err != nil {
-		return Setup{}, fmt.Errorf("load %s: %w", scanLocation, err)
+func tickArgs(now func() time.Time) func() (river.JobArgs, *river.InsertOpts) {
+	return func() (river.JobArgs, *river.InsertOpts) {
+		return ScanTickArgs{Minute: now().UTC().Format(minuteLayout)}, nil
 	}
-	staleScanAt := schedule.Daily{Hour: staleScanHour, Minute: staleScanMinute, Loc: loc}
-	followUpScanAt := schedule.Daily{Hour: followUpScanHour, Minute: followUpScanMinute, Loc: loc}
-	today := func() string { return scanDate(now(), loc) }
+}
 
+// NewSetup builds the scheduled jobs. now is the clock, injected for tests.
+func NewSetup(scanner Scanner, lister OwnerLister, enqueuer Enqueuer, now func() time.Time, log *slog.Logger) Setup {
 	return Setup{
 		Workers: func(ws *river.Workers) {
-			river.AddWorker(ws, &staleWorker{scanner: scanner, log: log})
-			river.AddWorker(ws, &followUpWorker{scanner: scanner, log: log})
+			river.AddWorker(ws, &tickWorker{owners: lister, enqueuer: enqueuer, now: now})
+			river.AddWorker(ws, &scanWorker{scanner: scanner, log: log})
 		},
 		Queues: map[string]river.QueueConfig{Queue: {MaxWorkers: 1}},
 		PeriodicJobs: []*river.PeriodicJob{
-			river.NewPeriodicJob(staleScanAt, func() (river.JobArgs, *river.InsertOpts) {
-				return StaleApplicationScanArgs{Date: today()}, nil
-			}, nil),
-			river.NewPeriodicJob(followUpScanAt, func() (river.JobArgs, *river.InsertOpts) {
-				return FollowUpScanArgs{Date: today()}, nil
-			}, nil),
+			river.NewPeriodicJob(river.PeriodicInterval(tickEvery), tickArgs(now), nil),
 		},
-	}, nil
+	}
+}
+
+// ContextEnqueuer queues scans on the River client the calling worker runs on,
+// so it can only be used from inside a worker.
+type ContextEnqueuer struct{}
+
+// EnqueueScan implements Enqueuer.
+func (ContextEnqueuer) EnqueueScan(ctx context.Context, owner uuid.UUID, date string) error {
+	client := river.ClientFromContext[pgx.Tx](ctx)
+	if _, err := client.Insert(ctx, DailyScanArgs{OwnerID: owner.String(), Date: date}, nil); err != nil {
+		return fmt.Errorf("enqueue daily_scan: %w", err)
+	}
+	return nil
 }

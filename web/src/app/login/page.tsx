@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 // Messages for the ?error= codes torii's login flow redirects back with.
 const ERROR_MESSAGES: Readonly<Record<string, string>> = {
-  not_allowed: "This Google account is not allowed to sign in.",
+  not_allowed: "This account has been disabled. Ask an admin to enable it.",
   invalid_state: "The sign-in took too long. Try again.",
   denied: "Sign-in was cancelled.",
   unavailable: "Google sign-in is unavailable. Try again shortly.",

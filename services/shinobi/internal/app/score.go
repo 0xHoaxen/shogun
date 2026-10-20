@@ -140,7 +140,7 @@ func (s *Service) ScorePosting(ctx context.Context, in ScoreInput) error {
 		return nil
 	}
 	judged, err := s.judge(ctx, prefs, candidate, rule)
-	if errors.Is(err, ErrModelOff) {
+	if errors.Is(err, ErrModelOff) || errors.Is(err, llm.ErrProviderNotConfigured) {
 		s.log.Warn("borderline posting keeps its rule score: no model is set up", slog.String("posting_id", posting.ID.String()))
 		return nil
 	}

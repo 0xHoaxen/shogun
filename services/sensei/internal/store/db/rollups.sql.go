@@ -13,11 +13,17 @@ import (
 )
 
 const deleteRollupsFrom = `-- name: DeleteRollupsFrom :exec
-DELETE FROM daily_rollups WHERE day >= $1
+DELETE FROM daily_rollups WHERE owner_id = $1 AND day >= $2
 `
 
-func (q *Queries) DeleteRollupsFrom(ctx context.Context, fromDay time.Time) error {
-	_, err := q.db.Exec(ctx, deleteRollupsFrom, fromDay)
+type DeleteRollupsFromParams struct {
+	OwnerID uuid.UUID
+	FromDay time.Time
+}
+
+// The owner's rollups from from_day on; they are recomputed from the facts next.
+func (q *Queries) DeleteRollupsFrom(ctx context.Context, arg DeleteRollupsFromParams) error {
+	_, err := q.db.Exec(ctx, deleteRollupsFrom, arg.OwnerID, arg.FromDay)
 	return err
 }
 
@@ -73,38 +79,50 @@ func (q *Queries) ListRollups(ctx context.Context, arg ListRollupsParams) ([]Lis
 
 const rollupContactMoves = `-- name: RollupContactMoves :exec
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date, 'contact_moves',
-       'status=' || COALESCE(dimension->>'to', 'unknown'), count(*)
-FROM facts
-WHERE type = 'contact.status_changed' AND (occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= $1
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE $1::text)::date, 'contact_moves',
+       'status=' || COALESCE(f.dimension->>'to', 'unknown'), count(*)
+FROM facts f
+WHERE f.owner_id = $2 AND f.type = 'contact.status_changed' AND (f.occurred_at AT TIME ZONE $1::text)::date >= $3
 GROUP BY 1, 2, 3, 4
 `
 
-func (q *Queries) RollupContactMoves(ctx context.Context, fromDay time.Time) error {
-	_, err := q.db.Exec(ctx, rollupContactMoves, fromDay)
+type RollupContactMovesParams struct {
+	Tz      string
+	OwnerID uuid.UUID
+	FromDay time.Time
+}
+
+func (q *Queries) RollupContactMoves(ctx context.Context, arg RollupContactMovesParams) error {
+	_, err := q.db.Exec(ctx, rollupContactMoves, arg.Tz, arg.OwnerID, arg.FromDay)
 	return err
 }
 
 const rollupContacts = `-- name: RollupContacts :exec
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date,
-       CASE dimension->>'to' WHEN 'reached_out' THEN 'outreach_sent' ELSE 'replies' END,
-       'channel=' || COALESCE(dimension->>'channel', 'unknown'), count(*)
-FROM facts
-WHERE type = 'contact.status_changed' AND dimension->>'to' IN ('reached_out', 'replied')
-  AND (occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= $1
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE $1::text)::date,
+       CASE f.dimension->>'to' WHEN 'reached_out' THEN 'outreach_sent' ELSE 'replies' END,
+       'channel=' || COALESCE(f.dimension->>'channel', 'unknown'), count(*)
+FROM facts f
+WHERE f.owner_id = $2 AND f.type = 'contact.status_changed' AND f.dimension->>'to' IN ('reached_out', 'replied')
+  AND (f.occurred_at AT TIME ZONE $1::text)::date >= $3
 GROUP BY 1, 2, 3, 4
 `
 
+type RollupContactsParams struct {
+	Tz      string
+	OwnerID uuid.UUID
+	FromDay time.Time
+}
+
 // First contacts and replies per day and channel, and moves per day and status.
-func (q *Queries) RollupContacts(ctx context.Context, fromDay time.Time) error {
-	_, err := q.db.Exec(ctx, rollupContacts, fromDay)
+func (q *Queries) RollupContacts(ctx context.Context, arg RollupContactsParams) error {
+	_, err := q.db.Exec(ctx, rollupContacts, arg.Tz, arg.OwnerID, arg.FromDay)
 	return err
 }
 
 const rollupJobStages = `-- name: RollupJobStages :exec
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT f.owner_id, (f.occurred_at AT TIME ZONE 'Asia/Kolkata')::date,
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE $1::text)::date,
        CASE f.dimension->>'to'
          WHEN 'applied' THEN 'applications' WHEN 'shortlisted' THEN 'shortlisted'
          WHEN 'interview' THEN 'interviews' WHEN 'offer' THEN 'offers' ELSE 'rejections' END,
@@ -116,30 +134,42 @@ LEFT JOIN LATERAL (
       AND added.dimension->>'job_id' = f.dimension->>'job_id'
     ORDER BY added.occurred_at LIMIT 1
 ) a ON true
-WHERE f.type = 'job.status_changed'
+WHERE f.owner_id = $2 AND f.type = 'job.status_changed'
   AND f.dimension->>'to' IN ('applied', 'shortlisted', 'interview', 'offer', 'rejected')
-  AND (f.occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= $1
+  AND (f.occurred_at AT TIME ZONE $1::text)::date >= $3
 GROUP BY 1, 2, 3, 4
 `
 
+type RollupJobStagesParams struct {
+	Tz      string
+	OwnerID uuid.UUID
+	FromDay time.Time
+}
+
 // Moves into each stage per day, by the source the job was added from; a job
 // sensei never saw added counts under source=unknown.
-func (q *Queries) RollupJobStages(ctx context.Context, fromDay time.Time) error {
-	_, err := q.db.Exec(ctx, rollupJobStages, fromDay)
+func (q *Queries) RollupJobStages(ctx context.Context, arg RollupJobStagesParams) error {
+	_, err := q.db.Exec(ctx, rollupJobStages, arg.Tz, arg.OwnerID, arg.FromDay)
 	return err
 }
 
 const rollupJobsAdded = `-- name: RollupJobsAdded :exec
 INSERT INTO daily_rollups (owner_id, day, metric, dimension, value)
-SELECT owner_id, (occurred_at AT TIME ZONE 'Asia/Kolkata')::date, 'jobs_added',
-       'source=' || COALESCE(dimension->>'source', 'unknown'), count(*)
-FROM facts
-WHERE type = 'job.added' AND (occurred_at AT TIME ZONE 'Asia/Kolkata')::date >= $1
+SELECT f.owner_id, (f.occurred_at AT TIME ZONE $1::text)::date, 'jobs_added',
+       'source=' || COALESCE(f.dimension->>'source', 'unknown'), count(*)
+FROM facts f
+WHERE f.owner_id = $2 AND f.type = 'job.added' AND (f.occurred_at AT TIME ZONE $1::text)::date >= $3
 GROUP BY 1, 2, 3, 4
 `
 
+type RollupJobsAddedParams struct {
+	Tz      string
+	OwnerID uuid.UUID
+	FromDay time.Time
+}
+
 // Jobs added per day and source.
-func (q *Queries) RollupJobsAdded(ctx context.Context, fromDay time.Time) error {
-	_, err := q.db.Exec(ctx, rollupJobsAdded, fromDay)
+func (q *Queries) RollupJobsAdded(ctx context.Context, arg RollupJobsAddedParams) error {
+	_, err := q.db.Exec(ctx, rollupJobsAdded, arg.Tz, arg.OwnerID, arg.FromDay)
 	return err
 }

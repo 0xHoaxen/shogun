@@ -40,8 +40,8 @@ func TestListBudgetsCreatesDefaultsAndShowsCurrentSpend(t *testing.T) {
 	budgets := h.listBudgets(t)
 
 	// Assert
-	if len(budgets) != 11 {
-		t.Fatalf("got %d budgets, want the 11 defaults", len(budgets))
+	if len(budgets) != 12 {
+		t.Fatalf("got %d budgets, want the 12 defaults", len(budgets))
 	}
 	global := findBudget(t, budgets, sorobanv1.ScopeType_SCOPE_TYPE_GLOBAL, "", sorobanv1.BudgetPeriod_BUDGET_PERIOD_MONTHLY)
 	if global.GetLimitMicros() != 20_000_000 || global.GetMode() != sorobanv1.BudgetMode_BUDGET_MODE_HARD {
@@ -253,8 +253,9 @@ func (h *harness) spendFixture(t *testing.T) {
 		{"tsubame", "tsubame.classify", "claude-haiku-4-5", 1000},
 	}
 	for _, c := range calls {
+		h.switchModel(t, c.model)
 		res, err := h.client.Reserve(h.ctx(t), &sorobanv1.ReserveRequest{
-			Service: c.service, Feature: c.feature, Model: c.model, EstInputTokens: c.tokens,
+			Service: c.service, Feature: c.feature, EstInputTokens: c.tokens,
 		})
 		if err != nil {
 			t.Fatalf("Reserve %s: %v", c.feature, err)

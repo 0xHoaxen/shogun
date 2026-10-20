@@ -13,9 +13,9 @@ import (
 )
 
 const insertReservation = `-- name: InsertReservation :one
-INSERT INTO reservations (id, owner_id, service, feature, model, est_micros, budget_period_ids, created_at, expires_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at
+INSERT INTO reservations (id, owner_id, service, feature, model, est_micros, est_tokens, budget_period_ids, created_at, expires_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at, est_tokens
 `
 
 type InsertReservationParams struct {
@@ -25,6 +25,7 @@ type InsertReservationParams struct {
 	Feature         string
 	Model           string
 	EstMicros       int64
+	EstTokens       int64
 	BudgetPeriodIds []uuid.UUID
 	CreatedAt       time.Time
 	ExpiresAt       time.Time
@@ -38,6 +39,7 @@ func (q *Queries) InsertReservation(ctx context.Context, arg InsertReservationPa
 		arg.Feature,
 		arg.Model,
 		arg.EstMicros,
+		arg.EstTokens,
 		arg.BudgetPeriodIds,
 		arg.CreatedAt,
 		arg.ExpiresAt,
@@ -54,6 +56,7 @@ func (q *Queries) InsertReservation(ctx context.Context, arg InsertReservationPa
 		&i.Status,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.EstTokens,
 	)
 	return i, err
 }
@@ -70,6 +73,7 @@ type ListExpiredReservationIDsParams struct {
 	BatchSize int32
 }
 
+// owner-scope: internal expiry sweep across all owners
 func (q *Queries) ListExpiredReservationIDs(ctx context.Context, arg ListExpiredReservationIDsParams) ([]uuid.UUID, error) {
 	rows, err := q.db.Query(ctx, listExpiredReservationIDs, arg.Now, arg.BatchSize)
 	if err != nil {
@@ -91,7 +95,7 @@ func (q *Queries) ListExpiredReservationIDs(ctx context.Context, arg ListExpired
 }
 
 const lockReservation = `-- name: LockReservation :one
-SELECT id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at FROM reservations WHERE id = $1 AND owner_id = $2 FOR UPDATE
+SELECT id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at, est_tokens FROM reservations WHERE id = $1 AND owner_id = $2 FOR UPDATE
 `
 
 type LockReservationParams struct {
@@ -113,14 +117,16 @@ func (q *Queries) LockReservation(ctx context.Context, arg LockReservationParams
 		&i.Status,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.EstTokens,
 	)
 	return i, err
 }
 
 const lockReservationByID = `-- name: LockReservationByID :one
-SELECT id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at FROM reservations WHERE id = $1 FOR UPDATE
+SELECT id, owner_id, service, feature, model, est_micros, budget_period_ids, status, created_at, expires_at, est_tokens FROM reservations WHERE id = $1 FOR UPDATE
 `
 
+// owner-scope: internal expiry sweep; the id comes from ListExpiredReservationIDs
 // For the sweeper, which acts for no owner.
 func (q *Queries) LockReservationByID(ctx context.Context, id uuid.UUID) (Reservation, error) {
 	row := q.db.QueryRow(ctx, lockReservationByID, id)
@@ -136,6 +142,7 @@ func (q *Queries) LockReservationByID(ctx context.Context, id uuid.UUID) (Reserv
 		&i.Status,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.EstTokens,
 	)
 	return i, err
 }
@@ -149,7 +156,27 @@ type SetReservationStatusParams struct {
 	ID     uuid.UUID
 }
 
+// owner-scope: child reservation already locked with the owner
 func (q *Queries) SetReservationStatus(ctx context.Context, arg SetReservationStatusParams) error {
 	_, err := q.db.Exec(ctx, setReservationStatus, arg.Status, arg.ID)
 	return err
+}
+
+const sumOpenReservedTokens = `-- name: SumOpenReservedTokens :one
+SELECT COALESCE(sum(est_tokens), 0)::bigint AS tokens
+FROM reservations
+WHERE owner_id = $1 AND status = 'open' AND expires_at > $2
+`
+
+type SumOpenReservedTokensParams struct {
+	OwnerID uuid.UUID
+	Now     time.Time
+}
+
+// Tokens held by the owner's calls that are still in flight.
+func (q *Queries) SumOpenReservedTokens(ctx context.Context, arg SumOpenReservedTokensParams) (int64, error) {
+	row := q.db.QueryRow(ctx, sumOpenReservedTokens, arg.OwnerID, arg.Now)
+	var tokens int64
+	err := row.Scan(&tokens)
+	return tokens, err
 }
