@@ -16,6 +16,7 @@ const getLedgerEntryByReservation = `-- name: GetLedgerEntryByReservation :one
 SELECT id, owner_id, reservation_id, service, feature, model, input_tokens, output_tokens, cache_read_tokens, cache_write_tokens, cost_micros, request_id, occurred_at FROM ledger WHERE reservation_id = $1
 `
 
+// owner-scope: child reservation already locked with the owner
 func (q *Queries) GetLedgerEntryByReservation(ctx context.Context, reservationID uuid.UUID) (Ledger, error) {
 	row := q.db.QueryRow(ctx, getLedgerEntryByReservation, reservationID)
 	var i Ledger

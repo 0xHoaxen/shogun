@@ -42,13 +42,6 @@ func (r *Repo) GetPosting(ctx context.Context, owner, id uuid.UUID) (db.Posting,
 	return row, wrap("get posting", err)
 }
 
-// GetPostingByID returns a posting whatever its owner, for a job that already
-// acts for the owner it carries.
-func (r *Repo) GetPostingByID(ctx context.Context, id uuid.UUID) (db.Posting, error) {
-	row, err := r.q.GetPostingByID(ctx, id)
-	return row, wrap("get posting", err)
-}
-
 // PostingRow is a posting with its score, when it has one.
 type PostingRow = db.ListPostingsRow
 

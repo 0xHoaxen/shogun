@@ -16,6 +16,7 @@ const getUser = `-- name: GetUser :one
 SELECT id, google_sub, email, display_name, role, status, gmail_allowed, timezone, version, created_at, updated_at, archived_at FROM users WHERE id = $1 AND archived_at IS NULL
 `
 
+// owner-scope: global users are the tenants; their id is the owner id; admin calls are role-checked in torii
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUser, id)
 	var i User
@@ -50,6 +51,7 @@ type ListUsersParams struct {
 	PageSize       int32
 }
 
+// owner-scope: global users are the tenants; only admin RPCs list them, role-checked in torii
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
 	rows, err := q.db.Query(ctx, listUsers, arg.AfterCreatedAt, arg.AfterID, arg.PageSize)
 	if err != nil {
@@ -94,6 +96,7 @@ type SetUserGmailAllowedParams struct {
 	ID           uuid.UUID
 }
 
+// owner-scope: global users are the tenants; only admin RPCs change it, role-checked in torii
 func (q *Queries) SetUserGmailAllowed(ctx context.Context, arg SetUserGmailAllowedParams) (User, error) {
 	row := q.db.QueryRow(ctx, setUserGmailAllowed, arg.GmailAllowed, arg.ID)
 	var i User
@@ -125,6 +128,7 @@ type SetUserRoleParams struct {
 	ID   uuid.UUID
 }
 
+// owner-scope: global users are the tenants; only the admin bootstrap changes it
 func (q *Queries) SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error) {
 	row := q.db.QueryRow(ctx, setUserRole, arg.Role, arg.ID)
 	var i User
@@ -156,6 +160,7 @@ type SetUserStatusParams struct {
 	ID     uuid.UUID
 }
 
+// owner-scope: global users are the tenants; only admin RPCs change it, role-checked in torii
 func (q *Queries) SetUserStatus(ctx context.Context, arg SetUserStatusParams) (User, error) {
 	row := q.db.QueryRow(ctx, setUserStatus, arg.Status, arg.ID)
 	var i User
@@ -187,6 +192,7 @@ type SetUserTimezoneParams struct {
 	ID       uuid.UUID
 }
 
+// owner-scope: global users are the tenants; a user changes only their own, by session id
 func (q *Queries) SetUserTimezone(ctx context.Context, arg SetUserTimezoneParams) (User, error) {
 	row := q.db.QueryRow(ctx, setUserTimezone, arg.Timezone, arg.ID)
 	var i User
@@ -227,6 +233,7 @@ type UpsertUserParams struct {
 	DisplayName string
 }
 
+// owner-scope: global users are the tenants; the id is derived from the Google subject at login
 // Creates the user, or refreshes email and display name on a later login.
 // Role, status, gmail_allowed and timezone are only changed by their setters.
 func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error) {

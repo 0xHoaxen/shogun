@@ -16,6 +16,7 @@ const getVoiceSampleText = `-- name: GetVoiceSampleText :one
 SELECT text FROM voice_samples WHERE id = $1
 `
 
+// owner-scope: internal embedding job for a sample id taken from the owner's own event
 func (q *Queries) GetVoiceSampleText(ctx context.Context, id uuid.UUID) (string, error) {
 	row := q.db.QueryRow(ctx, getVoiceSampleText, id)
 	var text string
@@ -175,6 +176,7 @@ type SetVoiceSampleEmbeddingParams struct {
 	ID        uuid.UUID
 }
 
+// owner-scope: internal embedding job for a sample id taken from the owner's own event
 func (q *Queries) SetVoiceSampleEmbedding(ctx context.Context, arg SetVoiceSampleEmbeddingParams) (int64, error) {
 	result, err := q.db.Exec(ctx, setVoiceSampleEmbedding, arg.Embedding, arg.ID)
 	if err != nil {

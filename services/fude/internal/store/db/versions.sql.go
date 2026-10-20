@@ -20,6 +20,7 @@ type GetDraftVersionParams struct {
 	Version int32
 }
 
+// owner-scope: child only after GetDraft(owner, id) in Approve
 func (q *Queries) GetDraftVersion(ctx context.Context, arg GetDraftVersionParams) (DraftVersion, error) {
 	row := q.db.QueryRow(ctx, getDraftVersion, arg.DraftID, arg.Version)
 	var i DraftVersion
@@ -61,6 +62,7 @@ type InsertDraftVersionParams struct {
 	CreatedBy     string
 }
 
+// owner-scope: child draft already loaded with GetDraft(owner, id), or created in the same call
 func (q *Queries) InsertDraftVersion(ctx context.Context, arg InsertDraftVersionParams) (DraftVersion, error) {
 	row := q.db.QueryRow(ctx, insertDraftVersion,
 		arg.DraftID,
@@ -94,6 +96,7 @@ const listDraftVersions = `-- name: ListDraftVersions :many
 SELECT draft_id, version, subject, body, body_sha256, extra_context, prompt_context, model, reservation_id, created_by, created_at FROM draft_versions WHERE draft_id = $1 ORDER BY version DESC
 `
 
+// owner-scope: child only after GetDraft(owner, id) in GetDraft detail
 func (q *Queries) ListDraftVersions(ctx context.Context, draftID uuid.UUID) ([]DraftVersion, error) {
 	rows, err := q.db.Query(ctx, listDraftVersions, draftID)
 	if err != nil {

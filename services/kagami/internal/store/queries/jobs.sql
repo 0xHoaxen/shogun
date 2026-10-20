@@ -75,6 +75,7 @@ WHERE status = 'applied' AND applied_on <= @applied_by::date
 ORDER BY owner_id, id;
 
 -- name: MarkJobFollowUp :one
+-- owner-scope: internal stale-application scan; the job comes from the scan's own listing
 -- Plans a follow-up for a job that has none. Returns no row when one is set.
 UPDATE jobs SET next_follow_up = @next_follow_up::date, version = version + 1, updated_at = now()
 WHERE id = @id AND next_follow_up IS NULL
@@ -88,11 +89,13 @@ ORDER BY next_follow_up, id
 LIMIT @row_limit;
 
 -- name: InsertJobEvent :one
+-- owner-scope: child job already loaded with the owner
 INSERT INTO job_events (id, job_id, kind, from_status, to_status, source_event_id, payload, occurred_at)
 VALUES (@id, @job_id, @kind, @from_status, @to_status, @source_event_id, @payload, @occurred_at)
 RETURNING *;
 
 -- name: ListJobEvents :many
+-- owner-scope: child only after GetJob(owner, id)
 SELECT * FROM job_events WHERE job_id = @job_id ORDER BY occurred_at DESC, id DESC;
 
 -- name: FindJobByURLs :one
@@ -113,6 +116,7 @@ ORDER BY (j.status <> 'rejected') DESC, length(c.domain) DESC, j.updated_at DESC
 LIMIT 1;
 
 -- name: LatestJobStatusAnchor :one
+-- owner-scope: child job already loaded with the owner
 -- When the job's status last changed, as an event time: a change made from
 -- mail carries the time of the mail event in its payload; any other change is
 -- anchored at the moment it was made. A mail event that occurred before this

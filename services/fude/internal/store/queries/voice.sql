@@ -20,7 +20,9 @@ ORDER BY embedding <=> @query::vector NULLS LAST, created_at DESC, id DESC
 LIMIT @row_limit;
 
 -- name: GetVoiceSampleText :one
+-- owner-scope: internal embedding job for a sample id taken from the owner's own event
 SELECT text FROM voice_samples WHERE id = @id;
 
 -- name: SetVoiceSampleEmbedding :execrows
+-- owner-scope: internal embedding job for a sample id taken from the owner's own event
 UPDATE voice_samples SET embedding = @embedding::vector WHERE id = @id;

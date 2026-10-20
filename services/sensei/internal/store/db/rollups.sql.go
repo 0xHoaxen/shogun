@@ -16,6 +16,7 @@ const deleteRollupsFrom = `-- name: DeleteRollupsFrom :exec
 DELETE FROM daily_rollups WHERE day >= $1
 `
 
+// owner-scope: internal rebuilds every owner's rollups in one transaction, then recomputes them all
 func (q *Queries) DeleteRollupsFrom(ctx context.Context, fromDay time.Time) error {
 	_, err := q.db.Exec(ctx, deleteRollupsFrom, fromDay)
 	return err

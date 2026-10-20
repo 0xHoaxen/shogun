@@ -284,6 +284,7 @@ type InsertContactEventParams struct {
 	OccurredAt    time.Time
 }
 
+// owner-scope: child contact already loaded with the owner
 func (q *Queries) InsertContactEvent(ctx context.Context, arg InsertContactEventParams) (ContactEvent, error) {
 	row := q.db.QueryRow(ctx, insertContactEvent,
 		arg.ID,
@@ -319,6 +320,7 @@ ORDER BY COALESCE((payload->>'event_at')::timestamptz, occurred_at) DESC
 LIMIT 1
 `
 
+// owner-scope: child contact already loaded with the owner
 // See LatestJobStatusAnchor.
 func (q *Queries) LatestContactStatusAnchor(ctx context.Context, contactID uuid.UUID) (time.Time, error) {
 	row := q.db.QueryRow(ctx, latestContactStatusAnchor, contactID)
@@ -331,6 +333,7 @@ const listContactEvents = `-- name: ListContactEvents :many
 SELECT id, contact_id, kind, channel, from_status, to_status, source_event_id, payload, occurred_at FROM contact_events WHERE contact_id = $1 ORDER BY occurred_at DESC, id DESC
 `
 
+// owner-scope: child only after GetContact(owner, id)
 func (q *Queries) ListContactEvents(ctx context.Context, contactID uuid.UUID) ([]ContactEvent, error) {
 	rows, err := q.db.Query(ctx, listContactEvents, contactID)
 	if err != nil {

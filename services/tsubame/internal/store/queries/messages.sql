@@ -24,6 +24,7 @@ UPDATE messages SET
 WHERE id = @id AND owner_id = @owner_id AND classification IS NULL;
 
 -- name: ThreadHasOutbound :one
+-- owner-scope: child scoped by account_id of an account the job already holds
 -- Whether the owner sent anything in the thread, which makes mail in it a
 -- reply.
 SELECT EXISTS (
@@ -32,6 +33,7 @@ SELECT EXISTS (
 );
 
 -- name: ThreadLinks :one
+-- owner-scope: child scoped by account_id of an account the job already holds
 -- The job and contact an earlier message of the thread was linked to.
 SELECT linked_job_id, linked_contact_id FROM messages
 WHERE account_id = @account_id AND provider_thread_id = @thread_id AND id <> @id
