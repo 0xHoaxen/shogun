@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/katana/v1.0.0...services/katana/v1.1.0) (2026-10-20)
+
+
+### Features
+
+* **kagami:** scan each owner's follow-ups on their own clock ([fe868aa](https://github.com/0xHoaxen/shogun/commit/fe868aa0208b0be1d73a7a5289a11e196c1bf1ae))
+* **katana:** connect a user's own GitHub through OAuth ([6bf10dc](https://github.com/0xHoaxen/shogun/commit/6bf10dc012c076ed2e20db79915202747bae25a4))
+* **katana:** purge a deleted user's snapshots, suggestions and GitHub token ([5a4c248](https://github.com/0xHoaxen/shogun/commit/5a4c248e1cc71e3e81476836af4417e1ab345923))
+* **katana:** store each user's own sealed GitHub token and sync with it ([ae2df8a](https://github.com/0xHoaxen/shogun/commit/ae2df8ac453fae045f2e5758fffe0cc597515fab))
+* **llm:** call each user's own provider and drop the shared Anthropic settings ([7d1ef65](https://github.com/0xHoaxen/shogun/commit/7d1ef65cb0319da08d4040b2aced3aa9fe413863))
+* multi-user phase 11 (sign-up, per-user providers, account deletion) ([1517322](https://github.com/0xHoaxen/shogun/commit/1517322d2b8015be13d7dd5ff37e0a8b73a0d6d5))
+* **shinobi:** read each owner's source schedules in their own time zone ([91a4c48](https://github.com/0xHoaxen/shogun/commit/91a4c48b4c482e2225beaaeea828e96759eb4a01))
+* **torii:** announce users to services and keep a local owners list ([10ffeb1](https://github.com/0xHoaxen/shogun/commit/10ffeb1a2fd0671448dbf2fbec7b559073f481dc))
+
+
+### Bug Fixes
+
+* **katana:** stop sharing one GitHub account across users and sync on each owner's clock ([9bbacbf](https://github.com/0xHoaxen/shogun/commit/9bbacbf6f2917dd1f5e5970d3a755ec10d583cb5))
+
 ## [1.0.0](https://github.com/0xHoaxen/shogun/compare/services/katana/v0.0.1...services/katana/v1.0.0) (2026-10-10)
 
 
