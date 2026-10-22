@@ -72,7 +72,7 @@ replace github.com/0xHoaxen/shogun/gen/go => ../gen/go
 
 require (
 	aidanwoods.dev/go-paseto v1.6.0
-	github.com/anthropics/anthropic-sdk-go v1.80.0
+	github.com/anthropics/anthropic-sdk-go v1.82.0
 	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/client_model v0.6.3
 	github.com/riverqueue/river v0.49.0
