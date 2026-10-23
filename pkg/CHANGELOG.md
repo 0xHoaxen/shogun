@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0](https://github.com/0xHoaxen/shogun/compare/pkg/v1.2.1...pkg/v1.3.0) (2026-10-23)
+
+
+### Features
+
+* **kagami:** map any contacts sheet onto the import columns ([560a1e5](https://github.com/0xHoaxen/shogun/commit/560a1e5a19a4f4fd62ec8ddacb939164577a5d95))
+* **kagami:** reshape contacts sheets with the owner's AI provider ([ed33cdf](https://github.com/0xHoaxen/shogun/commit/ed33cdf835f364b41d251129f4be53060e6febec))
+* **kagami:** reshape contacts sheets with the owner's AI provider ([552e912](https://github.com/0xHoaxen/shogun/commit/552e91205674e0dc3d166663163ddeeafa5e02af))
+* **llm:** call providers through the OpenAI chat completions format ([7fb6276](https://github.com/0xHoaxen/shogun/commit/7fb6276d34081efd46616aef8e1919639e5934e9))
+* **llm:** call providers through the OpenAI chat completions format ([cb399fd](https://github.com/0xHoaxen/shogun/commit/cb399fd8aff1ce86def6e8622604ea404396692d))
+
+
+### Bug Fixes
+
+* bump Go to 1.26.10 for GO-2026-6809 ([27b914c](https://github.com/0xHoaxen/shogun/commit/27b914ce8990401048db4dfccf7b70ba5677f3aa))
+* **web:** bump next to 16.4.2 for critical advisories ([03b1072](https://github.com/0xHoaxen/shogun/commit/03b10721c195e446411756ebd56bee830f2e33ef))
+
 ## [1.2.1](https://github.com/0xHoaxen/shogun/compare/pkg/v1.2.0...pkg/v1.2.1) (2026-10-20)
 
 
