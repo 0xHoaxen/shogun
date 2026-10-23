@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.4.0](https://github.com/0xHoaxen/shogun/compare/web/v1.3.0...web/v1.4.0) (2026-10-23)
+
+
+### Features
+
+* **kagami:** map any contacts sheet onto the import columns ([560a1e5](https://github.com/0xHoaxen/shogun/commit/560a1e5a19a4f4fd62ec8ddacb939164577a5d95))
+* **kagami:** reshape contacts sheets with the owner's AI provider ([ed33cdf](https://github.com/0xHoaxen/shogun/commit/ed33cdf835f364b41d251129f4be53060e6febec))
+* **llm:** call providers through the OpenAI chat completions format ([7fb6276](https://github.com/0xHoaxen/shogun/commit/7fb6276d34081efd46616aef8e1919639e5934e9))
+* **llm:** call providers through the OpenAI chat completions format ([cb399fd](https://github.com/0xHoaxen/shogun/commit/cb399fd8aff1ce86def6e8622604ea404396692d))
+* **torii:** pass contacts sheet reshaping through to kagami ([ede185f](https://github.com/0xHoaxen/shogun/commit/ede185f1ce5a07481371f1c61efed23cb7940386))
+* **torii:** pass contacts sheet reshaping through to kagami ([33b24a7](https://github.com/0xHoaxen/shogun/commit/33b24a788f6bef93687fbb4db6da099288ce9860))
+* **web:** import any contacts sheet with the owner's AI provider ([d93725f](https://github.com/0xHoaxen/shogun/commit/d93725fccc4bc6f42569da28872e4735f1fb12ee))
+* **web:** import any contacts sheet with the owner's AI provider ([08c5794](https://github.com/0xHoaxen/shogun/commit/08c5794aa3cbf58aef0bf8b961ad9c6c9ae3c369))
+
+
+### Bug Fixes
+
+* **web:** bump next to 16.4.2 for critical advisories ([03b1072](https://github.com/0xHoaxen/shogun/commit/03b10721c195e446411756ebd56bee830f2e33ef))
+* **web:** bump next to 16.4.2 for critical advisories ([5e8ebc8](https://github.com/0xHoaxen/shogun/commit/5e8ebc8cd00c596f2f8b74388a75dd2a611a0f59))
+* **web:** regenerate lockfile with npm 10 so CI npm ci passes ([50cc5de](https://github.com/0xHoaxen/shogun/commit/50cc5de7a6ea1d25ee6b2830f5b032aac2e0bc1e))
+* **web:** restore optional emnapi entries in lockfile for npm ci ([38ce629](https://github.com/0xHoaxen/shogun/commit/38ce629a98f4339b7519a42d00f0acf93b35bb63))
+
 ## [1.3.0](https://github.com/0xHoaxen/shogun/compare/web/v1.2.0...web/v1.3.0) (2026-10-20)
 
 
