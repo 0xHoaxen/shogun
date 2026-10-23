@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0](https://github.com/0xHoaxen/shogun/compare/services/torii/v1.2.0...services/torii/v1.3.0) (2026-10-23)
+
+
+### Features
+
+* **kagami:** map any contacts sheet onto the import columns ([560a1e5](https://github.com/0xHoaxen/shogun/commit/560a1e5a19a4f4fd62ec8ddacb939164577a5d95))
+* **kagami:** reshape contacts sheets with the owner's AI provider ([ed33cdf](https://github.com/0xHoaxen/shogun/commit/ed33cdf835f364b41d251129f4be53060e6febec))
+* **llm:** call providers through the OpenAI chat completions format ([7fb6276](https://github.com/0xHoaxen/shogun/commit/7fb6276d34081efd46616aef8e1919639e5934e9))
+* **torii:** pass contacts sheet reshaping through to kagami ([ede185f](https://github.com/0xHoaxen/shogun/commit/ede185f1ce5a07481371f1c61efed23cb7940386))
+* **torii:** pass contacts sheet reshaping through to kagami ([33b24a7](https://github.com/0xHoaxen/shogun/commit/33b24a788f6bef93687fbb4db6da099288ce9860))
+
+
+### Bug Fixes
+
+* bump Go to 1.26.10 for GO-2026-6809 ([27b914c](https://github.com/0xHoaxen/shogun/commit/27b914ce8990401048db4dfccf7b70ba5677f3aa))
+* **web:** bump next to 16.4.2 for critical advisories ([03b1072](https://github.com/0xHoaxen/shogun/commit/03b10721c195e446411756ebd56bee830f2e33ef))
+
 ## [1.2.0](https://github.com/0xHoaxen/shogun/compare/services/torii/v1.1.0...services/torii/v1.2.0) (2026-10-20)
 
 
