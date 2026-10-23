@@ -114,7 +114,13 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		}
 	}
 
-	service := app.NewService(pool, nil)
+	reshape, err := newReshaper(ctx, lookup, cfg, authority, log)
+	if err != nil {
+		return err
+	}
+	defer reshape.close()
+
+	service := app.NewService(pool, nil, reshape.option)
 	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(kagamievents.Handlers(service, log), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {
 		return err

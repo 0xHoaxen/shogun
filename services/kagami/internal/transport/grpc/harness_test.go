@@ -37,7 +37,7 @@ type harness struct {
 	owner     string
 }
 
-func newHarness(t *testing.T) *harness {
+func newHarness(t *testing.T, opts ...app.Option) *harness {
 	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "kagami")
@@ -57,7 +57,7 @@ func newHarness(t *testing.T) *harness {
 		grpc.UnaryInterceptor(authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(authority.StreamServerInterceptor()),
 	)
-	kagamiv1.RegisterKagamiServiceServer(srv, kagamigrpc.New(app.NewService(pool, nil)))
+	kagamiv1.RegisterKagamiServiceServer(srv, kagamigrpc.New(app.NewService(pool, nil, opts...)))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)

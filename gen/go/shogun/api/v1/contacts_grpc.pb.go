@@ -40,7 +40,12 @@ type ContactsServiceClient interface {
 	// move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
 	ChangeContactStatus(ctx context.Context, in *ChangeContactStatusRequest, opts ...grpc.CallOption) (*ChangeContactStatusResponse, error)
 	// ImportContacts parses a contacts CSV. With dry_run nothing is written and
-	// the report is the preview shown before the owner confirms.
+	// the report is the preview shown before the owner confirms. With reshape a
+	// sheet with other columns is first mapped onto the import columns by the
+	// owner's AI provider: no column holding a name is FailedPrecondition with
+	// reason IMPORT_NO_NAME_COLUMN, a provider that fails or answers badly
+	// IMPORT_RESHAPE_FAILED, no provider AI_PROVIDER_NOT_CONFIGURED, and a spent
+	// budget ResourceExhausted with reason BUDGET_EXHAUSTED.
 	ImportContacts(ctx context.Context, in *ImportContactsRequest, opts ...grpc.CallOption) (*ImportContactsResponse, error)
 }
 
@@ -107,7 +112,12 @@ type ContactsServiceServer interface {
 	// move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
 	ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error)
 	// ImportContacts parses a contacts CSV. With dry_run nothing is written and
-	// the report is the preview shown before the owner confirms.
+	// the report is the preview shown before the owner confirms. With reshape a
+	// sheet with other columns is first mapped onto the import columns by the
+	// owner's AI provider: no column holding a name is FailedPrecondition with
+	// reason IMPORT_NO_NAME_COLUMN, a provider that fails or answers badly
+	// IMPORT_RESHAPE_FAILED, no provider AI_PROVIDER_NOT_CONFIGURED, and a spent
+	// budget ResourceExhausted with reason BUDGET_EXHAUSTED.
 	ImportContacts(context.Context, *ImportContactsRequest) (*ImportContactsResponse, error)
 	mustEmbedUnimplementedContactsServiceServer()
 }
