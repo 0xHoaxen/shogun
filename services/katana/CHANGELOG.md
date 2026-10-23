@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/0xHoaxen/shogun/compare/services/katana/v1.1.0...services/katana/v1.2.0) (2026-10-23)
+
+
+### Features
+
+* **llm:** call providers through the OpenAI chat completions format ([7fb6276](https://github.com/0xHoaxen/shogun/commit/7fb6276d34081efd46616aef8e1919639e5934e9))
+* **llm:** call providers through the OpenAI chat completions format ([cb399fd](https://github.com/0xHoaxen/shogun/commit/cb399fd8aff1ce86def6e8622604ea404396692d))
+
+
+### Bug Fixes
+
+* bump Go to 1.26.10 for GO-2026-6809 ([27b914c](https://github.com/0xHoaxen/shogun/commit/27b914ce8990401048db4dfccf7b70ba5677f3aa))
+* **web:** bump next to 16.4.2 for critical advisories ([03b1072](https://github.com/0xHoaxen/shogun/commit/03b10721c195e446411756ebd56bee830f2e33ef))
+
 ## [1.1.0](https://github.com/0xHoaxen/shogun/compare/services/katana/v1.0.0...services/katana/v1.1.0) (2026-10-20)
 
 
