@@ -16,9 +16,9 @@ import (
 
 const drillCallTimeout = 200 * time.Millisecond
 
-// hangingAnthropic never answers a message until the client gives up, like a
+// hangingProvider never answers a message until the client gives up, like a
 // model that has stopped responding.
-func hangingAnthropic(t *testing.T) (*httptest.Server, *atomic.Int32) {
+func hangingProvider(t *testing.T) (*httptest.Server, *atomic.Int32) {
 	t.Helper()
 	var creates atomic.Int32
 	release := make(chan struct{})
@@ -39,9 +39,9 @@ func hangingAnthropic(t *testing.T) (*httptest.Server, *atomic.Int32) {
 }
 
 func TestDrillClaudeTimeoutReleasesTheHoldAndSpendsNothing(t *testing.T) {
-	// Arrange: the real Anthropic adapter against a model that never answers.
-	srv, creates := hangingAnthropic(t)
-	api := llm.NewAnthropicAPI(llm.AllowPrivateAddresses(), llm.CallTimeout(drillCallTimeout), llm.MaxRetries(0))
+	// Arrange: the real provider adapter against a model that never answers.
+	srv, creates := hangingProvider(t)
+	api := llm.NewOpenAIAPI(llm.AllowPrivateAddresses(), llm.CallTimeout(drillCallTimeout), llm.MaxRetries(0))
 	meter := &llmtest.Meter{
 		ReservationID: "res-timeout",
 		Provider:      &sorobanv1.ProviderAccess{BaseUrl: srv.URL, Model: "claude-opus-5-5", ApiKey: "test-key-12345"},

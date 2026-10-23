@@ -921,6 +921,29 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
 - [ ] **P11.9 Compliance** (S) Needs: P11.11
   Do: privacy and terms for many users and BYO keys; Google verification notes in `docs/deploy.md`.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+  Note: `web/src/app/privacy/page.tsx` and `terms/page.tsx` still say mail snippets go to Anthropic; since M1 they go to the user's own OpenAI-compatible provider. `TODO(owner)`: legal copy.
+
+## Phase 12: Mail import and any provider
+
+- [x] **M1 OpenAI-compatible provider client** (M)
+  Done: `pkg/llm` calls `POST {base_url}/chat/completions` over `net/http` (`OpenAIAPI`, replacing `AnthropicAPI`; the Anthropic SDK is gone from every module). Bearer key, system prompt as the first message, `prompt_tokens_details.cached_tokens` counted as cache reads, `content_filter` or a `refusal` is a refusal; 429, 5xx and broken connections are retried twice with backoff; non-2xx is a `*StatusError` that `ClassifyFailure` maps as before. The address is the part before `/chat/completions` (`https://api.openai.com/v1`, `https://api.anthropic.com/v1`). Prompt-cache hints are no longer sent. The compose stub serves `/v1/chat/completions`.
+  Done when: `cd pkg && go test -race ./llm/...`, `make lint`, `make build`.
+
+- [ ] **M2 Show the connected Gmail address** (M) Needs: M1
+  Do: `ListAccounts` on `tsubame.v1` and `api.v1.MailService` (`MailAccount {id, address, status, last_synced_at}`) over the existing `Accounts.List`; handler tests in tsubame and torii; `mail-settings.tsx` shows "Connected as <address>", status and last sync, and the button only when there is no account ("Connect Gmail") or it needs reauth ("Reconnect Gmail"); Playwright mock tests for both.
+  Done when: `make proto && make lint && make test`; `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
+- [ ] **M3 Sync immediately on connect** (S) Needs: M2
+  Do: `Connector.Complete` enqueues a `gmail_sync` through a `SyncQueue` interface (unique with the periodic one), so the first 30 days are read at once instead of within five minutes.
+  Done when: `cd services/tsubame && go test -race ./...`.
+
+- [ ] **M4 Import jobs and contacts from mail** (L, split tsubame/kagami if over 400 lines) Needs: M3
+  Do: the classifier also extracts company, role, job URL and contact (name, email, title) from sender, subject and snippet; new add-only fields on `MailClassified`; kagami `ApplyMailClassified` finds or creates the job (company + title, `source=gmail`, status from the class) and the contact (by email) at confidence ≥ 0.9, in the inbox transaction with their events; `other` creates nothing.
+  Done when: `make proto && make lint && make test`.
+
+- [ ] **M5 Tell the owner when AI is off, retry when it is on** (M) Needs: M4
+  Do: event `mail.ai_required` (routed to taiko) written at most once a day per owner when classification finds no provider (`accounts.ai_notice_at`, new migration); taiko notification linking to the AI provider settings; each sync re-queues up to 100 unclassified messages from the last 30 days. `TODO(owner)`: add `mail.ai_required` to the LLD event catalog.
+  Done when: `make proto && make lint && make test`.
 
 ## Later (not scheduled)
 

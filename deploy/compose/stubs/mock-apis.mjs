@@ -1,8 +1,8 @@
-// Stand-in for Anthropic and Gmail in the end-to-end stack, so fude and tsubame
-// run their real code against a server that never leaves the machine.
-// No dependencies: `node mock-apis.mjs`.
+// Stand-in for an OpenAI-compatible model provider and Gmail in the end-to-end
+// stack, so fude and tsubame run their real code against a server that never
+// leaves the machine. No dependencies: `node mock-apis.mjs`.
 //
-// Anthropic:  POST /v1/messages/count_tokens, POST /v1/messages
+// Provider:   POST /v1/chat/completions
 // Google:     POST /token, GET /gmail/v1/users/me/{profile,messages,history},
 //             GET /gmail/v1/users/me/messages/:id, POST .../messages/send
 // Test only:  GET /_e2e/sent lists what was sent; DELETE /_e2e/sent clears it.
@@ -57,21 +57,14 @@ async function handle(req, res) {
 
   if (key === "GET /healthz") return send(res, 200, { ok: true });
 
-  if (key === "POST /v1/messages/count_tokens") {
-    await readBody(req);
-    return send(res, 200, { input_tokens: 120 });
-  }
-  if (key === "POST /v1/messages") {
+  if (key === "POST /v1/chat/completions") {
     const body = JSON.parse((await readBody(req)) || "{}");
     return send(res, 200, {
-      id: `msg_${drafts + 1}`,
-      type: "message",
-      role: "assistant",
+      id: `chatcmpl_${drafts + 1}`,
+      object: "chat.completion",
       model: body.model ?? "stub",
-      content: [{ type: "text", text: nextDraft() }],
-      stop_reason: "end_turn",
-      stop_sequence: null,
-      usage: { input_tokens: 120, output_tokens: 60, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      choices: [{ index: 0, message: { role: "assistant", content: nextDraft() }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 120, completion_tokens: 60, total_tokens: 180 },
     });
   }
 

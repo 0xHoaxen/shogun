@@ -63,7 +63,7 @@ type SorobanServiceClient interface {
 	ListBudgets(ctx context.Context, in *ListBudgetsRequest, opts ...grpc.CallOption) (*ListBudgetsResponse, error)
 	SetPrice(ctx context.Context, in *SetPriceRequest, opts ...grpc.CallOption) (*SetPriceResponse, error)
 	ListPrices(ctx context.Context, in *ListPricesRequest, opts ...grpc.CallOption) (*ListPricesResponse, error)
-	// SetProvider stores the caller's own AI provider: the Anthropic-compatible
+	// SetProvider stores the caller's own AI provider: the OpenAI-compatible
 	// base URL, the model and the API key. The key is sealed at rest and never
 	// returned. Without a provider the caller's AI features are off. With version
 	// 0 it creates the provider (api_key is then required, reason API_KEY_REQUIRED);
@@ -228,7 +228,7 @@ type SorobanServiceServer interface {
 	ListBudgets(context.Context, *ListBudgetsRequest) (*ListBudgetsResponse, error)
 	SetPrice(context.Context, *SetPriceRequest) (*SetPriceResponse, error)
 	ListPrices(context.Context, *ListPricesRequest) (*ListPricesResponse, error)
-	// SetProvider stores the caller's own AI provider: the Anthropic-compatible
+	// SetProvider stores the caller's own AI provider: the OpenAI-compatible
 	// base URL, the model and the API key. The key is sealed at rest and never
 	// returned. Without a provider the caller's AI features are off. With version
 	// 0 it creates the provider (api_key is then required, reason API_KEY_REQUIRED);

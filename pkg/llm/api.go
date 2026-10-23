@@ -58,7 +58,7 @@ type CallResult struct {
 	Refused bool
 }
 
-// API is the model behind Client. AnthropicAPI is the real one; llmtest has a
+// API is the model behind Client. OpenAIAPI is the real one; llmtest has a
 // fake. It holds no credentials of its own: every call brings the Access of the
 // user it is made for.
 type API interface {

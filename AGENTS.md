@@ -8,7 +8,7 @@ A multi-user web app (open Google sign-up, admin and member roles, every user fu
 
 **Hard product rule:** nothing leaves the system (email, DM, post) without *that user* approving that exact draft version. Automation is allowed for internal events only.
 
-**Tenancy rules:** every user-facing row carries `owner_id` and every query reachable from an RPC filters on it. Each user brings their own Anthropic-compatible provider (base URL, API key, model) and their own GitHub connection, set in the web Settings and stored encrypted. There are no global `ANTHROPIC_*`, `KATANA_GITHUB_*` or `TORII_ALLOWED_EMAILS` settings.
+**Tenancy rules:** every user-facing row carries `owner_id` and every query reachable from an RPC filters on it. Each user brings their own OpenAI-compatible provider (base URL, API key, model) and their own GitHub connection, set in the web Settings and stored encrypted. There are no global `ANTHROPIC_*`, `KATANA_GITHUB_*` or `TORII_ALLOWED_EMAILS` settings.
 
 ## Architecture in one screen
 
@@ -51,7 +51,7 @@ Run a single module: `cd services/kagami && go test -race ./...`. The repo is a 
 2. **Database isolation.** A service touches only its own schema. No foreign key crosses a schema; reference another service's row by plain `uuid` and resolve it through that service's API.
 3. **Events via outbox.** Write the event with `outbox.Write` in the same transaction as the state change. Never publish from outside a transaction, never call another service to "notify" it. Consumers must be idempotent (dedupe on event id via `inbox`).
 4. **No external send without Hanko.** Only `fude.Approve` signs a Hanko token; only `tsubame.Send` sends email and it verifies the token. Do not add another code path to either. Posts for LinkedIn and X are copy-only and never go through `tsubame`.
-5. **All Claude calls go through `pkg/llm`.** It reserves and commits cost with `soroban`. Never import the Anthropic SDK directly in a service. Fail closed if `soroban` is unavailable.
+5. **All Claude calls go through `pkg/llm`.** It reserves and commits cost with `soroban`. Never call a model provider directly from a service. Fail closed if `soroban` is unavailable.
 6. **Generated code is never edited.** `gen/go` and `web/src/gen` come from `make proto`; commit regenerated output.
 7. **Migrations are append-only.** Never edit a migration that has been merged; add a new one. SQL uses goose format in `services/<name>/migrations/`.
 8. **Secrets never enter the repo.** Config comes from environment variables; only `.env.example` is committed. Never log message bodies, tokens or email addresses.

@@ -45,7 +45,7 @@ func newScoring(
 		closeConn()
 		return nil, err
 	}
-	client, err := llm.New(llmCfg, llm.NewAnthropicAPI(llm.ForEnvironment(cfg.Environment)...),
+	client, err := llm.New(llmCfg, llm.NewOpenAIAPI(llm.ForEnvironment(cfg.Environment)...),
 		sorobanv1.NewSorobanServiceClient(conn), llm.WithLogger(log))
 	if err != nil {
 		closeConn()

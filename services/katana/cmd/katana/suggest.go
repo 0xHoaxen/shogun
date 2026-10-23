@@ -67,5 +67,5 @@ func newCompleter(cfg config.Base, meter llm.Meter, log *slog.Logger) (app.Compl
 	if err != nil {
 		return nil, err
 	}
-	return llm.New(llmCfg, llm.NewAnthropicAPI(llm.ForEnvironment(cfg.Environment)...), meter, llm.WithLogger(log))
+	return llm.New(llmCfg, llm.NewOpenAIAPI(llm.ForEnvironment(cfg.Environment)...), meter, llm.WithLogger(log))
 }

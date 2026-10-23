@@ -31,7 +31,7 @@ service SorobanService {
   rpc ListBudgets(ListBudgetsRequest) returns (ListBudgetsResponse);
   rpc SetPrice(SetPriceRequest) returns (SetPriceResponse);
   rpc ListPrices(ListPricesRequest) returns (ListPricesResponse);
-  // SetProvider stores the caller's own AI provider: the Anthropic-compatible
+  // SetProvider stores the caller's own AI provider: the OpenAI-compatible
   // base URL, the model and the API key. The key is sealed at rest and never
   // returned. Without a provider the caller's AI features are off. With version
   // 0 it creates the provider (api_key is then required, reason API_KEY_REQUIRED);

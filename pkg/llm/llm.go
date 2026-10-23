@@ -176,7 +176,7 @@ func validate(req Request) error {
 // reserve estimates the call, holds its cost against the user's budgets and
 // returns the reservation id with the provider to make the call with. The
 // estimate is made here, not by the provider: counting tokens would need the
-// user's key before their budget has been checked, and many Anthropic-compatible
+// user's key before their budget has been checked, and many OpenAI-compatible
 // providers have no token-counting endpoint at all.
 func (c *Client) reserve(ctx context.Context, feature string, call CallRequest) (string, Access, error) {
 	estimate := EstimateInputTokens(call.System, call.Messages)
