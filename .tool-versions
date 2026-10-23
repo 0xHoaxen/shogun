@@ -1,4 +1,4 @@
-golang 1.26.9
+golang 1.26.10
 golangci-lint 2.14.0
 nodejs 22
 helm 3

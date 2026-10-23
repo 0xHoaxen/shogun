@@ -1,6 +1,6 @@
 module github.com/0xHoaxen/shogun/gen/go
 
-go 1.26.9
+go 1.26.10
 
 require (
 	connectrpc.com/connect v1.21.0

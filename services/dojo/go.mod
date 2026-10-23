@@ -1,6 +1,6 @@
 module github.com/0xHoaxen/shogun/services/dojo
 
-go 1.26.9
+go 1.26.10
 
 require (
 	github.com/0xHoaxen/shogun/gen/go v0.0.0
