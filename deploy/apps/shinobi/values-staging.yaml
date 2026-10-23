@@ -1,6 +1,6 @@
 # shinobi, staging. image.tag is bumped by .github/workflows/deploy.yml.
 image:
-  tag: "1.2.0"
+  tag: "1.3.0"
 env:
   ENVIRONMENT: staging
 serviceMonitor:
