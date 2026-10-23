@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { AuthService } from "../src/gen/shogun/api/v1/auth_pb";
 import { ContactStatus, ContactsService } from "../src/gen/shogun/api/v1/contacts_pb";
+import { ProviderService } from "../src/gen/shogun/api/v1/providers_pb";
 import { mockRpc, mockRpcError } from "./fixtures";
 
 interface ContactInit {
@@ -291,4 +292,112 @@ test("a wrong header keeps the error inside the dialog", async ({ page }) => {
   await expect(dialog.getByRole("link", { name: "Download template" })).toBeVisible();
   const fits = await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth);
   expect(fits).toBe(true);
+});
+
+// withProvider makes the owner one with an AI provider set, which turns on the
+// AI import.
+async function withProvider(page: Page) {
+  await mockRpc(page, ProviderService.method.getProvider, {
+    provider: { baseUrl: "https://api.example.com/v1", model: "test-model", keyLast4: "abcd", version: 1 },
+  });
+}
+
+// chooseFileWithAi picks a file once the dialog is in AI mode, as the owner
+// would: the picker stays disabled until the provider has loaded.
+async function chooseFileWithAi(page: Page, name: string, content: string) {
+  await page.getByRole("button", { name: "Import CSV" }).click();
+  const dialog = importDialog(page);
+  await expect(dialog.getByTestId("import-ai-hint")).toBeVisible();
+  await expect(dialog.getByLabel("CSV file")).toBeEnabled();
+  await dialog.getByLabel("CSV file").setInputFiles({ name, mimeType: "text/csv", buffer: Buffer.from(content) });
+}
+
+const LINKEDIN_CSV = "First Name,Last Name,Company\nAsha,Nair,Lumen\n";
+const SHAPED_CSV =
+  "full_name,company,role,email,linkedin_url,x_handle,phone,relationship,how_we_met,status," +
+  "preferred_channel,last_contacted,next_follow_up,target_role,job_link,tags,notes\n" +
+  "Asha Nair,Lumen,,,,,,,,,,,,,,,\n";
+
+test("with an AI provider the dialog asks only for a name, not the template", async ({ page }) => {
+  // Arrange
+  await signIn(page);
+  await withProvider(page);
+  await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
+  await page.goto("/contacts");
+
+  // Act
+  await page.getByRole("button", { name: "Import CSV" }).click();
+
+  // Assert
+  const dialog = importDialog(page);
+  await expect(dialog.getByTestId("import-ai-hint")).toContainText("Each person needs a name");
+  await expect(dialog.getByRole("list", { name: "Columns" })).toBeHidden();
+  await expect(dialog.getByRole("link", { name: "Download template" })).toBeHidden();
+});
+
+test("an AI-shaped sheet shows the matched columns and imports what was previewed", async ({ page }) => {
+  // Arrange
+  await signIn(page);
+  await withProvider(page);
+  await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
+  const importCalls = await mockRpc(page, ContactsService.method.importContacts, (body) =>
+    body.dryRun
+      ? {
+          report: { rowsTotal: 1, rowsCreated: 1 },
+          shapedCsv: Buffer.from(SHAPED_CSV),
+          mappings: [
+            { target: "full_name", sources: ["First Name", "Last Name"] },
+            { target: "company", sources: ["Company"] },
+          ],
+        }
+      : { report: { rowsTotal: 1, rowsCreated: 1 }, importId: "import-1" },
+  );
+  await page.goto("/contacts");
+
+  // Act
+  await chooseFileWithAi(page, "Connections.csv", LINKEDIN_CSV);
+
+  // Assert
+  const dialog = importDialog(page);
+  const matched = dialog.getByRole("table", { name: "Matched columns" });
+  await expect(matched.getByRole("row", { name: /First Name \+ Last Name/ })).toContainText("full_name");
+  await expect(matched.getByRole("row", { name: /Company/ })).toContainText("company");
+  await expect(dialog).toContainText("Connections.csv has 1 row. 1 are new");
+  expect(importCalls[0].body).toMatchObject({ dryRun: true, reshape: true });
+
+  // Act
+  await dialog.getByRole("button", { name: "Import 1 row" }).click();
+
+  // Assert
+  await expect(dialog).toContainText("Imported 1 new and updated 0.");
+  const confirmBody = importCalls[1].body as { dryRun?: boolean; reshape?: boolean; csv?: string };
+  expect(confirmBody.dryRun).toBeUndefined();
+  expect(confirmBody.reshape).toBeUndefined();
+  expect(confirmBody.csv).toBe(Buffer.from(SHAPED_CSV).toString("base64"));
+});
+
+test("a failed AI import says why and shows the template", async ({ page }) => {
+  // Arrange
+  await signIn(page);
+  await withProvider(page);
+  await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
+  await mockRpcError(
+    page,
+    ContactsService.method.importContacts,
+    "failed_precondition",
+    "no column of the sheet holds a name",
+    "IMPORT_NO_NAME_COLUMN",
+  );
+  await page.goto("/contacts");
+
+  // Act
+  await chooseFileWithAi(page, "companies.csv", "Company,Website\nLumen,lumen.example\n");
+
+  // Assert
+  const dialog = importDialog(page);
+  await expect(dialog.getByRole("alert")).toHaveText(
+    "Your AI provider found no column with people's names in this sheet. Add one, or use the template below.",
+  );
+  await expect(dialog.getByRole("link", { name: "Download template" })).toBeVisible();
+  await expect(dialog.getByTestId("import-ai-hint")).toBeHidden();
 });
