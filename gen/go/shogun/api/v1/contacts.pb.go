@@ -575,10 +575,13 @@ func (x *ChangeContactStatusResponse) GetContact() *Contact {
 }
 
 type ImportContactsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Filename      string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
-	Csv           []byte                 `protobuf:"bytes,2,opt,name=csv,proto3" json:"csv,omitempty"`
-	DryRun        bool                   `protobuf:"varint,3,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Filename string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
+	Csv      []byte                 `protobuf:"bytes,2,opt,name=csv,proto3" json:"csv,omitempty"`
+	DryRun   bool                   `protobuf:"varint,3,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
+	// reshape asks the owner's AI provider to map a sheet with other columns
+	// onto the import columns first. A sheet that already has them is not sent.
+	Reshape       bool `protobuf:"varint,4,opt,name=reshape,proto3" json:"reshape,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -630,6 +633,13 @@ func (x *ImportContactsRequest) GetCsv() []byte {
 func (x *ImportContactsRequest) GetDryRun() bool {
 	if x != nil {
 		return x.DryRun
+	}
+	return false
+}
+
+func (x *ImportContactsRequest) GetReshape() bool {
+	if x != nil {
+		return x.Reshape
 	}
 	return false
 }
@@ -775,7 +785,12 @@ type ImportContactsResponse struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Report *ImportReport          `protobuf:"bytes,1,opt,name=report,proto3" json:"report,omitempty"`
 	// import_id is empty on a dry run.
-	ImportId      string `protobuf:"bytes,2,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
+	ImportId string `protobuf:"bytes,2,opt,name=import_id,json=importId,proto3" json:"import_id,omitempty"`
+	// shaped_csv is the sheet in the import columns, set when reshape changed
+	// it. Import it with reshape off to apply exactly what was previewed.
+	ShapedCsv []byte `protobuf:"bytes,3,opt,name=shaped_csv,json=shapedCsv,proto3" json:"shaped_csv,omitempty"`
+	// mappings say which columns of the sheet fill each import column.
+	Mappings      []*ColumnMapping `protobuf:"bytes,4,rep,name=mappings,proto3" json:"mappings,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -824,6 +839,73 @@ func (x *ImportContactsResponse) GetImportId() string {
 	return ""
 }
 
+func (x *ImportContactsResponse) GetShapedCsv() []byte {
+	if x != nil {
+		return x.ShapedCsv
+	}
+	return nil
+}
+
+func (x *ImportContactsResponse) GetMappings() []*ColumnMapping {
+	if x != nil {
+		return x.Mappings
+	}
+	return nil
+}
+
+// ColumnMapping fills one import column from columns of the sheet.
+type ColumnMapping struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Target        string                 `protobuf:"bytes,1,opt,name=target,proto3" json:"target,omitempty"`
+	Sources       []string               `protobuf:"bytes,2,rep,name=sources,proto3" json:"sources,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ColumnMapping) Reset() {
+	*x = ColumnMapping{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ColumnMapping) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ColumnMapping) ProtoMessage() {}
+
+func (x *ColumnMapping) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ColumnMapping.ProtoReflect.Descriptor instead.
+func (*ColumnMapping) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ColumnMapping) GetTarget() string {
+	if x != nil {
+		return x.Target
+	}
+	return ""
+}
+
+func (x *ColumnMapping) GetSources() []string {
+	if x != nil {
+		return x.Sources
+	}
+	return nil
+}
+
 var File_shogun_api_v1_contacts_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_contacts_proto_rawDesc = "" +
@@ -867,11 +949,12 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\tto_status\x18\x02 \x01(\x0e2\x1c.shogun.api.v1.ContactStatusR\btoStatus\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\x05R\aversion\"O\n" +
 	"\x1bChangeContactStatusResponse\x120\n" +
-	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\"^\n" +
+	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\"x\n" +
 	"\x15ImportContactsRequest\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x10\n" +
 	"\x03csv\x18\x02 \x01(\fR\x03csv\x12\x17\n" +
-	"\adry_run\x18\x03 \x01(\bR\x06dryRun\"T\n" +
+	"\adry_run\x18\x03 \x01(\bR\x06dryRun\x12\x18\n" +
+	"\areshape\x18\x04 \x01(\bR\areshape\"T\n" +
 	"\x0eImportRowError\x12\x10\n" +
 	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x16\n" +
 	"\x06column\x18\x02 \x01(\tR\x06column\x12\x18\n" +
@@ -883,10 +966,16 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\frows_updated\x18\x03 \x01(\x05R\vrowsUpdated\x12\x1f\n" +
 	"\vrows_failed\x18\x04 \x01(\x05R\n" +
 	"rowsFailed\x125\n" +
-	"\x06errors\x18\x05 \x03(\v2\x1d.shogun.api.v1.ImportRowErrorR\x06errors\"j\n" +
+	"\x06errors\x18\x05 \x03(\v2\x1d.shogun.api.v1.ImportRowErrorR\x06errors\"\xc3\x01\n" +
 	"\x16ImportContactsResponse\x123\n" +
 	"\x06report\x18\x01 \x01(\v2\x1b.shogun.api.v1.ImportReportR\x06report\x12\x1b\n" +
-	"\timport_id\x18\x02 \x01(\tR\bimportId*\xd7\x01\n" +
+	"\timport_id\x18\x02 \x01(\tR\bimportId\x12\x1d\n" +
+	"\n" +
+	"shaped_csv\x18\x03 \x01(\fR\tshapedCsv\x128\n" +
+	"\bmappings\x18\x04 \x03(\v2\x1c.shogun.api.v1.ColumnMappingR\bmappings\"A\n" +
+	"\rColumnMapping\x12\x16\n" +
+	"\x06target\x18\x01 \x01(\tR\x06target\x12\x18\n" +
+	"\asources\x18\x02 \x03(\tR\asources*\xd7\x01\n" +
 	"\rContactStatus\x12\x1e\n" +
 	"\x1aCONTACT_STATUS_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aCONTACT_STATUS_NOT_REACHED\x10\x01\x12\x1e\n" +
@@ -915,7 +1004,7 @@ func file_shogun_api_v1_contacts_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_api_v1_contacts_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_api_v1_contacts_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_shogun_api_v1_contacts_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_shogun_api_v1_contacts_proto_goTypes = []any{
 	(ContactStatus)(0),                  // 0: shogun.api.v1.ContactStatus
 	(*Contact)(nil),                     // 1: shogun.api.v1.Contact
@@ -929,6 +1018,7 @@ var file_shogun_api_v1_contacts_proto_goTypes = []any{
 	(*ImportRowError)(nil),              // 9: shogun.api.v1.ImportRowError
 	(*ImportReport)(nil),                // 10: shogun.api.v1.ImportReport
 	(*ImportContactsResponse)(nil),      // 11: shogun.api.v1.ImportContactsResponse
+	(*ColumnMapping)(nil),               // 12: shogun.api.v1.ColumnMapping
 }
 var file_shogun_api_v1_contacts_proto_depIdxs = []int32{
 	0,  // 0: shogun.api.v1.Contact.status:type_name -> shogun.api.v1.ContactStatus
@@ -939,19 +1029,20 @@ var file_shogun_api_v1_contacts_proto_depIdxs = []int32{
 	1,  // 5: shogun.api.v1.ChangeContactStatusResponse.contact:type_name -> shogun.api.v1.Contact
 	9,  // 6: shogun.api.v1.ImportReport.errors:type_name -> shogun.api.v1.ImportRowError
 	10, // 7: shogun.api.v1.ImportContactsResponse.report:type_name -> shogun.api.v1.ImportReport
-	2,  // 8: shogun.api.v1.ContactsService.ListContacts:input_type -> shogun.api.v1.ListContactsRequest
-	4,  // 9: shogun.api.v1.ContactsService.AddContact:input_type -> shogun.api.v1.AddContactRequest
-	6,  // 10: shogun.api.v1.ContactsService.ChangeContactStatus:input_type -> shogun.api.v1.ChangeContactStatusRequest
-	8,  // 11: shogun.api.v1.ContactsService.ImportContacts:input_type -> shogun.api.v1.ImportContactsRequest
-	3,  // 12: shogun.api.v1.ContactsService.ListContacts:output_type -> shogun.api.v1.ListContactsResponse
-	5,  // 13: shogun.api.v1.ContactsService.AddContact:output_type -> shogun.api.v1.AddContactResponse
-	7,  // 14: shogun.api.v1.ContactsService.ChangeContactStatus:output_type -> shogun.api.v1.ChangeContactStatusResponse
-	11, // 15: shogun.api.v1.ContactsService.ImportContacts:output_type -> shogun.api.v1.ImportContactsResponse
-	12, // [12:16] is the sub-list for method output_type
-	8,  // [8:12] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	12, // 8: shogun.api.v1.ImportContactsResponse.mappings:type_name -> shogun.api.v1.ColumnMapping
+	2,  // 9: shogun.api.v1.ContactsService.ListContacts:input_type -> shogun.api.v1.ListContactsRequest
+	4,  // 10: shogun.api.v1.ContactsService.AddContact:input_type -> shogun.api.v1.AddContactRequest
+	6,  // 11: shogun.api.v1.ContactsService.ChangeContactStatus:input_type -> shogun.api.v1.ChangeContactStatusRequest
+	8,  // 12: shogun.api.v1.ContactsService.ImportContacts:input_type -> shogun.api.v1.ImportContactsRequest
+	3,  // 13: shogun.api.v1.ContactsService.ListContacts:output_type -> shogun.api.v1.ListContactsResponse
+	5,  // 14: shogun.api.v1.ContactsService.AddContact:output_type -> shogun.api.v1.AddContactResponse
+	7,  // 15: shogun.api.v1.ContactsService.ChangeContactStatus:output_type -> shogun.api.v1.ChangeContactStatusResponse
+	11, // 16: shogun.api.v1.ContactsService.ImportContacts:output_type -> shogun.api.v1.ImportContactsResponse
+	13, // [13:17] is the sub-list for method output_type
+	9,  // [9:13] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_shogun_api_v1_contacts_proto_init() }
@@ -965,7 +1056,7 @@ func file_shogun_api_v1_contacts_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_api_v1_contacts_proto_rawDesc), len(file_shogun_api_v1_contacts_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

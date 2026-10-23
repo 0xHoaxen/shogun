@@ -114,12 +114,23 @@ func (s *ContactsServer) ImportContacts(
 		Filename: in.GetFilename(),
 		Csv:      in.GetCsv(),
 		DryRun:   in.GetDryRun(),
+		Reshape:  in.GetReshape(),
 	})
 	if err != nil {
 		return nil, fromGRPC(ctx, s.log, err)
 	}
 	return connect.NewResponse(&apiv1.ImportContactsResponse{
-		Report:   importReportToAPI(resp.GetReport()),
-		ImportId: resp.GetImportId(),
+		Report:    importReportToAPI(resp.GetReport()),
+		ImportId:  resp.GetImportId(),
+		ShapedCsv: resp.GetShapedCsv(),
+		Mappings:  columnMappingsToAPI(resp.GetMappings()),
 	}), nil
+}
+
+func columnMappingsToAPI(in []*kagamiv1.ColumnMapping) []*apiv1.ColumnMapping {
+	out := make([]*apiv1.ColumnMapping, 0, len(in))
+	for _, m := range in {
+		out = append(out, &apiv1.ColumnMapping{Target: m.GetTarget(), Sources: m.GetSources()})
+	}
+	return out
 }

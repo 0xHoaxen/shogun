@@ -35,7 +35,7 @@ func TestNewConfigListsOnlyTheServicesFeatures(t *testing.T) {
 }
 
 func TestNewConfigRejectsAServiceWithoutFeatures(t *testing.T) {
-	for _, service := range []string{"", "kagami"} {
+	for _, service := range []string{"", "dojo"} {
 		if _, err := llm.NewConfig(service); err == nil {
 			t.Errorf("service %q: want an error", service)
 		}

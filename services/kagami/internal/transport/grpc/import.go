@@ -10,7 +10,7 @@ import (
 // ImportContacts implements kagami.v1.KagamiService.
 func (s *Server) ImportContacts(ctx context.Context, req *kagamiv1.ImportContactsRequest) (*kagamiv1.ImportContactsResponse, error) {
 	res, err := s.svc.ImportContacts(ctx, app.ImportContactsInput{
-		Filename: req.GetFilename(), CSV: req.GetCsv(), DryRun: req.GetDryRun(),
+		Filename: req.GetFilename(), CSV: req.GetCsv(), DryRun: req.GetDryRun(), Reshape: req.GetReshape(),
 	})
 	if err != nil {
 		return nil, toStatus(err)
@@ -19,11 +19,17 @@ func (s *Server) ImportContacts(ctx context.Context, req *kagamiv1.ImportContact
 	for _, e := range res.Report.Errors {
 		rowErrors = append(rowErrors, &kagamiv1.ImportRowError{Row: e.Row, Column: e.Column, Message: e.Message})
 	}
+	mappings := make([]*kagamiv1.ColumnMapping, 0, len(res.Mappings))
+	for _, m := range res.Mappings {
+		mappings = append(mappings, &kagamiv1.ColumnMapping{Target: m.Target, Sources: m.Sources})
+	}
 	return &kagamiv1.ImportContactsResponse{
 		Report: &kagamiv1.ImportReport{
 			RowsTotal: res.Report.RowsTotal, RowsCreated: res.Report.RowsCreated,
 			RowsUpdated: res.Report.RowsUpdated, RowsFailed: res.Report.RowsFailed, Errors: rowErrors,
 		},
-		ImportId: res.ImportID,
+		ImportId:  res.ImportID,
+		ShapedCsv: res.ShapedCSV,
+		Mappings:  mappings,
 	}, nil
 }

@@ -40,8 +40,8 @@ func TestListBudgetsCreatesDefaultsAndShowsCurrentSpend(t *testing.T) {
 	budgets := h.listBudgets(t)
 
 	// Assert
-	if len(budgets) != 12 {
-		t.Fatalf("got %d budgets, want the 12 defaults", len(budgets))
+	if len(budgets) != 14 {
+		t.Fatalf("got %d budgets, want the 14 defaults", len(budgets))
 	}
 	global := findBudget(t, budgets, sorobanv1.ScopeType_SCOPE_TYPE_GLOBAL, "", sorobanv1.BudgetPeriod_BUDGET_PERIOD_MONTHLY)
 	if global.GetLimitMicros() != 20_000_000 || global.GetMode() != sorobanv1.BudgetMode_BUDGET_MODE_HARD {
