@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/app"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/domain"
 	"github.com/0xHoaxen/shogun/services/kagami/internal/store"
@@ -24,6 +25,11 @@ const (
 	reasonInvalidToken     = "INVALID_PAGE_TOKEN"
 	reasonOwnerRequired    = "OWNER_REQUIRED"
 	reasonInternal         = "INTERNAL"
+	reasonNoProvider       = "AI_PROVIDER_NOT_CONFIGURED"
+	reasonBudgetExhausted  = "BUDGET_EXHAUSTED"
+	reasonAIUnavailable    = "AI_UNAVAILABLE"
+	// reasonMeteringUnavailable matches fude's reason for the same failure.
+	reasonMeteringUnavailable = "METERING_UNAVAILABLE"
 )
 
 // toStatus maps a use case error to a gRPC status carrying an ErrorInfo reason.
@@ -36,7 +42,18 @@ func toStatus(err error) error {
 	var te *domain.TransitionError
 	var ia *app.InvalidArgumentError
 	var dup *app.DuplicateContactError
+	var reshape *app.ReshapeError
 	switch {
+	case errors.As(err, &reshape):
+		return withReason(codes.FailedPrecondition, reshape.Reason, reshape.Msg)
+	case errors.Is(err, llm.ErrProviderNotConfigured):
+		return withReason(codes.FailedPrecondition, reasonNoProvider, "add an AI provider in Settings first")
+	case errors.Is(err, llm.ErrBudgetExhausted):
+		return withReason(codes.ResourceExhausted, reasonBudgetExhausted, "the AI budget for this is spent")
+	case errors.Is(err, llm.ErrMeteringUnavailable):
+		return withReason(codes.Unavailable, reasonMeteringUnavailable, "AI cost metering is unavailable; try again later")
+	case errors.Is(err, app.ErrReshapeOff):
+		return withReason(codes.Unavailable, reasonAIUnavailable, "AI import is not available right now")
 	case errors.As(err, &te):
 		return withReason(codes.FailedPrecondition, te.Reason, te.Error())
 	case errors.As(err, &dup):

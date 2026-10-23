@@ -264,6 +264,9 @@ message ImportContactsRequest {
   string filename = 1;
   bytes csv = 2;
   bool dry_run = 3;
+  // reshape asks the caller's AI provider to map a sheet with other columns
+  // onto the import columns first. A sheet that already has them is not sent.
+  bool reshape = 4;
 }
 
 message ImportRowError {
@@ -285,6 +288,17 @@ message ImportContactsResponse {
   ImportReport report = 1;
   // import_id is empty on a dry run.
   string import_id = 2;
+  // shaped_csv is the sheet in the import columns, set when reshape changed
+  // it. Import it with reshape off to apply exactly what was previewed.
+  bytes shaped_csv = 3;
+  // mappings say which columns of the sheet fill each import column.
+  repeated ColumnMapping mappings = 4;
+}
+
+// ColumnMapping fills one import column from columns of the sheet.
+message ColumnMapping {
+  string target = 1;
+  repeated string sources = 2;
 }
 
 message ListDueFollowUpsRequest {
