@@ -30,7 +30,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // ProviderService is the Settings > AI provider screen. Every user brings their
-// own Anthropic-compatible provider: an address, a model and an API key. Torii
+// own OpenAI-compatible provider: an address, a model and an API key. Torii
 // maps it onto soroban, which seals the key, and fude, which tests it. The key
 // only ever goes in; nothing here returns it.
 type ProviderServiceClient interface {
@@ -108,7 +108,7 @@ func (c *providerServiceClient) TestProvider(ctx context.Context, in *TestProvid
 // for forward compatibility.
 //
 // ProviderService is the Settings > AI provider screen. Every user brings their
-// own Anthropic-compatible provider: an address, a model and an API key. Torii
+// own OpenAI-compatible provider: an address, a model and an API key. Torii
 // maps it onto soroban, which seals the key, and fude, which tests it. The key
 // only ever goes in; nothing here returns it.
 type ProviderServiceServer interface {

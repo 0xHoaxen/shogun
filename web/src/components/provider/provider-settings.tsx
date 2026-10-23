@@ -91,7 +91,7 @@ function ProviderForm({ provider }: FormProps) {
         label="Address"
         type="url"
         value={baseUrl}
-        placeholder="https://api.anthropic.com"
+        placeholder="https://api.openai.com/v1"
         autoComplete="off"
         spellCheck={false}
         onChange={(event) => setBaseUrl(event.target.value)}

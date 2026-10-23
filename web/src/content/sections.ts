@@ -61,7 +61,7 @@ export const SECTIONS = {
   provider: {
     id: "provider",
     role: "AI provider is where you give Shogun the AI it works with, so every call is made with your own provider and your own key.",
-    does: "You enter the address of an Anthropic-compatible provider, the model, and your API key. Shogun stores the key encrypted and never shows it again. It uses that provider for your drafts, for sorting your job mail, for profile suggestions and for scoring discovered jobs. You can set prices for a model Shogun has no price for, and a monthly token limit. Test connection makes one tiny call to check it works.",
+    does: "You enter the address of any OpenAI-compatible provider (the part before /chat/completions, such as https://api.openai.com/v1 or https://api.anthropic.com/v1), the model, and your API key. Shogun stores the key encrypted and never shows it again. It uses that provider for your drafts, for sorting your job mail, for profile suggestions and for scoring discovered jobs. You can set prices for a model Shogun has no price for, and a monthly token limit. Test connection makes one tiny call to check it works.",
     helps: "Nobody else's usage or bill is mixed with yours, and you choose the model and the cost. Until you add a provider, the AI features stay off and everything else keeps working.",
   },
   settings: {

@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/contacts.proto.
  */
 export const file_shogun_api_v1_contacts: GenFile = /*@__PURE__*/
-  fileDesc("ChxzaG9ndW4vYXBpL3YxL2NvbnRhY3RzLnByb3RvEg1zaG9ndW4uYXBpLnYxIooCCgdDb250YWN0EgoKAmlkGAEgASgJEhEKCWZ1bGxfbmFtZRgCIAEoCRIMCgRyb2xlGAMgASgJEhQKDGNvbXBhbnlfbmFtZRgEIAEoCRIsCgZzdGF0dXMYBSABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFZW1haWwYBiABKAkSFAoMbGlua2VkaW5fdXJsGAcgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAggASgJEhYKDmxhc3RfY29udGFjdGVkGAkgASgJEhYKDm5leHRfZm9sbG93X3VwGAogASgJEg0KBW5vdGVzGAsgASgJEg8KB3ZlcnNpb24YDCABKAUieQoTTGlzdENvbnRhY3RzUmVxdWVzdBIsCgZzdGF0dXMYASABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFcXVlcnkYAiABKAkSEQoJcGFnZV9zaXplGAMgASgFEhIKCnBhZ2VfdG9rZW4YBCABKAkiWQoUTGlzdENvbnRhY3RzUmVzcG9uc2USKAoIY29udGFjdHMYASADKAsyFi5zaG9ndW4uYXBpLnYxLkNvbnRhY3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIpkBChFBZGRDb250YWN0UmVxdWVzdBIRCglmdWxsX25hbWUYASABKAkSDAoEcm9sZRgCIAEoCRIUCgxjb21wYW55X25hbWUYAyABKAkSDQoFZW1haWwYBCABKAkSFAoMbGlua2VkaW5fdXJsGAUgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAYgASgJEg0KBW5vdGVzGAcgASgJIj0KEkFkZENvbnRhY3RSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0ImoKGkNoYW5nZUNvbnRhY3RTdGF0dXNSZXF1ZXN0EgoKAmlkGAEgASgJEi8KCXRvX3N0YXR1cxgCIAEoDjIcLnNob2d1bi5hcGkudjEuQ29udGFjdFN0YXR1cxIPCgd2ZXJzaW9uGAMgASgFIkYKG0NoYW5nZUNvbnRhY3RTdGF0dXNSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0IkcKFUltcG9ydENvbnRhY3RzUmVxdWVzdBIQCghmaWxlbmFtZRgBIAEoCRILCgNjc3YYAiABKAwSDwoHZHJ5X3J1bhgDIAEoCCI+Cg5JbXBvcnRSb3dFcnJvchILCgNyb3cYASABKAUSDgoGY29sdW1uGAIgASgJEg8KB21lc3NhZ2UYAyABKAkikgEKDEltcG9ydFJlcG9ydBISCgpyb3dzX3RvdGFsGAEgASgFEhQKDHJvd3NfY3JlYXRlZBgCIAEoBRIUCgxyb3dzX3VwZGF0ZWQYAyABKAUSEwoLcm93c19mYWlsZWQYBCABKAUSLQoGZXJyb3JzGAUgAygLMh0uc2hvZ3VuLmFwaS52MS5JbXBvcnRSb3dFcnJvciJYChZJbXBvcnRDb250YWN0c1Jlc3BvbnNlEisKBnJlcG9ydBgBIAEoCzIbLnNob2d1bi5hcGkudjEuSW1wb3J0UmVwb3J0EhEKCWltcG9ydF9pZBgCIAEoCSrXAQoNQ29udGFjdFN0YXR1cxIeChpDT05UQUNUX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGkNPTlRBQ1RfU1RBVFVTX05PVF9SRUFDSEVEEAESHgoaQ09OVEFDVF9TVEFUVVNfUkVBQ0hFRF9PVVQQAhInCiNDT05UQUNUX1NUQVRVU19DT05WRVJTQVRJT05fU1RBUlRFRBADEhoKFkNPTlRBQ1RfU1RBVFVTX1JFUExJRUQQBBIhCh1DT05UQUNUX1NUQVRVU19SRUZFUlJBTF9BU0tFRBAFMooDCg9Db250YWN0c1NlcnZpY2USVwoMTGlzdENvbnRhY3RzEiIuc2hvZ3VuLmFwaS52MS5MaXN0Q29udGFjdHNSZXF1ZXN0GiMuc2hvZ3VuLmFwaS52MS5MaXN0Q29udGFjdHNSZXNwb25zZRJRCgpBZGRDb250YWN0EiAuc2hvZ3VuLmFwaS52MS5BZGRDb250YWN0UmVxdWVzdBohLnNob2d1bi5hcGkudjEuQWRkQ29udGFjdFJlc3BvbnNlEmwKE0NoYW5nZUNvbnRhY3RTdGF0dXMSKS5zaG9ndW4uYXBpLnYxLkNoYW5nZUNvbnRhY3RTdGF0dXNSZXF1ZXN0Giouc2hvZ3VuLmFwaS52MS5DaGFuZ2VDb250YWN0U3RhdHVzUmVzcG9uc2USXQoOSW1wb3J0Q29udGFjdHMSJC5zaG9ndW4uYXBpLnYxLkltcG9ydENvbnRhY3RzUmVxdWVzdBolLnNob2d1bi5hcGkudjEuSW1wb3J0Q29udGFjdHNSZXNwb25zZWIGcHJvdG8z");
+  fileDesc("ChxzaG9ndW4vYXBpL3YxL2NvbnRhY3RzLnByb3RvEg1zaG9ndW4uYXBpLnYxIooCCgdDb250YWN0EgoKAmlkGAEgASgJEhEKCWZ1bGxfbmFtZRgCIAEoCRIMCgRyb2xlGAMgASgJEhQKDGNvbXBhbnlfbmFtZRgEIAEoCRIsCgZzdGF0dXMYBSABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFZW1haWwYBiABKAkSFAoMbGlua2VkaW5fdXJsGAcgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAggASgJEhYKDmxhc3RfY29udGFjdGVkGAkgASgJEhYKDm5leHRfZm9sbG93X3VwGAogASgJEg0KBW5vdGVzGAsgASgJEg8KB3ZlcnNpb24YDCABKAUieQoTTGlzdENvbnRhY3RzUmVxdWVzdBIsCgZzdGF0dXMYASABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFcXVlcnkYAiABKAkSEQoJcGFnZV9zaXplGAMgASgFEhIKCnBhZ2VfdG9rZW4YBCABKAkiWQoUTGlzdENvbnRhY3RzUmVzcG9uc2USKAoIY29udGFjdHMYASADKAsyFi5zaG9ndW4uYXBpLnYxLkNvbnRhY3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIpkBChFBZGRDb250YWN0UmVxdWVzdBIRCglmdWxsX25hbWUYASABKAkSDAoEcm9sZRgCIAEoCRIUCgxjb21wYW55X25hbWUYAyABKAkSDQoFZW1haWwYBCABKAkSFAoMbGlua2VkaW5fdXJsGAUgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAYgASgJEg0KBW5vdGVzGAcgASgJIj0KEkFkZENvbnRhY3RSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0ImoKGkNoYW5nZUNvbnRhY3RTdGF0dXNSZXF1ZXN0EgoKAmlkGAEgASgJEi8KCXRvX3N0YXR1cxgCIAEoDjIcLnNob2d1bi5hcGkudjEuQ29udGFjdFN0YXR1cxIPCgd2ZXJzaW9uGAMgASgFIkYKG0NoYW5nZUNvbnRhY3RTdGF0dXNSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0IlgKFUltcG9ydENvbnRhY3RzUmVxdWVzdBIQCghmaWxlbmFtZRgBIAEoCRILCgNjc3YYAiABKAwSDwoHZHJ5X3J1bhgDIAEoCBIPCgdyZXNoYXBlGAQgASgIIj4KDkltcG9ydFJvd0Vycm9yEgsKA3JvdxgBIAEoBRIOCgZjb2x1bW4YAiABKAkSDwoHbWVzc2FnZRgDIAEoCSKSAQoMSW1wb3J0UmVwb3J0EhIKCnJvd3NfdG90YWwYASABKAUSFAoMcm93c19jcmVhdGVkGAIgASgFEhQKDHJvd3NfdXBkYXRlZBgDIAEoBRITCgtyb3dzX2ZhaWxlZBgEIAEoBRItCgZlcnJvcnMYBSADKAsyHS5zaG9ndW4uYXBpLnYxLkltcG9ydFJvd0Vycm9yIpwBChZJbXBvcnRDb250YWN0c1Jlc3BvbnNlEisKBnJlcG9ydBgBIAEoCzIbLnNob2d1bi5hcGkudjEuSW1wb3J0UmVwb3J0EhEKCWltcG9ydF9pZBgCIAEoCRISCgpzaGFwZWRfY3N2GAMgASgMEi4KCG1hcHBpbmdzGAQgAygLMhwuc2hvZ3VuLmFwaS52MS5Db2x1bW5NYXBwaW5nIjAKDUNvbHVtbk1hcHBpbmcSDgoGdGFyZ2V0GAEgASgJEg8KB3NvdXJjZXMYAiADKAkq1wEKDUNvbnRhY3RTdGF0dXMSHgoaQ09OVEFDVF9TVEFUVVNfVU5TUEVDSUZJRUQQABIeChpDT05UQUNUX1NUQVRVU19OT1RfUkVBQ0hFRBABEh4KGkNPTlRBQ1RfU1RBVFVTX1JFQUNIRURfT1VUEAISJwojQ09OVEFDVF9TVEFUVVNfQ09OVkVSU0FUSU9OX1NUQVJURUQQAxIaChZDT05UQUNUX1NUQVRVU19SRVBMSUVEEAQSIQodQ09OVEFDVF9TVEFUVVNfUkVGRVJSQUxfQVNLRUQQBTKKAwoPQ29udGFjdHNTZXJ2aWNlElcKDExpc3RDb250YWN0cxIiLnNob2d1bi5hcGkudjEuTGlzdENvbnRhY3RzUmVxdWVzdBojLnNob2d1bi5hcGkudjEuTGlzdENvbnRhY3RzUmVzcG9uc2USUQoKQWRkQ29udGFjdBIgLnNob2d1bi5hcGkudjEuQWRkQ29udGFjdFJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkFkZENvbnRhY3RSZXNwb25zZRJsChNDaGFuZ2VDb250YWN0U3RhdHVzEikuc2hvZ3VuLmFwaS52MS5DaGFuZ2VDb250YWN0U3RhdHVzUmVxdWVzdBoqLnNob2d1bi5hcGkudjEuQ2hhbmdlQ29udGFjdFN0YXR1c1Jlc3BvbnNlEl0KDkltcG9ydENvbnRhY3RzEiQuc2hvZ3VuLmFwaS52MS5JbXBvcnRDb250YWN0c1JlcXVlc3QaJS5zaG9ndW4uYXBpLnYxLkltcG9ydENvbnRhY3RzUmVzcG9uc2ViBnByb3RvMw");
 
 /**
  * Contact is one row of the contact table.
@@ -270,6 +270,14 @@ export type ImportContactsRequest = Message<"shogun.api.v1.ImportContactsRequest
    * @generated from field: bool dry_run = 3;
    */
   dryRun: boolean;
+
+  /**
+   * reshape asks the owner's AI provider to map a sheet with other columns
+   * onto the import columns first. A sheet that already has them is not sent.
+   *
+   * @generated from field: bool reshape = 4;
+   */
+  reshape: boolean;
 };
 
 /**
@@ -360,6 +368,21 @@ export type ImportContactsResponse = Message<"shogun.api.v1.ImportContactsRespon
    * @generated from field: string import_id = 2;
    */
   importId: string;
+
+  /**
+   * shaped_csv is the sheet in the import columns, set when reshape changed
+   * it. Import it with reshape off to apply exactly what was previewed.
+   *
+   * @generated from field: bytes shaped_csv = 3;
+   */
+  shapedCsv: Uint8Array;
+
+  /**
+   * mappings say which columns of the sheet fill each import column.
+   *
+   * @generated from field: repeated shogun.api.v1.ColumnMapping mappings = 4;
+   */
+  mappings: ColumnMapping[];
 };
 
 /**
@@ -368,6 +391,30 @@ export type ImportContactsResponse = Message<"shogun.api.v1.ImportContactsRespon
  */
 export const ImportContactsResponseSchema: GenMessage<ImportContactsResponse> = /*@__PURE__*/
   messageDesc(file_shogun_api_v1_contacts, 10);
+
+/**
+ * ColumnMapping fills one import column from columns of the sheet.
+ *
+ * @generated from message shogun.api.v1.ColumnMapping
+ */
+export type ColumnMapping = Message<"shogun.api.v1.ColumnMapping"> & {
+  /**
+   * @generated from field: string target = 1;
+   */
+  target: string;
+
+  /**
+   * @generated from field: repeated string sources = 2;
+   */
+  sources: string[];
+};
+
+/**
+ * Describes the message shogun.api.v1.ColumnMapping.
+ * Use `create(ColumnMappingSchema)` to create a new message.
+ */
+export const ColumnMappingSchema: GenMessage<ColumnMapping> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 11);
 
 /**
  * @generated from enum shogun.api.v1.ContactStatus
@@ -450,7 +497,12 @@ export const ContactsService: GenService<{
   },
   /**
    * ImportContacts parses a contacts CSV. With dry_run nothing is written and
-   * the report is the preview shown before the owner confirms.
+   * the report is the preview shown before the owner confirms. With reshape a
+   * sheet with other columns is first mapped onto the import columns by the
+   * owner's AI provider: no column holding a name is FailedPrecondition with
+   * reason IMPORT_NO_NAME_COLUMN, a provider that fails or answers badly
+   * IMPORT_RESHAPE_FAILED, no provider AI_PROVIDER_NOT_CONFIGURED, and a spent
+   * budget ResourceExhausted with reason BUDGET_EXHAUSTED.
    *
    * @generated from rpc shogun.api.v1.ContactsService.ImportContacts
    */

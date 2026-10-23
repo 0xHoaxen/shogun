@@ -6,8 +6,6 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/anthropics/anthropic-sdk-go"
-
 	"github.com/0xHoaxen/shogun/pkg/netguard"
 )
 
@@ -45,7 +43,7 @@ func ClassifyFailure(err error) FailureKind {
 	if errors.Is(err, netguard.ErrNotPublic) {
 		return FailureNotPublic
 	}
-	var apiErr *anthropic.Error
+	var apiErr *StatusError
 	if errors.As(err, &apiErr) {
 		return classifyStatus(apiErr.StatusCode)
 	}

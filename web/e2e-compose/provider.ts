@@ -1,9 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 
-// The stand-in for an Anthropic-compatible provider, as the services see it on
+// The stand-in for an OpenAI-compatible provider, as the services see it on
 // the compose network (see stubs/mock-apis.mjs). The stack runs in local mode,
 // which is what allows an address that is not public.
-const MOCK_PROVIDER_URL = "http://mock-apis:8090";
+const MOCK_PROVIDER_URL = "http://mock-apis:8090/v1";
 const MOCK_MODEL = "e2e-model";
 const MOCK_KEY = "e2e-key-0123456789";
 

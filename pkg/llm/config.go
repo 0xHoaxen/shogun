@@ -32,13 +32,14 @@ type Config struct {
 // defaultFeatures lists every feature that calls the model, with its output cap.
 func defaultFeatures() map[string]FeatureConfig {
 	return map[string]FeatureConfig{
-		"fude.cover_letter":    {MaxTokens: 4096},
-		"fude.outreach":        {MaxTokens: 2048},
-		"fude.post":            {MaxTokens: 2048},
-		"fude.test_connection": {MaxTokens: 16},
-		"tsubame.classify":     {MaxTokens: 512},
-		"katana.suggest":       {MaxTokens: 4096},
-		"shinobi.score":        {MaxTokens: 1024},
+		"fude.cover_letter":     {MaxTokens: 4096},
+		"fude.outreach":         {MaxTokens: 2048},
+		"fude.post":             {MaxTokens: 2048},
+		"fude.test_connection":  {MaxTokens: 16},
+		"tsubame.classify":      {MaxTokens: 512},
+		"katana.suggest":        {MaxTokens: 4096},
+		"kagami.import_reshape": {MaxTokens: 1024},
+		"shinobi.score":         {MaxTokens: 1024},
 	}
 }
 

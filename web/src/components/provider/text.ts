@@ -4,7 +4,7 @@ import { reasonOf } from "@/lib/errors";
 // What each stable reason means to the person filling in the form.
 const REASONS: Record<string, string> = {
   INVALID_PROVIDER_URL:
-    "That address will not work. Use a public https address such as https://api.anthropic.com, without /v1, and no username, password or query.",
+    "That address will not work. Use a public https address such as https://api.openai.com/v1, with no username, password or query.",
   INVALID_PROVIDER_MODEL: "That model name will not work. Use letters, digits and . _ : / @ + - only.",
   INVALID_API_KEY: "That key does not look right. It must be 8 to 4096 characters with no spaces.",
   API_KEY_REQUIRED: "Enter your API key. It is needed the first time you save.",
