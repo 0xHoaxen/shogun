@@ -273,6 +273,69 @@ func TestImportContactsDryRunReturnsThePerRowReport(t *testing.T) {
 	}
 }
 
+func TestImportContactsReshapeReturnsTheShapedSheet(t *testing.T) {
+	// Arrange
+	h := newContactsHarness(t)
+	shaped := []byte("full_name,company\nAsha Nair,Lumen\n")
+	h.kagami.imp = func(*kagamiv1.ImportContactsRequest) (*kagamiv1.ImportContactsResponse, error) {
+		return &kagamiv1.ImportContactsResponse{
+			Report:    &kagamiv1.ImportReport{RowsTotal: 1, RowsCreated: 1},
+			ShapedCsv: shaped,
+			Mappings:  []*kagamiv1.ColumnMapping{{Target: "full_name", Sources: []string{"First Name", "Last Name"}}},
+		}, nil
+	}
+
+	// Act
+	resp, err := h.client.ImportContacts(context.Background(), withCookie(connect.NewRequest(&apiv1.ImportContactsRequest{
+		Filename: "linkedin.csv", Csv: []byte("First Name,Last Name\nAsha,Nair\n"), DryRun: true, Reshape: true,
+	}), h.token))
+	// Assert
+	if err != nil {
+		t.Fatalf("ImportContacts: %v", err)
+	}
+	if !bytes.Equal(resp.Msg.GetShapedCsv(), shaped) {
+		t.Fatalf("shaped_csv = %q", resp.Msg.GetShapedCsv())
+	}
+	if m := resp.Msg.GetMappings(); len(m) != 1 || m[0].GetTarget() != "full_name" || len(m[0].GetSources()) != 2 {
+		t.Fatalf("mappings = %v", m)
+	}
+	if sent := h.kagami.requestsSeen()[0].(*kagamiv1.ImportContactsRequest); !sent.GetReshape() || !sent.GetDryRun() {
+		t.Fatalf("kagami request = %v, want reshape on a dry run", sent)
+	}
+}
+
+func TestImportContactsReshapeFailureKeepsItsReason(t *testing.T) {
+	tests := []struct {
+		name   string
+		code   codes.Code
+		reason string
+	}{
+		{"no name column", codes.FailedPrecondition, "IMPORT_NO_NAME_COLUMN"},
+		{"provider failed", codes.FailedPrecondition, "IMPORT_RESHAPE_FAILED"},
+		{"no provider", codes.FailedPrecondition, "AI_PROVIDER_NOT_CONFIGURED"},
+		{"budget spent", codes.ResourceExhausted, "BUDGET_EXHAUSTED"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			h := newContactsHarness(t)
+			h.kagami.imp = func(*kagamiv1.ImportContactsRequest) (*kagamiv1.ImportContactsResponse, error) {
+				return nil, grpcError(tt.code, tt.reason, "refused")
+			}
+
+			// Act
+			_, err := h.client.ImportContacts(context.Background(), withCookie(connect.NewRequest(&apiv1.ImportContactsRequest{
+				Csv: []byte("Name\nAsha\n"), DryRun: true, Reshape: true,
+			}), h.token))
+
+			// Assert
+			if connect.CodeOf(err) != connect.Code(tt.code) || reasonOf(err) != tt.reason {
+				t.Fatalf("err = %v, want %s with reason %s", err, tt.code, tt.reason)
+			}
+		})
+	}
+}
+
 func TestImportContactsConfirmReturnsTheImportID(t *testing.T) {
 	// Arrange
 	h := newContactsHarness(t)

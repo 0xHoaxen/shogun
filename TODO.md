@@ -953,7 +953,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: `ImportContactsRequest.reshape`, `ImportContactsResponse.shaped_csv` and `mappings` (`ColumnMapping`) in `kagami.v1`; feature `kagami.import_reshape` (1024 output tokens) in `pkg/llm`; soroban `00007` default budgets (kagami monthly hard $1, feature daily soft $0.20, `TODO(owner)` to confirm); kagami dials soroban (`SOROBAN_ADDR`, now required) and builds the metered client in `cmd/kagami/reshape.go`; the gRPC layer maps `IMPORT_RESHAPE_FAILED` / `IMPORT_NO_NAME_COLUMN` / `AI_PROVIDER_NOT_CONFIGURED` to FailedPrecondition, `BUDGET_EXHAUSTED` to ResourceExhausted, `METERING_UNAVAILABLE` and `AI_UNAVAILABLE` to Unavailable.
   Done when: `make proto`, `cd services/kagami && go test -race ./...`, `cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`.
 
-- [ ] **P11.13c AI reshape of a contacts sheet: torii** (S) Needs: P11.13b
+- [x] **P11.13c AI reshape of a contacts sheet: torii** (S) Needs: P11.13b
   Do: the same three fields on `shogun.api.v1.ImportContacts*`, forwarded by torii's `ContactsServer.ImportContacts`, with the reasons kept.
   Done when: `make proto`, `cd services/torii && go test -race ./...`.
 
