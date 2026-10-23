@@ -957,7 +957,7 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: the same three fields on `shogun.api.v1.ImportContacts*`, forwarded by torii's `ContactsServer.ImportContacts`, with the reasons kept.
   Done when: `make proto`, `cd services/torii && go test -race ./...`.
 
-- [ ] **P11.13d AI reshape of a contacts sheet: web** (M) Needs: P11.13c
+- [x] **P11.13d AI reshape of a contacts sheet: web** (M) Needs: P11.13c
   Do: with a provider set, the Import CSV dialog hides the 17-column template and says what it needs (a name per person; email, company, role, LinkedIn and the rest when present) and that the AI maps the columns before anything is saved. A picked file is previewed with `reshape` on, showing which of the sheet's columns fill each field above the usual report; Confirm imports `shaped_csv` with `reshape` off, so what is saved is what was previewed. A failure says why in plain words and shows the template. Without a provider the dialog is unchanged.
   Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
 

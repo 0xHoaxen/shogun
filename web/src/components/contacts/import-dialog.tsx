@@ -1,33 +1,45 @@
 "use client";
 
 import { create } from "@bufbuild/protobuf";
-import { ConnectError, createClient } from "@connectrpc/connect";
-import { useTransport } from "@connectrpc/connect-query";
+import { createClient } from "@connectrpc/connect";
+import { useQuery, useTransport } from "@connectrpc/connect-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ChangeEvent } from "react";
 
 import { contactsQueryKey } from "@/components/contacts/contacts-key";
+import { ColumnMappings, ImportAiHint } from "@/components/contacts/import-ai";
+import { importErrorText } from "@/components/contacts/import-errors";
 import { ImportFormat } from "@/components/contacts/import-format";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import {
   ContactsService,
   ImportReportSchema,
+  type ColumnMapping,
   type ImportReport,
 } from "@/gen/shogun/api/v1/contacts_pb";
+import { ProviderService } from "@/gen/shogun/api/v1/providers_pb";
 
 // Torii and kagami both refuse larger files.
 const MAX_CSV_BYTES = 3 << 20;
 
 type Stage =
   | { kind: "choose" }
-  | { kind: "preview"; filename: string; csv: Uint8Array; report: ImportReport }
+  | {
+      kind: "preview";
+      filename: string;
+      // csv is what Confirm imports: the AI-shaped sheet when there is one.
+      csv: Uint8Array;
+      report: ImportReport;
+      mappings: ColumnMapping[];
+    }
   | { kind: "done"; report: ImportReport };
 
 interface ImportVariables {
   filename: string;
   csv: Uint8Array;
   dryRun: boolean;
+  reshape?: boolean;
 }
 
 function plural(count: number, noun: string): string {
@@ -83,6 +95,11 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
   const queryClient = useQueryClient();
   const [stage, setStage] = useState<Stage>({ kind: "choose" });
   const [problem, setProblem] = useState<string | null>(null);
+  // AI mode: with a provider set any sheet is mapped by it, so the template is
+  // only shown again once an AI import has failed.
+  const provider = useQuery(ProviderService.method.getProvider, {}, { enabled: open });
+  const aiMode = provider.isSuccess && provider.data.provider !== undefined;
+  const [aiFailed, setAiFailed] = useState(false);
 
   const run = useMutation({
     mutationFn: (vars: ImportVariables) => client.importContacts(vars),
@@ -91,6 +108,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
   function close() {
     setStage({ kind: "choose" });
     setProblem(null);
+    setAiFailed(false);
     run.reset();
     onOpenChange(false);
   }
@@ -107,17 +125,22 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
       return;
     }
     const csv = new Uint8Array(await file.arrayBuffer());
+    const reshape = aiMode;
     run.mutate(
-      { filename: file.name, csv, dryRun: true },
+      { filename: file.name, csv, dryRun: true, reshape },
       {
         onSuccess: (response) =>
           setStage({
             kind: "preview",
             filename: file.name,
-            csv,
+            csv: response.shapedCsv.length > 0 ? response.shapedCsv : csv,
             report: response.report ?? create(ImportReportSchema),
+            mappings: response.mappings,
           }),
-        onError: (error) => setProblem(ConnectError.from(error).rawMessage),
+        onError: (error) => {
+          setProblem(importErrorText(error));
+          setAiFailed(reshape);
+        },
       },
     );
   }
@@ -131,10 +154,13 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
           await queryClient.invalidateQueries({ queryKey: contactsQueryKey });
           setStage({ kind: "done", report: response.report ?? preview.report });
         },
-        onError: (error) => setProblem(ConnectError.from(error).rawMessage),
+        onError: (error) => setProblem(importErrorText(error)),
       },
     );
   }
+
+  const choosing = stage.kind === "choose";
+  const showTemplate = !provider.isPending && (!aiMode || aiFailed);
 
   return (
     <Dialog
@@ -154,17 +180,25 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
               id="contacts-csv"
               type="file"
               accept=".csv,text/csv"
-              disabled={run.isPending}
+              // Until the provider is known it is not clear whether to reshape.
+              disabled={run.isPending || provider.isPending}
               onChange={handleFile}
               className="block w-full min-w-0 border border-ink bg-field p-2 text-xs"
             />
           </div>
         ) : null}
 
-        {stage.kind === "choose" ? <ImportFormat /> : null}
+        {choosing && aiMode && run.isPending ? (
+          <p role="status">Your AI provider is matching the sheet&apos;s columns…</p>
+        ) : null}
+
+        {choosing && aiMode && !aiFailed ? <ImportAiHint /> : null}
+
+        {choosing && showTemplate ? <ImportFormat /> : null}
 
         {stage.kind === "preview" ? (
           <>
+            <ColumnMappings mappings={stage.mappings} />
             <PreviewSummary filename={stage.filename} report={stage.report} />
             <RowErrors report={stage.report} />
           </>
