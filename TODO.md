@@ -945,6 +945,22 @@ Anyone can sign in with Google and gets a fully isolated Shogun. Roles are admin
   Do: event `mail.ai_required` (routed to taiko) written at most once a day per owner when classification finds no provider (`accounts.ai_notice_at`, new migration); taiko notification linking to the AI provider settings; each sync re-queues up to 100 unclassified messages from the last 30 days. `TODO(owner)`: add `mail.ai_required` to the LLD event catalog.
   Done when: `make proto && make lint && make test`.
 
+- [x] **P11.13a AI reshape of a contacts sheet: kagami app** (M) Needs: P11.5e1
+  Do: import any contacts CSV, not only the 17-column template. `Service.reshapeImportCSV` (`importcsv_reshape.go`) shows the owner's provider only the sheet's header and up to 5 sample rows (cells cut to 80 characters) and asks for a column mapping as JSON; it never sends the whole file and the model never writes a contact. The answer is checked strictly (every target an import column, every source a real header used once, `full_name` mapped, else `IMPORT_RESHAPE_FAILED` / `IMPORT_NO_NAME_COLUMN`), then `importcsv_shape.go` moves every row itself: several sources joined (tags with `;`), dates rewritten as YYYY-MM-DD under the answer's `date_order` (blank if unreadable), statuses through `status_values` (blank if unknown). It finds a header below notes, as in LinkedIn's export, and skips the model when the sheet already has the import columns. `ImportContactsInput.Reshape`, `ImportResult.ShapedCSV/Mappings`, `WithReshaper`. Provider failures name only their kind; no provider, a spent budget and metering down keep their `pkg/llm` errors. Diff is ~690 lines, half of it tests: one unit, kept together.
+  Done when: `cd services/kagami && go test -race ./internal/app/...`, `make lint`.
+
+- [ ] **P11.13b AI reshape of a contacts sheet: kagami wiring** (M) Needs: P11.13a
+  Do: `ImportContactsRequest.reshape`, `ImportContactsResponse.shaped_csv` and `mappings` (`ColumnMapping`) in `kagami.v1`; feature `kagami.import_reshape` (1024 output tokens) in `pkg/llm`; soroban `00007` default budgets (kagami monthly hard $1, feature daily soft $0.20, `TODO(owner)` to confirm); kagami dials soroban (`SOROBAN_ADDR`, now required) and builds the metered client in `cmd/kagami/reshape.go`; the gRPC layer maps `IMPORT_RESHAPE_FAILED` / `IMPORT_NO_NAME_COLUMN` / `AI_PROVIDER_NOT_CONFIGURED` to FailedPrecondition, `BUDGET_EXHAUSTED` to ResourceExhausted, `METERING_UNAVAILABLE` and `AI_UNAVAILABLE` to Unavailable.
+  Done when: `make proto`, `cd services/kagami && go test -race ./...`, `cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`.
+
+- [ ] **P11.13c AI reshape of a contacts sheet: torii** (S) Needs: P11.13b
+  Do: the same three fields on `shogun.api.v1.ImportContacts*`, forwarded by torii's `ContactsServer.ImportContacts`, with the reasons kept.
+  Done when: `make proto`, `cd services/torii && go test -race ./...`.
+
+- [ ] **P11.13d AI reshape of a contacts sheet: web** (M) Needs: P11.13c
+  Do: with a provider set, the Import CSV dialog hides the 17-column template and says what it needs (a name per person; email, company, role, LinkedIn and the rest when present) and that the AI maps the columns before anything is saved. A picked file is previewed with `reshape` on, showing which of the sheet's columns fill each field above the usual report; Confirm imports `shaped_csv` with `reshape` off, so what is saved is what was previewed. A failure says why in plain words and shows the template. Without a provider the dialog is unchanged.
+  Done when: `cd web && npm run typecheck && npm run lint && npx playwright test`.
+
 ## Later (not scheduled)
 
 Interview prep, resume tailoring per job, post scheduling calendar, Outlook provider for `tsubame`, NATS JetStream behind `pkg/bus`, row-level security for multi-user (Postgres RLS on top of Phase 11).

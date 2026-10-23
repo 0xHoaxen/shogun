@@ -26,6 +26,9 @@ type ImportContactsInput struct {
 	CSV      []byte
 	// DryRun builds the report and writes nothing.
 	DryRun bool
+	// Reshape maps a sheet with other columns onto the import columns first,
+	// with the owner's AI provider.
+	Reshape bool
 }
 
 // ImportRowError is one row the import could not apply. Row is the 1-based CSV
@@ -49,6 +52,10 @@ type ImportReport struct {
 type ImportResult struct {
 	Report   ImportReport
 	ImportID string
+	// ShapedCSV is the sheet in the import columns when Reshape changed it,
+	// and Mappings how each column was filled. Both are empty otherwise.
+	ShapedCSV []byte
+	Mappings  []ColumnMapping
 }
 
 // ImportContacts adds the contacts of a CSV and updates the ones already in
@@ -62,7 +69,18 @@ func (s *Service) ImportContacts(ctx context.Context, in ImportContactsInput) (I
 	if err != nil {
 		return ImportResult{}, err
 	}
-	rows, err := parseImportCSV(in.CSV)
+	var result ImportResult
+	data := in.CSV
+	if in.Reshape {
+		shaped, mappings, err := s.reshapeImportCSV(ctx, in.CSV)
+		if err != nil {
+			return ImportResult{}, err
+		}
+		if shaped != nil {
+			data, result.ShapedCSV, result.Mappings = shaped, shaped, mappings
+		}
+	}
+	rows, err := parseImportCSV(data)
 	if err != nil {
 		return ImportResult{}, err
 	}
@@ -71,7 +89,6 @@ func (s *Service) ImportContacts(ctx context.Context, in ImportContactsInput) (I
 		filename = defaultImportFilename
 	}
 
-	var result ImportResult
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
 		report, err := s.applyImportRows(ctx, tx, owner, rows)
 		if err != nil {

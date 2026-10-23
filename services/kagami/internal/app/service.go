@@ -28,14 +28,20 @@ const (
 type Service struct {
 	pool *pgxpool.Pool
 	now  func() time.Time
+	// reshaper maps imported sheets with other columns; nil turns that off.
+	reshaper Completer
 }
 
 // NewService returns a Service on pool. A nil now means time.Now.
-func NewService(pool *pgxpool.Pool, now func() time.Time) *Service {
+func NewService(pool *pgxpool.Pool, now func() time.Time, opts ...Option) *Service {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{pool: pool, now: now}
+	s := &Service{pool: pool, now: now}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
 }
 
 // inTx runs fn in one transaction with a Repo bound to it.
