@@ -3,50 +3,91 @@
 @import "shadcn/tailwind.css";
 
 /*
- * Shogun design system, spec v1: light only, ruled cells, one signal colour,
- * mono labels and tight grotesk headlines. Seven colours and nothing else.
- * No radii, shadows or gradients.
+ * Shogun design system, spec v2: dark ground, one accent per page, no radii.
+ * Values come from docs/v2/DESIGN-GUIDE.md. Contrast of every text and
+ * background pair is at least 4.5:1 (listed in the V1.1 PR).
  */
 :root {
-  --paper: #f7f7f5;
-  --ink: #111111;
-  --strip: #e4e4e2;
-  --signal: #f2592a;
-  --rail-ink: #14301f;
-  --field: #ffffff;
-  --muted-ink: #444444;
+  --bg: #1c1c1a;
+  --panel: rgba(38, 38, 35, 0.62); /* used with backdrop-filter: blur(6px), see .panel */
+  --panel-solid: #222220; /* the panel composited over --bg, for places that cannot blur */
+  --line: #34342f;
+  --line2: #4a4942;
+  --text: #ece6d3;
+  --muted: #aba694;
+  --cream: #d8d0b8;
+  --ink: #1c1c1a; /* text on --accent and --cream */
   --radius: 0px;
 
-  /* shadcn semantic tokens, mapped onto the seven values. */
-  --background: var(--paper);
-  --foreground: var(--ink);
-  --card: var(--paper);
-  --card-foreground: var(--ink);
-  --popover: var(--paper);
-  --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: var(--paper);
-  --secondary: var(--strip);
-  --secondary-foreground: var(--ink);
-  --muted: var(--strip);
-  --muted-foreground: var(--muted-ink);
-  --accent: var(--strip);
-  --accent-foreground: var(--ink);
-  --destructive: var(--ink);
-  --border: var(--ink);
-  --input: var(--ink);
-  --ring: var(--signal);
+  /* Accent: the page scheme. Set data-scheme on a page wrapper to change it. */
+  --accent: #e8693c;
+
+  /* Density: set data-density="compact" on <html> for tight rows. */
+  --rowpad: 12px;
+
+  /* shadcn semantic tokens, mapped onto the v2 set. */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card: var(--panel-solid);
+  --card-foreground: var(--text);
+  --popover: var(--panel-solid);
+  --popover-foreground: var(--text);
+  --primary: var(--cream);
+  --primary-foreground: var(--ink);
+  --secondary: var(--panel-solid);
+  --secondary-foreground: var(--text);
+  --muted-surface: var(--panel-solid);
+  --accent-surface: var(--panel-solid);
+  --destructive: var(--text);
+  --border: var(--line);
+  --input: var(--line2);
+  --ring: var(--accent);
+}
+
+/* Accent schemes. Ember is the default. */
+:root,
+[data-scheme="ember"] {
+  --accent: #e8693c;
+}
+[data-scheme="moss"] {
+  --accent: #9dae6c;
+}
+[data-scheme="tide"] {
+  --accent: #6fa8be;
+}
+[data-scheme="plum"] {
+  --accent: #c08ab0;
+}
+
+[data-density="compact"] {
+  --rowpad: 7px;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-strip: var(--strip);
-  --color-signal: var(--signal);
-  --color-rail-ink: var(--rail-ink);
-  --color-field: var(--field);
-  --color-muted-ink: var(--muted-ink);
+  /* v2 utilities: bg-panel, border-line2, text-muted, bg-cream, bg-scheme ... */
+  --color-bg: var(--bg);
+  --color-panel: var(--panel);
+  --color-panel-solid: var(--panel-solid);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-text: var(--text);
+  --color-cream: var(--cream);
+  --color-on-accent: var(--ink);
+  --color-scheme: var(--accent);
 
+  /*
+   * Legacy v1 names, kept so screens that have not moved to v2 still render.
+   * Remove each one when the last screen using it is rebuilt.
+   */
+  --color-paper: var(--bg);
+  --color-ink: var(--text);
+  --color-strip: var(--panel-solid);
+  --color-signal: var(--accent);
+  --color-rail-ink: var(--ink);
+  --color-field: var(--panel-solid);
+  --color-muted-ink: var(--muted);
+
+  /* shadcn semantic colours. muted and accent are surfaces here, as in shadcn. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -57,10 +98,10 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted-surface);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--accent-surface);
+  --color-accent-foreground: var(--text);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
@@ -71,9 +112,11 @@
   --radius-lg: 0px;
   --radius-xl: 0px;
 
-  --font-sans: var(--font-geist-mono), ui-monospace, monospace;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-display: var(--font-space-grotesk), system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-display: var(--font-inter-tight), system-ui, sans-serif;
+  --font-serif: var(--font-dm-serif), Georgia, serif;
+  --font-mark: var(--font-noto-serif-jp), serif;
 }
 
 @layer base {
@@ -82,32 +125,51 @@
   }
   html {
     @apply font-sans;
+    color-scheme: dark;
   }
   body {
-    @apply bg-background text-foreground text-xs leading-normal;
+    @apply bg-background text-foreground;
+    font-size: 14px;
+    line-height: 22px;
   }
   ::selection {
-    background: var(--signal);
+    background: var(--accent);
     color: var(--ink);
   }
   :focus-visible {
-    outline: 2px solid var(--signal);
-    outline-offset: 0;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
-  /* Display headline: tight grotesk. */
+  /* Display headline: two lines, the second in --muted. */
   .h-display {
     font-family: var(--font-display);
     font-weight: 500;
-    letter-spacing: -0.045em;
-    line-height: 0.95;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
     margin: 0;
   }
-  /* Label: uppercase mono with tracking. */
+  /* Label: 11px uppercase mono with tracking. */
   .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
+  }
+  /* Cards, widgets, active nav. */
+  .panel {
+    background: var(--panel);
+    backdrop-filter: blur(6px);
   }
 }

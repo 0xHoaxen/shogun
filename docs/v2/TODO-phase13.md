@@ -27,7 +27,7 @@ v2 rules on top of `AGENTS.md`:
 
 ### V1. Shell and design system
 
-- [ ] **V1.1 Design tokens** (M) Needs: V0.1
+- [x] **V1.1 Design tokens** (M) Needs: V0.1
   Do: replace the spec v1 light tokens in `globals.css` with the v2 dark set from `DESIGN-GUIDE.md` (bg, panel, line, line2, text, muted, cream, accent), the four accent schemes Ember `#E8693C`, Moss `#9DAE6C`, Tide `#6FA8BE`, Plum `#C08AB0` as `--accent` set per page, fonts Inter Tight, IBM Plex Mono, DM Serif Display and Noto Serif JP (self-hosted woff2 like today's fonts, with their OFL files), density `--rowpad` 12px comfy / 7px compact. Keep the shadcn semantic mapping. Check every text/background pair for 4.5:1 and list the results in the PR.
   Files: `web/src/app/globals.css`, `web/src/app/fonts/**`, `web/src/app/layout.tsx`.
   Done when: web checks.
