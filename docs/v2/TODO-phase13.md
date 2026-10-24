@@ -42,7 +42,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `web/src/components/ui/**`.
   Done when: web checks.
 
-- [ ] **V1.4 Appearance in local storage** (S) Needs: V1.1
+- [x] **V1.4 Appearance in local storage** (S) Needs: V1.1
   Do: decision D6. One `useAppearance` hook for page schemes, density, motion, sidebar collapsed, Dashboard layout, stored in `localStorage` under one versioned key, wrapped in try/catch with defaults when storage is empty or blocked. Motion off also follows `prefers-reduced-motion`.
   Files: `web/src/lib/appearance.ts`, shell.
   Done when: web checks.
