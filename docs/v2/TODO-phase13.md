@@ -32,17 +32,17 @@ v2 rules on top of `AGENTS.md`:
   Files: `web/src/app/globals.css`, `web/src/app/fonts/**`, `web/src/app/layout.tsx`.
   Done when: web checks.
 
-- [ ] **V1.2 App shell and routes** (M) Needs: V1.1
+- [x] **V1.2 App shell and routes** (M) Needs: V1.1
   Do: replace `Rail` and `AppShell` with the v2 shell: top bar (logo mark, Next hint, status text), collapsible sidebar with 8 numbered sections and the Inbox count, footer strip ("Page scheme", "Nothing leaves without your approval"). Below 860px the sidebar becomes a top menu. New routes `/dashboard`, `/inbox`, `/pipeline`, `/people`, `/writing`, `/growth`, `/insights`; `/settings` keeps its path. Redirects: `/jobs -> /pipeline`, `/contacts -> /people`, `/drafts -> /inbox`, `/drafts/[id] -> /writing?draft=id`, `/learning` and `/profile -> /growth`, `/notifications -> /inbox`, `/discovery -> /settings?tab=discovery`. Old screens render inside the new shell until their own task replaces them. Login lands on `/dashboard` (`TODO(owner)` if you want `/inbox` instead).
   Files: `web/src/components/shell/**`, `web/src/app/(app)/**`, `web/src/app/page.tsx`, `web/src/content/sections.ts`.
   Done when: web checks; existing specs updated for the new URLs.
 
-- [ ] **V1.3 Shared v2 components** (M) Needs: V1.1
+- [x] **V1.3 Shared v2 components** (M) Needs: V1.1
   Do: `SidePanel` (slides in from the right, scrim, Esc closes, focus trap, returns focus), `Toast` with Undo and a 10 second timer, `FilterChips` with counts and `aria-pressed`, `Tag` (default, ok, warn), `Toggle` (`role=switch`), `Segmented`, `StepHeader` (1/2/3 with done and current), `ProgressLines` (the "AI reads it" list with done, now, pending). Each with a Playwright component spec or a page spec.
   Files: `web/src/components/ui/**`.
   Done when: web checks.
 
-- [ ] **V1.4 Appearance in local storage** (S) Needs: V1.1
+- [x] **V1.4 Appearance in local storage** (S) Needs: V1.1
   Do: decision D6. One `useAppearance` hook for page schemes, density, motion, sidebar collapsed, Dashboard layout, stored in `localStorage` under one versioned key, wrapped in try/catch with defaults when storage is empty or blocked. Motion off also follows `prefers-reduced-motion`.
   Files: `web/src/lib/appearance.ts`, shell.
   Done when: web checks.

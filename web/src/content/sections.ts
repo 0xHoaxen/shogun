@@ -107,3 +107,27 @@ export const SECTIONS = {
     helps: "You keep the service safe and within Google's limits for Gmail without ever reading anyone's private data.",
   },
 } as const satisfies Record<string, SectionAbout>;
+
+// Accent scheme of a page: the value of data-scheme on the shell (see globals.css).
+export type Scheme = "ember" | "moss" | "tide" | "plum";
+
+export interface NavSection {
+  href: string;
+  label: string;
+  // The page's default scheme. Users will be able to change it in Settings > Appearance.
+  scheme: Scheme;
+}
+
+// The eight numbered sidebar sections, in order: 01 Dashboard ... 08 Settings.
+export const NAV_SECTIONS: readonly NavSection[] = [
+  { href: "/dashboard", label: "Dashboard", scheme: "ember" },
+  { href: "/inbox", label: "Inbox", scheme: "tide" },
+  { href: "/pipeline", label: "Pipeline", scheme: "moss" },
+  { href: "/people", label: "People", scheme: "plum" },
+  { href: "/writing", label: "Writing", scheme: "ember" },
+  { href: "/growth", label: "Growth", scheme: "moss" },
+  { href: "/insights", label: "Insights", scheme: "tide" },
+  { href: "/settings", label: "Settings", scheme: "plum" },
+];
+
+export const DEFAULT_SCHEME: Scheme = "ember";

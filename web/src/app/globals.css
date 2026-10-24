@@ -64,7 +64,8 @@
 }
 
 @theme inline {
-  /* v2 utilities: bg-panel, border-line2, text-muted, bg-cream, bg-scheme ... */
+  /* v2 utilities: bg-panel, border-line2, bg-cream, bg-scheme ... Muted text is
+     text-muted-foreground; bg-muted is the shadcn surface. */
   --color-bg: var(--bg);
   --color-panel: var(--panel);
   --color-panel-solid: var(--panel-solid);
@@ -119,6 +120,12 @@
   --font-mark: var(--font-noto-serif-jp), serif;
 }
 
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -140,6 +147,7 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+  /* Stops all animation: the OS setting, or Motion off in Settings > Appearance. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -148,6 +156,13 @@
       transition: none !important;
       scroll-behavior: auto !important;
     }
+  }
+  :root[data-motion="off"] *,
+  :root[data-motion="off"] *::before,
+  :root[data-motion="off"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
 

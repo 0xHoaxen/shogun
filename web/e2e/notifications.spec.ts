@@ -57,7 +57,7 @@ test("a new notification appears in the bell and the list without a reload", asy
     await gate;
     return [{ notification: { id: "n2", title: "Cover letter ready" } }];
   });
-  await page.goto("/notifications");
+  await page.goto("/inbox");
   await expect(page.getByTestId("unread-count")).toHaveText("1");
 
   // Act: taiko stores a notification and announces it.
@@ -74,17 +74,17 @@ test("the bell shows the unread count on every page and links to the list", asyn
   await mockNotifications(page, [row("n1", "One"), row("n2", "Two", true)]);
   await mockServerStream(page, NotificationsService.method.stream, () => []);
 
-  await page.goto("/notifications");
+  await page.goto("/inbox");
 
   const bell = page.getByRole("link", { name: "Notifications, 1 unread" });
-  await expect(bell).toHaveAttribute("aria-current", "page");
+  await expect(bell).toHaveAttribute("href", "/notifications");
   await expect(page.getByRole("link", { name: /One/ })).toHaveAttribute("href", "/drafts/n1");
 });
 
 test("mark all read clears the count", async ({ page }) => {
   await mockNotifications(page, [row("n1", "One"), row("n2", "Two")]);
   await mockServerStream(page, NotificationsService.method.stream, () => []);
-  await page.goto("/notifications");
+  await page.goto("/inbox");
   await expect(page.getByTestId("unread-count")).toHaveText("2");
 
   await page.getByRole("button", { name: "Mark all read" }).click();
@@ -99,7 +99,7 @@ test("opening an unread notification marks it read", async ({ page }) => {
   await mockNotifications(page, rows);
   await mockServerStream(page, NotificationsService.method.stream, () => []);
   await page.route("**/drafts/n1", (route) => route.fulfill({ contentType: "text/html", body: "<html></html>" }));
-  await page.goto("/notifications");
+  await page.goto("/inbox");
 
   await page.getByRole("link", { name: /One/ }).click();
 
@@ -115,7 +115,7 @@ test("the page reconnects from the last notification it saw", async ({ page }) =
   );
 
   // Act
-  await page.goto("/notifications");
+  await page.goto("/inbox");
 
   // Assert: the second request asks for what came after n7.
   await expect.poll(() => calls.length, { timeout: 10_000 }).toBeGreaterThan(1);
@@ -128,7 +128,7 @@ test("an empty list says so", async ({ page }) => {
   await mockNotifications(page, []);
   await mockServerStream(page, NotificationsService.method.stream, () => []);
 
-  await page.goto("/notifications");
+  await page.goto("/inbox");
 
   await expect(page.getByText("Nothing yet.")).toBeVisible();
 });

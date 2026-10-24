@@ -46,7 +46,7 @@ test("connect Gmail, write a draft, regenerate and edit it, approve it, and exac
   await grantGmailAccess(page);
 
   // Act: ask for an email draft.
-  await page.goto("/drafts");
+  await page.goto("/inbox");
   await page.getByRole("button", { name: "New draft" }).click();
   await page.getByLabel("Channel").selectOption({ label: "Email" });
   await page.getByLabel("To").fill(RECIPIENT);

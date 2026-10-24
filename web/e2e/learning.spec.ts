@@ -4,6 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { AuthService } from "../src/gen/shogun/api/v1/auth_pb";
 import { DraftsService } from "../src/gen/shogun/api/v1/drafts_pb";
 import { ItemKind, ItemStatus, LearningService } from "../src/gen/shogun/api/v1/learning_pb";
+import { ProfileService } from "../src/gen/shogun/api/v1/profile_pb";
 import { mockRpc, mockRpcError } from "./fixtures";
 
 const WHEN = timestampFromDate(new Date("2026-10-06T09:00:00Z"));
@@ -27,6 +28,12 @@ function activityOf(id: string, summary: string, itemId = "") {
   return { id, itemId, summary, minutes: 45, occurredOn: "2026-10-06", tags: ["go"], createdAt: WHEN };
 }
 
+// Growth shows the learning log and the profile suggestions together for now;
+// the screen under test overrides its own calls, the other one stays empty.
+test.beforeEach(async ({ page }) => {
+  await mockRpc(page, ProfileService.method.listProfileSuggestions, { suggestions: [] });
+});
+
 async function signIn(page: Page) {
   await mockRpc(page, AuthService.method.getSession, {
     session: { email: "owner@example.com", displayName: "Owner", expiresAt: timestampFromDate(new Date("2026-11-01T00:00:00Z")) },
@@ -44,7 +51,7 @@ test("the screen lists items and activities and asks for the chosen status", asy
     activities: [activityOf("a1", "built a worker pool", "i1")],
   });
 
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   const row = page.getByRole("row", { name: /^Go course/ });
   await expect(row).toContainText("channels first");
@@ -70,7 +77,7 @@ test("adding an item sends its fields and shows the refreshed list", async ({ pa
     stored.push(item);
     return { item: itemOf(item) };
   });
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Add item" }).click();
   await page.getByLabel("Title").fill("  Designing Data-Intensive Applications ");
@@ -93,7 +100,7 @@ test("starting an item moves it with the version the page read", async ({ page }
     current = itemOf({ ...GO_COURSE, status: ItemStatus.IN_PROGRESS, version: 2, startedOn: "2026-10-07" });
     return { item: current };
   });
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Start Go course" }).click();
 
@@ -109,7 +116,7 @@ test("a refused move says why and shows what the server holds", async ({ page })
   let current = itemOf(GO_COURSE);
   await mockRpc(page, LearningService.method.listLearningItems, () => ({ items: [current] }));
   await mockRpc(page, LearningService.method.listLearningActivities, { activities: [] });
-  await page.goto("/learning");
+  await page.goto("/growth");
   await expect(page.getByRole("button", { name: "Start Go course" })).toBeVisible();
   // Another tab finished the course after this page loaded.
   current = itemOf({ ...GO_COURSE, status: ItemStatus.DONE, version: 5, completedOn: "2026-10-07" });
@@ -126,7 +133,7 @@ test("a move the state machine refuses is explained", async ({ page }) => {
   await mockRpc(page, LearningService.method.listLearningItems, { items: [itemOf(GO_COURSE)] });
   await mockRpc(page, LearningService.method.listLearningActivities, { activities: [] });
   await mockRpcError(page, LearningService.method.changeLearningItemStatus, "failed_precondition", "no", "ITEM_STATUS_INVALID_TRANSITION");
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Finish Go course" }).click();
 
@@ -143,7 +150,7 @@ test("logging an activity sends the fields and refreshes the activity", async ({
     stored.push(activity);
     return { activity };
   });
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Log activity" }).first().click();
   await page.getByLabel("What did you learn?").fill("read the race detector docs");
@@ -161,7 +168,7 @@ test("a validation message from the server is shown in the dialog", async ({ pag
   await mockRpc(page, LearningService.method.listLearningItems, { items: [] });
   await mockRpc(page, LearningService.method.listLearningActivities, { activities: [] });
   await mockRpcError(page, LearningService.method.addLearningItem, "invalid_argument", "invalid input: url must be an http or https address", "INVALID_ARGUMENT");
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Add item" }).click();
   await page.getByLabel("Title").fill("x");
@@ -179,7 +186,7 @@ test("chosen activities become a post draft and the page opens it", async ({ pag
   await mockRpc(page, DraftsService.method.getDraft, { draft: { id: "d9" }, versions: [] });
   await mockRpc(page, DraftsService.method.listQueue, { drafts: [] });
   const posts = await mockRpc(page, LearningService.method.generateLearningPost, { draftId: "d9" });
-  await page.goto("/learning");
+  await page.goto("/growth");
   const write = page.getByRole("button", { name: /^Write a post/ });
   await expect(write).toBeDisabled();
 
@@ -190,7 +197,7 @@ test("chosen activities become a post draft and the page opens it", async ({ pag
   await page.getByLabel("Where will you post it?").selectOption({ label: "X" });
   await page.getByRole("button", { name: "Write the post" }).click();
 
-  await expect(page).toHaveURL(/\/drafts\/d9$/);
+  await expect(page).toHaveURL(/\/writing\?draft=d9$/);
   expect(posts[0].body).toMatchObject({ activityIds: ["a1", "a2"], channel: "DRAFT_CHANNEL_X" });
 });
 
@@ -199,23 +206,23 @@ test("a post that cannot be started says so and stays on the page", async ({ pag
   await mockRpc(page, LearningService.method.listLearningItems, { items: [] });
   await mockRpc(page, LearningService.method.listLearningActivities, { activities: [activityOf("a1", "built a worker pool")] });
   await mockRpcError(page, LearningService.method.generateLearningPost, "unavailable", "busy", "UNAVAILABLE");
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("checkbox", { name: "Choose: built a worker pool" }).check();
   await page.getByRole("button", { name: /^Write a post/ }).click();
   await page.getByRole("button", { name: "Write the post" }).click();
 
   await expect(page.locator("p[role=alert]")).toContainText("busy right now");
-  await expect(page).toHaveURL(/\/learning$/);
+  await expect(page).toHaveURL(/\/growth$/);
 });
 
-test("the nav has a Learning tab", async ({ page }) => {
+test("the old /learning address lands on Growth", async ({ page }) => {
   await signIn(page);
   await mockRpc(page, LearningService.method.listLearningItems, { items: [] });
   await mockRpc(page, LearningService.method.listLearningActivities, { activities: [] });
 
   await page.goto("/learning");
 
-  await expect(page.getByRole("link", { name: "Learning" })).toBeVisible();
+  await expect(page).toHaveURL(/\/growth$/);
   await expect(page.getByRole("heading", { name: "What you're learning." })).toBeVisible();
 });

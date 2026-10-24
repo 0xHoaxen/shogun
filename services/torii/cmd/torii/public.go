@@ -35,7 +35,7 @@ const (
 	// Paths are relative so they resolve against whichever origin the browser
 	// reached torii through, the web app's proxy.
 	loginPath     = "/login"
-	postLoginPath = "/jobs"
+	postLoginPath = "/dashboard"
 
 	publicReadHeaderTimeout = 10 * time.Second
 	publicIdleTimeout       = 2 * time.Minute

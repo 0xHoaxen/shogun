@@ -92,13 +92,13 @@ test("the queue lists drafts with subject and preview and asks for the chosen st
         : [{ ...draftOf(emailScenario()), preview: "Dear Lumen team, I would like to help." }],
   }));
 
-  await page.goto("/drafts");
+  await page.goto("/inbox");
 
   const row = page.getByRole("row", { name: /Hello Lumen/ });
   await expect(row).toContainText("Dear Lumen team");
   await expect(row).toContainText("jobs@lumen.example");
   await expect(row).toContainText("Needs you");
-  await expect(row.getByRole("link", { name: "Review" })).toHaveAttribute("href", "/drafts/d1");
+  await expect(row.getByRole("link", { name: "Review" })).toHaveAttribute("href", "/writing?draft=d1");
   expect(calls[0].body).toMatchObject({ state: "DRAFT_STATE_PENDING" });
 
   await page.getByRole("button", { name: "Sent", exact: true }).click();
@@ -117,7 +117,7 @@ test("a new draft is requested with an idempotency key and opens its page", asyn
     draft: { ...draftOf(emailScenario()), state: DraftState.GENERATING, currentVersion: 0 },
     versions: [],
   });
-  await page.goto("/drafts");
+  await page.goto("/inbox");
 
   await page.getByRole("button", { name: "New draft" }).click();
   await page.getByLabel("Channel").selectOption({ label: "Email" });
@@ -125,7 +125,7 @@ test("a new draft is requested with an idempotency key and opens its page", asyn
   await page.getByLabel("What should it say?").fill("A short note about the role");
   await page.getByRole("button", { name: "Write draft" }).click();
 
-  await expect(page).toHaveURL(/\/drafts\/d1$/);
+  await expect(page).toHaveURL(/\/writing\?draft=d1$/);
   await expect(page.getByRole("status")).toContainText("Writing the first version");
   expect(created).toHaveLength(1);
   expect(created[0].body).toMatchObject({
@@ -145,7 +145,7 @@ test("approving an email sends the digest of the exact stored text and then show
     s.state = DraftState.APPROVED;
     return { draft: draftOf(s), copyReady: false };
   });
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   const preview = page.getByTestId("send-preview");
   await expect(preview).toContainText("jobs@lumen.example");
@@ -170,7 +170,7 @@ test("the digest covers multi-byte text as the server counts it", async ({ page 
   s.versions = [{ version: 1, subject: "Café ✓", body: "Grüße — 日本語", author: VersionAuthor.AI }];
   await serve(page, s);
   const approvals = await mockRpc(page, DraftsService.method.approve, { draft: draftOf(s), copyReady: false });
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   await page.getByRole("button", { name: "Approve and send" }).click();
 
@@ -187,7 +187,7 @@ test("editing saves a new version and approval waits until the edit is saved", a
     s.version = 4;
     return { draft: draftOf(s), draftVersion: { version: 2, subject: String(body.subject), body: String(body.body), author: VersionAuthor.USER } };
   });
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
   const approve = page.getByRole("button", { name: "Approve and send" });
   await expect(approve).toBeEnabled();
 
@@ -208,7 +208,7 @@ test("an older version can be read but not approved", async ({ page }) => {
   s.currentVersion = 2;
   s.versions.push({ version: 2, subject: SUBJECT, body: "The second take.", author: VersionAuthor.USER });
   await serve(page, s);
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   await page.getByRole("button", { name: /v1/ }).click();
 
@@ -222,7 +222,7 @@ test("regenerating sends the note and the version, and the new version appears b
   const s = emailScenario();
   await serve(page, s);
   const regenerated = await mockRpc(page, DraftsService.method.regenerate, () => ({ draft: draftOf(s) }));
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   await page.getByLabel("Anything to change or keep in mind?").fill("shorter, mention Go");
   await page.getByRole("button", { name: "Regenerate" }).click();
@@ -247,7 +247,7 @@ test("a copy-only draft is approved, then copied by hand, and nothing is sent", 
     s.state = DraftState.APPROVED;
     return { draft: draftOf(s), copyReady: true };
   });
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
   await expect(page.getByTestId("send-preview")).not.toContainText("To ");
 
   await page.getByRole("button", { name: "Approve", exact: true }).click();
@@ -270,7 +270,7 @@ test("an approved copy-only draft is marked as posted once the owner has posted 
     s.state = DraftState.SENT;
     return { draft: draftOf(s) };
   });
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   await page.getByRole("button", { name: "Mark as posted" }).click();
 
@@ -288,7 +288,7 @@ test("a refused mark as posted says why and shows the draft as it now is", async
   s.versions = [{ version: 1, subject: "", body: "A short post.", author: VersionAuthor.AI }];
   await serve(page, s);
   await mockRpcError(page, DraftsService.method.markPosted, "failed_precondition", "draft is not approved", "DRAFT_STATE_INVALID_TRANSITION");
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
   await expect(page.getByRole("button", { name: "Mark as posted" })).toBeVisible();
   s.state = DraftState.PENDING; // edited elsewhere while this page was open
 
@@ -311,7 +311,7 @@ for (const [reason, code, message] of REFUSALS) {
   test(`a refused approval (${reason}) tells the owner what became of the mail`, async ({ page }) => {
     await serve(page, emailScenario());
     await mockRpcError(page, DraftsService.method.approve, code, "refused", reason);
-    await page.goto("/drafts/d1");
+    await page.goto("/writing?draft=d1");
 
     await page.getByRole("button", { name: "Approve and send" }).click();
 
@@ -326,7 +326,7 @@ test("discarding sends the draft's version", async ({ page }) => {
     s.state = DraftState.DISCARDED;
     return { draft: draftOf(s) };
   });
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   await page.getByRole("button", { name: "Discard draft" }).click();
 
@@ -342,7 +342,7 @@ test("a failed draft says nothing was sent and offers no approval", async ({ pag
   s.versions = [];
   await serve(page, s);
 
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   await expect(page.locator('p[role="alert"]')).toContainText("could not be written");
   await expect(page.locator('p[role="alert"]')).toContainText("Nothing was sent");
@@ -357,7 +357,7 @@ test("a draft that failed for want of an AI provider says so in words and links 
   s.versions = [];
   await serve(page, s);
 
-  await page.goto("/drafts/d1");
+  await page.goto("/writing?draft=d1");
 
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toContainText("you have not added an AI provider yet");
