@@ -10,12 +10,12 @@ test("log in, add a job, move it and keep it across a reload", async ({ page }) 
   const card = (name: string) => page.getByRole("region", { name, exact: true }).getByText(title);
 
   // Act: open a page while signed out; torii's Google flow runs against the stub.
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
   await expect(page).toHaveURL(/\/login$/);
   await page.getByRole("link", { name: "Sign in with Google" }).click();
 
   // Assert: back on the board as the allowed owner.
-  await expect(page).toHaveURL(/\/jobs$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByTestId("owner-email")).toHaveText(OWNER_EMAIL);
 
   // Act: add a job.
@@ -42,6 +42,6 @@ test("log in, add a job, move it and keep it across a reload", async ({ page }) 
 
   // Assert: the session is gone, so the board is no longer reachable.
   await expect(page).toHaveURL(/\/login$/);
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
   await expect(page).toHaveURL(/\/login$/);
 });

@@ -982,7 +982,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `TODO.md`, `CLAUDE.md`.
   Done when: `git diff --stat` shows only those two files plus `docs/v2/**`.
 
-- [ ] **V0.1 Design docs for v2** (S) Needs: V0.0
+- [x] **V0.1 Design docs for v2** (S) Needs: V0.0
   Do: update `docs/shogun-hld.md`, `docs/shogun-lld.md`, `docs/shogun-ddl.md`, `docs/shogun-state-machines.md` for: soroban `models` (many per owner, one active); kagami `status_proposals` and `contact.note_added`; katana `profiles`, `profile_roles`, `skills`, `job_skills`, `profile.updated`, consuming `job.added`; tsubame held sends (`sends.status` gains `held`, `send_after`, `CancelSend`) with the send state machine `held -> sending -> sent|failed`, `held -> cancelled`; torii `approval_rules`. AGENTS.md requires this before new tables or events.
   Files: `docs/*.md`.
   Done when: docs reviewed in the PR; `make lint`.
@@ -994,22 +994,22 @@ v2 rules on top of `AGENTS.md`:
 
 ### V1. Shell and design system
 
-- [ ] **V1.1 Design tokens** (M) Needs: V0.1
+- [x] **V1.1 Design tokens** (M) Needs: V0.1
   Do: replace the spec v1 light tokens in `globals.css` with the v2 dark set from `DESIGN-GUIDE.md` (bg, panel, line, line2, text, muted, cream, accent), the four accent schemes Ember `#E8693C`, Moss `#9DAE6C`, Tide `#6FA8BE`, Plum `#C08AB0` as `--accent` set per page, fonts Inter Tight, IBM Plex Mono, DM Serif Display and Noto Serif JP (self-hosted woff2 like today's fonts, with their OFL files), density `--rowpad` 12px comfy / 7px compact. Keep the shadcn semantic mapping. Check every text/background pair for 4.5:1 and list the results in the PR.
   Files: `web/src/app/globals.css`, `web/src/app/fonts/**`, `web/src/app/layout.tsx`.
   Done when: web checks.
 
-- [ ] **V1.2 App shell and routes** (M) Needs: V1.1
+- [x] **V1.2 App shell and routes** (M) Needs: V1.1
   Do: replace `Rail` and `AppShell` with the v2 shell: top bar (logo mark, Next hint, status text), collapsible sidebar with 8 numbered sections and the Inbox count, footer strip ("Page scheme", "Nothing leaves without your approval"). Below 860px the sidebar becomes a top menu. New routes `/dashboard`, `/inbox`, `/pipeline`, `/people`, `/writing`, `/growth`, `/insights`; `/settings` keeps its path. Redirects: `/jobs -> /pipeline`, `/contacts -> /people`, `/drafts -> /inbox`, `/drafts/[id] -> /writing?draft=id`, `/learning` and `/profile -> /growth`, `/notifications -> /inbox`, `/discovery -> /settings?tab=discovery`. Old screens render inside the new shell until their own task replaces them. Login lands on `/dashboard` (`TODO(owner)` if you want `/inbox` instead).
   Files: `web/src/components/shell/**`, `web/src/app/(app)/**`, `web/src/app/page.tsx`, `web/src/content/sections.ts`.
   Done when: web checks; existing specs updated for the new URLs.
 
-- [ ] **V1.3 Shared v2 components** (M) Needs: V1.1
+- [x] **V1.3 Shared v2 components** (M) Needs: V1.1
   Do: `SidePanel` (slides in from the right, scrim, Esc closes, focus trap, returns focus), `Toast` with Undo and a 10 second timer, `FilterChips` with counts and `aria-pressed`, `Tag` (default, ok, warn), `Toggle` (`role=switch`), `Segmented`, `StepHeader` (1/2/3 with done and current), `ProgressLines` (the "AI reads it" list with done, now, pending). Each with a Playwright component spec or a page spec.
   Files: `web/src/components/ui/**`.
   Done when: web checks.
 
-- [ ] **V1.4 Appearance in local storage** (S) Needs: V1.1
+- [x] **V1.4 Appearance in local storage** (S) Needs: V1.1
   Do: decision D6. One `useAppearance` hook for page schemes, density, motion, sidebar collapsed, Dashboard layout, stored in `localStorage` under one versioned key, wrapped in try/catch with defaults when storage is empty or blocked. Motion off also follows `prefers-reduced-motion`.
   Files: `web/src/lib/appearance.ts`, shell.
   Done when: web checks.

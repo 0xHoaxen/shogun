@@ -32,6 +32,19 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
 ];
 
+// v1 routes that moved with the v2 shell. Temporary (307): each old URL stays
+// valid for bookmarks and links in mail until the v2 screens are all in.
+const movedRoutes: ReadonlyArray<readonly [string, string]> = [
+  ["/jobs", "/pipeline"],
+  ["/contacts", "/people"],
+  ["/drafts", "/inbox"],
+  ["/drafts/:id", "/writing?draft=:id"],
+  ["/learning", "/growth"],
+  ["/profile", "/growth"],
+  ["/notifications", "/inbox"],
+  ["/discovery", "/settings?tab=discovery"],
+];
+
 const nextConfig: NextConfig = {
   // A self-contained server for the Docker image.
   output: "standalone",
@@ -41,6 +54,9 @@ const nextConfig: NextConfig = {
   compress: false,
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
+  },
+  async redirects() {
+    return movedRoutes.map(([source, destination]) => ({ source, destination, permanent: false }));
   },
   async rewrites() {
     return [
