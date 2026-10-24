@@ -30,6 +30,14 @@ targetRules = ["generic-api-key"]
 regexes = ['''^shogun\.api\.v1$''']
 
 [[allowlists]]
+description = "the localStorage name of the appearance settings, which looks like a key to the entropy check"
+targetRules = ["generic-api-key"]
+# Both must match: only this exact name in this file passes.
+condition = "AND"
+paths = ['''^web/src/lib/appearance\.ts$''']
+regexes = ['''^shogun\.appearance\.v1$''']
+
+[[allowlists]]
 description = "truncated kubeseal ciphertext shown as an example in the deploy guide"
 targetRules = ["generic-api-key"]
 # Both must match: only a value cut short with "..." passes, a full key still fails.
