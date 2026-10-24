@@ -37,7 +37,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `web/src/components/shell/**`, `web/src/app/(app)/**`, `web/src/app/page.tsx`, `web/src/content/sections.ts`.
   Done when: web checks; existing specs updated for the new URLs.
 
-- [ ] **V1.3 Shared v2 components** (M) Needs: V1.1
+- [x] **V1.3 Shared v2 components** (M) Needs: V1.1
   Do: `SidePanel` (slides in from the right, scrim, Esc closes, focus trap, returns focus), `Toast` with Undo and a 10 second timer, `FilterChips` with counts and `aria-pressed`, `Tag` (default, ok, warn), `Toggle` (`role=switch`), `Segmented`, `StepHeader` (1/2/3 with done and current), `ProgressLines` (the "AI reads it" list with done, now, pending). Each with a Playwright component spec or a page spec.
   Files: `web/src/components/ui/**`.
   Done when: web checks.

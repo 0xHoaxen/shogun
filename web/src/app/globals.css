@@ -120,6 +120,12 @@
   --font-mark: var(--font-noto-serif-jp), serif;
 }
 
+@keyframes blink {
+  50% {
+    opacity: 0.2;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

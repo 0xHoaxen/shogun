@@ -4,13 +4,14 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { FooterStrip } from "@/components/shell/footer-strip";
 import { Sidebar } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/top-bar";
 import { Button } from "@/components/ui/button";
+import { ToastProvider } from "@/components/ui/toast";
 import { DEFAULT_SCHEME, NAV_SECTIONS } from "@/content/sections";
 import { AuthService } from "@/gen/shogun/api/v1/auth_pb";
 import { DraftState, DraftsService } from "@/gen/shogun/api/v1/drafts_pb";
@@ -51,6 +52,14 @@ export function AppShell({ children }: AppShellProps) {
     },
   });
 
+  const current = NAV_SECTIONS.find((item) => pathname.startsWith(item.href));
+  const scheme = current?.scheme ?? DEFAULT_SCHEME;
+  // Panels and dialogs render in a portal outside the shell, so the scheme
+  // also goes on <html> for them to pick up.
+  useEffect(() => {
+    document.documentElement.dataset.scheme = scheme;
+  }, [scheme]);
+
   if (session.isPending) {
     return <div aria-busy="true" className="min-h-screen bg-background" />;
   }
@@ -66,30 +75,30 @@ export function AppShell({ children }: AppShellProps) {
     );
   }
 
-  const current = NAV_SECTIONS.find((item) => pathname.startsWith(item.href));
-  const scheme = current?.scheme ?? DEFAULT_SCHEME;
   const pendingCount = pending.data?.drafts.length ?? 0;
   const hasMore = Boolean(pending.data?.nextPageToken);
   const inboxLabel = hasMore ? INBOX_CAPPED_LABEL : pendingCount > 0 ? String(pendingCount) : null;
   const email = session.data.session?.email ?? "";
 
   return (
-    <div data-scheme={scheme} className="flex min-h-screen flex-col bg-background">
-      <TopBar status={nextStatus(inboxLabel)} />
-      <div className="flex min-h-0 grow max-[860px]:flex-col">
-        <Sidebar
-          current={current}
-          inboxLabel={inboxLabel}
-          collapsed={collapsed}
-          onToggle={() => setCollapsed((value) => !value)}
-        />
-        <main className="min-w-0 grow">{children}</main>
+    <ToastProvider>
+      <div data-scheme={scheme} className="flex min-h-screen flex-col bg-background">
+        <TopBar status={nextStatus(inboxLabel)} />
+        <div className="flex min-h-0 grow max-[860px]:flex-col">
+          <Sidebar
+            current={current}
+            inboxLabel={inboxLabel}
+            collapsed={collapsed}
+            onToggle={() => setCollapsed((value) => !value)}
+          />
+          <main className="min-w-0 grow">{children}</main>
+        </div>
+        <FooterStrip scheme={scheme}>
+          <NotificationBell active={false} />
+          <span data-testid="owner-email">{email}</span>
+          <Button onClick={() => logout.mutate({})}>Logout</Button>
+        </FooterStrip>
       </div>
-      <FooterStrip scheme={scheme}>
-        <NotificationBell active={false} />
-        <span data-testid="owner-email">{email}</span>
-        <Button onClick={() => logout.mutate({})}>Logout</Button>
-      </FooterStrip>
-    </div>
+    </ToastProvider>
   );
 }
