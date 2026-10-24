@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shogun Growth</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Noto+Serif+JP:wght@700&amp;display=swap">
+<style>
+body{margin:0;background:#1C1C1A}
+.page{--panel:rgba(38,38,35,.62);--line:#34342F;--line2:#4A4942;--text:#ECE6D3;--muted:#ABA694;--cream:#D8D0B8;--ink:#1C1C1A;--ok:#9DAE6C;
+ color:var(--text);font-family:'Inter Tight',system-ui,sans-serif;font-size:14px;line-height:22px;min-height:1620px;
+ background:
+  radial-gradient(1000px 520px at 92% -10%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 62%),
+  radial-gradient(800px 520px at -8% 110%, rgba(216,208,184,.09), transparent 60%),
+  radial-gradient(rgba(236,230,211,.07) 1px, transparent 1.3px) 0 0/16px 16px,
+  #1C1C1A}
+.page ::selection{background:var(--accent);color:var(--ink)}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;font-variant-numeric:tabular-nums}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mut{color:var(--muted)}
+.rw{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;border-bottom:1px dashed var(--line2)}
+.gut{background:repeating-linear-gradient(135deg, rgba(236,230,211,.07) 0 1px, transparent 1px 8px)}
+.gut.l{border-right:1px dashed var(--line2)}.gut.r{border-left:1px dashed var(--line2)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:20px;padding:0 24px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;letter-spacing:-.01em}
+.strip{flex:1 1 320px;display:flex;align-items:center;gap:12px;min-width:0;height:36px;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.leader{flex-grow:1;height:8px;background:radial-gradient(var(--muted) 1px, transparent 1.4px) 0 0/8px 4px;opacity:.6}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 16px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;box-sizing:border-box;border-radius:0}
+.btn:hover{border-color:var(--text)}
+.btn.ghost{border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--text);border-color:var(--line2)}
+.btn.cream{background:var(--cream);border-color:var(--cream);color:var(--ink);font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:0 22px;min-height:42px;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.btn.cream:hover{background:#E6DFC9}
+.btn.cream kbd{color:var(--ink);border-color:rgba(28,28,26,.35)}
+.btn.sm{min-height:28px;padding:0 10px;font-size:12px}
+.btn:focus-visible,.row:focus-visible,.chip:focus-visible,.nv:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+kbd{font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:16px;padding:0 5px;border:1px solid var(--line2);color:var(--muted)}
+.body{display:grid;grid-template-columns:200px minmax(0,1fr);transition:grid-template-columns .22s ease}
+.body.c{grid-template-columns:60px minmax(0,1fr)}
+.body.c .lab{display:none}
+.body.c .nv{gap:4px;padding:0 10px}
+.side{border-right:1px dashed var(--line2);overflow:hidden}
+.tog{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 16px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.tog:hover{color:var(--text)}
+.body.c .tog{padding:0;justify-content:center}
+.crop{position:absolute;right:-70px;top:-60px;width:300px;height:300px;color:color-mix(in srgb, var(--accent) 34%, #2B2B28);pointer-events:none}
+.nv{display:flex;align-items:center;gap:14px;height:44px;padding:0 16px;border-bottom:1px solid var(--line);font-weight:500}
+.nv span.n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.nv:hover{background:rgba(236,230,211,.05)}
+.nv.on{background:var(--panel);box-shadow:inset 2px 0 0 var(--accent)}
+.nv .cnt{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--accent);color:var(--ink);padding:0 6px;line-height:18px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px;padding:36px 28px 22px;border-bottom:1px dashed var(--line2);position:relative;overflow:hidden;background:linear-gradient(160deg, rgba(236,230,211,.06), transparent 50%)}
+.head > *{position:relative}
+.head > .crop{position:absolute}
+.head > .crop{width:340px;height:340px;right:-130px;top:50%;transform:translateY(-50%)}.head > .ln{right:189px !important}.head .filters{padding-right:230px !important}
+.head > .ln.mid{position:relative;display:block;align-self:stretch;right:auto !important;margin:-8px 161px -12px -28px;z-index:0}@media (max-width:860px){.head > .ln.mid{margin-right:161px}}
+.head > .crop{z-index:1}.head > .h1,.head > .filters{z-index:2}
+.head .chip{background:rgba(28,28,26,.88);backdrop-filter:blur(4px)}
+.head .chip.on{background:var(--accent)}
+@media (max-width:860px){.head .filters{flex-wrap:nowrap;overflow-x:auto;width:100%;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent);padding-right:40px !important}.head .filters::-webkit-scrollbar{display:none}.head .chip{flex:0 0 auto}}
+
+@media (max-width:860px){.head > .crop{width:340px;height:340px;right:-130px;top:50%;transform:translateY(-50%)}.head > .ln{right:189px !important}}
+.crop{color:color-mix(in srgb, var(--accent) 55%, #3A3A36)}
+@media (max-width:860px){.head{padding:36px 28px 22px !important;gap:20px}.h1{font-size:40px !important;line-height:44px !important}.head .chip{min-height:28px}}
+.head{flex-direction:column;align-items:flex-start;gap:20px}
+@media (max-width:860px){.head .filters{padding-right:0 !important}}
+.h1{margin:0;font-size:40px;line-height:44px;font-weight:500;letter-spacing:-.035em}
+.h1 .dim{color:var(--muted)}
+.chip{min-height:28px;padding:0 10px;border:1px solid var(--line2);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip:hover{color:var(--text)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.split{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr)}
+.list{border-right:1px dashed var(--line2);min-width:0}
+.row{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:10px;width:100%;padding:14px 18px 14px 16px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer;box-sizing:border-box}
+.row:hover{background:rgba(236,230,211,.04)}
+.row.on{background:var(--panel);box-shadow:inset 2px 0 0 var(--accent)}
+.rn{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);padding-top:1px}
+.rk{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent)}
+.ttl{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pane{min-width:0;display:flex;flex-direction:column;padding:28px;gap:18px;box-sizing:border-box}
+.meta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(6px)}
+.mc{padding:10px 14px;border-right:1px solid var(--line);min-width:0}
+.mc:last-child{border-right:0}
+.paper{background:var(--cream);color:var(--ink);position:relative;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
+.ph{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px dashed rgba(28,28,26,.3)}
+.ph .lbl{color:#55513F}
+.vs{display:flex;gap:2px}
+.vs button{min-height:24px;padding:0 8px;border:1px solid transparent;background:transparent;color:#55513F;font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer}
+.vs button.on{border-color:rgba(28,28,26,.5);color:var(--ink)}
+.copy{min-height:24px;padding:0 8px;border:1px solid rgba(28,28,26,.35);background:transparent;color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer}
+.pbody{padding:18px 20px 22px;font-size:15px;line-height:24px;white-space:pre-line;max-width:70ch}
+.act{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.note{flex:1 1 260px;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:18px;color:var(--muted)}
+.toast{position:fixed;right:24px;bottom:24px;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 14px;background:var(--cream);color:var(--ink);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+.toast button{border:1px solid rgba(28,28,26,.4);background:transparent;color:var(--ink);min-height:26px;padding:0 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+@media (max-width:960px){.split{grid-template-columns:minmax(0,1fr)}.list{border-right:0;border-bottom:1px dashed var(--line2)}}
+@media (max-width:860px){.rw{grid-template-columns:12px minmax(0,1fr) 12px}.body,.body.c{grid-template-columns:minmax(0,1fr)}.tog{display:none}.body.c .lab{display:inline}.side{border-right:0;border-bottom:1px dashed var(--line2);display:flex;flex-wrap:wrap}.nv{flex:1 1 140px}.head,.pane{padding-left:16px;padding-right:16px}.meta{grid-template-columns:minmax(0,1fr)}.mc{border-right:0;border-bottom:1px solid var(--line)}.btn,.chip,.nv{min-height:44px}.h1{font-size:30px;line-height:34px}}
+.strip{padding:0 12px;background:transparent;transition:background .3s ease,border-color .3s ease;color:var(--text)}
+.strip{position:relative;overflow:hidden;isolation:isolate}
+.strip::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 6%, transparent) 65%, transparent);transform:translateX(-101%);transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.strip:hover::before,.strip:focus-visible::before{transform:translateX(0)}
+.strip:hover{border-color:color-mix(in srgb, var(--accent) 50%, var(--line2))}
+@media (prefers-reduced-motion: reduce){.strip::before{transition:none}}
+.strip:hover .leader{opacity:1}
+.strip .go-i{transition:transform .2s ease}.strip:hover .go-i{transform:translateX(3px)}
+.strip > *{flex-shrink:0;white-space:nowrap}
+.strip > .nx{flex-shrink:1;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.strip > .leader{flex:1 1 24px;min-width:24px}
+@media (max-width:1180px){.strip .hide-sm{display:none}}
+.go{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line2);color:var(--muted);transition:color .2s,border-color .2s,background .2s}
+.go:hover{color:var(--ink);background:var(--accent);border-color:var(--accent)}
+@media (max-width:860px){.hide-sm{display:none}}
+.ln{position:absolute;background:var(--line2);pointer-events:none}
+.ln.v{width:1px}.ln.h{height:1px}
+.nd{position:absolute;width:5px;height:5px;border-radius:50%;background:color-mix(in srgb, var(--accent) 45%, #ECE6D3)}
+.ln.v .nd.s{top:-2px;left:-2px}.ln.v .nd.e{bottom:-2px;left:-2px}
+.ln.h .nd.s{left:-2px;top:-2px}.ln.h .nd.e{right:-2px;top:-2px}
+.pk{position:absolute;width:5px;height:5px;border-radius:50%;background:color-mix(in srgb, var(--accent) 45%, #ECE6D3);box-shadow:0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);opacity:0}
+.ln.v .pk{left:-2px;animation:dv 3.6s cubic-bezier(.5,0,.6,1) infinite}
+.ln.h .pk{top:-2px;animation:dh 4.2s cubic-bezier(.5,0,.6,1) infinite}
+.d2{animation-delay:-1.3s!important}.d3{animation-delay:-2.4s!important}
+@keyframes dv{0%{top:-2px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:calc(100% - 3px);opacity:0}}
+@keyframes dh{0%{left:-2px;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:calc(100% - 3px);opacity:0}}
+@media (prefers-reduced-motion: reduce){.pk{animation:none;display:none}}
+@media (max-width:860px){
+ .top{gap:10px;padding:10px 12px}.top .brand{margin-right:auto}.top .strip{order:5;flex:1 1 100%}
+ .side{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.side::-webkit-scrollbar{display:none}
+ .nv{flex:0 0 auto;border-bottom:0;border-right:1px solid var(--line);padding:0 14px;gap:8px}
+ .nv.on{box-shadow:inset 0 -2px 0 var(--accent)}.nv .cnt{margin-left:4px}
+}
+.head > .ln{position:absolute}
+.top{gap:10px}
+.top .strip{height:36px;box-sizing:border-box;border:1px solid var(--line2)}
+.top .btn{height:36px;min-height:36px}
+.btn.cream{background:var(--accent);border-color:var(--accent);color:var(--ink);clip-path:none;text-transform:none;letter-spacing:0;font-weight:600}.btn.cream:hover{background:color-mix(in srgb, var(--accent) 85%, #ECE6D3);border-color:transparent}.btn.cream kbd{color:var(--ink);border-color:rgba(28,28,26,.35)}
+.act{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.act .note{flex:1 1 100%;order:-1;margin-bottom:4px}
+.act .btn{min-height:36px;height:36px;padding:0 16px;font-size:13px}
+.act .btn.ghost{border-color:var(--line2);color:var(--text)}
+.act .btn.ghost:hover{border-color:var(--text)}
+.act .btn.cream{margin-left:auto;min-height:36px;padding:0 18px}
+.act .btn kbd{margin-left:2px}
+@media (max-width:860px){.btn,.btn.cream,.btn.sm{min-height:36px}.act .btn{flex:1 1 0;min-width:0;padding:0 10px}.act .btn.cream{flex:1 1 100%;margin-left:0;order:9}.act .btn kbd{display:none}}
+.regen{border:1px dashed var(--line2);background:var(--panel);backdrop-filter:blur(6px);padding:16px;display:flex;flex-direction:column;gap:12px}
+.regen .rh{display:flex;align-items:center;gap:8px}.regen .rh .lbl{margin-right:auto}
+.regen textarea{min-height:76px}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mode{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.mode:hover{border-color:var(--muted)}
+.mode .t{display:flex;align-items:center;gap:8px;font-weight:500;font-size:13px}
+.mode .t::before{content:"";width:10px;height:10px;border:1px solid var(--line2);box-sizing:border-box;flex:0 0 auto}
+.mode.on{border-color:var(--accent);background:color-mix(in srgb, var(--accent) 10%, transparent)}
+.mode.on .t::before{background:var(--accent);border-color:var(--accent)}
+.mode .d{font-size:12px;line-height:18px;color:var(--muted);padding-left:18px}
+.mode:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.regen .ra{display:flex;gap:8px;justify-content:flex-end}
+.regen .ra .btn{min-height:36px;height:36px}
+.regen .ra .btn.ghost{border-color:var(--line2);color:var(--text)}
+.btn.open{border-color:var(--accent);color:var(--accent)}
+@media (max-width:860px){.modes{grid-template-columns:minmax(0,1fr)}.regen .ra .btn{flex:1 1 0}}
+/* v2 look: transparent cards, dashed rules, dotted marks */
+.page{--dotoff:color-mix(in srgb, var(--muted) 30%, transparent)}
+.w:not(.s-accent):not(.s-cream){background:transparent !important;backdrop-filter:none !important;border:1px dashed var(--line2) !important}
+.w:not(.s-accent):not(.s-cream) .wh{border-bottom:1px dashed var(--line2)}
+.w:not(.s-accent):not(.s-cream) .li,.w:not(.s-accent):not(.s-cream) .lgi,.w:not(.s-accent):not(.s-cream) .acct,.pgs td,.tbl th,.tbl td{border-bottom-style:dashed !important;border-bottom-color:var(--line2) !important}
+.meta,.links{background:transparent !important;backdrop-filter:none !important;border:1px dashed var(--line2) !important}
+.mc,.links a{border-color:var(--line2) !important;border-right-style:dashed !important;border-bottom-style:dashed !important}
+.card{background:transparent !important;backdrop-filter:none !important;border-style:dashed !important;border-color:var(--line2) !important}
+.card.on{border-style:solid !important;border-color:var(--accent) !important}
+.bar,.sbar,.stages i,.segs i,.sg,.heat i,.hc,.dual{background:radial-gradient(circle, var(--dotoff) 1.4px, transparent 1.9px) 0 50%/5px 5px !important;height:10px}
+.bar > i,.fill,.dual i,.stages i.on,.segs i.on,.sg.on,.heat i.l2,.hc.on{background:radial-gradient(circle, var(--hi, var(--hi-fill, var(--accent))) 1.5px, transparent 2px) 0 50%/5px 5px !important;height:10px}
+.heat i.l1,.hc.mid{background:radial-gradient(circle, color-mix(in srgb, var(--hi, var(--hi-fill, var(--accent))) 55%, transparent) 1.5px, transparent 2px) 0 50%/5px 5px !important;opacity:1 !important}
+.segs i,.sg{height:16px !important}.heat i,.hc{height:auto}
+.w.s-accent,.w.s-cream{--dotoff:rgba(28,28,26,.22)}
+.dual b{background:var(--text) !important}
+.paper{background:var(--cream)}
+/* head filters: full width like phones, wrap instead of scroll */
+.head .filters{flex-wrap:wrap !important;overflow:visible !important;max-width:100% !important;width:100%;padding-right:0 !important;box-sizing:border-box;-webkit-mask-image:none !important;mask-image:none !important;row-gap:6px}
+.head .filters > *{flex:0 0 auto}
+/* head buttons match the filter chips */
+.head .filters .btn,.head .filters .btn.sm{min-height:28px !important;height:28px;padding:0 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;flex:0 0 auto;gap:6px}
+.head .filters .btn kbd{display:none}
+
+/* list gives way so the detail pane keeps its action row on one line */
+.split{grid-template-columns:minmax(0,min(380px,calc(100% - 400px))) minmax(0,1fr)}
+@media (max-width:960px){.split{grid-template-columns:minmax(0,1fr)}}
+
+/* shared widgets for v2 pages */
+.page{--hi:var(--accent)}
+.btn.cream{background:var(--accent);border-color:var(--accent);color:var(--ink);clip-path:none;text-transform:none;letter-spacing:0;font-weight:600}.btn.cream:hover{background:color-mix(in srgb, var(--accent) 85%, #ECE6D3);border-color:transparent}.btn.cream kbd{color:var(--ink);border-color:rgba(28,28,26,.35)}
+.head .filters{flex-wrap:wrap}
+@media (max-width:860px){.head .filters{flex-wrap:nowrap}.head .filters > *{flex:0 0 auto}}
+/* head buttons match the filter chips */
+.head .filters .btn,.head .filters .btn.sm{min-height:28px !important;height:28px;padding:0 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;letter-spacing:.06em;text-transform:uppercase;flex:0 0 auto;gap:6px}
+.head .filters .btn kbd{display:none}
+.head .filters .seg button{min-height:26px !important;height:26px !important}
+.w{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(6px);min-width:0;display:flex;flex-direction:column;color:var(--text);position:relative;--hi:var(--accent)}
+.w.s-accent{--panel:var(--accent);--text:#1C1C1A;--muted:rgba(28,28,26,.72);--line:rgba(28,28,26,.22);--line2:rgba(28,28,26,.4);--hi:#1C1C1A;background:var(--accent) repeating-linear-gradient(135deg, rgba(0,0,0,.07) 0 1px, transparent 1px 7px);border-color:var(--accent)}
+.w.s-cream{--panel:#D8D0B8;--text:#1C1C1A;--muted:#55513F;--line:rgba(28,28,26,.18);--line2:rgba(28,28,26,.35);--hi:#1C1C1A;background:#D8D0B8;border-color:#D8D0B8}
+.wh{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);min-height:50px;box-sizing:border-box}
+.wh .lbl{margin-right:auto}
+.wb{padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.w > .wb{flex:1 1 auto}
+.wf{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 16px;border-top:1px dashed var(--line2);margin-top:auto}
+.w.s-accent .wf,.w.s-cream .wf{border-top-style:solid;border-top-color:var(--line)}
+.wf .btn{min-height:36px;height:36px}
+.wf .note{flex:1 1 100%;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:18px;color:var(--muted)}
+.big{font-size:30px;line-height:34px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tag{display:inline-flex;align-items:center;gap:6px;min-height:20px;padding:0 6px;border:1px solid var(--line2);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);white-space:nowrap}
+.tag.t-acc{color:var(--accent);border-color:color-mix(in srgb, var(--accent) 50%, var(--line2))}
+.tag.t-warn{color:#D8B35A}.tag.t-ok{color:#9DAE6C}.tag.t-bad{color:#EE7F70}
+.tag.t-acc::before,.tag.t-warn::before,.tag.t-ok::before,.tag.t-bad::before{content:"";width:6px;height:6px;background:currentColor}
+.bar{height:8px;background:var(--line)}.bar > i{display:block;height:8px;background:var(--hi)}
+.mtop{display:flex;justify-content:space-between;gap:12px;font-size:13px}.mtop span:last-child{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.segs{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:3px}.segs i{height:16px;background:var(--line)}.segs i.on{background:var(--hi)}
+.heat{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px}.heat i{aspect-ratio:1;background:var(--line)}.heat i.l1{background:color-mix(in srgb, var(--hi) 45%, var(--line))}.heat i.l2{background:var(--hi)}
+.seg{display:inline-flex;border:1px solid var(--line2);align-self:flex-start;max-width:100%}
+.seg button{min-height:28px;padding:0 10px;border:0;border-right:1px solid var(--line2);background:rgba(28,28,26,.88);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer}
+.seg button:last-child{border-right:0}.seg button.on{background:var(--cream);color:var(--ink)}
+.av{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid color-mix(in srgb, var(--accent) 55%, var(--line2));color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:12px;flex:0 0 auto;box-sizing:border-box}
+.av.lg{width:48px;height:48px;font-size:15px}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.inp{min-height:36px;padding:0 12px;border:1px solid var(--line2);background:rgba(28,28,26,.6);color:var(--text);font:inherit;box-sizing:border-box;border-radius:0;width:100%}
+textarea.inp{padding:10px 12px;resize:vertical;line-height:22px}
+.inp:focus-visible,.sw:focus-visible,.tg:focus-visible,.card:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;line-height:20px;color:var(--muted)}
+.tg{display:flex;align-items:flex-start;gap:12px;background:transparent;border:0;color:var(--text);font:inherit;cursor:pointer;padding:0;text-align:left;width:100%}
+.tg .trk{width:34px;height:18px;border:1px solid var(--line2);position:relative;flex:0 0 auto;box-sizing:border-box;margin-top:2px;transition:background .2s,border-color .2s}
+.tg .trk::after{content:"";position:absolute;top:3px;left:3px;width:10px;height:10px;background:var(--muted);transition:transform .2s cubic-bezier(.2,.7,.2,1),background .2s}
+.tg.on .trk{background:var(--accent);border-color:var(--accent)}.tg.on .trk::after{transform:translateX(16px);background:var(--ink)}
+.sw{width:22px;height:22px;border:2px solid transparent;cursor:pointer;padding:0}.sw.on{border-color:var(--text)}
+.pgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:24px}
+.span2{grid-column:span 2}.span3{grid-column:1 / -1}
+.tl{display:flex;flex-direction:column}
+.tli{display:grid;grid-template-columns:72px 12px minmax(0,1fr);gap:10px;padding:8px 0;position:relative}
+.tli .when{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);padding-top:2px}
+.tli .dot{width:7px;height:7px;border-radius:50%;background:color-mix(in srgb, var(--accent) 45%, #ECE6D3);margin-top:7px;position:relative}
+.tli:not(:last-child) .dot::after{content:"";position:absolute;left:3px;top:10px;width:1px;height:calc(100% + 18px);background:var(--line2)}
+.tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl th{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:400;text-align:left;padding:8px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.num{text-align:right !important;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.scroll{overflow-x:auto}
+.dr{display:flex;flex-direction:column;gap:18px;padding:28px;min-width:0;box-sizing:border-box}
+.h2{margin:0;font-size:24px;line-height:30px;font-weight:500;letter-spacing:-.02em}
+@media (max-width:1100px){.pgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.span3{grid-column:1 / -1}.wfull{grid-column:1 / -1}.wfull .heat i{aspect-ratio:auto;height:18px}}
+@media (max-width:860px){.pgrid{grid-template-columns:minmax(0,1fr);padding:16px}.span2{grid-column:auto}.dr{padding:20px 16px}.seg button{min-height:44px}}
+.act{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.act .note{flex:1 1 100%;order:-1;margin-bottom:4px}
+.act .btn{min-height:36px;height:36px;padding:0 16px;font-size:13px}
+.act .btn.ghost{border-color:var(--line2);color:var(--text)}
+.act .btn.ghost:hover{border-color:var(--text)}
+.act .btn.cream,.act .btn.acc{margin-left:auto;min-height:36px;padding:0 18px}
+.act .btn kbd{margin-left:2px}
+@media (max-width:860px){.btn,.btn.cream,.btn.sm{min-height:36px}.act .btn{flex:1 1 0;min-width:0;padding:0 10px}.act .btn.cream,.act .btn.acc{flex:1 1 100%;margin-left:0;order:9}.act .btn kbd{display:none}}
+/* v2 look: transparent cards, dashed rules, dotted marks */
+.page{--dotoff:color-mix(in srgb, var(--muted) 30%, transparent)}
+.w:not(.s-accent):not(.s-cream){background:transparent !important;backdrop-filter:none !important;border:1px dashed var(--line2) !important}
+.w:not(.s-accent):not(.s-cream) .wh{border-bottom:1px dashed var(--line2)}
+.w:not(.s-accent):not(.s-cream) .li,.w:not(.s-accent):not(.s-cream) .lgi,.w:not(.s-accent):not(.s-cream) .acct,.pgs td,.tbl th,.tbl td{border-bottom-style:dashed !important;border-bottom-color:var(--line2) !important}
+.meta,.links{background:transparent !important;backdrop-filter:none !important;border:1px dashed var(--line2) !important}
+.mc,.links a{border-color:var(--line2) !important;border-right-style:dashed !important;border-bottom-style:dashed !important}
+.card{background:transparent !important;backdrop-filter:none !important;border-style:dashed !important;border-color:var(--line2) !important}
+.card.on{border-style:solid !important;border-color:var(--accent) !important}
+.bar,.sbar,.stages i,.segs i,.sg,.heat i,.hc,.dual{background:radial-gradient(circle, var(--dotoff) 1.4px, transparent 1.9px) 0 50%/5px 5px !important;height:10px}
+.bar > i,.fill,.dual i,.stages i.on,.segs i.on,.sg.on,.heat i.l2,.hc.on{background:radial-gradient(circle, var(--hi, var(--hi-fill, var(--accent))) 1.5px, transparent 2px) 0 50%/5px 5px !important;height:10px}
+.heat i.l1,.hc.mid{background:radial-gradient(circle, color-mix(in srgb, var(--hi, var(--hi-fill, var(--accent))) 55%, transparent) 1.5px, transparent 2px) 0 50%/5px 5px !important;opacity:1 !important}
+.segs i,.sg{height:16px !important}.heat i,.hc{height:auto}
+.w.s-accent,.w.s-cream{--dotoff:rgba(28,28,26,.22)}
+.dual b{background:var(--text) !important}
+.paper{background:var(--cream)}
+/* head filters: full width like phones, wrap instead of scroll */
+.head .filters{flex-wrap:wrap !important;overflow:visible !important;max-width:100% !important;width:100%;padding-right:0 !important;box-sizing:border-box;-webkit-mask-image:none !important;mask-image:none !important;row-gap:6px}
+.head .filters > *{flex:0 0 auto}
+/* side drawer shared by People and Growth */
+.sscrim{position:fixed;inset:0;background:rgba(20,20,18,.35);opacity:0;pointer-events:none;transition:opacity .3s ease;z-index:40;border:0;padding:0;width:100%;cursor:pointer}
+.sscrim.open{opacity:1;pointer-events:auto}
+.sd{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:100%;z-index:41;background:linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, rgba(31,31,29,.55)), rgba(31,31,29,.55) 45%);-webkit-backdrop-filter:blur(16px) saturate(120%);backdrop-filter:blur(16px) saturate(120%);border-left:1px dashed var(--line2);transform:translateX(105%);transition:transform .38s cubic-bezier(.2,.7,.2,1);overflow-y:auto;visibility:hidden;color:var(--text);box-sizing:border-box}
+.sd.open{transform:translateX(0);visibility:visible}
+.sd .dh{position:sticky;top:0;display:flex;align-items:center;gap:8px;padding:12px 16px 12px 28px;border-bottom:1px solid var(--line);z-index:1;background:rgba(28,28,26,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.sd .dh .lbl{margin-right:auto}
+.sd .x{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer;padding:0}
+.sd .x:hover{color:var(--ink);background:var(--accent);border-color:var(--accent)}
+.sd .x:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sd .btn.acc,.btn.acc{background:var(--accent);border-color:var(--accent);color:var(--ink);font-weight:600}
+.btn.acc:hover{background:color-mix(in srgb, var(--accent) 85%, #ECE6D3);border-color:transparent}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.ff{display:flex;flex-direction:column;gap:14px}
+.ff .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.ff .seg{align-self:stretch;display:flex}.ff .seg button{flex:1 1 0}
+.ferr{color:#EE7F70;font-size:13px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:10px;padding:28px 16px;border:1px dashed var(--line2);text-align:center;position:relative}
+.drop:hover,.drop:focus-within{border-color:var(--accent)}
+.drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop .big2{font-size:15px;font-weight:500}
+.steps{display:flex;gap:6px 18px;flex-wrap:wrap}
+@media (max-width:520px){.toast{left:12px;right:12px;bottom:12px}.toast span{min-width:0}}
+select.inp{color-scheme:dark;background-color:rgba(28,28,26,.85);appearance:none;-webkit-appearance:none;padding-right:26px !important;background-image:linear-gradient(45deg, transparent 50%, var(--muted) 50%),linear-gradient(135deg, var(--muted) 50%, transparent 50%);background-position:calc(100% - 13px) 50%,calc(100% - 9px) 50%;background-size:4px 4px;background-repeat:no-repeat}
+select.inp option{background:#262623;color:#ECE6D3}
+.steps span{font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:2px 0;border-bottom:2px solid transparent}
+.steps span.on{color:var(--text);border-color:var(--accent)}
+.steps span.done{color:var(--accent)}
+.scan{display:flex;flex-direction:column;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.scan .ln2{display:flex;gap:10px;align-items:center;color:var(--muted)}
+.scan .ln2.ok{color:var(--text)}
+.scan .ln2 i{width:8px;height:8px;background:var(--line2);flex:0 0 auto}
+.scan .ln2.ok i{background:var(--accent)}
+.scan .ln2.now i{background:var(--accent);animation:blink .8s steps(2) infinite}
+@keyframes blink{50%{opacity:.2}}
+.vlist{display:flex;flex-direction:column;border:1px dashed var(--line2)}
+.vrow{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px 12px;border-bottom:1px dashed var(--line2);background:transparent;border-left:0;border-right:0;border-top:0;color:var(--text);font:inherit;text-align:left;cursor:pointer;width:100%;box-sizing:border-box}
+.vrow:last-child{border-bottom:0}
+.vrow .cb{width:14px;height:14px;border:1px solid var(--line2);margin-top:3px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center}
+.vrow.on .cb{background:var(--accent);border-color:var(--accent)}
+.vrow.on .cb::after{content:"";width:6px;height:3px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(-45deg) translate(1px,-1px)}
+.vrow:not(.on) .vt{color:var(--muted);text-decoration:line-through}
+.vrow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.vrow .vt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vrow select.inp{min-height:30px;height:30px;width:auto;padding:0 8px;font-size:12px}
+.mapt{width:100%;border-collapse:collapse;font-size:13px}
+.mapt th{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px dashed var(--line2)}
+.mapt td{padding:6px 8px;border-bottom:1px dashed var(--line2);vertical-align:middle}
+.mapt select.inp{min-height:30px;height:30px;padding:0 6px;font-size:12px}
+.ai{display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent)}
+.ai::before{content:"";width:6px;height:6px;background:var(--accent)}
+@media (prefers-reduced-motion: reduce){.sd,.sscrim{transition:none}.scan .ln2.now i{animation:none}}
+@media (max-width:520px){.ff .two{grid-template-columns:minmax(0,1fr)}.sd .dh{padding-left:16px}}
+
+
+.skl{display:grid;grid-template-columns:minmax(0,1fr) 64px 64px;gap:6px 12px;align-items:center}
+.skl .hd{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.skl .nm{font-size:13px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.dual{position:relative;height:8px;background:var(--line)}
+.dual i{position:absolute;left:0;top:0;height:8px;background:var(--hi)}
+.dual b{position:absolute;top:-3px;width:2px;height:14px;background:var(--text)}
+.logf{display:flex;gap:8px;flex-wrap:wrap}
+.logf .inp{flex:1 1 220px}
+.lg{display:flex;flex-direction:column}
+.lgi{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.lgi:last-child{border-bottom:0}
+.lgi .d{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);padding-top:2px}
+.lgi .tx{display:flex;flex-direction:column;gap:4px}
+.lgi .tgs{display:flex;gap:4px;flex-wrap:wrap}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:8px;background:var(--hi)}.legend b{width:2px;height:12px;background:var(--text)}
+.prof{grid-column:1 / -1}
+.pf{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+.pf .who2{display:flex;gap:14px;align-items:flex-start}
+.pf .facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px dashed var(--line2)}
+.pf .facts > div{padding:8px 12px;border-bottom:1px dashed var(--line2);border-right:1px dashed var(--line2);min-width:0}
+.pf .facts > div:nth-child(2n){border-right:0}
+.pf .facts > div:nth-last-child(-n+2){border-bottom:0}
+.xp{display:flex;flex-direction:column}
+.xp > div{display:grid;grid-template-columns:136px minmax(0,1fr);gap:12px;padding:8px 0;border-bottom:1px dashed var(--line2)}
+.xp > div:last-child{border-bottom:0}
+.pempty{display:flex;flex-wrap:wrap;align-items:center;gap:16px;justify-content:space-between}
+.vgrp{display:flex;flex-direction:column;gap:8px}
+.vgrp .vh{display:flex;align-items:center;gap:8px}
+.vgrp .vh .lbl{margin-right:auto}
+.vfield{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.skc{display:flex;flex-wrap:wrap;gap:6px}
+.skc button{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:0 10px;border:1px dashed var(--line2);background:transparent;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+.skc button.on{border-style:solid;border-color:var(--accent);color:var(--text)}
+.skc button .lv{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--accent)}
+.skc button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:960px){.pf{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.pf .facts{grid-template-columns:minmax(0,1fr)}.pf .facts > div{border-right:0}.pf .facts > div:nth-last-child(2){border-bottom:1px dashed var(--line2)}.xp > div{grid-template-columns:minmax(0,1fr);gap:2px}}
+.sug{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.sug li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;font-size:13px;line-height:20px}
+.sug li .n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);padding-top:1px}
+
+</style>
+</helmet>
+<div class="page" style="--accent: {{ accent }}">
+
+<div class="rw">
+<div class="gut l"></div>
+<header class="top">
+<a href="Main.dc.html" class="brand" aria-label="Shogun home">
+<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="3" fill="none" stroke="var(--accent)" stroke-width="2.4"></rect><text x="16" y="22.5" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="700" font-size="17" fill="var(--accent)">将</text></svg>
+<span>shogun</span>
+</a>
+<a class="strip" href="#" aria-label="Next: Kafka is asked in 5 of your 9 roles. Start with a consumer group"><span class="lbl" style="color: var(--accent)">Next</span><span class="mono nx">Kafka is asked in 5 of your 9 roles. Start with a consumer group</span><span class="leader" aria-hidden="true"></span><span class="mono mut hide-sm">9 day streak</span><svg class="go-i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</header>
+<div class="gut r"></div>
+</div>
+
+<div class="rw">
+<div class="gut l"></div>
+<div class="{{ bodyCls }}">
+<nav class="side" aria-label="Main">
+<button type="button" class="tog" onClick="{{ toggleSide }}" aria-expanded="{{ sideOpen }}" aria-label="{{ togLabel }}"><span aria-hidden="true">{{ togIcon }}</span><span class="lab">Collapse</span></button>
+<a href="Main.dc.html" class="nv" title="Dashboard"><span class="n">01</span><span class="lab">Dashboard</span></a>
+<a href="Inbox.dc.html" class="nv" title="Inbox"><span class="n">02</span><span class="lab">Inbox</span><span class="cnt">7</span></a>
+<a href="Pipeline.dc.html" class="nv" title="Pipeline"><span class="n">03</span><span class="lab">Pipeline</span></a>
+<a href="People.dc.html" class="nv" title="People"><span class="n">04</span><span class="lab">People</span></a>
+<a href="Writing.dc.html" class="nv" title="Writing"><span class="n">05</span><span class="lab">Writing</span></a>
+<a href="Growth.dc.html" class="nv on" aria-current="page" title="Growth"><span class="n">06</span><span class="lab">Growth</span></a>
+<a href="Insights.dc.html" class="nv" title="Insights"><span class="n">07</span><span class="lab">Insights</span></a>
+<a href="Settings.dc.html" class="nv" title="Settings"><span class="n">08</span><span class="lab">Settings</span></a>
+</nav>
+<main style="min-width: 0">
+<div class="head">
+<span class="ln h" style="left: 0; right: 211px; top: 18px" aria-hidden="true"><span class="nd s"></span><span class="nd e"></span><span class="pk "></span></span><span class="ln h" style="left: 0; right: 211px; bottom: 14px" aria-hidden="true"><span class="nd s"></span><span class="nd e"></span><span class="pk d2"></span></span><svg class="crop" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="3" fill="none" stroke="currentColor" stroke-width=".3"></rect><rect x="4.4" y="4.4" width="23.2" height="23.2" rx="1.5" fill="none" stroke="currentColor" stroke-width=".3"></rect><text x="16" y="22.5" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="700" font-size="17" fill="none" stroke="currentColor" stroke-width=".18">将</text></svg>
+<h1 class="h1">Learn it.<br><span class="dim">Log it. Show it.</span></h1>
+<span class="ln h mid" aria-hidden="true"><span class="nd s"></span><span class="nd e"></span><span class="pk d3"></span></span>
+<div style="display: flex; gap: 6px; padding-right: 220px; max-width: 100%; box-sizing: border-box; align-items: center" class="filters" role="group" aria-label="Growth controls">
+<div class="seg" role="group" aria-label="Range"><sc-for list="{{ ranges }}" as="r" hint-placeholder-count="3"><button type="button" class="{{ r.cls }}" onClick="{{ r.pick }}" aria-pressed="{{ r.pressed }}">{{ r.label }}</button></sc-for></div>
+<a href="#log" class="btn sm" style="background: rgba(28,28,26,.88)">Log today</a>
+<button type="button" class="btn sm" onClick="{{ openResume }}" style="background: rgba(28,28,26,.88)">{{ resumeBtn }}</button>
+</div>
+</div>
+<div class="pgrid">
+<section class="w prof" aria-label="Your profile">
+<div class="wh"><span class="lbl">Your profile</span><span class="mono mut">{{ profSrc }}</span></div>
+<div class="wb">
+<sc-if value="{{ noProfile }}" hint-placeholder-val="{{ false }}"><div class="pempty"><div><div style="font-weight: 500">Add your resume and Shogun fills in your profile.</div><div class="hint">It reads your roles, skills and dates, then asks you to check each one before anything is saved.</div></div><button type="button" class="btn acc" onClick="{{ openResume }}">Add resume</button></div></sc-if>
+<sc-if value="{{ hasProfile }}" hint-placeholder-val="{{ true }}"><div class="pf">
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div class="who2"><span class="av lg" aria-hidden="true">{{ prof.ini }}</span><div><h2 class="h2">{{ prof.name }}</h2><div class="mut">{{ prof.headline }}</div></div></div>
+<div class="facts"><sc-for list="{{ prof.facts }}" as="k" hint-placeholder-count="4"><div><div class="lbl">{{ k.k }}</div><div class="mono" style="overflow-wrap: anywhere; margin-top: 2px">{{ k.v }}</div></div></sc-for></div>
+</div>
+<div><div class="lbl" style="margin-bottom: 4px">Experience</div><div class="xp"><sc-for list="{{ prof.xp }}" as="x" hint-placeholder-count="3"><div><span class="mono mut">{{ x.when }}</span><span><span style="display: block">{{ x.role }}</span><span class="sub">{{ x.co }}</span></span></div></sc-for></div></div>
+</div></sc-if>
+</div>
+</section>
+<section class="w span2" aria-label="Skills against demand">
+<div class="wh"><span class="lbl">Skills against what your target roles ask for</span></div>
+<div class="wb">
+<div class="legend"><span><i></i>Your evidence</span><span><b></b>Demand in your 9 saved roles</span></div>
+<div class="skl">
+<span class="hd">Skill</span><span class="hd num">You</span><span class="hd num">Asked</span>
+<sc-for list="{{ skills }}" as="k" hint-placeholder-count="6">
+<span class="nm"><span>{{ k.name }}</span><span class="dual" aria-hidden="true"><i style="width: {{ k.youW }}"></i><b style="left: {{ k.askW }}; opacity: {{ k.askOp }}"></b></span></span>
+<span class="num">{{ k.you }}</span><span class="num">{{ k.ask }}</span>
+</sc-for>
+</div>
+</div>
+</section>
+<section class="w s-accent wfull" aria-label="Streak">
+<div class="wh"><span class="lbl">Learning streak</span><span class="mono">{{ entries }} entries, {{ rangeLabel }}</span></div>
+<div class="wb">
+<div class="big">{{ streak }} days</div>
+<div class="segs" role="img" aria-label="{{ streak }} of 14 days"><sc-for list="{{ streakSegs }}" as="g" hint-placeholder-count="14"><i class="{{ g.cls }}"></i></sc-for></div>
+<div class="heat" role="img" aria-label="Daily log activity" style="margin-top: 8px"><sc-for list="{{ heat }}" as="c" hint-placeholder-count="42"><i class="{{ c.cls }}"></i></sc-for></div>
+<span style="font-size: 13px; line-height: 20px">Each square is a day, oldest first. Log one thing a day and Shogun turns entries into posts and profile updates.</span>
+</div>
+</section>
+<section class="w span2" aria-label="Learning log" id="log">
+<div class="wh"><span class="lbl">Learning log</span><span class="mono mut">{{ logCount }} entries</span></div>
+<div class="wb">
+<div class="logf"><input class="inp" id="log-input" type="text" placeholder="What did you learn or ship today?" value="{{ draft }}" onInput="{{ type }}" aria-label="New log entry"><button type="button" class="btn cream" onClick="{{ add }}" style="min-height: 36px; padding: 0 16px">Add entry</button></div>
+<div class="lg"><sc-for list="{{ log }}" as="e" hint-placeholder-count="4"><div class="lgi"><span class="d">{{ e.d }}</span><span class="tx"><span>{{ e.t }}</span><span class="tgs"><sc-for list="{{ e.tags }}" as="t" hint-placeholder-count="2"><span class="tag">{{ t }}</span></sc-for></span></span></div></sc-for></div>
+</div>
+</section>
+<section class="w s-cream wfull" aria-label="Suggested next">
+<div class="wh"><span class="lbl">Close the gap next</span></div>
+<div class="wb">
+<ol class="sug">
+<li><span class="n">01</span><span><b>Kafka basics.</b> Asked in 5 of 9 roles; you have NATS. A weekend project with a consumer group closes most of it.</span></li>
+<li><span class="n">02</span><span><b>Terraform.</b> Asked in 4 roles. Log the infra you already wrote at work.</span></li>
+<li><span class="n">03</span><span><b>Write about operators.</b> You have 3 entries and no post yet. Shogun can draft one in Writing.</span></li>
+</ol>
+</div>
+<div class="wf"><a href="Writing.dc.html" class="btn">Draft the operators post</a></div>
+</section>
+</div>
+<button type="button" class="{{ scrimCls }}" onClick="{{ close }}" aria-label="Close panel" tabindex="-1"></button>
+<aside class="{{ sdCls }}" aria-label="Resume" aria-hidden="{{ sdHidden }}">
+<div class="dh"><span class="lbl">Resume</span><button type="button" class="x" onClick="{{ close }}" aria-label="Close" title="Close (Esc)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+<div class="dr">
+<div><h2 class="h2">{{ rvTitle }}</h2><div class="mut" style="font-size: 13px; margin-top: 4px">{{ rvSub }}</div></div>
+<div class="steps" aria-label="Steps"><sc-for list="{{ rvSteps }}" as="p" hint-placeholder-count="3"><span class="{{ p.cls }}">{{ p.label }}</span></sc-for></div>
+<sc-if value="{{ rvPick }}" hint-placeholder-val="{{ true }}">
+<label class="drop"><input type="file" accept=".pdf,.doc,.docx,.txt" onChange="{{ pickResume }}" aria-label="Choose your resume"><span class="big2">Drop your resume here or choose a file</span><span class="hint">PDF, Word or text, up to 10 MB.</span></label>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap"><span class="hint">Just looking?</span><button type="button" class="btn sm" onClick="{{ useSampleResume }}">Use a sample resume</button></div>
+</sc-if>
+<sc-if value="{{ rvScan }}" hint-placeholder-val="{{ false }}">
+<div class="scan" role="status"><sc-for list="{{ rvLines }}" as="l" hint-placeholder-count="5"><div class="{{ l.cls }}"><i></i><span>{{ l.text }}</span></div></sc-for></div>
+</sc-if>
+<sc-if value="{{ rvCheck }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; align-items: center; gap: 8px"><span class="ai">Read by AI</span><span class="mono mut" style="margin-left: auto">{{ rvFile }}</span></div>
+<div class="vgrp">
+<div class="vh"><span class="lbl">About you</span><span class="mono mut">Edit anything that is wrong</span></div>
+<div class="ff">
+<sc-for list="{{ rvFields }}" as="v" hint-placeholder-count="5"><div class="fld"><label class="lbl" for="{{ v.id }}">{{ v.label }} <span class="{{ v.tcls }}" style="margin-left: 6px; text-transform: none; letter-spacing: 0">{{ v.tag }}</span></label><input class="inp" id="{{ v.id }}" type="text" value="{{ v.val }}" onInput="{{ v.set }}"><sc-if value="{{ v.hasWhy }}" hint-placeholder-val="{{ false }}"><span class="hint">{{ v.why }}</span></sc-if></div></sc-for>
+</div>
+</div>
+<div class="vgrp">
+<div class="vh"><span class="lbl">Experience</span><span class="mono mut">{{ xpCount }}</span></div>
+<div class="vlist"><sc-for list="{{ rvXp }}" as="r" hint-placeholder-count="4"><button type="button" class="{{ r.cls }}" onClick="{{ r.flip }}" aria-pressed="{{ r.on }}"><span class="cb" aria-hidden="true"></span><span class="vt"><span>{{ r.role }}</span><span class="sub">{{ r.line }}</span></span><span class="{{ r.tcls }}">{{ r.tag }}</span></button></sc-for></div>
+</div>
+<div class="vgrp">
+<div class="vh"><span class="lbl">Skills</span><span class="mono mut">{{ skCount }}</span></div>
+<div class="skc"><sc-for list="{{ rvSkills }}" as="k" hint-placeholder-count="8"><button type="button" class="{{ k.cls }}" onClick="{{ k.flip }}" aria-pressed="{{ k.on }}">{{ k.name }} <span class="lv">{{ k.lv }}</span></button></sc-for></div>
+<span class="hint">The number is how much evidence the resume shows, out of 10. New skills join your skills table; known ones only go up.</span>
+</div>
+<div class="act">
+<span class="note">Saved to your profile only. Shogun never edits LinkedIn or sends your resume.</span>
+<button type="button" class="btn" onClick="{{ restartResume }}">Use another file</button>
+<button type="button" class="btn acc" onClick="{{ saveResume }}">Add to profile</button>
+</div>
+</sc-if>
+</div>
+</aside>
+</main>
+</div>
+<div class="gut r"></div>
+</div>
+
+<div class="rw" style="border-bottom: 0">
+<div class="gut l"></div>
+<footer style="display: flex; flex-wrap: wrap; gap: 24px; justify-content: space-between; padding: 14px 24px"><span class="lbl">Page scheme: {{ schemeName }}</span><span class="lbl">Nothing leaves without your approval</span></footer>
+<div class="gut r"></div>
+</div>
+
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div class="toast" role="status"><span>{{ toastText }}</span><button type="button" onClick="{{ undo }}">Undo</button></div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"scheme":{"editor":"enum","options":["Ember","Moss","Tide","Plum"],"default":"Moss"},"$preview":{"width":1440,"height":1620}}'>
+
+const SCHEMES = { Ember:'#E8693C', Moss:'#9DAE6C', Tide:'#6FA8BE', Plum:'#C08AB0' };
+function shell(c, def) {
+  const s = c.state, name = SCHEMES[c.props.scheme] ? c.props.scheme : def;
+  return {
+    bodyCls: s.collapsed ? 'body c' : 'body', sideOpen: s.collapsed ? 'false' : 'true',
+    togIcon: s.collapsed ? '»' : '«', togLabel: s.collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+    toggleSide: () => c.setState({ collapsed: !s.collapsed }),
+    accent: SCHEMES[name], schemeName: name,
+    hasToast: !!s.toast, toastText: s.toast ? s.toast.text : '',
+    undo: () => { if (!s.toast) return; clearTimeout(c.t); const u = s.toast.undo; c.setState({ toast: null }); u && u(); }
+  };
+}
+function toast(c, text, undo) { clearTimeout(c.t); c.t = setTimeout(() => c.setState({ toast: null }), 10000); c.setState({ toast: { text, undo } }); }
+
+
+const SKILLS = [['Go',9,8],['PostgreSQL',8,7],['gRPC',6,5],['Kubernetes',6,6],['Kafka',1,5],['Terraform',2,4],['Kubernetes operators',3,2]];
+const LOG = [
+ {d:'today',t:'Wrote a controller-runtime reconciler that retries with backoff',tags:['Kubernetes operators','Go']},
+ {d:'22 Oct',t:'Read the Postgres docs on advisory locks; replaced a cron mutex with one',tags:['PostgreSQL']},
+ {d:'20 Oct',t:'Benchmarked gRPC streaming vs unary for the batch API',tags:['gRPC','Go']},
+ {d:'15 Oct',t:'Moved the job queue to SKIP LOCKED; failed jobs down by a third',tags:['PostgreSQL']}
+];
+const R_FIELDS = [['name','Name','Aditi Sharma','From resume',''],['headline','Headline','Backend engineer, Go and PostgreSQL','From resume',''],['loc','Location','Bengaluru, India','Check','The resume lists Bengaluru and "open to remote". Shogun kept Bengaluru.'],['email','Email','aditi.sharma@gmail.example','From resume',''],['years','Experience','6 years','Check','Worked out from your earliest role, Jun 2019. Change it if you count differently.']];
+const R_XP = [['Senior Software Engineer','Corvid Logistics','Mar 2023 – now','',''],['Software Engineer II','Corvid Logistics','Jan 2021 – Mar 2023','',''],['Backend Engineer','Pebble Pay','Jun 2019 – Feb 2021','Check','Ends a month after the next role starts']];
+const R_SK = [['Go',9],['PostgreSQL',8],['Kubernetes',7],['gRPC',6],['Kafka',3],['Redis',6],['AWS',5],['Prometheus',4]];
+const RANGES = { '4 wk': 28, '6 wk': 42, '12 wk': 84 };
+function heatFor(n) { const out = []; let x = 7; for (let i = 0; i < n; i++) { x = (x * 37 + 11) % 97; out.push(x % 5 === 0 ? 0 : x % 3 === 0 ? 2 : x % 2 ? 1 : 0); } out[n - 1] = 2; return out; }
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { range:'6 wk', added:[], draft:'', open:false, rv:null, prof:null, boost:{} }; this.onKey = e => { if (e.key === 'Escape' && this.state.open) this.setState({ open:false }); }; }
+  componentDidMount() { window.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { clearTimeout(this.t); this.rt && this.rt.forEach(clearTimeout); window.removeEventListener('keydown', this.onKey); }
+  scanResume(name) { this.rt && this.rt.forEach(clearTimeout); const f = {}; R_FIELDS.forEach(r => { f[r[0]] = r[2]; }); this.setState({ rv: { step:'scan', name, n:0, f, xpOff:{}, skOff:{} } }); this.rt = [1, 2, 3, 4, 5].map(i => setTimeout(() => this.setState({ rv: { ...this.state.rv, n:i, step: i === 5 ? 'check' : 'scan' } }), i * 520)); }
+  renderVals() {
+    const s = this.state, base = shell(this, 'Moss');
+    const days = RANGES[s.range], heat = heatFor(days);
+    const log = s.added.concat(LOG);
+    const streak = 9 + (s.added.length ? 0 : 0);
+    const rv = s.rv, setRv = p => this.setState({ rv: { ...this.state.rv, ...p } });
+    const known = SKILLS.map(k => k[0]);
+    const skills = SKILLS.map(([n, y, a]) => [n, Math.max(y, s.boost[n] || 0), a]).concat(Object.keys(s.boost).filter(n => !known.includes(n)).map(n => [n, s.boost[n], 0]));
+    const P = s.prof;
+    return { ...base,
+      scrimCls: s.open ? 'sscrim open' : 'sscrim', sdCls: s.open ? 'sd open' : 'sd', sdHidden: s.open ? 'false' : 'true', close: () => this.setState({ open:false }),
+      openResume: () => this.setState({ open:true, rv:null }), resumeBtn: P ? 'Replace resume' : 'Add resume',
+      noProfile: !P, hasProfile: !!P, profSrc: P ? 'From ' + P.file + ', checked by you today' : 'Not set up yet',
+      prof: P ? { ...P, ini: P.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(), facts: [{ k:'Location', v:P.loc }, { k:'Email', v:P.email }, { k:'Experience', v:P.years }, { k:'Skills', v: P.skills + ' from resume' }] } : { facts:[], xp:[] },
+      rvTitle: !rv ? 'Add your resume' : rv.step === 'check' ? 'Check what Shogun found' : 'Reading your resume', rvSub: !rv ? 'Shogun reads it with AI, then you check every field before it is saved.' : rv.step === 'check' ? 'Untick anything wrong. Fields marked Check are guesses.' : 'This takes a few seconds.',
+      rvSteps: [['pick','1 Upload'],['scan','2 AI reads it'],['check','3 You check it']].map(([k,l], i) => { const at = ['pick','scan','check'].indexOf(rv ? rv.step : 'pick'); return { label:l, cls: i === at ? 'on' : i < at ? 'done' : '' }; }),
+      rvPick: !rv, rvScan: !!rv && rv.step === 'scan', rvCheck: !!rv && rv.step === 'check', rvFile: rv ? rv.name : '',
+      pickResume: e => { const file = e.target.files && e.target.files[0]; if (file) this.scanResume(file.name); },
+      useSampleResume: () => this.scanResume('aditi-sharma-resume.pdf'),
+      restartResume: () => this.setState({ rv:null }),
+      rvLines: rv ? [['Opening ' + rv.name, 0], ['Found 4 sections: summary, experience, skills, education', 1], ['Reading 3 roles and their dates', 2], ['Matching 8 skills to your skills table', 3], ['Flagging anything that looks off', 4]].map(([t, k]) => ({ text:t, cls: rv.n > k ? 'ln2 ok' : rv.n === k ? 'ln2 now' : 'ln2' })) : [],
+      rvFields: rv && rv.step === 'check' ? R_FIELDS.map(([k, l, _, tag, why]) => ({ id:'rv-' + k, label:l, val: rv.f[k], tag, tcls: tag === 'Check' ? 'tag t-warn' : 'tag', hasWhy: !!why, why, set: e => setRv({ f: { ...this.state.rv.f, [k]: e.target.value } }) })) : [],
+      rvXp: rv && rv.step === 'check' ? R_XP.map(([r, c, d, tag, why], i) => { const on = !rv.xpOff[i]; return { role:r, line: c + ' · ' + d + (why ? ' · ' + why : ''), tag: tag || 'From resume', tcls: tag ? 'tag t-warn' : 'tag', cls: on ? 'vrow on' : 'vrow', on: on ? 'true' : 'false', flip: () => setRv({ xpOff: { ...this.state.rv.xpOff, [i]: !this.state.rv.xpOff[i] } }) }; }) : [],
+      xpCount: rv ? (R_XP.length - Object.values(rv.xpOff).filter(Boolean).length) + ' of ' + R_XP.length + ' kept' : '',
+      rvSkills: rv && rv.step === 'check' ? R_SK.map(([n, lv]) => { const on = !rv.skOff[n]; const isNew = !known.includes(n); return { name:n, lv: lv + (isNew ? ' new' : ''), cls: on ? 'on' : '', on: on ? 'true' : 'false', flip: () => setRv({ skOff: { ...this.state.rv.skOff, [n]: !this.state.rv.skOff[n] } }) }; }) : [],
+      skCount: rv ? (R_SK.length - Object.values(rv.skOff).filter(Boolean).length) + ' of ' + R_SK.length + ' kept' : '',
+      saveResume: () => { const r = this.state.rv; if (!r) return; const prev = { prof: this.state.prof, boost: this.state.boost }; const sk = R_SK.filter(([n]) => !r.skOff[n]); const boost = { ...this.state.boost }; sk.forEach(([n, lv]) => { boost[n] = Math.max(boost[n] || 0, lv); }); const xp = R_XP.filter((_, i) => !r.xpOff[i]).map(([role, co, when]) => ({ role, co, when: when.replace(' – ', '–') })); this.setState({ prof: { name: r.f.name, headline: r.f.headline, loc: r.f.loc, email: r.f.email, years: r.f.years, xp, skills: sk.length, file: r.name }, boost, open:false, rv:null }); toast(this, 'Profile updated from ' + r.name, () => this.setState(prev)); },
+      ranges: Object.keys(RANGES).map(r => ({ label:r, cls: s.range === r ? 'on' : '', pressed: s.range === r ? 'true':'false', pick: () => this.setState({ range:r }) })),
+      rangeLabel: 'last ' + s.range,
+      roleCount: '9',
+      skills: skills.map(([n,y,a]) => ({ name:n, you:y + '/10', ask: a ? a + ' of 9' : '—', youW: y * 10 + '%', askW: 'calc(' + Math.round(a / 9 * 100) + '% - 1px)', askOp: a ? '1' : '0' })),
+      streak: String(streak), streakSegs: Array.from({ length:14 }, (_, i) => ({ cls: i < streak ? 'on' : '' })),
+      entries: String(heat.reduce((a, v) => a + (v === 2 ? 2 : v), 0) + s.added.length),
+      heat: heat.map(v => ({ cls: v === 2 ? 'l2' : v === 1 ? 'l1' : '' })),
+      log: log.map(e => ({ ...e })), logCount: String(log.length), draft: s.draft,
+      type: e => this.setState({ draft: e.target.value }),
+      add: () => { const t = s.draft.trim(); if (!t) return; const tags = SKILLS.map(k => k[0]).filter(k => t.toLowerCase().includes(k.toLowerCase())); this.setState({ added: [{ d:'now', t, tags: tags.length ? tags : ['Untagged'] }].concat(s.added), draft:'' }); toast(this, 'Logged. Shogun will suggest a post when there are 3 on this topic', () => this.setState({ added: this.state.added.slice(1) })); }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

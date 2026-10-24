@@ -25,6 +25,7 @@ The rules, commands and architecture in `AGENTS.md` apply in full. This file add
 | Table definitions | `services/<name>/migrations/` (source of truth once written) |
 | RPC and event contracts | `proto/shogun/<name>/v1/` |
 | Design intent | Shogun LLD and Shogun System Design docs (linked in `README.md`) |
+| v2 work | `docs/v2/PLAN.md` (decisions), `docs/v2/DESIGN-GUIDE.md`, `docs/v2/design/` (mock and screenshots) |
 
 ## Generated and protected files
 
