@@ -67,4 +67,4 @@ Background: two soft radial glows (accent top right, cream bottom left) over a
 
 ## Copy
 
-The design already follows the owner decisions: Settings > AI models has no hosted default and no local-model copy, Accounts shows Calendar as "Coming soon" and says the resume file is not kept. Contact types in People still show the mock's Recruiter / Referral / Hiring manager / Other; ship the relationship values instead (recruiter, engineer, manager, alumni, friend, other, decision D5).
+The design already follows the owner decisions: Settings > AI has no hosted default and no local-model copy (it shows a list of models in the mock; ship one provider, no list, no Use/Remove, decision D11), Accounts shows Calendar as "Coming soon" and says the resume file is not kept. Contact types in People still show the mock's Recruiter / Referral / Hiring manager / Other; ship the relationship values instead (recruiter, engineer, manager, alumni, friend, other, decision D5).

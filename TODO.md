@@ -983,7 +983,7 @@ v2 rules on top of `AGENTS.md`:
   Done when: `git diff --stat` shows only those two files plus `docs/v2/**`.
 
 - [x] **V0.1 Design docs for v2** (S) Needs: V0.0
-  Do: update `docs/shogun-hld.md`, `docs/shogun-lld.md`, `docs/shogun-ddl.md`, `docs/shogun-state-machines.md` for: soroban `models` (many per owner, one active); kagami `status_proposals` and `contact.note_added`; katana `profiles`, `profile_roles`, `skills`, `job_skills`, `profile.updated`, consuming `job.added`; tsubame held sends (`sends.status` gains `held`, `send_after`, `CancelSend`) with the send state machine `held -> sending -> sent|failed`, `held -> cancelled`; torii `approval_rules`. AGENTS.md requires this before new tables or events.
+  Do: update `docs/shogun-hld.md`, `docs/shogun-lld.md`, `docs/shogun-ddl.md`, `docs/shogun-state-machines.md` for: kagami `status_proposals` and `contact.note_added`; katana `profiles`, `profile_roles`, `skills`, `job_skills`, `profile.updated`, consuming `job.added`; tsubame held sends (`sends.status` gains `held`, `send_after`, `CancelSend`) with the send state machine `held -> sending -> sent|failed`, `held -> cancelled`; torii `approval_rules`. AGENTS.md requires this before new tables or events.
   Files: `docs/*.md`.
   Done when: docs reviewed in the PR; `make lint`.
 
@@ -1014,25 +1014,23 @@ v2 rules on top of `AGENTS.md`:
   Files: `web/src/lib/appearance.ts`, shell.
   Done when: web checks.
 
-### V2. AI models (Settings)
+### V2. AI provider (Settings)
 
-- [ ] **V2.1 Several models per user: soroban** (M) Needs: V0.1
-  Do: new migration: table `models` (`id`, `owner_id`, `name`, `base_url`, `model`, `api_key_ciphertext`, `key_id`, `key_last4`, prices, `active bool`, `version`, timestamps; unique partial index one active per owner); copy every `providers` row in as the active model; per-owner `model_settings` row for `monthly_token_cap`. Keep `providers` readable until V6.1 drops it (append-only migrations). `Reserve` uses the active model. RPCs on `soroban.v1`: `ListModels`, `AddModel`, `SetActiveModel`, `RemoveModel`; the existing `GetProvider`/`SetProvider` read and write the active model.
-  Files: `services/soroban/migrations/`, `services/soroban/internal/**`, `proto/shogun/soroban/v1/soroban.proto`.
-  Done when: `make proto && cd services/soroban && go test -race ./...`, `make lint`.
+- [x] **V2.1 Several models per user: soroban** (M)
+  Dropped: one AI provider per user for now (D11). The existing `providers` row, `SetProvider`, `GetProvider` and `DeleteProvider` stay as they are.
 
-- [ ] **V2.2 Test unsaved details** (M) Needs: V2.1
+- [ ] **V2.2 Test unsaved details** (M) Needs: V0.1
   Do: a test that takes base URL, model and API key (not stored), makes one short call through `pkg/llm` with `netguard`, and returns ok, failure kind, latency and the model that answered. API key required; private and local addresses refused as `NOT_PUBLIC` (decision D2). Add failure kinds for a base URL ending in `/chat/completions`. Counted against the caller's budget like today's test.
   Files: `services/fude/internal/app/provider.go`, `proto/shogun/fude/v1/fude.proto`.
   Done when: `make proto && cd services/fude && go test -race ./...`, `make lint`.
 
-- [ ] **V2.3 Models API in torii** (M) Needs: V2.2
-  Do: `shogun.api.v1.ModelService`: `ListModels`, `TestModel` (unsaved details), `AddModel` (runs the test again server side and refuses a failing model, so Add can never save one), `SetActiveModel`, `RemoveModel`. Key write-only and scrubbed from errors exactly as `ProviderService` does. `ProviderService` keeps working off the active model.
-  Files: `proto/shogun/api/v1/models.proto`, `services/torii/internal/transport/connectapi/models.go`.
+- [ ] **V2.3 Test and save a provider in torii** (M) Needs: V2.2
+  Do: `ProviderService.TestProvider` takes unsaved base URL, model and API key and returns the test result of V2.2. `SetProvider` runs the same test server side and refuses a failing provider, so Save can never store one. Key stays write-only and scrubbed from errors as today.
+  Files: `proto/shogun/api/v1/providers.proto`, `services/torii/internal/transport/connectapi/providers.go`.
   Done when: `make proto && cd services/torii && go test -race ./...`.
 
-- [ ] **V2.4 AI models tab** (M) Needs: V2.3, V1.3
-  Do: Settings > AI models as in `Settings.dc.html` and `flow-settings-ai-models-*.png`: base URL, model name, API key with Show/Hide, optional name, Test connection, a result line that says why it failed, Add model disabled until a passing test of the exact current values, list with "In use" tag, Use this model, Remove with Undo. The design already leaves out a hosted default and local models. With no model: "Set up an AI provider to use AI features" here and on every AI action (decision D1).
+- [ ] **V2.4 AI provider tab** (M) Needs: V2.3, V1.3
+  Do: Settings > AI as in `Settings.dc.html` and `flow-settings-ai-models-*.png`, for one provider (D11): base URL, model name, API key with Show/Hide, Test connection, a result line that says why it failed, Save disabled until a passing test of the exact current values. No model list, "In use" tag, Use this model or Remove-with-Undo; Delete provider stays as today. The design already leaves out a hosted default and local models. With no provider: "Set up an AI provider to use AI features" here and on every AI action (decision D1).
   Files: `web/src/components/provider/**`, `web/src/app/(app)/settings/**`.
   Done when: web checks.
 
@@ -1139,7 +1137,7 @@ v2 rules on top of `AGENTS.md`:
   Done when: web checks.
 
 - [ ] **V5.9 Settings screen** (M) Needs: V2.4, V0.2
-  Do: `Settings.dc.html`: tabs All, Approvals, Accounts, AI models, Appearance, Notifications, plus Discovery, Spend, Users from V0.2. Accounts: Gmail, GitHub, LinkedIn (manual), Resume, Google Calendar with a "Coming soon" tag and no button (decision D9). Appearance via `useAppearance`. Delete drafts with a confirm step.
+  Do: `Settings.dc.html`: tabs All, Approvals, Accounts, AI provider, Appearance, Notifications, plus Discovery, Spend, Users from V0.2. Accounts: Gmail, GitHub, LinkedIn (manual), Resume, Google Calendar with a "Coming soon" tag and no button (decision D9). Appearance via `useAppearance`. Delete drafts with a confirm step.
   Done when: web checks.
 
 - [ ] **V5.10 Approval rules and signature** (M) Needs: V5.4
@@ -1162,7 +1160,7 @@ v2 rules on top of `AGENTS.md`:
 ### V6. Finish
 
 - [ ] **V6.1 Remove v1 leftovers** (S) Needs: all of V5
-  Do: delete unused v1 components and routes (keep redirects), drop the old `providers` table in a new soroban migration.
+  Do: delete unused v1 components and routes (keep redirects).
   Done when: `make test`; web checks.
 
 - [ ] **V6.2 End-to-end tests** (M) Needs: V6.1

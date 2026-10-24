@@ -593,35 +593,9 @@ CREATE TABLE providers (
   key_last4              text  NOT NULL,
   input_micros_per_mtok  bigint,            -- optional, for models not in prices
   output_micros_per_mtok bigint,
+  monthly_token_cap      bigint CHECK (monthly_token_cap > 0),   -- optional; null means unlimited
   version                int   NOT NULL DEFAULT 1,
   updated_at             timestamptz NOT NULL DEFAULT now()
-);
-
--- v2: many models per user, exactly one active. The migration copies each
--- providers row into models as the active row; ProviderService keeps reading
--- the active model, so existing callers do not change.
-CREATE TABLE models (
-  id                     uuid PRIMARY KEY,
-  owner_id               uuid NOT NULL,
-  label                  text  NOT NULL,
-  base_url               text  NOT NULL,
-  model                  text  NOT NULL,
-  api_key_ciphertext     bytea NOT NULL,
-  key_id                 text  NOT NULL,
-  key_last4              text  NOT NULL,
-  input_micros_per_mtok  bigint,
-  output_micros_per_mtok bigint,
-  active                 boolean NOT NULL DEFAULT false,
-  version                int   NOT NULL DEFAULT 1,
-  created_at             timestamptz NOT NULL DEFAULT now(),
-  updated_at             timestamptz NOT NULL DEFAULT now()
-);
-CREATE UNIQUE INDEX models_one_active ON models (owner_id) WHERE active;
-
-CREATE TABLE model_settings (
-  owner_id   uuid PRIMARY KEY,
-  cap_micros bigint CHECK (cap_micros >= 0),   -- optional spend cap across all models; null means none
-  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE budgets (
