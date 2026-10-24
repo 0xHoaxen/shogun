@@ -982,7 +982,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `TODO.md`, `CLAUDE.md`.
   Done when: `git diff --stat` shows only those two files plus `docs/v2/**`.
 
-- [ ] **V0.1 Design docs for v2** (S) Needs: V0.0
+- [x] **V0.1 Design docs for v2** (S) Needs: V0.0
   Do: update `docs/shogun-hld.md`, `docs/shogun-lld.md`, `docs/shogun-ddl.md`, `docs/shogun-state-machines.md` for: soroban `models` (many per owner, one active); kagami `status_proposals` and `contact.note_added`; katana `profiles`, `profile_roles`, `skills`, `job_skills`, `profile.updated`, consuming `job.added`; tsubame held sends (`sends.status` gains `held`, `send_after`, `CancelSend`) with the send state machine `held -> sending -> sent|failed`, `held -> cancelled`; torii `approval_rules`. AGENTS.md requires this before new tables or events.
   Files: `docs/*.md`.
   Done when: docs reviewed in the PR; `make lint`.

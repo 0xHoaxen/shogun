@@ -39,12 +39,12 @@ Eight Go services, each with one job and its own Postgres schema. No service rea
 
 | Service | Responsibility | Owns |
 | --- | --- | --- |
-| `kagami` | Jobs, contacts and their timelines; follow-up dates; add-contact form and CSV import | Schema `kagami`: companies, jobs, job_events, contacts, contact_events |
+| `kagami` | Jobs, contacts and their timelines; follow-up dates; add-contact form and CSV import | Schema `kagami`: companies, jobs, job_events, contacts, contact_events, status_proposals |
 | `tsubame` | Gmail connection, mail sync, job-mail classification, the only sender of email | Schema `tsubame`: email messages, provider tokens (encrypted) |
 | `fude` | All text generation through the Claude API: cover letters, outreach, posts; draft versions; the approval queue | Schema `fude`: drafts, draft_versions, voice_samples (with embeddings) |
 | `taiko` | Turns events into notifications; read or unread state; delivery channels | Schema `taiko`: notifications, channel settings |
 | `dojo` | Learning items and activities; triggers post generation | Schema `dojo`: items, activities |
-| `katana` | GitHub sync; resume and LinkedIn suggestions | Schema `katana`: suggestions, github_snapshots |
+| `katana` | GitHub sync; resume and LinkedIn suggestions | Schema `katana`: suggestions, github_snapshots, profiles, profile_roles, skills, job_skills |
 | `shinobi` | Pulls postings from the data source you provide; scores them against your preferences | Schema `shinobi`: sources, postings, preferences, scores |
 | `sensei` | Read-only analytics: rates by source, outreach reply rates | Schema `sensei`: aggregated events, report snapshots |
 
@@ -52,12 +52,12 @@ Eight Go services, each with one job and its own Postgres schema. No service rea
 
 | Service | gRPC API | Publishes | Consumes |
 | --- | --- | --- | --- |
-| `kagami` | Jobs and contacts CRUD, ImportContacts, ListDueFollowUps | `job.added`, `job.status_changed`, `contact.status_changed` | `mail.classified` (updates job status), `draft.sent` (advances contact status) |
-| `tsubame` | Connect, ListMessages, CreateDraft, Send (needs approval token) | `mail.classified`, `mail.reply_detected`, `draft.sent` | none |
-| `fude` | GenerateDraft, Regenerate, Approve, Discard, ListQueue | `draft.ready`, `draft.failed`, `draft.approved` | `job.added` (cover letter), `contact.status_changed` (outreach draft), `learning.activity_added` (post draft) |
+| `kagami` | Jobs and contacts CRUD, ImportContacts, ListDueFollowUps, AddContactNote, MarkContacted, status proposals | `job.added`, `job.status_changed`, `contact.status_changed`, `contact.note_added` | `mail.classified` (updates job status, raises status proposals), `draft.sent` (advances contact status) |
+| `tsubame` | Connect, ListMessages, CreateDraft, Send (needs approval token; held for the undo window), CancelSend | `mail.classified`, `mail.reply_detected`, `draft.sent`, `draft.send_cancelled` | none |
+| `fude` | GenerateDraft, Regenerate (tone, length), Approve, Discard, DiscardAllPending, TestModel, ListQueue | `draft.ready`, `draft.failed`, `draft.approved` | `job.added` (cover letter), `contact.status_changed` (outreach draft), `learning.activity_added` (post draft) |
 | `taiko` | Publish, List, MarkRead, Subscribe (stream) | none | every `*.ready`, `*.failed`, `mail.classified`, `discovery.match_found` |
 | `dojo` | Items and activities CRUD, GeneratePost | `learning.activity_added`, `learning.item_completed` | none |
-| `katana` | SyncGitHub, ListSuggestions, Accept, Dismiss | `profile.suggestion_ready` | `learning.item_completed` |
+| `katana` | SyncGitHub, ListSuggestions, Accept, Dismiss, ParseResume, SaveProfile, GetProfile, ListSkills | `profile.suggestion_ready`, `profile.updated` | `learning.item_completed`, `job.added` (job skills) |
 | `shinobi` | ConfigureSource, ListPostings, SaveToTracker | `discovery.match_found` | none |
 | `sensei` | GetFunnel, GetOutreachStats | none | `job.*`, `contact.*`, `mail.*`, `draft.sent` |
 
