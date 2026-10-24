@@ -110,7 +110,7 @@ test("Profile points a user with no GitHub connection to Settings", async ({ pag
   await signIn(page);
   await mockRpc(page, ProfileService.method.listProfileSuggestions, { suggestions: [], nextPageToken: "" });
   await mockRpcError(page, ProfileService.method.syncGitHub, "failed_precondition", "not connected", "GITHUB_NOT_CONNECTED");
-  await page.goto("/profile");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Sync GitHub" }).click();
 

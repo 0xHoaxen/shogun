@@ -64,7 +64,8 @@
 }
 
 @theme inline {
-  /* v2 utilities: bg-panel, border-line2, text-muted, bg-cream, bg-scheme ... */
+  /* v2 utilities: bg-panel, border-line2, bg-cream, bg-scheme ... Muted text is
+     text-muted-foreground; bg-muted is the shadcn surface. */
   --color-bg: var(--bg);
   --color-panel: var(--panel);
   --color-panel-solid: var(--panel-solid);

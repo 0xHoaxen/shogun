@@ -33,7 +33,7 @@ export function PostDialog({ open, onOpenChange, activityIds }: PostDialogProps)
       await queryClient.invalidateQueries({ queryKey: draftsQueueKey });
       generate.reset();
       onOpenChange(false);
-      router.push(`/drafts/${response.draftId}`);
+      router.push(`/writing?draft=${response.draftId}`);
     },
   });
 

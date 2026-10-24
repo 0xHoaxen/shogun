@@ -9,14 +9,14 @@ const CHAIN_TIMEOUT_MS = 45_000;
 async function signIn(page: Page) {
   await page.goto("/login");
   await page.getByRole("link", { name: "Sign in with Google" }).click();
-  await expect(page).toHaveURL(/\/jobs$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
   // The AI provider is each user's own; without one no post is written.
   await addProvider(page);
 }
 
 // pendingPosts counts the LinkedIn posts waiting for approval in the queue.
 async function pendingPosts(page: Page): Promise<number> {
-  await page.goto("/drafts");
+  await page.goto("/inbox");
   const rows = page.getByRole("row", { name: /Post.*LinkedIn.*Needs you/ });
   await expect(page.getByRole("button", { name: "Needs you" })).toBeVisible();
   // The rows load after the filter; wait for the table to settle.
@@ -38,7 +38,7 @@ test("logging an activity leads to a pending post draft in the queue", async ({ 
   await signIn(page);
   const before = await pendingPosts(page);
 
-  await page.goto("/learning");
+  await page.goto("/growth");
   await page.getByRole("button", { name: "Log activity" }).first().click();
   const dialog = page.getByRole("dialog", { name: "Log activity" });
   await dialog.getByLabel("What did you learn?").fill(summary);
@@ -53,7 +53,7 @@ test("finishing an item is moved by dojo, shown as done and drafts a post", asyn
   const title = `Course ${Date.now()}`;
   await signIn(page);
   const before = await pendingPosts(page);
-  await page.goto("/learning");
+  await page.goto("/growth");
 
   await page.getByRole("button", { name: "Add item" }).click();
   const dialog = page.getByRole("dialog", { name: "Add item" });
@@ -75,7 +75,7 @@ test("choosing an activity and writing a post opens its draft", async ({ page })
   const summary = `Read the race detector docs ${Date.now()}`;
   await signIn(page);
   const before = await pendingPosts(page);
-  await page.goto("/learning");
+  await page.goto("/growth");
   await page.getByRole("button", { name: "Log activity" }).first().click();
   const dialog = page.getByRole("dialog", { name: "Log activity" });
   await dialog.getByLabel("What did you learn?").fill(summary);
@@ -86,7 +86,7 @@ test("choosing an activity and writing a post opens its draft", async ({ page })
   await page.getByRole("button", { name: /^Write a post/ }).click();
   await page.getByRole("button", { name: "Write the post" }).click();
 
-  await expect(page).toHaveURL(/\/drafts\/[0-9a-f-]{36}$/, { timeout: CHAIN_TIMEOUT_MS });
+  await expect(page).toHaveURL(/\/writing\?draft=[0-9a-f-]{36}$/, { timeout: CHAIN_TIMEOUT_MS });
   // Logging the activity drafted one post and asking for a post drafted another.
   await waitForPosts(page, before, 2);
 });

@@ -32,7 +32,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `web/src/app/globals.css`, `web/src/app/fonts/**`, `web/src/app/layout.tsx`.
   Done when: web checks.
 
-- [ ] **V1.2 App shell and routes** (M) Needs: V1.1
+- [x] **V1.2 App shell and routes** (M) Needs: V1.1
   Do: replace `Rail` and `AppShell` with the v2 shell: top bar (logo mark, Next hint, status text), collapsible sidebar with 8 numbered sections and the Inbox count, footer strip ("Page scheme", "Nothing leaves without your approval"). Below 860px the sidebar becomes a top menu. New routes `/dashboard`, `/inbox`, `/pipeline`, `/people`, `/writing`, `/growth`, `/insights`; `/settings` keeps its path. Redirects: `/jobs -> /pipeline`, `/contacts -> /people`, `/drafts -> /inbox`, `/drafts/[id] -> /writing?draft=id`, `/learning` and `/profile -> /growth`, `/notifications -> /inbox`, `/discovery -> /settings?tab=discovery`. Old screens render inside the new shell until their own task replaces them. Login lands on `/dashboard` (`TODO(owner)` if you want `/inbox` instead).
   Files: `web/src/components/shell/**`, `web/src/app/(app)/**`, `web/src/app/page.tsx`, `web/src/content/sections.ts`.
   Done when: web checks; existing specs updated for the new URLs.

@@ -246,7 +246,7 @@ test("the AI provider tab is in Settings and the notice on an AI page links to i
   await serveProvider(page, undefined);
   await mockRpc(page, ProviderService.method.testProvider, { ok: true });
 
-  await page.goto("/discovery");
+  await page.goto("/settings?tab=discovery");
   const notice = page.getByTestId("ai-provider-notice");
 
   await expect(notice).toContainText("AI features are off until you add your AI provider");
@@ -262,7 +262,7 @@ test("the notice is gone once a provider is set", async ({ page }) => {
   await signIn(page);
   await serveProvider(page, stored());
 
-  await page.goto("/discovery");
+  await page.goto("/settings?tab=discovery");
 
   await expect(page.getByRole("heading", { name: "What's out there." })).toBeVisible();
   await expect(page.getByTestId("ai-provider-notice")).toHaveCount(0);
@@ -272,7 +272,7 @@ test("the notice stays out of the way when the provider cannot be read", async (
   await signIn(page);
   await mockRpcError(page, ProviderService.method.getProvider, "unavailable", "down");
 
-  await page.goto("/discovery");
+  await page.goto("/settings?tab=discovery");
 
   await expect(page.getByRole("heading", { name: "What's out there." })).toBeVisible();
   await expect(page.getByTestId("ai-provider-notice")).toHaveCount(0);

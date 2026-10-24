@@ -63,7 +63,7 @@ test("the board shows every stage with its jobs and the total", async ({ page })
   await mockRpc(page, JobsService.method.getBoard, board([NORTHWIND]));
 
   // Act
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Assert
   await expect(page.getByRole("heading", { name: "1 role, six stages." })).toBeVisible();
@@ -90,7 +90,7 @@ test("adding a job sends the form with an idempotency key and shows the card", a
     current = board([NORTHWIND, added]);
     return { job: added };
   });
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Act
   await page.getByRole("button", { name: "Add job" }).click();
@@ -111,7 +111,7 @@ test("a job cannot be added without a title and company", async ({ page }) => {
   // Arrange
   await signIn(page);
   await mockRpc(page, JobsService.method.getBoard, board([]));
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Act
   await page.getByRole("button", { name: "Add job" }).click();
@@ -131,7 +131,7 @@ test("dragging a card with the keyboard moves it and sends the change", async ({
     current = board([applied]);
     return { job: applied };
   });
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Act
   await moveCardRight(page, /Senior Backend Engineer/);
@@ -154,7 +154,7 @@ test("a rejected move puts the card back and says why", async ({ page }) => {
     "cannot move from saved to applied",
     "JOB_STATUS_INVALID_TRANSITION",
   );
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Act
   await moveCardRight(page, /Senior Backend Engineer/);
@@ -178,7 +178,7 @@ test("a stale version reloads the board and says the job changed", async ({ page
     "version is stale",
     "VERSION_CONFLICT",
   );
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Act
   await moveCardRight(page, /Senior Backend Engineer/);

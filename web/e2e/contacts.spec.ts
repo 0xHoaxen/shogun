@@ -66,7 +66,7 @@ test("the table lists contacts with their status and next step", async ({ page }
   await mockRpc(page, ContactsService.method.listContacts, { contacts: [PRIYA, KENJI] });
 
   // Act
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Assert
   const row = page.getByRole("row", { name: /Priya Raman/ });
@@ -83,7 +83,7 @@ test("a status filter asks for that status and shows only its people", async ({ 
   const calls = await mockRpc(page, ContactsService.method.listContacts, (body) => ({
     contacts: body.status === "CONTACT_STATUS_REPLIED" ? [PRIYA] : [PRIYA, KENJI],
   }));
-  await page.goto("/contacts");
+  await page.goto("/people");
   await expect(page.getByRole("row", { name: /Kenji Watanabe/ })).toBeVisible();
 
   // Act
@@ -103,7 +103,7 @@ test("an empty status says nobody is there", async ({ page }) => {
   await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
 
   // Act
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Assert
   await expect(page.getByText("Nobody in this status yet.")).toBeVisible();
@@ -119,7 +119,7 @@ test("adding a contact sends the form with an idempotency key and shows the row"
     current = [PRIYA, added];
     return { contact: added };
   });
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await page.getByRole("button", { name: "Add contact" }).click();
@@ -145,7 +145,7 @@ test("a good CSV is previewed as a dry run and saved only after confirming", asy
       ? { report: { rowsTotal: 3, rowsCreated: 2, rowsUpdated: 1 } }
       : { report: { rowsTotal: 3, rowsCreated: 2, rowsUpdated: 1 }, importId: "import-1" },
   );
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFile(page, "contacts-sept.csv", CSV);
@@ -182,7 +182,7 @@ test("a CSV with bad rows lists them and still imports the good ones", async ({ 
       errors: [{ row: 4, column: "full_name", message: "name is required" }],
     },
   });
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFile(page, "mixed.csv", CSV);
@@ -206,7 +206,7 @@ test("a CSV with nothing importable cannot be confirmed", async ({ page }) => {
       errors: [{ row: 2, column: "email", message: "email is not valid" }],
     },
   });
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFile(page, "bad.csv", CSV);
@@ -224,7 +224,7 @@ test("cancelling the preview saves nothing", async ({ page }) => {
   const importCalls = await mockRpc(page, ContactsService.method.importContacts, {
     report: { rowsTotal: 1, rowsCreated: 1 },
   });
-  await page.goto("/contacts");
+  await page.goto("/people");
   await chooseFile(page, "contacts.csv", CSV);
   await expect(importDialog(page)).toContainText("contacts.csv has 1 row.");
 
@@ -242,7 +242,7 @@ test("a file over 3 MB is refused before it is sent", async ({ page }) => {
   await signIn(page);
   await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
   const importCalls = await mockRpc(page, ContactsService.method.importContacts, { report: {} });
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFile(page, "huge.csv", Buffer.alloc((3 << 20) + 1, "a"));
@@ -256,7 +256,7 @@ test("the import dialog shows the expected columns and offers a template", async
   // Arrange
   await signIn(page);
   await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await page.getByRole("button", { name: "Import CSV" }).click();
@@ -281,7 +281,7 @@ test("a wrong header keeps the error inside the dialog", async ({ page }) => {
     "header must be exactly: full_name,company,role,email,linkedin_url,x_handle,phone,relationship,how_we_met,status,preferred_channel,last_contacted,next_follow_up,target_role,job_link,tags,notes";
   const method = ContactsService.method.importContacts;
   await mockRpcError(page, method, "invalid_argument", message, "INVALID_HEADER");
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFile(page, "wrong.csv", CSV);
@@ -323,7 +323,7 @@ test("with an AI provider the dialog asks only for a name, not the template", as
   await signIn(page);
   await withProvider(page);
   await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await page.getByRole("button", { name: "Import CSV" }).click();
@@ -352,7 +352,7 @@ test("an AI-shaped sheet shows the matched columns and imports what was previewe
         }
       : { report: { rowsTotal: 1, rowsCreated: 1 }, importId: "import-1" },
   );
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFileWithAi(page, "Connections.csv", LINKEDIN_CSV);
@@ -388,7 +388,7 @@ test("a failed AI import says why and shows the template", async ({ page }) => {
     "no column of the sheet holds a name",
     "IMPORT_NO_NAME_COLUMN",
   );
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await chooseFileWithAi(page, "companies.csv", "Company,Website\nLumen,lumen.example\n");

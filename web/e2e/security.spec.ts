@@ -37,7 +37,7 @@ test("the policy lets the app load and hydrate without a violation", async ({ pa
   await mockRpcError(page, AuthService.method.getSession, "unauthenticated", "no session");
 
   // Act: a signed-out visit goes through a client-side redirect, so it needs scripts to run.
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Assert
   await expect(page).toHaveURL(/\/login$/);

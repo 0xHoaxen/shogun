@@ -19,7 +19,7 @@ test("a signed-out visit to a page lands on the login page", async ({ page }) =>
   await mockRpcError(page, AuthService.method.getSession, "unauthenticated", "no session");
 
   // Act
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Assert
   await expect(page).toHaveURL(/\/login$/);
@@ -60,15 +60,15 @@ test("a signed-in visit shows the shell with the owner and the page tabs", async
   await mockRpc(page, AuthService.method.getSession, SIGNED_IN);
 
   // Act
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
 
   // Assert
   await expect(page.getByTestId("owner-email")).toHaveText(OWNER_EMAIL);
-  await expect(page.getByRole("link", { name: "Jobs" })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByRole("link", { name: "Contacts" })).not.toHaveAttribute("aria-current");
+  await expect(page.getByRole("link", { name: "Pipeline" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("link", { name: "People" })).not.toHaveAttribute("aria-current");
 });
 
-test("the root sends a signed-in owner to the jobs page", async ({ page }) => {
+test("the root sends a signed-in owner to the dashboard", async ({ page }) => {
   // Arrange
   await mockRpc(page, AuthService.method.getSession, SIGNED_IN);
 
@@ -76,14 +76,14 @@ test("the root sends a signed-in owner to the jobs page", async ({ page }) => {
   await page.goto("/");
 
   // Assert
-  await expect(page).toHaveURL(/\/jobs$/);
+  await expect(page).toHaveURL(/\/dashboard$/);
 });
 
 test("logout ends the session and returns to the login page", async ({ page }) => {
   // Arrange
   await mockRpc(page, AuthService.method.getSession, SIGNED_IN);
   const logoutCalls = await mockRpc(page, AuthService.method.logout, {});
-  await page.goto("/contacts");
+  await page.goto("/people");
 
   // Act
   await page.getByRole("button", { name: "Logout" }).click();

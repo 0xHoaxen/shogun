@@ -131,7 +131,7 @@ function PostingCard({ posting, busy, onSave }: PostingCardProps) {
           </a>
         ) : null}
         {posting.savedJobId ? (
-          <Link href="/jobs" className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold">
+          <Link href="/pipeline" className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold">
             Saved to the board
           </Link>
         ) : (

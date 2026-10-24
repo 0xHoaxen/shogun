@@ -62,7 +62,7 @@ export function AddDraftDialog({ open, onOpenChange }: AddDraftDialogProps) {
       generate.reset();
       onOpenChange(false);
       if (response.draft) {
-        router.push(`/drafts/${response.draft.id}`);
+        router.push(`/writing?draft=${response.draft.id}`);
       }
     },
   });

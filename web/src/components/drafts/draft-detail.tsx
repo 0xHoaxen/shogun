@@ -153,7 +153,7 @@ export function DraftDetail({ id }: DraftDetailProps) {
   return (
     <>
       <PageHeader title="Review." description={headerText(draft.state)}>
-        <Link href="/drafts" className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold hover:bg-ink hover:text-paper">
+        <Link href="/inbox" className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold hover:bg-ink hover:text-paper">
           Back to drafts
         </Link>
       </PageHeader>

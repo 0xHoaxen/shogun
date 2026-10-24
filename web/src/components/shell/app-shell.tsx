@@ -3,58 +3,33 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import { useMutation, useQuery } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
-import { NOTIFICATIONS_PATH, NotificationBell } from "@/components/notifications/notification-bell";
-import { Rail } from "@/components/shell/rail";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { FooterStrip } from "@/components/shell/footer-strip";
+import { Sidebar } from "@/components/shell/sidebar";
+import { TopBar } from "@/components/shell/top-bar";
+import { Button } from "@/components/ui/button";
+import { DEFAULT_SCHEME, NAV_SECTIONS } from "@/content/sections";
 import { AuthService } from "@/gen/shogun/api/v1/auth_pb";
+import { DraftState, DraftsService } from "@/gen/shogun/api/v1/drafts_pb";
 import { LOGIN_PATH } from "@/lib/transport";
-import { cn } from "@/lib/utils";
 
-interface NavItem {
-  href: string;
-  label: string;
-  // The strip's section code and the rail's rotated name for the page.
-  section: string;
-  railLabel: string;
-}
-
-const NAV_ITEMS: readonly NavItem[] = [
-  { href: "/jobs", label: "Jobs", section: "S2 / Tracker", railLabel: "JOB PIPELINE" },
-  { href: "/contacts", label: "Contacts", section: "S3 / Network", railLabel: "CONTACT BOOK" },
-  { href: "/drafts", label: "Drafts", section: "S4 / Drafts", railLabel: "APPROVAL QUEUE" },
-  { href: "/learning", label: "Learning", section: "S5 / Learning", railLabel: "LEARNING LOG" },
-  { href: "/profile", label: "Profile", section: "S6 / Profile", railLabel: "PROFILE EDITS" },
-  { href: "/discovery", label: "Discovery", section: "S7 / Discovery", railLabel: "JOB DISCOVERY" },
-  { href: "/insights", label: "Insights", section: "S8 / Insights", railLabel: "INSIGHTS" },
-];
-
-// The bell is not a tab, but its page still names itself in the strip and rail.
-const SETTINGS_PATH = "/settings";
-
-// Settings is not a tab: it opens from the footer and holds keys and integrations.
-const SETTINGS_PAGE: NavItem = {
-  href: SETTINGS_PATH,
-  label: "Settings",
-  section: "S9 / Settings",
-  railLabel: "SETTINGS",
-};
-
-const BELL_PAGE: NavItem = {
-  href: NOTIFICATIONS_PATH,
-  label: "Bell",
-  section: "S9 / Taiko",
-  railLabel: "NOTIFICATIONS",
-};
+// One page of pending drafts is enough to count them up to the chip's cap.
+const INBOX_PAGE_SIZE = 99;
+const INBOX_CAPPED_LABEL = `${INBOX_PAGE_SIZE}+`;
 
 interface AppShellProps {
   children: ReactNode;
 }
 
-// The signed-in frame: rail, strip, tab nav and utility footer. Nothing is
+function nextStatus(label: string | null): string {
+  if (label === null) return "Nothing is waiting for you";
+  return `${label} ${label === "1" ? "draft is" : "drafts are"} waiting for your approval`;
+}
+
+// The signed-in frame: top bar, numbered sidebar and footer strip. Nothing is
 // shown until the session resolves; the transport sends a missing or expired
 // session to /login.
 export function AppShell({ children }: AppShellProps) {
@@ -62,6 +37,12 @@ export function AppShell({ children }: AppShellProps) {
   const session = useQuery(AuthService.method.getSession);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [collapsed, setCollapsed] = useState(false);
+  const pending = useQuery(DraftsService.method.listQueue, {
+    state: DraftState.PENDING,
+    pageSize: INBOX_PAGE_SIZE,
+    pageToken: "",
+  });
   const logout = useMutation(AuthService.method.logout, {
     // Leave even when the call fails: the cookie is HttpOnly and torii expires it.
     onSettled: () => {
@@ -71,74 +52,44 @@ export function AppShell({ children }: AppShellProps) {
   });
 
   if (session.isPending) {
-    return <div aria-busy="true" className="min-h-screen bg-paper" />;
+    return <div aria-busy="true" className="min-h-screen bg-background" />;
   }
   if (session.isError) {
     if (ConnectError.from(session.error).code === Code.Unauthenticated) {
-      return <div className="min-h-screen bg-paper" />;
+      return <div className="min-h-screen bg-background" />;
     }
     return (
-      <div className="flex min-h-screen flex-col items-start gap-4 bg-paper p-[22px]">
+      <div className="flex min-h-screen flex-col items-start gap-4 bg-background p-[22px]">
         <p role="alert">Can&apos;t reach Shogun. Try again.</p>
         <Button onClick={() => session.refetch()}>Retry</Button>
       </div>
     );
   }
 
-  const onBellPage = pathname.startsWith(NOTIFICATIONS_PATH);
-  const onSettingsPage = pathname.startsWith(SETTINGS_PATH);
-  const current = onBellPage
-    ? BELL_PAGE
-    : onSettingsPage
-      ? SETTINGS_PAGE
-      : NAV_ITEMS.find((item) => pathname.startsWith(item.href));
+  const current = NAV_SECTIONS.find((item) => pathname.startsWith(item.href));
+  const scheme = current?.scheme ?? DEFAULT_SCHEME;
+  const pendingCount = pending.data?.drafts.length ?? 0;
+  const hasMore = Boolean(pending.data?.nextPageToken);
+  const inboxLabel = hasMore ? INBOX_CAPPED_LABEL : pendingCount > 0 ? String(pendingCount) : null;
   const email = session.data.session?.email ?? "";
 
   return (
-    <div className="grid min-h-screen grid-cols-[104px_minmax(0,1fr)] border border-ink bg-paper max-[860px]:grid-cols-1">
-      <Rail label={current?.railLabel ?? "SHOGUN"} />
-      <div className="flex min-w-0 flex-col">
-        <div className="label flex min-h-11 flex-wrap items-center justify-between gap-3 border-b border-ink bg-strip px-[22px]">
-          <span>{current?.section ?? "Shogun"}</span>
-          <span>Shogun / Systems for career</span>
-        </div>
-        <nav aria-label="Shogun" className="flex flex-wrap border-b border-ink">
-          {NAV_ITEMS.map((item) => {
-            const active = item === current;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "label inline-flex min-h-11 grow items-center justify-center border-r border-ink px-4 font-medium last:border-r-0 hover:bg-ink hover:text-paper",
-                  active && "bg-ink text-paper",
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+    <div data-scheme={scheme} className="flex min-h-screen flex-col bg-background">
+      <TopBar status={nextStatus(inboxLabel)} />
+      <div className="flex min-h-0 grow max-[860px]:flex-col">
+        <Sidebar
+          current={current}
+          inboxLabel={inboxLabel}
+          collapsed={collapsed}
+          onToggle={() => setCollapsed((value) => !value)}
+        />
         <main className="min-w-0 grow">{children}</main>
-        <footer
-          aria-label="Utility"
-          className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-t border-ink px-[22px]"
-        >
-          <Link
-            href={SETTINGS_PATH}
-            aria-current={onSettingsPage ? "page" : undefined}
-            className={cn(buttonVariants(), onSettingsPage && "bg-ink text-paper")}
-          >
-            Settings
-          </Link>
-          <div className="flex flex-wrap items-center gap-3">
-            <NotificationBell active={onBellPage} />
-            <span data-testid="owner-email">{email}</span>
-            <Button onClick={() => logout.mutate({})}>Logout</Button>
-          </div>
-        </footer>
       </div>
+      <FooterStrip scheme={scheme}>
+        <NotificationBell active={false} />
+        <span data-testid="owner-email">{email}</span>
+        <Button onClick={() => logout.mutate({})}>Logout</Button>
+      </FooterStrip>
     </div>
   );
 }
