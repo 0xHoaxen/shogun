@@ -147,6 +147,7 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
+  /* Stops all animation: the OS setting, or Motion off in Settings > Appearance. */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -155,6 +156,13 @@
       transition: none !important;
       scroll-behavior: auto !important;
     }
+  }
+  :root[data-motion="off"] *,
+  :root[data-motion="off"] *::before,
+  :root[data-motion="off"] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }
 
