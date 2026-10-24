@@ -89,7 +89,8 @@ func (m *Meter) Reserve(_ context.Context, in *sorobanv1.ReserveRequest, _ ...gr
 	}
 	resp := &sorobanv1.ReserveResponse{ReservationId: id}
 	switch {
-	case m.NoProvider:
+	case m.NoProvider, in.UnsavedModel != nil:
+		// soroban hands back no provider for a test of unsaved details.
 	case m.Provider != nil:
 		resp.Provider = m.Provider
 	default:

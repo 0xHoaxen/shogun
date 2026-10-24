@@ -321,7 +321,7 @@ Soroban (the abacus) is the tenth service: every paid call (Claude tokens today;
 
 Starting defaults, all editable in the app: global $20 per month hard, `fude` $15 per month hard, every other service $3 per month hard, and each feature $1 per day soft.
 
-**AI provider (v2).** Each user has one provider; every feature uses it through `pkg/llm`. Before it can be saved it is tested with one short call on the unsaved details, metered like any other call. Without a provider AI features stay off. Resume parsing and job skills have their own budget rows (`katana.resume_parse`, `katana.job_skills`).
+**AI provider (v2).** Each user has one provider; every feature uses it through `pkg/llm`. Before it can be saved it is tested with one short call on the unsaved details, metered like any other call. For that test only, `Reserve` takes `unsaved_model` and prices the call by the model name without a saved provider; the key stays with the caller and never reaches soroban, and `pkg/llm` offers `CompleteWith` for it. Without a provider AI features stay off. Resume parsing and job skills have their own budget rows (`katana.resume_parse`, `katana.job_skills`).
 
 **Pricing.** A `prices` table holds per-model rates (input, output, cache read, cache write per million tokens) with an `effective_from` date, so old ledger rows keep the price that applied then. Prices are seeded by migration and changed with `SetPrice`.
 

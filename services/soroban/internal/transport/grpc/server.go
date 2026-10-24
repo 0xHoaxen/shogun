@@ -31,19 +31,25 @@ func (s *Server) Reserve(ctx context.Context, req *sorobanv1.ReserveRequest) (*s
 		Feature:         req.GetFeature(),
 		EstInputTokens:  req.GetEstInputTokens(),
 		EstOutputTokens: req.GetEstOutputTokens(),
+		UnsavedModel:    req.GetUnsavedModel(),
 	})
 	if err != nil {
 		return nil, toStatus(err)
+	}
+	// A test of unsaved details opens no provider: the caller has its own.
+	var provider *sorobanv1.ProviderAccess
+	if res.Provider.APIKey != "" {
+		provider = &sorobanv1.ProviderAccess{
+			BaseUrl: res.Provider.BaseURL,
+			Model:   res.Provider.Model,
+			ApiKey:  res.Provider.APIKey,
+		}
 	}
 	return &sorobanv1.ReserveResponse{
 		ReservationId: res.ReservationID.String(),
 		ExpiresAt:     timestamppb.New(res.ExpiresAt),
 		EstMicros:     res.EstMicros,
-		Provider: &sorobanv1.ProviderAccess{
-			BaseUrl: res.Provider.BaseURL,
-			Model:   res.Provider.Model,
-			ApiKey:  res.Provider.APIKey,
-		},
+		Provider:      provider,
 	}, nil
 }
 

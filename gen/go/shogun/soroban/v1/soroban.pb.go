@@ -308,8 +308,15 @@ type ReserveRequest struct {
 	Model           string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
 	EstInputTokens  int32  `protobuf:"varint,4,opt,name=est_input_tokens,json=estInputTokens,proto3" json:"est_input_tokens,omitempty"`
 	EstOutputTokens int32  `protobuf:"varint,5,opt,name=est_output_tokens,json=estOutputTokens,proto3" json:"est_output_tokens,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// unsaved_model is for a connection test of provider details the user has not
+	// saved yet, so they have no provider to reserve against. The caller makes the
+	// call with its own address and key; soroban never receives the key and only
+	// prices the call by this model name and holds its cost. Allowed for the
+	// feature fude.test_connection only (INVALID_REQUEST otherwise). The response
+	// then carries no provider. A saved provider's monthly token cap still applies.
+	UnsavedModel  *string `protobuf:"bytes,6,opt,name=unsaved_model,json=unsavedModel,proto3,oneof" json:"unsaved_model,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ReserveRequest) Reset() {
@@ -376,6 +383,13 @@ func (x *ReserveRequest) GetEstOutputTokens() int32 {
 		return x.EstOutputTokens
 	}
 	return 0
+}
+
+func (x *ReserveRequest) GetUnsavedModel() string {
+	if x != nil && x.UnsavedModel != nil {
+		return *x.UnsavedModel
+	}
+	return ""
 }
 
 type ReserveResponse struct {
@@ -2006,13 +2020,15 @@ const file_shogun_soroban_v1_soroban_proto_rawDesc = "" +
 	"\finput_tokens\x18\x01 \x01(\x05R\vinputTokens\x12#\n" +
 	"\routput_tokens\x18\x02 \x01(\x05R\foutputTokens\x12*\n" +
 	"\x11cache_read_tokens\x18\x03 \x01(\x05R\x0fcacheReadTokens\x12,\n" +
-	"\x12cache_write_tokens\x18\x04 \x01(\x05R\x10cacheWriteTokens\"\xb4\x01\n" +
+	"\x12cache_write_tokens\x18\x04 \x01(\x05R\x10cacheWriteTokens\"\xf0\x01\n" +
 	"\x0eReserveRequest\x12\x18\n" +
 	"\aservice\x18\x01 \x01(\tR\aservice\x12\x18\n" +
 	"\afeature\x18\x02 \x01(\tR\afeature\x12\x18\n" +
 	"\x05model\x18\x03 \x01(\tB\x02\x18\x01R\x05model\x12(\n" +
 	"\x10est_input_tokens\x18\x04 \x01(\x05R\x0eestInputTokens\x12*\n" +
-	"\x11est_output_tokens\x18\x05 \x01(\x05R\x0festOutputTokens\"\xd1\x01\n" +
+	"\x11est_output_tokens\x18\x05 \x01(\x05R\x0festOutputTokens\x12(\n" +
+	"\runsaved_model\x18\x06 \x01(\tH\x00R\funsavedModel\x88\x01\x01B\x10\n" +
+	"\x0e_unsaved_model\"\xd1\x01\n" +
 	"\x0fReserveResponse\x12%\n" +
 	"\x0ereservation_id\x18\x01 \x01(\tR\rreservationId\x129\n" +
 	"\n" +
@@ -2287,6 +2303,7 @@ func file_shogun_soroban_v1_soroban_proto_init() {
 	if File_shogun_soroban_v1_soroban_proto != nil {
 		return
 	}
+	file_shogun_soroban_v1_soroban_proto_msgTypes[1].OneofWrappers = []any{}
 	file_shogun_soroban_v1_soroban_proto_msgTypes[22].OneofWrappers = []any{}
 	file_shogun_soroban_v1_soroban_proto_msgTypes[23].OneofWrappers = []any{}
 	type x struct{}
