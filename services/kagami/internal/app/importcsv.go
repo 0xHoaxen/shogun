@@ -253,6 +253,12 @@ func (s *Service) upsertImportedContact(ctx context.Context, tx pgx.Tx, repo *st
 		if status == "" {
 			status = domain.ContactNotReached
 		}
+		// A new person with no relationship in the file gets the one the preview
+		// showed, guessed from their title, so what is stored is what was checked.
+		// Someone already in the book is never changed by a guess (the update below).
+		if guess, guessed := previewRelationship(values.Relationship, deref(values.Role)); guessed {
+			values.Relationship = &guess
+		}
 		_, err := s.createContact(ctx, tx, repo, owner, newContactRow{values: values, status: status, companyName: row.company})
 		return true, err
 	}

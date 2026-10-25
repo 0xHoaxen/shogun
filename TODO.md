@@ -1066,7 +1066,12 @@ v2 rules on top of `AGENTS.md`:
   Files: `web/src/components/contacts/**` (rename to `people/` is fine), `web/src/app/(app)/people/page.tsx`.
   Done when: web checks.
 
-- [ ] **V3.6 Import panel** (M) Needs: V3.5
+- [x] **V3.6a Store the guessed type on import: kagami** (S) Needs: V3.2
+  Do: found while planning V3.6: the dry-run preview guesses a type from the job title but the import did not store it. A new person whose row has no relationship now gets the guess (including other); a typed value wins and people already in the book are never changed by a guess.
+  Files: `services/kagami/internal/app/importcsv.go`.
+  Done when: `cd services/kagami && go test -race ./...`.
+
+- [ ] **V3.6 Import panel** (M) Needs: V3.5, V3.6a
   Do: `flow-people-import-*.png`: step 1 choose file (CSV up to 5,000 rows); step 2 AI reads it with progress lines; step 3 mapping table (your column, goes to, example, editable select) and per-row tick list with relationship tag or "Already in People"; Import N people; toast with Undo (archives the imported rows). No provider: the mapping step falls back to the template columns, as today.
   Files: `web/src/components/contacts/import-*.tsx`.
   Done when: web checks.
