@@ -292,3 +292,68 @@ func TestPreviewCellsAreShortenedButTheImportKeepsThemWhole(t *testing.T) {
 		t.Fatalf("stored name %q, err %v; want the whole name kept", list.GetContacts()[0].GetFullName(), err)
 	}
 }
+
+func (h *harness) relationshipOf(t *testing.T, name string) string {
+	t.Helper()
+	list, err := h.client.ListContacts(h.ctx(t), &kagamiv1.ListContactsRequest{Query: name})
+	if err != nil || len(list.GetContacts()) != 1 {
+		t.Fatalf("find %q: %v, %v", name, list.GetContacts(), err)
+	}
+	return list.GetContacts()[0].GetRelationship()
+}
+
+func TestAnImportStoresTheTypeThePreviewGuessedForNewPeople(t *testing.T) {
+	h := newHarness(t)
+	csv := sheet(
+		[6]string{"Sana Iyer", "Lumen", "Technical Recruiter", "sana@lumen.example", "", ""},
+		[6]string{"Tom Becker", "Corvid", "Engineering Manager", "tom@corvid.example", "", ""},
+		[6]string{"Ana Ruiz", "Northwind", "Backend Engineer", "ana@northwind.example", "", ""},
+		[6]string{"Lee Park", "Northwind", "Designer", "lee@northwind.example", "", ""},
+		[6]string{"Kim Soo", "Northwind", "Technical Recruiter", "kim@northwind.example", "", "friend"},
+		[6]string{"Pat Doe", "Northwind", "", "pat@northwind.example", "", ""},
+	)
+	preview := h.preview(t, csv)
+
+	h.importCSV(t, csv, false)
+
+	want := map[string]string{"Sana Iyer": "recruiter", "Tom Becker": "manager", "Ana Ruiz": "engineer", "Lee Park": "other", "Kim Soo": "friend", "Pat Doe": ""}
+	for name, rel := range want {
+		if got := h.relationshipOf(t, name); got != rel {
+			t.Errorf("%s stored as %q, want %q", name, got, rel)
+		}
+	}
+	// What the preview tagged is what was stored, apart from "no title, no guess":
+	// the preview shows other for it and nothing is stored.
+	for _, r := range preview {
+		stored := h.relationshipOf(t, r.GetFullName())
+		if r.GetRole() == "" {
+			continue
+		}
+		if stored != r.GetRelationship() {
+			t.Errorf("%s: the preview said %q and %q was stored", r.GetFullName(), r.GetRelationship(), stored)
+		}
+	}
+}
+
+func TestAnImportNeverChangesAnExistingPersonsTypeWithAGuess(t *testing.T) {
+	h := newHarness(t)
+	existing, err := h.client.AddContact(h.ctx(t), &kagamiv1.AddContactRequest{
+		Contact: &kagamiv1.Contact{FullName: "Priya Raman", Email: "priya@lumen.example", Relationship: "friend", Role: "Friend"}, CompanyName: "Lumen",
+	})
+	if err != nil {
+		t.Fatalf("add contact: %v", err)
+	}
+	noType := h.addContact(t, "Arjun Mehta", "arjun@corvid.example", "")
+
+	h.importCSV(t, sheet(
+		[6]string{"Priya Raman", "Lumen", "Technical Recruiter", "priya@lumen.example", "", ""},
+		[6]string{"Arjun Mehta", "Corvid", "Engineering Manager", "arjun@corvid.example", "", ""},
+	), false)
+
+	if got := h.relationshipOf(t, "Priya Raman"); got != "friend" {
+		t.Errorf("an existing person's type became %q, want it kept as friend (%s)", got, existing.GetContact().GetId())
+	}
+	if got := h.relationshipOf(t, "Arjun Mehta"); got != "" {
+		t.Errorf("a person with no type was given %q by a guess on update (%s); only new people get one", got, noType.GetId())
+	}
+}
