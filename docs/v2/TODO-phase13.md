@@ -94,7 +94,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `proto/shogun/api/v1/contacts.proto`, `services/torii/internal/transport/connectapi/contact*.go`.
   Done when: `make proto && cd services/torii && go test -race ./...`.
 
-- [ ] **V3.5 People screen** (M) Needs: V3.4, V1.3
+- [x] **V3.5 People screen** (M) Needs: V3.4, V1.3
   Do: `People.dc.html`: list and detail, filter chips per relationship plus Write back (follow-up due), detail with email, last contact, how you know them, linked roles, notes and history, Add note, Mark contacted (Undo), Draft a note (fude `GenerateDraft`, goes to Inbox), empty state, Add person side panel (only name required; relationship choice).
   Files: `web/src/components/contacts/**` (rename to `people/` is fine), `web/src/app/(app)/people/page.tsx`.
   Done when: web checks.

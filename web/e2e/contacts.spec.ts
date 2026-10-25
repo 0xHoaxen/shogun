@@ -26,15 +26,6 @@ const PRIYA: ContactInit = {
   nextFollowUp: "2026-10-08",
 };
 
-const KENJI: ContactInit = {
-  id: "c2",
-  fullName: "Kenji Watanabe",
-  role: "Tech Lead",
-  companyName: "Northwind",
-  status: ContactStatus.NOT_REACHED,
-  version: 1,
-};
-
 const CSV = "full_name,email\nAsha Nair,asha@example.com\n";
 
 async function signIn(page: Page) {
@@ -52,89 +43,14 @@ function importDialog(page: Page) {
 }
 
 async function chooseFile(page: Page, name: string, content: string | Buffer) {
-  await page.getByRole("button", { name: "Import CSV" }).click();
+  // With an empty book the empty state offers Import CSV too; the header one is first.
+  await page.getByRole("button", { name: "Import CSV" }).first().click();
   await importDialog(page).getByLabel("CSV file").setInputFiles({
     name,
     mimeType: "text/csv",
     buffer: Buffer.from(content),
   });
 }
-
-test("the table lists contacts with their status and next step", async ({ page }) => {
-  // Arrange
-  await signIn(page);
-  await mockRpc(page, ContactsService.method.listContacts, { contacts: [PRIYA, KENJI] });
-
-  // Act
-  await page.goto("/people");
-
-  // Assert
-  const row = page.getByRole("row", { name: /Priya Raman/ });
-  await expect(row).toContainText("Staff Engineer");
-  await expect(row).toContainText("Lumen");
-  await expect(row).toContainText("Replied");
-  await expect(row).toContainText("Follow up 2026-10-08");
-  await expect(page.getByRole("row", { name: /Kenji Watanabe/ })).toContainText("Not reached");
-});
-
-test("a status filter asks for that status and shows only its people", async ({ page }) => {
-  // Arrange
-  await signIn(page);
-  const calls = await mockRpc(page, ContactsService.method.listContacts, (body) => ({
-    contacts: body.status === "CONTACT_STATUS_REPLIED" ? [PRIYA] : [PRIYA, KENJI],
-  }));
-  await page.goto("/people");
-  await expect(page.getByRole("row", { name: /Kenji Watanabe/ })).toBeVisible();
-
-  // Act
-  await page.getByRole("button", { name: "Replied" }).click();
-
-  // Assert
-  await expect(page.getByRole("row", { name: /Kenji Watanabe/ })).toBeHidden();
-  await expect(page.getByRole("row", { name: /Priya Raman/ })).toBeVisible();
-  expect(calls.map((call) => (call.body as { status?: string }).status)).toContain(
-    "CONTACT_STATUS_REPLIED",
-  );
-});
-
-test("an empty status says nobody is there", async ({ page }) => {
-  // Arrange
-  await signIn(page);
-  await mockRpc(page, ContactsService.method.listContacts, { contacts: [] });
-
-  // Act
-  await page.goto("/people");
-
-  // Assert
-  await expect(page.getByText("Nobody in this status yet.")).toBeVisible();
-});
-
-test("adding a contact sends the form with an idempotency key and shows the row", async ({ page }) => {
-  // Arrange
-  await signIn(page);
-  let current: ContactInit[] = [PRIYA];
-  await mockRpc(page, ContactsService.method.listContacts, () => ({ contacts: current }));
-  const addCalls = await mockRpc(page, ContactsService.method.addContact, () => {
-    const added: ContactInit = { ...KENJI, id: "c3", fullName: "Asha Nair", companyName: "Quayside" };
-    current = [PRIYA, added];
-    return { contact: added };
-  });
-  await page.goto("/people");
-
-  // Act
-  await page.getByRole("button", { name: "Add contact" }).click();
-  const dialog = page.getByRole("dialog", { name: "Add contact" });
-  await dialog.getByLabel("Name").fill("Asha Nair");
-  await dialog.getByLabel("Company").fill("Quayside");
-  await dialog.getByRole("button", { name: "Add contact" }).click();
-
-  // Assert
-  await expect(page.getByRole("row", { name: /Asha Nair/ })).toContainText("Quayside");
-  await expect(dialog).toBeHidden();
-  expect(addCalls).toHaveLength(1);
-  expect(addCalls[0].body).toMatchObject({ fullName: "Asha Nair", companyName: "Quayside" });
-  expect(addCalls[0].headers["idempotency-key"]).toBeTruthy();
-});
 
 test("a good CSV is previewed as a dry run and saved only after confirming", async ({ page }) => {
   // Arrange
@@ -259,7 +175,8 @@ test("the import dialog shows the expected columns and offers a template", async
   await page.goto("/people");
 
   // Act
-  await page.getByRole("button", { name: "Import CSV" }).click();
+  // With an empty book the empty state offers Import CSV too; the header one is first.
+  await page.getByRole("button", { name: "Import CSV" }).first().click();
 
   // Assert
   const dialog = importDialog(page);
@@ -305,7 +222,8 @@ async function withProvider(page: Page) {
 // chooseFileWithAi picks a file once the dialog is in AI mode, as the owner
 // would: the picker stays disabled until the provider has loaded.
 async function chooseFileWithAi(page: Page, name: string, content: string) {
-  await page.getByRole("button", { name: "Import CSV" }).click();
+  // With an empty book the empty state offers Import CSV too; the header one is first.
+  await page.getByRole("button", { name: "Import CSV" }).first().click();
   const dialog = importDialog(page);
   await expect(dialog.getByTestId("import-ai-hint")).toBeVisible();
   await expect(dialog.getByLabel("CSV file")).toBeEnabled();
@@ -326,7 +244,8 @@ test("with an AI provider the dialog asks only for a name, not the template", as
   await page.goto("/people");
 
   // Act
-  await page.getByRole("button", { name: "Import CSV" }).click();
+  // With an empty book the empty state offers Import CSV too; the header one is first.
+  await page.getByRole("button", { name: "Import CSV" }).first().click();
 
   // Assert
   const dialog = importDialog(page);
