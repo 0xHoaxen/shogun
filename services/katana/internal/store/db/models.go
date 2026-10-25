@@ -32,6 +32,19 @@ type Inbox struct {
 	ReceivedAt time.Time
 }
 
+type JobSkill struct {
+	OwnerID uuid.UUID
+	JobID   uuid.UUID
+	NameKey string
+	Name    string
+}
+
+type JobSkillRun struct {
+	OwnerID   uuid.UUID
+	JobID     uuid.UUID
+	CreatedAt time.Time
+}
+
 type Outbox struct {
 	ID          uuid.UUID
 	Type        string

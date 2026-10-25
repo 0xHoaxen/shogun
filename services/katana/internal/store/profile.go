@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"errors"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -70,3 +72,37 @@ func (r *Repo) ListSkills(ctx context.Context, owner uuid.UUID) ([]db.Skill, err
 
 // MonthPtr returns nil for an empty month, else a pointer to it.
 func MonthPtr(s string) *string { return textPtr(s) }
+
+// ReadJob reports whether the owner's job has already been read for skills.
+func (r *Repo) ReadJob(ctx context.Context, owner, job uuid.UUID) (bool, error) {
+	ok, err := r.q.HasJobSkillRun(ctx, db.HasJobSkillRunParams{OwnerID: owner, JobID: job})
+	return ok, wrap("check job skill run", err)
+}
+
+// SaveJobSkills marks the job as read and stores the skills it asks for,
+// keyed by their lower case.
+func (r *Repo) SaveJobSkills(ctx context.Context, owner, job uuid.UUID, names []string, now time.Time) error {
+	if err := r.q.InsertJobSkillRun(ctx, db.InsertJobSkillRunParams{OwnerID: owner, JobID: job, Now: now}); err != nil {
+		return wrap("insert job skill run", err)
+	}
+	for _, name := range names {
+		err := r.q.InsertJobSkill(ctx, db.InsertJobSkillParams{
+			OwnerID: owner, JobID: job, NameKey: strings.ToLower(name), Name: name,
+		})
+		if err != nil {
+			return wrap("insert job skill", err)
+		}
+	}
+	return nil
+}
+
+// SkillsWithAsked returns the owner's skills and the skills their read jobs
+// ask for, and how many jobs have been read.
+func (r *Repo) SkillsWithAsked(ctx context.Context, owner uuid.UUID) ([]db.ListSkillsWithAskedRow, int, error) {
+	rows, err := r.q.ListSkillsWithAsked(ctx, owner)
+	if err != nil {
+		return nil, 0, wrap("list skills with asked", err)
+	}
+	n, err := r.q.CountJobSkillRuns(ctx, owner)
+	return rows, int(n), wrap("count job skill runs", err)
+}

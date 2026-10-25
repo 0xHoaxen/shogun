@@ -70,6 +70,16 @@ func WithSuggestions(queue Queue, completer Completer, log *slog.Logger) Option 
 	return func(s *Service) { s.queue, s.llm, s.log = queue, completer, log }
 }
 
+// JobAdded asks for a job the owner just saved to be read for its skills, inside
+// tx, the transaction that also marks the event as seen. The read is unique per
+// job, so a redelivered event adds none.
+func (s *Service) JobAdded(ctx context.Context, tx pgx.Tx, owner, job uuid.UUID) error {
+	if s.queue == nil {
+		return nil
+	}
+	return s.queue.EnqueueJobSkills(ctx, tx, owner, job)
+}
+
 // LearnedItem asks for a suggestion run about something the owner finished
 // learning, inside tx, the transaction that also marks the event as seen. The
 // run is unique per item, so a redelivered event adds none.

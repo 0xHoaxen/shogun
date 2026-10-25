@@ -164,17 +164,35 @@ func (s *Service) GetProfile(ctx context.Context, owner uuid.UUID) (Profile, err
 	}, nil
 }
 
-// ListSkills returns the owner's skills, strongest first.
-func (s *Service) ListSkills(ctx context.Context, owner uuid.UUID) ([]ProfileSkill, error) {
-	rows, err := store.New(s.pool).ListSkills(ctx, owner)
+// SkillRow is a skill in the owner's table. Have is false for a skill that
+// saved roles ask for and the owner has not kept; its Level is then 0.
+type SkillRow struct {
+	Name    string
+	Level   int
+	Source  string
+	Have    bool
+	AskedIn int
+}
+
+// SkillList is the owner's skills beside what their saved roles ask for.
+// RolesRead is how many saved roles have been read, the M of "asked in N of M".
+type SkillList struct {
+	Skills    []SkillRow
+	RolesRead int
+}
+
+// ListSkills returns the skills the owner has and the ones their saved roles
+// ask for, most asked first.
+func (s *Service) ListSkills(ctx context.Context, owner uuid.UUID) (SkillList, error) {
+	rows, read, err := store.New(s.pool).SkillsWithAsked(ctx, owner)
 	if err != nil {
-		return nil, err
+		return SkillList{}, err
 	}
-	skills := make([]ProfileSkill, len(rows))
+	list := SkillList{Skills: make([]SkillRow, len(rows)), RolesRead: read}
 	for i, r := range rows {
-		skills[i] = ProfileSkill{Name: r.Name, Level: int(r.Level), Source: r.Source}
+		list.Skills[i] = SkillRow{Name: r.Name, Level: int(r.Level), Source: r.Source, Have: r.Have, AskedIn: int(r.AskedIn)}
 	}
-	return skills, nil
+	return list, nil
 }
 
 // checkProfile returns in trimmed, or says what is wrong with it.

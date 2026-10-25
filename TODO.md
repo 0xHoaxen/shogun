@@ -1093,7 +1093,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/katana/migrations/`, `services/katana/internal/store/**`, `proto/shogun/katana/v1/*.proto`, `pkg/bus/routes.go`.
   Done when: `make proto && cd services/katana && go test -race ./...`.
 
-- [ ] **V4.4 Skills asked by saved roles: katana** (M) Needs: V4.3
+- [x] **V4.4 Skills asked by saved roles: katana** (M) Needs: V4.3
   Do: consume `job.added`, fetch the description from kagami, extract skills with feature `katana.job_skills` (skip when no active model), store in `job_skills`. `ListSkills` returns "asked in N of your M saved roles" per skill.
   Files: `services/katana/internal/events/**`, `services/katana/internal/jobs/**`.
   Done when: `cd services/katana && go test -race ./...`.

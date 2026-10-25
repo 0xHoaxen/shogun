@@ -46,6 +46,7 @@ func TestRunServesHealthAndStopsOnCancel(t *testing.T) {
 		"IDENTITY_SIGNING_KEY":     testIdentityKey,
 		"KATANA_SECRET_MASTER_KEY": testSecretKey,
 		"SOROBAN_ADDR":             testSorobanAddr,
+		"KAGAMI_ADDR":              testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -81,6 +82,7 @@ func TestEveryRPCRequiresIdentity(t *testing.T) {
 		"IDENTITY_SIGNING_KEY":     testIdentityKey,
 		"KATANA_SECRET_MASTER_KEY": testSecretKey,
 		"SOROBAN_ADDR":             testSorobanAddr,
+		"KAGAMI_ADDR":              testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)
@@ -157,6 +159,7 @@ func TestRunRelaysOutboxRowToConsumer(t *testing.T) {
 		"IDENTITY_SIGNING_KEY":     testIdentityKey,
 		"KATANA_SECRET_MASTER_KEY": testSecretKey,
 		"SOROBAN_ADDR":             testSorobanAddr,
+		"KAGAMI_ADDR":              testSorobanAddr,
 	}
 	lookup := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 	grpcLis := listen(t)

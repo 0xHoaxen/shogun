@@ -7,16 +7,19 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	sorobanv1 "github.com/0xHoaxen/shogun/gen/go/shogun/soroban/v1"
 	"github.com/0xHoaxen/shogun/pkg/config"
 	"github.com/0xHoaxen/shogun/pkg/grpcclient"
 	"github.com/0xHoaxen/shogun/pkg/llm"
 	"github.com/0xHoaxen/shogun/services/katana/internal/app"
 	"github.com/0xHoaxen/shogun/services/katana/internal/jobs"
+	kagamisource "github.com/0xHoaxen/shogun/services/katana/internal/transport/kagami"
 )
 
 const (
 	sorobanAddrEnv = "SOROBAN_ADDR"
+	kagamiAddrEnv  = "KAGAMI_ADDR"
 )
 
 // suggestions is what writing suggestions needs, with the connection to close.
@@ -35,6 +38,10 @@ func newSuggestions(
 	if err != nil {
 		return nil, err
 	}
+	kagamiAddr, err := config.Required(lookup, kagamiAddrEnv)
+	if err != nil {
+		return nil, err
+	}
 	queue, err := jobs.NewRiverQueue(pool)
 	if err != nil {
 		return nil, err
@@ -43,20 +50,33 @@ func newSuggestions(
 	if err != nil {
 		return nil, err
 	}
-	completer, err := newCompleter(cfg, sorobanv1.NewSorobanServiceClient(conn), log)
+	kagamiConn, err := grpcclient.Dial(ctx, kagamiAddr, grpcclient.WithSigner(signer))
 	if err != nil {
 		_ = conn.Close()
 		return nil, err
 	}
+	completer, err := newCompleter(cfg, sorobanv1.NewSorobanServiceClient(conn), log)
+	if err != nil {
+		_ = conn.Close()
+		_ = kagamiConn.Close()
+		return nil, err
+	}
+	source := kagamisource.New(kagamiv1.NewKagamiServiceClient(kagamiConn))
 	return &suggestions{
-		option: app.WithSuggestions(queue, completer, log),
-		close:  func() { closeConn(conn, log) },
+		option: func(s *app.Service) {
+			app.WithSuggestions(queue, completer, log)(s)
+			app.WithJobSkills(source)(s)
+		},
+		close: func() {
+			closeConn(conn, log)
+			closeConn(kagamiConn, log)
+		},
 	}, nil
 }
 
 func closeConn(conn *grpc.ClientConn, log *slog.Logger) {
 	if err := conn.Close(); err != nil {
-		log.Warn("close soroban connection", slog.Any("error", err))
+		log.Warn("close connection", slog.Any("error", err))
 	}
 }
 
