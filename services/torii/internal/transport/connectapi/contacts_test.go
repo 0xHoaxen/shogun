@@ -31,6 +31,9 @@ type fakeContactsKagami struct {
 	add    func(*kagamiv1.AddContactRequest) (*kagamiv1.AddContactResponse, error)
 	change func(*kagamiv1.ChangeContactStatusRequest) (*kagamiv1.ChangeContactStatusResponse, error)
 	imp    func(*kagamiv1.ImportContactsRequest) (*kagamiv1.ImportContactsResponse, error)
+	get    func(*kagamiv1.GetContactRequest) (*kagamiv1.GetContactResponse, error)
+	note   func(*kagamiv1.AddContactNoteRequest) (*kagamiv1.AddContactNoteResponse, error)
+	mark   func(*kagamiv1.MarkContactedRequest) (*kagamiv1.MarkContactedResponse, error)
 
 	mu       sync.Mutex
 	owners   []string
@@ -75,6 +78,21 @@ func (f *fakeContactsKagami) ChangeContactStatus(ctx context.Context, in *kagami
 func (f *fakeContactsKagami) ImportContacts(ctx context.Context, in *kagamiv1.ImportContactsRequest, _ ...grpc.CallOption) (*kagamiv1.ImportContactsResponse, error) {
 	f.record(ctx, in)
 	return f.imp(in)
+}
+
+func (f *fakeContactsKagami) GetContact(ctx context.Context, in *kagamiv1.GetContactRequest, _ ...grpc.CallOption) (*kagamiv1.GetContactResponse, error) {
+	f.record(ctx, in)
+	return f.get(in)
+}
+
+func (f *fakeContactsKagami) AddContactNote(ctx context.Context, in *kagamiv1.AddContactNoteRequest, _ ...grpc.CallOption) (*kagamiv1.AddContactNoteResponse, error) {
+	f.record(ctx, in)
+	return f.note(in)
+}
+
+func (f *fakeContactsKagami) MarkContacted(ctx context.Context, in *kagamiv1.MarkContactedRequest, _ ...grpc.CallOption) (*kagamiv1.MarkContactedResponse, error) {
+	f.record(ctx, in)
+	return f.mark(in)
 }
 
 type contactsHarness struct {

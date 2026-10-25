@@ -42,6 +42,15 @@ const (
 	// ContactsServiceChangeContactStatusProcedure is the fully-qualified name of the ContactsService's
 	// ChangeContactStatus RPC.
 	ContactsServiceChangeContactStatusProcedure = "/shogun.api.v1.ContactsService/ChangeContactStatus"
+	// ContactsServiceGetContactProcedure is the fully-qualified name of the ContactsService's
+	// GetContact RPC.
+	ContactsServiceGetContactProcedure = "/shogun.api.v1.ContactsService/GetContact"
+	// ContactsServiceAddContactNoteProcedure is the fully-qualified name of the ContactsService's
+	// AddContactNote RPC.
+	ContactsServiceAddContactNoteProcedure = "/shogun.api.v1.ContactsService/AddContactNote"
+	// ContactsServiceMarkContactedProcedure is the fully-qualified name of the ContactsService's
+	// MarkContacted RPC.
+	ContactsServiceMarkContactedProcedure = "/shogun.api.v1.ContactsService/MarkContacted"
 	// ContactsServiceImportContactsProcedure is the fully-qualified name of the ContactsService's
 	// ImportContacts RPC.
 	ContactsServiceImportContactsProcedure = "/shogun.api.v1.ContactsService/ImportContacts"
@@ -56,6 +65,16 @@ type ContactsServiceClient interface {
 	// ChangeContactStatus moves a contact along the state machine; an invalid
 	// move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
 	ChangeContactStatus(context.Context, *connect.Request[v1.ChangeContactStatusRequest]) (*connect.Response[v1.ChangeContactStatusResponse], error)
+	// GetContact returns one contact with its notes and history, newest first, and
+	// the owner's jobs at its company (at most 20).
+	GetContact(context.Context, *connect.Request[v1.GetContactRequest]) (*connect.Response[v1.GetContactResponse], error)
+	// AddContactNote adds a note. Empty text is INVALID_NOTE and text over 2000
+	// characters NOTE_TOO_LONG. It never conflicts with an edit.
+	AddContactNote(context.Context, *connect.Request[v1.AddContactNoteRequest]) (*connect.Response[v1.AddContactNoteResponse], error)
+	// MarkContacted records that the owner reached the contact themselves. A
+	// contact not yet reached moves to reached out; otherwise only last_contacted
+	// changes. A future date is INVALID_DATE and a stale version VERSION_CONFLICT.
+	MarkContacted(context.Context, *connect.Request[v1.MarkContactedRequest]) (*connect.Response[v1.MarkContactedResponse], error)
 	// ImportContacts parses a contacts CSV. With dry_run nothing is written and
 	// the report is the preview shown before the owner confirms. With reshape a
 	// sheet with other columns is first mapped onto the import columns by the
@@ -95,6 +114,24 @@ func NewContactsServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(contactsServiceMethods.ByName("ChangeContactStatus")),
 			connect.WithClientOptions(opts...),
 		),
+		getContact: connect.NewClient[v1.GetContactRequest, v1.GetContactResponse](
+			httpClient,
+			baseURL+ContactsServiceGetContactProcedure,
+			connect.WithSchema(contactsServiceMethods.ByName("GetContact")),
+			connect.WithClientOptions(opts...),
+		),
+		addContactNote: connect.NewClient[v1.AddContactNoteRequest, v1.AddContactNoteResponse](
+			httpClient,
+			baseURL+ContactsServiceAddContactNoteProcedure,
+			connect.WithSchema(contactsServiceMethods.ByName("AddContactNote")),
+			connect.WithClientOptions(opts...),
+		),
+		markContacted: connect.NewClient[v1.MarkContactedRequest, v1.MarkContactedResponse](
+			httpClient,
+			baseURL+ContactsServiceMarkContactedProcedure,
+			connect.WithSchema(contactsServiceMethods.ByName("MarkContacted")),
+			connect.WithClientOptions(opts...),
+		),
 		importContacts: connect.NewClient[v1.ImportContactsRequest, v1.ImportContactsResponse](
 			httpClient,
 			baseURL+ContactsServiceImportContactsProcedure,
@@ -109,6 +146,9 @@ type contactsServiceClient struct {
 	listContacts        *connect.Client[v1.ListContactsRequest, v1.ListContactsResponse]
 	addContact          *connect.Client[v1.AddContactRequest, v1.AddContactResponse]
 	changeContactStatus *connect.Client[v1.ChangeContactStatusRequest, v1.ChangeContactStatusResponse]
+	getContact          *connect.Client[v1.GetContactRequest, v1.GetContactResponse]
+	addContactNote      *connect.Client[v1.AddContactNoteRequest, v1.AddContactNoteResponse]
+	markContacted       *connect.Client[v1.MarkContactedRequest, v1.MarkContactedResponse]
 	importContacts      *connect.Client[v1.ImportContactsRequest, v1.ImportContactsResponse]
 }
 
@@ -127,6 +167,21 @@ func (c *contactsServiceClient) ChangeContactStatus(ctx context.Context, req *co
 	return c.changeContactStatus.CallUnary(ctx, req)
 }
 
+// GetContact calls shogun.api.v1.ContactsService.GetContact.
+func (c *contactsServiceClient) GetContact(ctx context.Context, req *connect.Request[v1.GetContactRequest]) (*connect.Response[v1.GetContactResponse], error) {
+	return c.getContact.CallUnary(ctx, req)
+}
+
+// AddContactNote calls shogun.api.v1.ContactsService.AddContactNote.
+func (c *contactsServiceClient) AddContactNote(ctx context.Context, req *connect.Request[v1.AddContactNoteRequest]) (*connect.Response[v1.AddContactNoteResponse], error) {
+	return c.addContactNote.CallUnary(ctx, req)
+}
+
+// MarkContacted calls shogun.api.v1.ContactsService.MarkContacted.
+func (c *contactsServiceClient) MarkContacted(ctx context.Context, req *connect.Request[v1.MarkContactedRequest]) (*connect.Response[v1.MarkContactedResponse], error) {
+	return c.markContacted.CallUnary(ctx, req)
+}
+
 // ImportContacts calls shogun.api.v1.ContactsService.ImportContacts.
 func (c *contactsServiceClient) ImportContacts(ctx context.Context, req *connect.Request[v1.ImportContactsRequest]) (*connect.Response[v1.ImportContactsResponse], error) {
 	return c.importContacts.CallUnary(ctx, req)
@@ -141,6 +196,16 @@ type ContactsServiceHandler interface {
 	// ChangeContactStatus moves a contact along the state machine; an invalid
 	// move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
 	ChangeContactStatus(context.Context, *connect.Request[v1.ChangeContactStatusRequest]) (*connect.Response[v1.ChangeContactStatusResponse], error)
+	// GetContact returns one contact with its notes and history, newest first, and
+	// the owner's jobs at its company (at most 20).
+	GetContact(context.Context, *connect.Request[v1.GetContactRequest]) (*connect.Response[v1.GetContactResponse], error)
+	// AddContactNote adds a note. Empty text is INVALID_NOTE and text over 2000
+	// characters NOTE_TOO_LONG. It never conflicts with an edit.
+	AddContactNote(context.Context, *connect.Request[v1.AddContactNoteRequest]) (*connect.Response[v1.AddContactNoteResponse], error)
+	// MarkContacted records that the owner reached the contact themselves. A
+	// contact not yet reached moves to reached out; otherwise only last_contacted
+	// changes. A future date is INVALID_DATE and a stale version VERSION_CONFLICT.
+	MarkContacted(context.Context, *connect.Request[v1.MarkContactedRequest]) (*connect.Response[v1.MarkContactedResponse], error)
 	// ImportContacts parses a contacts CSV. With dry_run nothing is written and
 	// the report is the preview shown before the owner confirms. With reshape a
 	// sheet with other columns is first mapped onto the import columns by the
@@ -176,6 +241,24 @@ func NewContactsServiceHandler(svc ContactsServiceHandler, opts ...connect.Handl
 		connect.WithSchema(contactsServiceMethods.ByName("ChangeContactStatus")),
 		connect.WithHandlerOptions(opts...),
 	)
+	contactsServiceGetContactHandler := connect.NewUnaryHandler(
+		ContactsServiceGetContactProcedure,
+		svc.GetContact,
+		connect.WithSchema(contactsServiceMethods.ByName("GetContact")),
+		connect.WithHandlerOptions(opts...),
+	)
+	contactsServiceAddContactNoteHandler := connect.NewUnaryHandler(
+		ContactsServiceAddContactNoteProcedure,
+		svc.AddContactNote,
+		connect.WithSchema(contactsServiceMethods.ByName("AddContactNote")),
+		connect.WithHandlerOptions(opts...),
+	)
+	contactsServiceMarkContactedHandler := connect.NewUnaryHandler(
+		ContactsServiceMarkContactedProcedure,
+		svc.MarkContacted,
+		connect.WithSchema(contactsServiceMethods.ByName("MarkContacted")),
+		connect.WithHandlerOptions(opts...),
+	)
 	contactsServiceImportContactsHandler := connect.NewUnaryHandler(
 		ContactsServiceImportContactsProcedure,
 		svc.ImportContacts,
@@ -190,6 +273,12 @@ func NewContactsServiceHandler(svc ContactsServiceHandler, opts ...connect.Handl
 			contactsServiceAddContactHandler.ServeHTTP(w, r)
 		case ContactsServiceChangeContactStatusProcedure:
 			contactsServiceChangeContactStatusHandler.ServeHTTP(w, r)
+		case ContactsServiceGetContactProcedure:
+			contactsServiceGetContactHandler.ServeHTTP(w, r)
+		case ContactsServiceAddContactNoteProcedure:
+			contactsServiceAddContactNoteHandler.ServeHTTP(w, r)
+		case ContactsServiceMarkContactedProcedure:
+			contactsServiceMarkContactedHandler.ServeHTTP(w, r)
 		case ContactsServiceImportContactsProcedure:
 			contactsServiceImportContactsHandler.ServeHTTP(w, r)
 		default:
@@ -211,6 +300,18 @@ func (UnimplementedContactsServiceHandler) AddContact(context.Context, *connect.
 
 func (UnimplementedContactsServiceHandler) ChangeContactStatus(context.Context, *connect.Request[v1.ChangeContactStatusRequest]) (*connect.Response[v1.ChangeContactStatusResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ContactsService.ChangeContactStatus is not implemented"))
+}
+
+func (UnimplementedContactsServiceHandler) GetContact(context.Context, *connect.Request[v1.GetContactRequest]) (*connect.Response[v1.GetContactResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ContactsService.GetContact is not implemented"))
+}
+
+func (UnimplementedContactsServiceHandler) AddContactNote(context.Context, *connect.Request[v1.AddContactNoteRequest]) (*connect.Response[v1.AddContactNoteResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ContactsService.AddContactNote is not implemented"))
+}
+
+func (UnimplementedContactsServiceHandler) MarkContacted(context.Context, *connect.Request[v1.MarkContactedRequest]) (*connect.Response[v1.MarkContactedResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("shogun.api.v1.ContactsService.MarkContacted is not implemented"))
 }
 
 func (UnimplementedContactsServiceHandler) ImportContacts(context.Context, *connect.Request[v1.ImportContactsRequest]) (*connect.Response[v1.ImportContactsResponse], error) {

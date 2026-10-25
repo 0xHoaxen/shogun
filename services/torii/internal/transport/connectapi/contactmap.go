@@ -1,6 +1,8 @@
 package connectapi
 
 import (
+	"encoding/json"
+
 	apiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/api/v1"
 	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 )
@@ -49,7 +51,45 @@ func contactToAPI(c *kagamiv1.Contact) *apiv1.Contact {
 		NextFollowUp:     c.GetNextFollowUp(),
 		Notes:            c.GetNotes(),
 		Version:          c.GetVersion(),
+		Relationship:     c.GetRelationship(),
+		HowWeMet:         c.GetHowWeMet(),
 	}
+}
+
+// contactEventToAPI shows one timeline entry. kagami keeps a note's text in the
+// entry's JSON payload; the web gets it as text and never sees the payload.
+func contactEventToAPI(e *kagamiv1.ContactEvent) *apiv1.ContactEvent {
+	var payload struct {
+		Text string `json:"text"`
+	}
+	if e.GetKind() == "note" {
+		// A payload that is not a note's JSON leaves the text empty.
+		_ = json.Unmarshal([]byte(e.GetPayload()), &payload)
+	}
+	return &apiv1.ContactEvent{
+		Id: e.GetId(), Kind: e.GetKind(), Channel: e.GetChannel(), Text: payload.Text, OccurredAt: e.GetOccurredAt(),
+	}
+}
+
+func contactEventsToAPI(events []*kagamiv1.ContactEvent) []*apiv1.ContactEvent {
+	out := make([]*apiv1.ContactEvent, 0, len(events))
+	for _, e := range events {
+		out = append(out, contactEventToAPI(e))
+	}
+	return out
+}
+
+func importPreviewToAPI(rows []*kagamiv1.ImportPreviewRow) []*apiv1.ImportPreviewRow {
+	out := make([]*apiv1.ImportPreviewRow, 0, len(rows))
+	for _, r := range rows {
+		out = append(out, &apiv1.ImportPreviewRow{
+			Row: r.GetRow(), FullName: r.GetFullName(), Role: r.GetRole(), Company: r.GetCompany(), Email: r.GetEmail(),
+			Relationship: r.GetRelationship(), RelationshipGuessed: r.GetRelationshipGuessed(),
+			Duplicate: r.GetDuplicate(), DuplicateContactId: r.GetDuplicateContactId(), DuplicateReason: r.GetDuplicateReason(),
+			RepeatsRow: r.GetRepeatsRow(), Problem: r.GetProblem(),
+		})
+	}
+	return out
 }
 
 func contactsToAPI(contacts []*kagamiv1.Contact) []*apiv1.Contact {
@@ -70,6 +110,7 @@ func importReportToAPI(r *kagamiv1.ImportReport) *apiv1.ImportReport {
 		RowsCreated: r.GetRowsCreated(),
 		RowsUpdated: r.GetRowsUpdated(),
 		RowsFailed:  r.GetRowsFailed(),
+		RowsSkipped: r.GetRowsSkipped(),
 		Errors:      rowErrors,
 	}
 }
