@@ -1071,7 +1071,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/kagami/internal/app/importcsv.go`.
   Done when: `cd services/kagami && go test -race ./...`.
 
-- [ ] **V3.6 Import panel** (M) Needs: V3.5, V3.6a
+- [x] **V3.6 Import panel** (M) Needs: V3.5, V3.6a
   Do: `flow-people-import-*.png`: step 1 choose file (CSV up to 5,000 rows); step 2 AI reads it with progress lines; step 3 mapping table (your column, goes to, example, editable select) and per-row tick list with relationship tag or "Already in People"; Import N people; toast with Undo (archives the imported rows). No provider: the mapping step falls back to the template columns, as today.
   Files: `web/src/components/contacts/import-*.tsx`.
   Done when: web checks.

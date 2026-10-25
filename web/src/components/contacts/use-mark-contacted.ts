@@ -3,19 +3,17 @@
 import { ConnectError, createClient } from "@connectrpc/connect";
 import { useTransport } from "@connectrpc/connect-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { contactQueryKey, contactsQueryKey } from "@/components/contacts/contacts-key";
-import { TOAST_MS, useToast } from "@/components/ui/toast";
+import { useUndoWindow } from "@/components/contacts/use-undo-window";
 import { ContactsService } from "@/gen/shogun/api/v1/contacts_pb";
 import { reasonOf } from "@/lib/errors";
 
 interface Pending {
   id: string;
-  name: string;
   version: number;
   on: string;
-  timer: ReturnType<typeof setTimeout>;
 }
 
 export interface MarkContacted {
@@ -39,15 +37,11 @@ function errorText(error: unknown): string {
 
 // useMarkContacted records "I contacted them" with an Undo. The server cannot
 // undo it (a status never moves back), so the call waits as long as the toast
-// does: Undo cancels it and nothing was ever sent. A mark that is still waiting
-// is sent at once when the person is left, another is made, the tab is hidden or
-// the page goes, so it is never lost.
+// does (see useUndoWindow): Undo cancels it and nothing was ever sent.
 export function useMarkContacted(): MarkContacted {
   const transport = useTransport();
   const client = useMemo(() => createClient(ContactsService, transport), [transport]);
   const queryClient = useQueryClient();
-  const toast = useToast();
-  const waiting = useRef<Pending | null>(null);
   const [pending, setPending] = useState<MarkContacted["pending"]>(null);
   const [error, setError] = useState("");
 
@@ -67,58 +61,18 @@ export function useMarkContacted(): MarkContacted {
     },
     [client, queryClient],
   );
-
-  const flush = useCallback(() => {
-    const item = waiting.current;
-    if (item === null) {
-      return;
-    }
-    clearTimeout(item.timer);
-    waiting.current = null;
-    void send(item);
-  }, [send]);
+  const undoWindow = useUndoWindow<Pending>(send);
 
   const mark = useCallback<MarkContacted["mark"]>(
     (contact, on) => {
-      flush();
       setError("");
-      const item: Pending = {
-        id: contact.id,
-        name: contact.fullName,
-        version: contact.version,
-        on,
-        timer: setTimeout(flush, TOAST_MS),
-      };
-      waiting.current = item;
-      setPending({ id: item.id, on });
-      toast.show({
-        text: `${contact.fullName} marked as contacted`,
-        undo: () => {
-          if (waiting.current === item) {
-            clearTimeout(item.timer);
-            waiting.current = null;
-            setPending(null);
-          }
-        },
-      });
+      setPending({ id: contact.id, on });
+      undoWindow.start({ id: contact.id, version: contact.version, on }, `${contact.fullName} marked as contacted`, () =>
+        setPending(null),
+      );
     },
-    [flush, toast],
+    [undoWindow],
   );
 
-  useEffect(() => {
-    const onHide = () => {
-      if (document.visibilityState === "hidden") {
-        flush();
-      }
-    };
-    document.addEventListener("visibilitychange", onHide);
-    window.addEventListener("pagehide", flush);
-    return () => {
-      document.removeEventListener("visibilitychange", onHide);
-      window.removeEventListener("pagehide", flush);
-      flush();
-    };
-  }, [flush]);
-
-  return { pending, error, mark, flush };
+  return { pending, error, mark, flush: undoWindow.flush };
 }
