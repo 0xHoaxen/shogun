@@ -23,6 +23,15 @@ service KagamiService {
   rpc ListContacts(ListContactsRequest) returns (ListContactsResponse);
   // GetContact returns the contact with its timeline.
   rpc GetContact(GetContactRequest) returns (GetContactResponse);
+  // AddContactNote adds a note to the contact's timeline and returns it. The text
+  // is trimmed; empty is INVALID_NOTE and more than 2000 characters NOTE_TOO_LONG.
+  // A note does not change the contact, so it never conflicts with an edit.
+  rpc AddContactNote(AddContactNoteRequest) returns (AddContactNoteResponse);
+  // MarkContacted records that the owner reached the contact themselves, outside
+  // Shogun. A contact not yet reached moves to reached_out; for any other status
+  // only last_contacted changes, and a status never moves backwards. A stale
+  // version is VERSION_CONFLICT and a future date INVALID_DATE.
+  rpc MarkContacted(MarkContactedRequest) returns (MarkContactedResponse);
   // ChangeContactStatus fails with CONTACT_STATUS_INVALID_TRANSITION on an
   // invalid move.
   rpc ChangeContactStatus(ChangeContactStatusRequest) returns (ChangeContactStatusResponse);
@@ -248,6 +257,29 @@ message GetContactRequest {
 message GetContactResponse {
   Contact contact = 1;
   repeated ContactEvent timeline = 2;
+  // linked_jobs are the owner's jobs at the contact's company, newest first, at
+  // most 20. Empty when the contact has no company.
+  repeated Job linked_jobs = 3;
+}
+
+message AddContactNoteRequest {
+  string id = 1;
+  string text = 2;
+}
+
+message AddContactNoteResponse {
+  ContactEvent note = 1;
+}
+
+message MarkContactedRequest {
+  string id = 1;
+  int32 version = 2;
+  // on is YYYY-MM-DD; empty means today in the owner's time zone.
+  string on = 3;
+}
+
+message MarkContactedResponse {
+  Contact contact = 1;
 }
 
 message ChangeContactStatusRequest {

@@ -387,6 +387,67 @@ func (x *ContactStatusChanged) GetOwnerId() string {
 	return ""
 }
 
+// ContactNoteAdded is the payload of contact.note_added. It has no consumer yet.
+type ContactNoteAdded struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContactId     string                 `protobuf:"bytes,1,opt,name=contact_id,json=contactId,proto3" json:"contact_id,omitempty"`
+	NoteId        string                 `protobuf:"bytes,2,opt,name=note_id,json=noteId,proto3" json:"note_id,omitempty"`
+	OwnerId       string                 `protobuf:"bytes,3,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContactNoteAdded) Reset() {
+	*x = ContactNoteAdded{}
+	mi := &file_shogun_kagami_v1_events_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContactNoteAdded) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContactNoteAdded) ProtoMessage() {}
+
+func (x *ContactNoteAdded) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_events_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContactNoteAdded.ProtoReflect.Descriptor instead.
+func (*ContactNoteAdded) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_events_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ContactNoteAdded) GetContactId() string {
+	if x != nil {
+		return x.ContactId
+	}
+	return ""
+}
+
+func (x *ContactNoteAdded) GetNoteId() string {
+	if x != nil {
+		return x.NoteId
+	}
+	return ""
+}
+
+func (x *ContactNoteAdded) GetOwnerId() string {
+	if x != nil {
+		return x.OwnerId
+	}
+	return ""
+}
+
 // ContactFollowUpDue is the payload of contact.follow_up_due.
 type ContactFollowUpDue struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -399,7 +460,7 @@ type ContactFollowUpDue struct {
 
 func (x *ContactFollowUpDue) Reset() {
 	*x = ContactFollowUpDue{}
-	mi := &file_shogun_kagami_v1_events_proto_msgTypes[5]
+	mi := &file_shogun_kagami_v1_events_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -411,7 +472,7 @@ func (x *ContactFollowUpDue) String() string {
 func (*ContactFollowUpDue) ProtoMessage() {}
 
 func (x *ContactFollowUpDue) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_kagami_v1_events_proto_msgTypes[5]
+	mi := &file_shogun_kagami_v1_events_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +485,7 @@ func (x *ContactFollowUpDue) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContactFollowUpDue.ProtoReflect.Descriptor instead.
 func (*ContactFollowUpDue) Descriptor() ([]byte, []int) {
-	return file_shogun_kagami_v1_events_proto_rawDescGZIP(), []int{5}
+	return file_shogun_kagami_v1_events_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ContactFollowUpDue) GetContactId() string {
@@ -482,6 +543,11 @@ const file_shogun_kagami_v1_events_proto_rawDesc = "" +
 	"\x02to\x18\x03 \x01(\x0e2\x1f.shogun.kagami.v1.ContactStatusR\x02to\x12\x18\n" +
 	"\achannel\x18\x04 \x01(\tR\achannel\x12\x19\n" +
 	"\bowner_id\x18\x05 \x01(\tR\aownerId\"e\n" +
+	"\x10ContactNoteAdded\x12\x1d\n" +
+	"\n" +
+	"contact_id\x18\x01 \x01(\tR\tcontactId\x12\x17\n" +
+	"\anote_id\x18\x02 \x01(\tR\x06noteId\x12\x19\n" +
+	"\bowner_id\x18\x03 \x01(\tR\aownerId\"e\n" +
 	"\x12ContactFollowUpDue\x12\x1d\n" +
 	"\n" +
 	"contact_id\x18\x01 \x01(\tR\tcontactId\x12\x15\n" +
@@ -501,25 +567,26 @@ func file_shogun_kagami_v1_events_proto_rawDescGZIP() []byte {
 	return file_shogun_kagami_v1_events_proto_rawDescData
 }
 
-var file_shogun_kagami_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_shogun_kagami_v1_events_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_shogun_kagami_v1_events_proto_goTypes = []any{
 	(*JobAdded)(nil),              // 0: shogun.kagami.v1.JobAdded
 	(*JobStatusChanged)(nil),      // 1: shogun.kagami.v1.JobStatusChanged
 	(*JobFollowUpDue)(nil),        // 2: shogun.kagami.v1.JobFollowUpDue
 	(*ContactAdded)(nil),          // 3: shogun.kagami.v1.ContactAdded
 	(*ContactStatusChanged)(nil),  // 4: shogun.kagami.v1.ContactStatusChanged
-	(*ContactFollowUpDue)(nil),    // 5: shogun.kagami.v1.ContactFollowUpDue
-	(JobStatus)(0),                // 6: shogun.kagami.v1.JobStatus
-	(*timestamppb.Timestamp)(nil), // 7: google.protobuf.Timestamp
-	(ContactStatus)(0),            // 8: shogun.kagami.v1.ContactStatus
+	(*ContactNoteAdded)(nil),      // 5: shogun.kagami.v1.ContactNoteAdded
+	(*ContactFollowUpDue)(nil),    // 6: shogun.kagami.v1.ContactFollowUpDue
+	(JobStatus)(0),                // 7: shogun.kagami.v1.JobStatus
+	(*timestamppb.Timestamp)(nil), // 8: google.protobuf.Timestamp
+	(ContactStatus)(0),            // 9: shogun.kagami.v1.ContactStatus
 }
 var file_shogun_kagami_v1_events_proto_depIdxs = []int32{
-	6, // 0: shogun.kagami.v1.JobStatusChanged.from:type_name -> shogun.kagami.v1.JobStatus
-	6, // 1: shogun.kagami.v1.JobStatusChanged.to:type_name -> shogun.kagami.v1.JobStatus
-	7, // 2: shogun.kagami.v1.JobStatusChanged.at:type_name -> google.protobuf.Timestamp
-	8, // 3: shogun.kagami.v1.ContactAdded.status:type_name -> shogun.kagami.v1.ContactStatus
-	8, // 4: shogun.kagami.v1.ContactStatusChanged.from:type_name -> shogun.kagami.v1.ContactStatus
-	8, // 5: shogun.kagami.v1.ContactStatusChanged.to:type_name -> shogun.kagami.v1.ContactStatus
+	7, // 0: shogun.kagami.v1.JobStatusChanged.from:type_name -> shogun.kagami.v1.JobStatus
+	7, // 1: shogun.kagami.v1.JobStatusChanged.to:type_name -> shogun.kagami.v1.JobStatus
+	8, // 2: shogun.kagami.v1.JobStatusChanged.at:type_name -> google.protobuf.Timestamp
+	9, // 3: shogun.kagami.v1.ContactAdded.status:type_name -> shogun.kagami.v1.ContactStatus
+	9, // 4: shogun.kagami.v1.ContactStatusChanged.from:type_name -> shogun.kagami.v1.ContactStatus
+	9, // 5: shogun.kagami.v1.ContactStatusChanged.to:type_name -> shogun.kagami.v1.ContactStatus
 	6, // [6:6] is the sub-list for method output_type
 	6, // [6:6] is the sub-list for method input_type
 	6, // [6:6] is the sub-list for extension type_name
@@ -539,7 +606,7 @@ func file_shogun_kagami_v1_events_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_kagami_v1_events_proto_rawDesc), len(file_shogun_kagami_v1_events_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

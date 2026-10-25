@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,6 +40,12 @@ type harness struct {
 
 func newHarness(t *testing.T, opts ...app.Option) *harness {
 	t.Helper()
+	return newHarnessAt(t, nil, opts...)
+}
+
+// newHarnessAt is newHarness with the service's clock set; nil is the real one.
+func newHarnessAt(t *testing.T, now func() time.Time, opts ...app.Option) *harness {
+	t.Helper()
 	ctx := context.Background()
 	pool, err := postgres.Connect(ctx, postgrestest.NewDatabase(t), "kagami")
 	if err != nil {
@@ -57,7 +64,7 @@ func newHarness(t *testing.T, opts ...app.Option) *harness {
 		grpc.UnaryInterceptor(authority.UnaryServerInterceptor()),
 		grpc.StreamInterceptor(authority.StreamServerInterceptor()),
 	)
-	kagamiv1.RegisterKagamiServiceServer(srv, kagamigrpc.New(app.NewService(pool, nil, opts...)))
+	kagamiv1.RegisterKagamiServiceServer(srv, kagamigrpc.New(app.NewService(pool, now, opts...)))
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = srv.Serve(lis) }()
 	t.Cleanup(srv.Stop)
