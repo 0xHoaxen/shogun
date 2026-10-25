@@ -57,7 +57,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `proto/shogun/soroban/v1/soroban.proto`, `services/soroban/internal/app/reserve.go`, `pkg/llm/llm.go`.
   Done when: `make proto && cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`.
 
-- [ ] **V2.2 Test unsaved details** (M) Needs: V2.2a
+- [x] **V2.2 Test unsaved details** (M) Needs: V2.2a
   Do: a test that takes base URL, model and API key (not stored), makes one short call through `pkg/llm` with `netguard`, and returns ok, failure kind, latency and the model that answered. API key required; private and local addresses refused as `NOT_PUBLIC` (decision D2). Add failure kinds for a base URL ending in `/chat/completions`. Counted against the caller's budget like today's test.
   Files: `services/fude/internal/app/provider.go`, `proto/shogun/fude/v1/fude.proto`.
   Done when: `make proto && cd services/fude && go test -race ./...`, `make lint`.
