@@ -1046,7 +1046,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/kagami/**`, `proto/shogun/kagami/v1/*.proto`, `pkg/bus/routes.go`.
   Done when: `make proto && cd services/kagami && go test -race ./...`, `make lint`.
 
-- [ ] **V3.2 Import preview per row: kagami app** (M) Needs: V3.1
+- [x] **V3.2 Import preview per row: kagami app** (M) Needs: V3.1
   Do: the dry run returns every row: index, name, role, company, email, guessed relationship (rules on the title, no AI call: recruit/talent/sourc to recruiter; manager/head/director/vp/lead/cto to manager; engineer/developer/swe to engineer; else other), and a duplicate flag with the matching contact id (same email or LinkedIn, else same normalised name and company). Keep the AI column mapping from P11.13.
   Files: `services/kagami/internal/app/importcsv*.go`.
   Done when: `cd services/kagami && go test -race ./internal/app/...`.

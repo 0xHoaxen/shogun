@@ -2395,7 +2395,15 @@ type ImportContactsResponse struct {
 	// it. Import it with reshape off to apply exactly what was previewed.
 	ShapedCsv []byte `protobuf:"bytes,3,opt,name=shaped_csv,json=shapedCsv,proto3" json:"shaped_csv,omitempty"`
 	// mappings say which columns of the sheet fill each import column.
-	Mappings      []*ColumnMapping `protobuf:"bytes,4,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	Mappings []*ColumnMapping `protobuf:"bytes,4,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	// rows says, for each row of the file, what the import read and whether the
+	// person is already known. Set on a dry run only.
+	Rows []*ImportPreviewRow `protobuf:"bytes,5,rep,name=rows,proto3" json:"rows,omitempty"`
+	// rows_truncated is true when the file had more than 1000 rows, so rows holds
+	// only the first 1000. The report still counts them all, and an import applies
+	// them all. (A reshaped sheet travels in this response too, and the two have to
+	// fit gRPC's 4 MiB.)
+	RowsTruncated bool `protobuf:"varint,6,opt,name=rows_truncated,json=rowsTruncated,proto3" json:"rows_truncated,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2458,6 +2466,162 @@ func (x *ImportContactsResponse) GetMappings() []*ColumnMapping {
 	return nil
 }
 
+func (x *ImportContactsResponse) GetRows() []*ImportPreviewRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+func (x *ImportContactsResponse) GetRowsTruncated() bool {
+	if x != nil {
+		return x.RowsTruncated
+	}
+	return false
+}
+
+// ImportPreviewRow is one row of a dry run.
+type ImportPreviewRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// row is the 1-based CSV row number, counting the header as row 1.
+	Row      int32  `protobuf:"varint,1,opt,name=row,proto3" json:"row,omitempty"`
+	FullName string `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	Role     string `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	Company  string `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
+	Email    string `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	// relationship is the one in the file, or a guess from the role (rules on the
+	// words of the title, no AI call) when the file has none.
+	Relationship        string `protobuf:"bytes,6,opt,name=relationship,proto3" json:"relationship,omitempty"`
+	RelationshipGuessed bool   `protobuf:"varint,7,opt,name=relationship_guessed,json=relationshipGuessed,proto3" json:"relationship_guessed,omitempty"`
+	// duplicate is true when the person is already in the book, found by email,
+	// then LinkedIn URL, then the same name at the same company. The import would
+	// update that contact rather than add one.
+	Duplicate          bool   `protobuf:"varint,8,opt,name=duplicate,proto3" json:"duplicate,omitempty"`
+	DuplicateContactId string `protobuf:"bytes,9,opt,name=duplicate_contact_id,json=duplicateContactId,proto3" json:"duplicate_contact_id,omitempty"`
+	// duplicate_reason is email, linkedin or name_company.
+	DuplicateReason string `protobuf:"bytes,10,opt,name=duplicate_reason,json=duplicateReason,proto3" json:"duplicate_reason,omitempty"`
+	// repeats_row is the earlier row of this file that is the same person, or 0.
+	RepeatsRow int32 `protobuf:"varint,11,opt,name=repeats_row,json=repeatsRow,proto3" json:"repeats_row,omitempty"`
+	// problem says why the row cannot be imported; empty when it can.
+	Problem       string `protobuf:"bytes,12,opt,name=problem,proto3" json:"problem,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportPreviewRow) Reset() {
+	*x = ImportPreviewRow{}
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportPreviewRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportPreviewRow) ProtoMessage() {}
+
+func (x *ImportPreviewRow) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportPreviewRow.ProtoReflect.Descriptor instead.
+func (*ImportPreviewRow) Descriptor() ([]byte, []int) {
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{33}
+}
+
+func (x *ImportPreviewRow) GetRow() int32 {
+	if x != nil {
+		return x.Row
+	}
+	return 0
+}
+
+func (x *ImportPreviewRow) GetFullName() string {
+	if x != nil {
+		return x.FullName
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRelationship() string {
+	if x != nil {
+		return x.Relationship
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRelationshipGuessed() bool {
+	if x != nil {
+		return x.RelationshipGuessed
+	}
+	return false
+}
+
+func (x *ImportPreviewRow) GetDuplicate() bool {
+	if x != nil {
+		return x.Duplicate
+	}
+	return false
+}
+
+func (x *ImportPreviewRow) GetDuplicateContactId() string {
+	if x != nil {
+		return x.DuplicateContactId
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetDuplicateReason() string {
+	if x != nil {
+		return x.DuplicateReason
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRepeatsRow() int32 {
+	if x != nil {
+		return x.RepeatsRow
+	}
+	return 0
+}
+
+func (x *ImportPreviewRow) GetProblem() string {
+	if x != nil {
+		return x.Problem
+	}
+	return ""
+}
+
 // ColumnMapping fills one import column from columns of the sheet.
 type ColumnMapping struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -2469,7 +2633,7 @@ type ColumnMapping struct {
 
 func (x *ColumnMapping) Reset() {
 	*x = ColumnMapping{}
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[33]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2481,7 +2645,7 @@ func (x *ColumnMapping) String() string {
 func (*ColumnMapping) ProtoMessage() {}
 
 func (x *ColumnMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[33]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2494,7 +2658,7 @@ func (x *ColumnMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnMapping.ProtoReflect.Descriptor instead.
 func (*ColumnMapping) Descriptor() ([]byte, []int) {
-	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{33}
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ColumnMapping) GetTarget() string {
@@ -2521,7 +2685,7 @@ type ListDueFollowUpsRequest struct {
 
 func (x *ListDueFollowUpsRequest) Reset() {
 	*x = ListDueFollowUpsRequest{}
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[34]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2533,7 +2697,7 @@ func (x *ListDueFollowUpsRequest) String() string {
 func (*ListDueFollowUpsRequest) ProtoMessage() {}
 
 func (x *ListDueFollowUpsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[34]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2546,7 +2710,7 @@ func (x *ListDueFollowUpsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDueFollowUpsRequest.ProtoReflect.Descriptor instead.
 func (*ListDueFollowUpsRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{34}
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListDueFollowUpsRequest) GetOnOrBefore() string {
@@ -2566,7 +2730,7 @@ type ListDueFollowUpsResponse struct {
 
 func (x *ListDueFollowUpsResponse) Reset() {
 	*x = ListDueFollowUpsResponse{}
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[35]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2578,7 +2742,7 @@ func (x *ListDueFollowUpsResponse) String() string {
 func (*ListDueFollowUpsResponse) ProtoMessage() {}
 
 func (x *ListDueFollowUpsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[35]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2591,7 +2755,7 @@ func (x *ListDueFollowUpsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDueFollowUpsResponse.ProtoReflect.Descriptor instead.
 func (*ListDueFollowUpsResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{35}
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ListDueFollowUpsResponse) GetJobs() []*Job {
@@ -2620,7 +2784,7 @@ type FindMailLinksRequest struct {
 
 func (x *FindMailLinksRequest) Reset() {
 	*x = FindMailLinksRequest{}
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[36]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2632,7 +2796,7 @@ func (x *FindMailLinksRequest) String() string {
 func (*FindMailLinksRequest) ProtoMessage() {}
 
 func (x *FindMailLinksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[36]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2645,7 +2809,7 @@ func (x *FindMailLinksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FindMailLinksRequest.ProtoReflect.Descriptor instead.
 func (*FindMailLinksRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{36}
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *FindMailLinksRequest) GetFromEmail() string {
@@ -2676,7 +2840,7 @@ type FindMailLinksResponse struct {
 
 func (x *FindMailLinksResponse) Reset() {
 	*x = FindMailLinksResponse{}
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[37]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2688,7 +2852,7 @@ func (x *FindMailLinksResponse) String() string {
 func (*FindMailLinksResponse) ProtoMessage() {}
 
 func (x *FindMailLinksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[37]
+	mi := &file_shogun_kagami_v1_kagami_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2701,7 +2865,7 @@ func (x *FindMailLinksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FindMailLinksResponse.ProtoReflect.Descriptor instead.
 func (*FindMailLinksResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{37}
+	return file_shogun_kagami_v1_kagami_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *FindMailLinksResponse) GetContactId() string {
@@ -2920,13 +3084,30 @@ const file_shogun_kagami_v1_kagami_proto_rawDesc = "" +
 	"\frows_updated\x18\x03 \x01(\x05R\vrowsUpdated\x12\x1f\n" +
 	"\vrows_failed\x18\x04 \x01(\x05R\n" +
 	"rowsFailed\x128\n" +
-	"\x06errors\x18\x05 \x03(\v2 .shogun.kagami.v1.ImportRowErrorR\x06errors\"\xc9\x01\n" +
+	"\x06errors\x18\x05 \x03(\v2 .shogun.kagami.v1.ImportRowErrorR\x06errors\"\xa8\x02\n" +
 	"\x16ImportContactsResponse\x126\n" +
 	"\x06report\x18\x01 \x01(\v2\x1e.shogun.kagami.v1.ImportReportR\x06report\x12\x1b\n" +
 	"\timport_id\x18\x02 \x01(\tR\bimportId\x12\x1d\n" +
 	"\n" +
 	"shaped_csv\x18\x03 \x01(\fR\tshapedCsv\x12;\n" +
-	"\bmappings\x18\x04 \x03(\v2\x1f.shogun.kagami.v1.ColumnMappingR\bmappings\"A\n" +
+	"\bmappings\x18\x04 \x03(\v2\x1f.shogun.kagami.v1.ColumnMappingR\bmappings\x126\n" +
+	"\x04rows\x18\x05 \x03(\v2\".shogun.kagami.v1.ImportPreviewRowR\x04rows\x12%\n" +
+	"\x0erows_truncated\x18\x06 \x01(\bR\rrowsTruncated\"\x92\x03\n" +
+	"\x10ImportPreviewRow\x12\x10\n" +
+	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x1b\n" +
+	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12\x18\n" +
+	"\acompany\x18\x04 \x01(\tR\acompany\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12\"\n" +
+	"\frelationship\x18\x06 \x01(\tR\frelationship\x121\n" +
+	"\x14relationship_guessed\x18\a \x01(\bR\x13relationshipGuessed\x12\x1c\n" +
+	"\tduplicate\x18\b \x01(\bR\tduplicate\x120\n" +
+	"\x14duplicate_contact_id\x18\t \x01(\tR\x12duplicateContactId\x12)\n" +
+	"\x10duplicate_reason\x18\n" +
+	" \x01(\tR\x0fduplicateReason\x12\x1f\n" +
+	"\vrepeats_row\x18\v \x01(\x05R\n" +
+	"repeatsRow\x12\x18\n" +
+	"\aproblem\x18\f \x01(\tR\aproblem\"A\n" +
 	"\rColumnMapping\x12\x16\n" +
 	"\x06target\x18\x01 \x01(\tR\x06target\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources\";\n" +
@@ -2992,7 +3173,7 @@ func file_shogun_kagami_v1_kagami_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_kagami_v1_kagami_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_shogun_kagami_v1_kagami_proto_msgTypes = make([]protoimpl.MessageInfo, 38)
+var file_shogun_kagami_v1_kagami_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_shogun_kagami_v1_kagami_proto_goTypes = []any{
 	(JobStatus)(0),                      // 0: shogun.kagami.v1.JobStatus
 	(ContactStatus)(0),                  // 1: shogun.kagami.v1.ContactStatus
@@ -3029,29 +3210,30 @@ var file_shogun_kagami_v1_kagami_proto_goTypes = []any{
 	(*ImportRowError)(nil),              // 32: shogun.kagami.v1.ImportRowError
 	(*ImportReport)(nil),                // 33: shogun.kagami.v1.ImportReport
 	(*ImportContactsResponse)(nil),      // 34: shogun.kagami.v1.ImportContactsResponse
-	(*ColumnMapping)(nil),               // 35: shogun.kagami.v1.ColumnMapping
-	(*ListDueFollowUpsRequest)(nil),     // 36: shogun.kagami.v1.ListDueFollowUpsRequest
-	(*ListDueFollowUpsResponse)(nil),    // 37: shogun.kagami.v1.ListDueFollowUpsResponse
-	(*FindMailLinksRequest)(nil),        // 38: shogun.kagami.v1.FindMailLinksRequest
-	(*FindMailLinksResponse)(nil),       // 39: shogun.kagami.v1.FindMailLinksResponse
-	(*timestamppb.Timestamp)(nil),       // 40: google.protobuf.Timestamp
-	(*fieldmaskpb.FieldMask)(nil),       // 41: google.protobuf.FieldMask
+	(*ImportPreviewRow)(nil),            // 35: shogun.kagami.v1.ImportPreviewRow
+	(*ColumnMapping)(nil),               // 36: shogun.kagami.v1.ColumnMapping
+	(*ListDueFollowUpsRequest)(nil),     // 37: shogun.kagami.v1.ListDueFollowUpsRequest
+	(*ListDueFollowUpsResponse)(nil),    // 38: shogun.kagami.v1.ListDueFollowUpsResponse
+	(*FindMailLinksRequest)(nil),        // 39: shogun.kagami.v1.FindMailLinksRequest
+	(*FindMailLinksResponse)(nil),       // 40: shogun.kagami.v1.FindMailLinksResponse
+	(*timestamppb.Timestamp)(nil),       // 41: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil),       // 42: google.protobuf.FieldMask
 }
 var file_shogun_kagami_v1_kagami_proto_depIdxs = []int32{
-	40, // 0: shogun.kagami.v1.Company.created_at:type_name -> google.protobuf.Timestamp
-	40, // 1: shogun.kagami.v1.Company.updated_at:type_name -> google.protobuf.Timestamp
+	41, // 0: shogun.kagami.v1.Company.created_at:type_name -> google.protobuf.Timestamp
+	41, // 1: shogun.kagami.v1.Company.updated_at:type_name -> google.protobuf.Timestamp
 	0,  // 2: shogun.kagami.v1.Job.status:type_name -> shogun.kagami.v1.JobStatus
-	40, // 3: shogun.kagami.v1.Job.created_at:type_name -> google.protobuf.Timestamp
-	40, // 4: shogun.kagami.v1.Job.updated_at:type_name -> google.protobuf.Timestamp
-	40, // 5: shogun.kagami.v1.Job.archived_at:type_name -> google.protobuf.Timestamp
+	41, // 3: shogun.kagami.v1.Job.created_at:type_name -> google.protobuf.Timestamp
+	41, // 4: shogun.kagami.v1.Job.updated_at:type_name -> google.protobuf.Timestamp
+	41, // 5: shogun.kagami.v1.Job.archived_at:type_name -> google.protobuf.Timestamp
 	0,  // 6: shogun.kagami.v1.JobEvent.from_status:type_name -> shogun.kagami.v1.JobStatus
 	0,  // 7: shogun.kagami.v1.JobEvent.to_status:type_name -> shogun.kagami.v1.JobStatus
-	40, // 8: shogun.kagami.v1.JobEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	41, // 8: shogun.kagami.v1.JobEvent.occurred_at:type_name -> google.protobuf.Timestamp
 	1,  // 9: shogun.kagami.v1.Contact.status:type_name -> shogun.kagami.v1.ContactStatus
-	40, // 10: shogun.kagami.v1.Contact.created_at:type_name -> google.protobuf.Timestamp
-	40, // 11: shogun.kagami.v1.Contact.updated_at:type_name -> google.protobuf.Timestamp
-	40, // 12: shogun.kagami.v1.Contact.archived_at:type_name -> google.protobuf.Timestamp
-	40, // 13: shogun.kagami.v1.ContactEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	41, // 10: shogun.kagami.v1.Contact.created_at:type_name -> google.protobuf.Timestamp
+	41, // 11: shogun.kagami.v1.Contact.updated_at:type_name -> google.protobuf.Timestamp
+	41, // 12: shogun.kagami.v1.Contact.archived_at:type_name -> google.protobuf.Timestamp
+	41, // 13: shogun.kagami.v1.ContactEvent.occurred_at:type_name -> google.protobuf.Timestamp
 	0,  // 14: shogun.kagami.v1.AddJobRequest.status:type_name -> shogun.kagami.v1.JobStatus
 	3,  // 15: shogun.kagami.v1.AddJobResponse.job:type_name -> shogun.kagami.v1.Job
 	2,  // 16: shogun.kagami.v1.AddJobResponse.company:type_name -> shogun.kagami.v1.Company
@@ -3061,14 +3243,14 @@ var file_shogun_kagami_v1_kagami_proto_depIdxs = []int32{
 	0,  // 20: shogun.kagami.v1.ListJobsRequest.status:type_name -> shogun.kagami.v1.JobStatus
 	3,  // 21: shogun.kagami.v1.ListJobsResponse.jobs:type_name -> shogun.kagami.v1.Job
 	3,  // 22: shogun.kagami.v1.UpdateJobRequest.job:type_name -> shogun.kagami.v1.Job
-	41, // 23: shogun.kagami.v1.UpdateJobRequest.update_mask:type_name -> google.protobuf.FieldMask
+	42, // 23: shogun.kagami.v1.UpdateJobRequest.update_mask:type_name -> google.protobuf.FieldMask
 	3,  // 24: shogun.kagami.v1.UpdateJobResponse.job:type_name -> shogun.kagami.v1.Job
 	0,  // 25: shogun.kagami.v1.ChangeJobStatusRequest.to_status:type_name -> shogun.kagami.v1.JobStatus
 	3,  // 26: shogun.kagami.v1.ChangeJobStatusResponse.job:type_name -> shogun.kagami.v1.Job
 	5,  // 27: shogun.kagami.v1.AddContactRequest.contact:type_name -> shogun.kagami.v1.Contact
 	5,  // 28: shogun.kagami.v1.AddContactResponse.contact:type_name -> shogun.kagami.v1.Contact
 	5,  // 29: shogun.kagami.v1.UpdateContactRequest.contact:type_name -> shogun.kagami.v1.Contact
-	41, // 30: shogun.kagami.v1.UpdateContactRequest.update_mask:type_name -> google.protobuf.FieldMask
+	42, // 30: shogun.kagami.v1.UpdateContactRequest.update_mask:type_name -> google.protobuf.FieldMask
 	5,  // 31: shogun.kagami.v1.UpdateContactResponse.contact:type_name -> shogun.kagami.v1.Contact
 	1,  // 32: shogun.kagami.v1.ListContactsRequest.status:type_name -> shogun.kagami.v1.ContactStatus
 	5,  // 33: shogun.kagami.v1.ListContactsResponse.contacts:type_name -> shogun.kagami.v1.Contact
@@ -3081,44 +3263,45 @@ var file_shogun_kagami_v1_kagami_proto_depIdxs = []int32{
 	5,  // 40: shogun.kagami.v1.ChangeContactStatusResponse.contact:type_name -> shogun.kagami.v1.Contact
 	32, // 41: shogun.kagami.v1.ImportReport.errors:type_name -> shogun.kagami.v1.ImportRowError
 	33, // 42: shogun.kagami.v1.ImportContactsResponse.report:type_name -> shogun.kagami.v1.ImportReport
-	35, // 43: shogun.kagami.v1.ImportContactsResponse.mappings:type_name -> shogun.kagami.v1.ColumnMapping
-	3,  // 44: shogun.kagami.v1.ListDueFollowUpsResponse.jobs:type_name -> shogun.kagami.v1.Job
-	5,  // 45: shogun.kagami.v1.ListDueFollowUpsResponse.contacts:type_name -> shogun.kagami.v1.Contact
-	7,  // 46: shogun.kagami.v1.KagamiService.AddJob:input_type -> shogun.kagami.v1.AddJobRequest
-	9,  // 47: shogun.kagami.v1.KagamiService.GetJob:input_type -> shogun.kagami.v1.GetJobRequest
-	11, // 48: shogun.kagami.v1.KagamiService.ListJobs:input_type -> shogun.kagami.v1.ListJobsRequest
-	13, // 49: shogun.kagami.v1.KagamiService.UpdateJob:input_type -> shogun.kagami.v1.UpdateJobRequest
-	15, // 50: shogun.kagami.v1.KagamiService.ChangeJobStatus:input_type -> shogun.kagami.v1.ChangeJobStatusRequest
-	17, // 51: shogun.kagami.v1.KagamiService.AddContact:input_type -> shogun.kagami.v1.AddContactRequest
-	19, // 52: shogun.kagami.v1.KagamiService.UpdateContact:input_type -> shogun.kagami.v1.UpdateContactRequest
-	21, // 53: shogun.kagami.v1.KagamiService.ListContacts:input_type -> shogun.kagami.v1.ListContactsRequest
-	23, // 54: shogun.kagami.v1.KagamiService.GetContact:input_type -> shogun.kagami.v1.GetContactRequest
-	25, // 55: shogun.kagami.v1.KagamiService.AddContactNote:input_type -> shogun.kagami.v1.AddContactNoteRequest
-	27, // 56: shogun.kagami.v1.KagamiService.MarkContacted:input_type -> shogun.kagami.v1.MarkContactedRequest
-	29, // 57: shogun.kagami.v1.KagamiService.ChangeContactStatus:input_type -> shogun.kagami.v1.ChangeContactStatusRequest
-	31, // 58: shogun.kagami.v1.KagamiService.ImportContacts:input_type -> shogun.kagami.v1.ImportContactsRequest
-	36, // 59: shogun.kagami.v1.KagamiService.ListDueFollowUps:input_type -> shogun.kagami.v1.ListDueFollowUpsRequest
-	38, // 60: shogun.kagami.v1.KagamiService.FindMailLinks:input_type -> shogun.kagami.v1.FindMailLinksRequest
-	8,  // 61: shogun.kagami.v1.KagamiService.AddJob:output_type -> shogun.kagami.v1.AddJobResponse
-	10, // 62: shogun.kagami.v1.KagamiService.GetJob:output_type -> shogun.kagami.v1.GetJobResponse
-	12, // 63: shogun.kagami.v1.KagamiService.ListJobs:output_type -> shogun.kagami.v1.ListJobsResponse
-	14, // 64: shogun.kagami.v1.KagamiService.UpdateJob:output_type -> shogun.kagami.v1.UpdateJobResponse
-	16, // 65: shogun.kagami.v1.KagamiService.ChangeJobStatus:output_type -> shogun.kagami.v1.ChangeJobStatusResponse
-	18, // 66: shogun.kagami.v1.KagamiService.AddContact:output_type -> shogun.kagami.v1.AddContactResponse
-	20, // 67: shogun.kagami.v1.KagamiService.UpdateContact:output_type -> shogun.kagami.v1.UpdateContactResponse
-	22, // 68: shogun.kagami.v1.KagamiService.ListContacts:output_type -> shogun.kagami.v1.ListContactsResponse
-	24, // 69: shogun.kagami.v1.KagamiService.GetContact:output_type -> shogun.kagami.v1.GetContactResponse
-	26, // 70: shogun.kagami.v1.KagamiService.AddContactNote:output_type -> shogun.kagami.v1.AddContactNoteResponse
-	28, // 71: shogun.kagami.v1.KagamiService.MarkContacted:output_type -> shogun.kagami.v1.MarkContactedResponse
-	30, // 72: shogun.kagami.v1.KagamiService.ChangeContactStatus:output_type -> shogun.kagami.v1.ChangeContactStatusResponse
-	34, // 73: shogun.kagami.v1.KagamiService.ImportContacts:output_type -> shogun.kagami.v1.ImportContactsResponse
-	37, // 74: shogun.kagami.v1.KagamiService.ListDueFollowUps:output_type -> shogun.kagami.v1.ListDueFollowUpsResponse
-	39, // 75: shogun.kagami.v1.KagamiService.FindMailLinks:output_type -> shogun.kagami.v1.FindMailLinksResponse
-	61, // [61:76] is the sub-list for method output_type
-	46, // [46:61] is the sub-list for method input_type
-	46, // [46:46] is the sub-list for extension type_name
-	46, // [46:46] is the sub-list for extension extendee
-	0,  // [0:46] is the sub-list for field type_name
+	36, // 43: shogun.kagami.v1.ImportContactsResponse.mappings:type_name -> shogun.kagami.v1.ColumnMapping
+	35, // 44: shogun.kagami.v1.ImportContactsResponse.rows:type_name -> shogun.kagami.v1.ImportPreviewRow
+	3,  // 45: shogun.kagami.v1.ListDueFollowUpsResponse.jobs:type_name -> shogun.kagami.v1.Job
+	5,  // 46: shogun.kagami.v1.ListDueFollowUpsResponse.contacts:type_name -> shogun.kagami.v1.Contact
+	7,  // 47: shogun.kagami.v1.KagamiService.AddJob:input_type -> shogun.kagami.v1.AddJobRequest
+	9,  // 48: shogun.kagami.v1.KagamiService.GetJob:input_type -> shogun.kagami.v1.GetJobRequest
+	11, // 49: shogun.kagami.v1.KagamiService.ListJobs:input_type -> shogun.kagami.v1.ListJobsRequest
+	13, // 50: shogun.kagami.v1.KagamiService.UpdateJob:input_type -> shogun.kagami.v1.UpdateJobRequest
+	15, // 51: shogun.kagami.v1.KagamiService.ChangeJobStatus:input_type -> shogun.kagami.v1.ChangeJobStatusRequest
+	17, // 52: shogun.kagami.v1.KagamiService.AddContact:input_type -> shogun.kagami.v1.AddContactRequest
+	19, // 53: shogun.kagami.v1.KagamiService.UpdateContact:input_type -> shogun.kagami.v1.UpdateContactRequest
+	21, // 54: shogun.kagami.v1.KagamiService.ListContacts:input_type -> shogun.kagami.v1.ListContactsRequest
+	23, // 55: shogun.kagami.v1.KagamiService.GetContact:input_type -> shogun.kagami.v1.GetContactRequest
+	25, // 56: shogun.kagami.v1.KagamiService.AddContactNote:input_type -> shogun.kagami.v1.AddContactNoteRequest
+	27, // 57: shogun.kagami.v1.KagamiService.MarkContacted:input_type -> shogun.kagami.v1.MarkContactedRequest
+	29, // 58: shogun.kagami.v1.KagamiService.ChangeContactStatus:input_type -> shogun.kagami.v1.ChangeContactStatusRequest
+	31, // 59: shogun.kagami.v1.KagamiService.ImportContacts:input_type -> shogun.kagami.v1.ImportContactsRequest
+	37, // 60: shogun.kagami.v1.KagamiService.ListDueFollowUps:input_type -> shogun.kagami.v1.ListDueFollowUpsRequest
+	39, // 61: shogun.kagami.v1.KagamiService.FindMailLinks:input_type -> shogun.kagami.v1.FindMailLinksRequest
+	8,  // 62: shogun.kagami.v1.KagamiService.AddJob:output_type -> shogun.kagami.v1.AddJobResponse
+	10, // 63: shogun.kagami.v1.KagamiService.GetJob:output_type -> shogun.kagami.v1.GetJobResponse
+	12, // 64: shogun.kagami.v1.KagamiService.ListJobs:output_type -> shogun.kagami.v1.ListJobsResponse
+	14, // 65: shogun.kagami.v1.KagamiService.UpdateJob:output_type -> shogun.kagami.v1.UpdateJobResponse
+	16, // 66: shogun.kagami.v1.KagamiService.ChangeJobStatus:output_type -> shogun.kagami.v1.ChangeJobStatusResponse
+	18, // 67: shogun.kagami.v1.KagamiService.AddContact:output_type -> shogun.kagami.v1.AddContactResponse
+	20, // 68: shogun.kagami.v1.KagamiService.UpdateContact:output_type -> shogun.kagami.v1.UpdateContactResponse
+	22, // 69: shogun.kagami.v1.KagamiService.ListContacts:output_type -> shogun.kagami.v1.ListContactsResponse
+	24, // 70: shogun.kagami.v1.KagamiService.GetContact:output_type -> shogun.kagami.v1.GetContactResponse
+	26, // 71: shogun.kagami.v1.KagamiService.AddContactNote:output_type -> shogun.kagami.v1.AddContactNoteResponse
+	28, // 72: shogun.kagami.v1.KagamiService.MarkContacted:output_type -> shogun.kagami.v1.MarkContactedResponse
+	30, // 73: shogun.kagami.v1.KagamiService.ChangeContactStatus:output_type -> shogun.kagami.v1.ChangeContactStatusResponse
+	34, // 74: shogun.kagami.v1.KagamiService.ImportContacts:output_type -> shogun.kagami.v1.ImportContactsResponse
+	38, // 75: shogun.kagami.v1.KagamiService.ListDueFollowUps:output_type -> shogun.kagami.v1.ListDueFollowUpsResponse
+	40, // 76: shogun.kagami.v1.KagamiService.FindMailLinks:output_type -> shogun.kagami.v1.FindMailLinksResponse
+	62, // [62:77] is the sub-list for method output_type
+	47, // [47:62] is the sub-list for method input_type
+	47, // [47:47] is the sub-list for extension type_name
+	47, // [47:47] is the sub-list for extension extendee
+	0,  // [0:47] is the sub-list for field type_name
 }
 
 func init() { file_shogun_kagami_v1_kagami_proto_init() }
@@ -3132,7 +3315,7 @@ func file_shogun_kagami_v1_kagami_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_kagami_v1_kagami_proto_rawDesc), len(file_shogun_kagami_v1_kagami_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   38,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

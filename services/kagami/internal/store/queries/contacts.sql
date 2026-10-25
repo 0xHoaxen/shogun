@@ -23,6 +23,20 @@ SELECT * FROM contacts WHERE owner_id = @owner_id AND email = @email::citext;
 -- name: FindContactByLinkedin :one
 SELECT * FROM contacts WHERE owner_id = @owner_id AND linkedin_url = @linkedin_url::text;
 
+-- name: FindContactByNameAndCompany :one
+-- A contact with the same name, in any case and spacing, at the company with the
+-- same name, ignoring case. Read-only: it never creates the company. The
+-- oldest match wins.
+SELECT c.* FROM contacts c
+JOIN companies co ON co.id = c.company_id AND co.owner_id = c.owner_id
+WHERE c.owner_id = @owner_id
+  AND c.archived_at IS NULL
+  AND co.archived_at IS NULL
+  AND lower(btrim(regexp_replace(c.full_name, '\s+', ' ', 'g'))) = @name::text
+  AND lower(co.name) = lower(@company::text)
+ORDER BY c.created_at, c.id
+LIMIT 1;
+
 -- name: ListContacts :many
 -- Keyset pagination on (updated_at, id), newest first.
 SELECT c.* FROM contacts c

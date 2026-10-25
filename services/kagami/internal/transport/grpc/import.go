@@ -23,13 +23,24 @@ func (s *Server) ImportContacts(ctx context.Context, req *kagamiv1.ImportContact
 	for _, m := range res.Mappings {
 		mappings = append(mappings, &kagamiv1.ColumnMapping{Target: m.Target, Sources: m.Sources})
 	}
+	rows := make([]*kagamiv1.ImportPreviewRow, 0, len(res.Rows))
+	for _, r := range res.Rows {
+		rows = append(rows, &kagamiv1.ImportPreviewRow{
+			Row: r.Row, FullName: r.FullName, Role: r.Role, Company: r.Company, Email: r.Email,
+			Relationship: r.Relationship, RelationshipGuessed: r.RelationshipGuessed,
+			Duplicate: r.Duplicate, DuplicateContactId: r.DuplicateContactID, DuplicateReason: r.DuplicateReason,
+			RepeatsRow: r.RepeatsRow, Problem: r.Problem,
+		})
+	}
 	return &kagamiv1.ImportContactsResponse{
 		Report: &kagamiv1.ImportReport{
 			RowsTotal: res.Report.RowsTotal, RowsCreated: res.Report.RowsCreated,
 			RowsUpdated: res.Report.RowsUpdated, RowsFailed: res.Report.RowsFailed, Errors: rowErrors,
 		},
-		ImportId:  res.ImportID,
-		ShapedCsv: res.ShapedCSV,
-		Mappings:  mappings,
+		ImportId:      res.ImportID,
+		ShapedCsv:     res.ShapedCSV,
+		Mappings:      mappings,
+		Rows:          rows,
+		RowsTruncated: res.PreviewTruncated,
 	}, nil
 }
