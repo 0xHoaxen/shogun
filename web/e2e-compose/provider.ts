@@ -11,9 +11,12 @@ const MOCK_KEY = "e2e-key-0123456789";
 // real user would, through Settings. It works whether or not one is set already.
 export async function addProvider(page: Page): Promise<void> {
   await page.goto("/settings/provider");
-  await page.getByLabel("Address").fill(MOCK_PROVIDER_URL);
-  await page.getByLabel("Model").fill(MOCK_MODEL);
-  await page.getByLabel("API key").fill(MOCK_KEY);
-  await page.getByRole("button", { name: "Save" }).click();
+  await page.getByLabel("Base URL").fill(MOCK_PROVIDER_URL);
+  await page.getByLabel("Model name").fill(MOCK_MODEL);
+  await page.getByLabel("API key", { exact: true }).fill(MOCK_KEY);
+  // Save stays off until the exact details have passed a test.
+  await page.getByRole("button", { name: "Test connection" }).click();
+  await expect(page.getByTestId("test-result")).toContainText("Connected");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByTestId("provider-state")).toContainText("AI features are on");
 }

@@ -67,7 +67,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `proto/shogun/api/v1/providers.proto`, `services/torii/internal/transport/connectapi/providers.go`.
   Done when: `make proto && cd services/torii && go test -race ./...`.
 
-- [ ] **V2.4 AI provider tab** (M) Needs: V2.3, V1.3
+- [x] **V2.4 AI provider tab** (M) Needs: V2.3, V1.3
   Do: Settings > AI as in `Settings.dc.html` and `flow-settings-ai-models-*.png`, for one provider (D11): base URL, model name, API key with Show/Hide, Test connection, a result line that says why it failed, Save disabled until a passing test of the exact current values. No model list, "In use" tag, Use this model or Remove-with-Undo; Delete provider stays as today. The design already leaves out a hosted default and local models. With no provider: "Set up an AI provider to use AI features" here and on every AI action (decision D1).
   Files: `web/src/components/provider/**`, `web/src/app/(app)/settings/**`.
   Done when: web checks.
