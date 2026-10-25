@@ -121,7 +121,8 @@ test("old addresses land on their v2 route", async ({ page }) => {
     ["/learning", /\/growth$/],
     ["/profile", /\/growth$/],
     ["/notifications", /\/inbox$/],
-    ["/discovery", /\/settings\?tab=discovery$/],
+    ["/discovery", /\/settings\/discovery$/],
+    ["/settings?tab=discovery", /\/settings\/discovery$/],
   ] as const) {
     // Act
     await page.goto(from);

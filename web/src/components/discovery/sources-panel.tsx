@@ -44,50 +44,50 @@ export function SourcesPanel() {
   const rows = sources.data?.sources ?? [];
   return (
     <>
-      <div className="flex items-center justify-between gap-3 border-b border-ink p-[22px]">
-        <p className="text-muted-ink">Shogun reads only these. Nothing else is searched.</p>
+      <div className="flex items-center justify-between gap-3 border-b border-line2 p-[22px]">
+        <p className="text-muted-foreground">Shogun reads only these. Nothing else is searched.</p>
         <Button variant="primary" onClick={() => setAdding(true)}>
           Add source
         </Button>
       </div>
 
       {note ? (
-        <p role="status" className="border-b border-ink p-[22px]">
+        <p role="status" className="border-b border-line2 p-[22px]">
           {note}
         </p>
       ) : null}
       {run.isError ? (
-        <p role="alert" className="border-b border-ink p-[22px]">
+        <p role="alert" className="border-b border-line2 p-[22px]">
           {discoveryErrorText(run.error, "Couldn't read the source. Try again.")}
         </p>
       ) : null}
       {toggle.isError ? (
-        <p role="alert" className="border-b border-ink p-[22px]">
+        <p role="alert" className="border-b border-line2 p-[22px]">
           {discoveryErrorText(toggle.error, "Couldn't change the source. Try again.")}
         </p>
       ) : null}
 
       {sources.isError ? (
-        <div className="flex items-center gap-3 border-b border-ink p-[22px]">
+        <div className="flex items-center gap-3 border-b border-line2 p-[22px]">
           <p role="alert">Couldn&apos;t load your sources.</p>
           <Button onClick={() => sources.refetch()}>Retry</Button>
         </div>
       ) : (
         <>
           {rows.map((source) => (
-            <article key={source.id} aria-label={source.name} className="grid gap-2 border-b border-ink p-[22px]">
+            <article key={source.id} aria-label={source.name} className="grid gap-2 border-b border-line2 p-[22px]">
               <div className="flex flex-wrap items-center gap-2">
                 <b>{source.name}</b>
-                <span className="label inline-flex min-h-5 items-center border border-ink px-2 text-[11px]">
+                <span className="label inline-flex min-h-5 items-center border border-line2 px-2 text-[11px]">
                   {sourceKindLabel(source.kind)}
                 </span>
                 {source.enabled ? null : (
-                  <span className="label inline-flex min-h-5 items-center border border-dashed border-ink px-2 text-[11px]">
+                  <span className="label inline-flex min-h-5 items-center border border-dashed border-line2 px-2 text-[11px]">
                     Off
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-muted-ink">
+              <p className="text-[11px] text-muted-foreground">
                 {source.config?.url || "Pasted JSON"} · {source.schedule}
                 {source.lastRunAt ? ` · last read ${timestampDate(source.lastRunAt).toLocaleString()}` : " · never read"}
               </p>
@@ -119,7 +119,7 @@ export function SourcesPanel() {
             </article>
           ))}
           {sources.isSuccess && rows.length === 0 ? (
-            <p className="border-b border-ink p-[22px] text-muted-ink">No sources yet.</p>
+            <p className="border-b border-line2 p-[22px] text-muted-foreground">No sources yet.</p>
           ) : null}
         </>
       )}

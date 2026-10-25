@@ -7,6 +7,7 @@ import { useState } from "react";
 import { budgetName, modeLabel, periodLabel } from "@/components/spend/labels";
 import { Button } from "@/components/ui/button";
 import { Select, TextField } from "@/components/ui/field";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { BudgetMode, CostsService, type Budget } from "@/gen/shogun/api/v1/costs_pb";
 import { REASON_VERSION_CONFLICT, reasonOf } from "@/lib/errors";
 import { dollarsInput, formatMicros, parseDollars } from "@/lib/money";
@@ -50,7 +51,7 @@ function EditRow({ budget, onDone }: EditRowProps) {
   const conflict = update.isError && reasonOf(update.error) === REASON_VERSION_CONFLICT;
 
   return (
-    <tr className="border-b border-ink bg-strip">
+    <tr className="border-b border-line2 bg-panel">
       <td colSpan={6} className="p-[22px]">
         <form
           aria-label={`Edit ${name} budget`}
@@ -103,7 +104,7 @@ function EditRow({ budget, onDone }: EditRowProps) {
           </div>
         </form>
         {limitMicros === null ? (
-          <p className="mt-3 text-muted-ink">Enter an amount in dollars, such as 20 or 12.50.</p>
+          <p className="mt-3 text-muted-foreground">Enter an amount in dollars, such as 20 or 12.50.</p>
         ) : null}
         {update.isError ? (
           <p role="alert" className="mt-3">
@@ -123,20 +124,17 @@ export function BudgetsTable() {
   const rows = budgets.data?.budgets ?? [];
 
   return (
-    <section aria-labelledby="budgets-heading">
-      <h2 id="budgets-heading" className="label border-b border-ink bg-strip px-[22px] py-3 font-medium">
-        Budgets
-      </h2>
+    <SettingsCard id="budgets" label="Budgets" note="Hard stops calls, soft only tells you">
       {budgets.isError ? (
         <div className="flex items-center gap-3 p-[22px]">
           <p role="alert">Couldn&apos;t load your budgets.</p>
           <Button onClick={() => budgets.refetch()}>Retry</Button>
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table aria-label="Budgets" className="w-full min-w-[860px] border-collapse text-left">
             <thead>
-              <tr className="label h-9 bg-ink text-paper">
+              <tr className="label h-9 bg-cream text-on-accent">
                 <th className="px-2.5 font-medium">Covers</th>
                 <th className="px-2.5 font-medium">Period</th>
                 <th className="px-2.5 font-medium">Mode</th>
@@ -151,10 +149,10 @@ export function BudgetsTable() {
               {rows.flatMap((budget) => {
                 const name = budgetName(budget);
                 const row = (
-                  <tr key={budget.id} className="h-11 border-b border-ink">
+                  <tr key={budget.id} className="h-11 border-b border-line2">
                     <td className="px-2.5">
                       <b>{name}</b>
-                      {budget.enabled ? null : <span className="ml-2 text-[11px] text-muted-ink">off</span>}
+                      {budget.enabled ? null : <span className="ml-2 text-[11px] text-muted-foreground">off</span>}
                     </td>
                     <td className="px-2.5">{periodLabel(budget.period)}</td>
                     <td className="px-2.5">{modeLabel(budget.mode)}</td>
@@ -175,9 +173,9 @@ export function BudgetsTable() {
               })}
             </tbody>
           </table>
-          {budgets.isSuccess && rows.length === 0 ? <p className="p-[22px] text-muted-ink">No budgets yet.</p> : null}
+          {budgets.isSuccess && rows.length === 0 ? <p className="p-[22px] text-muted-foreground">No budgets yet.</p> : null}
         </div>
       )}
-    </section>
+    </SettingsCard>
   );
 }

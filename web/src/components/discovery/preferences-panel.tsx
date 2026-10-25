@@ -16,14 +16,14 @@ export function PreferencesPanel() {
   const loaded = useQuery(DiscoveryService.method.getDiscoveryPreferences, {});
   if (loaded.isError) {
     return (
-      <div className="flex items-center gap-3 border-b border-ink p-[22px]">
+      <div className="flex items-center gap-3 border-b border-line2 p-[22px]">
         <p role="alert">Couldn&apos;t load your preferences.</p>
         <Button onClick={() => loaded.refetch()}>Retry</Button>
       </div>
     );
   }
   if (!loaded.data?.preferences) {
-    return <div aria-busy="true" className="border-b border-ink p-[22px]" />;
+    return <div aria-busy="true" className="border-b border-line2 p-[22px]" />;
   }
   return <PreferencesForm saved={loaded.data.preferences} />;
 }
@@ -78,8 +78,8 @@ function PreferencesForm({ saved }: { saved: DiscoveryPreferences }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 border-b border-ink p-[22px]">
-      <p className="text-muted-ink">
+    <form onSubmit={handleSubmit} className="grid gap-4 border-b border-line2 p-[22px]">
+      <p className="text-muted-foreground">
         Separate terms with commas. Saving scores your postings again. Nothing matches until you set at least one.
       </p>
       {LISTS.map(([key, label]) => (

@@ -18,9 +18,9 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, about, children }: PageHeaderProps) {
   return (
     <>
-      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-end gap-6 border-b border-ink p-[22px] pt-8 max-[860px]:grid-cols-1">
+      <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-end gap-6 border-b border-line p-[22px] pt-8 max-[860px]:grid-cols-1">
         <h1 className="h-display text-[72px] max-[860px]:text-5xl">{title}</h1>
-        <div className="max-w-[46ch] text-muted-ink">
+        <div className="max-w-[46ch] text-muted-foreground">
           {description}
           {children ? <div className="mt-3.5 flex gap-2">{children}</div> : null}
         </div>

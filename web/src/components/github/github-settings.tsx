@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { SECTIONS } from "@/content/sections";
 import { ProfileService } from "@/gen/shogun/api/v1/profile_pb";
 import { reasonOf } from "@/lib/errors";
@@ -59,11 +60,9 @@ export function GitHubSettings() {
         title="Your GitHub."
         description="Connect GitHub so Shogun can suggest resume and LinkedIn edits from what you have built."
       />
-      <section aria-labelledby="github-heading" className="grid gap-3.5 border-b border-ink p-[22px]">
-        <h2 id="github-heading" className="label font-bold">
-          GitHub
-        </h2>
-        <p className="max-w-[60ch] text-muted-ink">
+      <SettingsCard id="github" label="GitHub" note="Public profile only">
+        <div className="grid gap-3.5 p-[22px]">
+        <p className="max-w-[60ch] text-muted-foreground">
           Shogun asks GitHub for no permissions beyond your public profile, so it can read only what anyone can
           see and can never change anything. Your token is stored encrypted and used only for your account.
           Disconnecting deletes it.
@@ -83,17 +82,17 @@ export function GitHubSettings() {
           <p role="status">Not connected.</p>
         )}
         {connect.isError ? (
-          <p role="alert" className="border border-ink bg-strip px-3 py-2">
+          <p role="alert" className="border border-line2 bg-panel px-3 py-2">
             {connectFailure(connect.error)}
           </p>
         ) : null}
         {disconnect.isError ? (
-          <p role="alert" className="border border-ink bg-strip px-3 py-2">
+          <p role="alert" className="border border-line2 bg-panel px-3 py-2">
             Couldn&apos;t disconnect GitHub. Try again.
           </p>
         ) : null}
         {refused ? (
-          <p role="alert" className="border border-ink bg-strip px-3 py-2">
+          <p role="alert" className="border border-line2 bg-panel px-3 py-2">
             GitHub&apos;s sign-in address could not be trusted, so nothing was opened.
           </p>
         ) : null}
@@ -107,7 +106,8 @@ export function GitHubSettings() {
             </Button>
           ) : null}
         </div>
-      </section>
+        </div>
+      </SettingsCard>
     </>
   );
 }

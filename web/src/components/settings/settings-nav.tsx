@@ -33,6 +33,11 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
     summary: "Connect GitHub so Shogun can suggest resume and LinkedIn edits from your public work.",
   },
   {
+    href: "/settings/discovery",
+    label: "Discovery",
+    summary: "Choose the sources Shogun reads for postings and what you want it to look for.",
+  },
+  {
     href: "/settings/spend",
     label: "Spend",
     summary: "See what your AI calls cost and set the limits that stop them.",
@@ -67,7 +72,7 @@ export function SettingsNav() {
   const pathname = usePathname();
   const tabs = useSettingsTabs();
   return (
-    <nav aria-label="Settings" className="flex flex-col border-r border-ink max-[860px]:flex-row max-[860px]:flex-wrap max-[860px]:border-r-0 max-[860px]:border-b">
+    <nav aria-label="Settings" className="flex flex-col border-r border-line max-[860px]:flex-row max-[860px]:flex-wrap max-[860px]:border-r-0 max-[860px]:border-b">
       {tabs.map((tab) => {
         const active = pathname.startsWith(tab.href);
         return (
@@ -76,8 +81,8 @@ export function SettingsNav() {
             href={tab.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "label inline-flex min-h-11 items-center border-b border-ink px-4 font-medium hover:bg-ink hover:text-paper max-[860px]:grow max-[860px]:justify-center max-[860px]:border-r max-[860px]:border-b-0",
-              active && "bg-ink text-paper",
+              "label inline-flex min-h-11 items-center border-b border-line px-4 font-medium hover:bg-cream hover:text-on-accent max-[860px]:grow max-[860px]:justify-center max-[860px]:border-r max-[860px]:border-b-0",
+              active && "bg-cream text-on-accent",
             )}
           >
             {tab.label}

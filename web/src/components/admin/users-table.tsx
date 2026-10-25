@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { SettingsCard } from "@/components/settings/settings-card";
 import { AdminService, UserRole, UserStatus, type User } from "@/gen/shogun/api/v1/admin_pb";
 import { AuthService } from "@/gen/shogun/api/v1/auth_pb";
 import { reasonOf } from "@/lib/errors";
@@ -39,7 +40,7 @@ function UserRow({ user, isSelf }: UserRowProps) {
 
   return (
     <>
-      <tr className="h-11 border-b border-ink">
+      <tr className="h-11 border-b border-line2">
         <td className="px-2.5">{user.email}</td>
         <td className="px-2.5">{user.displayName || "-"}</td>
         <td className="px-2.5">{user.role === UserRole.ADMIN ? "Admin" : "Member"}</td>
@@ -66,7 +67,7 @@ function UserRow({ user, isSelf }: UserRowProps) {
         </td>
       </tr>
       {failure ? (
-        <tr className="border-b border-ink">
+        <tr className="border-b border-line2">
           <td colSpan={7} role="alert" className="px-2.5 py-2">
             {reasonOf(failure) === REASON_ADMIN_CANNOT_DISABLE_SELF
               ? "You cannot disable your own account."
@@ -99,10 +100,7 @@ export function UsersTable() {
   }
 
   return (
-    <section aria-labelledby="users-heading">
-      <h2 id="users-heading" className="label border-b border-ink bg-strip px-[22px] py-3 font-medium">
-        Users
-      </h2>
+    <SettingsCard id="users" label="Users" note="Accounts only, never anyone's data">
       {users.isPending ? (
         <div aria-busy="true" className="p-[22px]">
           Loading users.
@@ -114,10 +112,10 @@ export function UsersTable() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table aria-label="Users" className="w-full min-w-[860px] border-collapse text-left">
               <thead>
-                <tr className="label h-9 bg-ink text-paper">
+                <tr className="label h-9 bg-cream text-on-accent">
                   <th className="px-2.5 font-medium">Email</th>
                   <th className="px-2.5 font-medium">Name</th>
                   <th className="px-2.5 font-medium">Role</th>
@@ -149,6 +147,6 @@ export function UsersTable() {
           </div>
         </>
       )}
-    </section>
+    </SettingsCard>
   );
 }

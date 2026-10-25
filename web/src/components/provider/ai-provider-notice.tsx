@@ -14,7 +14,7 @@ export function AiProviderNotice() {
     return null;
   }
   return (
-    <div role="note" data-testid="ai-provider-notice" className="border-b border-ink bg-strip px-[22px] py-3">
+    <div role="note" data-testid="ai-provider-notice" className="border-b border-line bg-panel px-[22px] py-3">
       Set up an AI provider to use AI features.{" "}
       <Link href="/settings/provider" className="font-bold underline">
         Add it in Settings
