@@ -58,6 +58,15 @@ type ProviderServiceClient interface {
 	// keeps the stored key. A bad address is INVALID_PROVIDER_URL, a bad model
 	// INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price
 	// INVALID_PRICE and a cap of 0 or less INVALID_TOKEN_CAP.
+	//
+	// A provider that does not work is never saved. When an api_key is sent, the
+	// address, model and key are tested first, as TestProvider does; a failing
+	// test is FailedPrecondition with reason PROVIDER_TEST_FAILED and the
+	// failure's name (a ProviderFailure) in the error metadata under "failure".
+	// With no api_key (keeping the stored key) the address and model must be
+	// unchanged, since the key is not available to test a new one with; changing
+	// them needs the key again (API_KEY_REQUIRED). Editing only prices or the cap
+	// makes no test call.
 	SetProvider(context.Context, *connect.Request[v1.SetProviderRequest]) (*connect.Response[v1.SetProviderResponse], error)
 	// DeleteProvider removes the provider and its key. Their AI features are then
 	// off. Having none is not an error.
@@ -67,6 +76,11 @@ type ProviderServiceClient interface {
 	// result (ok false and a failure), not an error. No provider is
 	// FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
 	// token cap is ResourceExhausted with reason BUDGET_EXHAUSTED.
+	//
+	// With base_url, model and api_key all set it tests those details instead,
+	// which need not be saved: the key is used for this call only and is never
+	// stored, logged or returned. Some but not all is INVALID_ARGUMENT with reason
+	// INVALID_REQUEST.
 	TestProvider(context.Context, *connect.Request[v1.TestProviderRequest]) (*connect.Response[v1.TestProviderResponse], error)
 }
 
@@ -147,6 +161,15 @@ type ProviderServiceHandler interface {
 	// keeps the stored key. A bad address is INVALID_PROVIDER_URL, a bad model
 	// INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price
 	// INVALID_PRICE and a cap of 0 or less INVALID_TOKEN_CAP.
+	//
+	// A provider that does not work is never saved. When an api_key is sent, the
+	// address, model and key are tested first, as TestProvider does; a failing
+	// test is FailedPrecondition with reason PROVIDER_TEST_FAILED and the
+	// failure's name (a ProviderFailure) in the error metadata under "failure".
+	// With no api_key (keeping the stored key) the address and model must be
+	// unchanged, since the key is not available to test a new one with; changing
+	// them needs the key again (API_KEY_REQUIRED). Editing only prices or the cap
+	// makes no test call.
 	SetProvider(context.Context, *connect.Request[v1.SetProviderRequest]) (*connect.Response[v1.SetProviderResponse], error)
 	// DeleteProvider removes the provider and its key. Their AI features are then
 	// off. Having none is not an error.
@@ -156,6 +179,11 @@ type ProviderServiceHandler interface {
 	// result (ok false and a failure), not an error. No provider is
 	// FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
 	// token cap is ResourceExhausted with reason BUDGET_EXHAUSTED.
+	//
+	// With base_url, model and api_key all set it tests those details instead,
+	// which need not be saved: the key is used for this call only and is never
+	// stored, logged or returned. Some but not all is INVALID_ARGUMENT with reason
+	// INVALID_REQUEST.
 	TestProvider(context.Context, *connect.Request[v1.TestProviderRequest]) (*connect.Response[v1.TestProviderResponse], error)
 }
 

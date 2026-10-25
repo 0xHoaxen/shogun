@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -67,6 +68,10 @@ func (s *ProviderServer) SetProvider(
 	ctx context.Context, req *connect.Request[apiv1.SetProviderRequest],
 ) (*connect.Response[apiv1.SetProviderResponse], error) {
 	in := req.Msg
+	// A provider that does not work is never saved.
+	if err := s.checkBeforeSave(ctx, in); err != nil {
+		return nil, err
+	}
 	resp, err := s.store.SetProvider(ctx, &sorobanv1.SetProviderRequest{
 		BaseUrl:             in.GetBaseUrl(),
 		Model:               in.GetModel(),
@@ -96,17 +101,79 @@ func (s *ProviderServer) DeleteProvider(
 
 // TestProvider tries the caller's provider with one small call.
 func (s *ProviderServer) TestProvider(
-	ctx context.Context, _ *connect.Request[apiv1.TestProviderRequest],
+	ctx context.Context, req *connect.Request[apiv1.TestProviderRequest],
 ) (*connect.Response[apiv1.TestProviderResponse], error) {
-	resp, err := s.tester.TestProvider(ctx, &fudev1.TestProviderRequest{})
+	in := req.Msg
+	resp, err := s.tester.TestProvider(ctx, &fudev1.TestProviderRequest{
+		BaseUrl: in.BaseUrl, Model: in.Model, ApiKey: in.ApiKey,
+	})
 	if err != nil {
-		return nil, fromGRPC(ctx, s.log, err)
+		return nil, fromGRPC(ctx, s.log, redactSecret(err, in.GetApiKey()))
 	}
 	return connect.NewResponse(&apiv1.TestProviderResponse{
-		Ok:      resp.GetOk(),
-		Failure: providerFailureToAPI(resp.GetFailure()),
-		Model:   resp.GetModel(),
+		Ok:        resp.GetOk(),
+		Failure:   providerFailureToAPI(resp.GetFailure()),
+		Model:     resp.GetModel(),
+		LatencyMs: resp.GetLatencyMs(),
 	}), nil
+}
+
+// checkBeforeSave makes sure a provider that does not work is never saved. With
+// a key it is tested with the details as they will be stored. Without one (the
+// stored key is kept) the stored address and model must be unchanged: the key is
+// not available here to test a new one with. An edit of prices or the cap only
+// makes no call.
+func (s *ProviderServer) checkBeforeSave(ctx context.Context, in *apiv1.SetProviderRequest) error {
+	if in.GetApiKey() == "" {
+		return s.checkUnchanged(ctx, in)
+	}
+	resp, err := s.tester.TestProvider(ctx, &fudev1.TestProviderRequest{
+		BaseUrl: &in.BaseUrl, Model: &in.Model, ApiKey: &in.ApiKey,
+	})
+	if err != nil {
+		return fromGRPC(ctx, s.log, redactSecret(err, in.GetApiKey()))
+	}
+	if resp.GetOk() {
+		return nil
+	}
+	return testFailedError(providerFailureToAPI(resp.GetFailure()))
+}
+
+// checkUnchanged refuses an update that keeps the stored key but changes the
+// address or model, which could not be tested.
+func (s *ProviderServer) checkUnchanged(ctx context.Context, in *apiv1.SetProviderRequest) error {
+	if in.GetVersion() == 0 {
+		return nil // creating: soroban refuses a missing key with API_KEY_REQUIRED
+	}
+	current, err := s.store.GetProvider(ctx, &sorobanv1.GetProviderRequest{})
+	if err != nil {
+		return fromGRPC(ctx, s.log, err)
+	}
+	stored := current.GetProvider()
+	if stored == nil || (sameAddress(stored.GetBaseUrl(), in.GetBaseUrl()) && strings.TrimSpace(in.GetModel()) == stored.GetModel()) {
+		return nil
+	}
+	return newError(connect.CodeInvalidArgument, reasonAPIKeyRequired,
+		"enter the API key again to change the address or the model, so the new details can be tested")
+}
+
+// sameAddress compares two provider addresses the way soroban stores them: no
+// surrounding space and no trailing slash.
+func sameAddress(a, b string) bool {
+	return strings.TrimRight(strings.TrimSpace(a), "/") == strings.TrimRight(strings.TrimSpace(b), "/")
+}
+
+// testFailedError is the refusal of a provider whose test failed. The kind of
+// failure is in the metadata, so the client can say what to fix.
+func testFailedError(failure apiv1.ProviderFailure) error {
+	err := connect.NewError(connect.CodeFailedPrecondition, errors.New("the provider did not pass its test, so it was not saved"))
+	detail, detailErr := connect.NewErrorDetail(&errdetails.ErrorInfo{
+		Reason: reasonProviderTestFailed, Domain: errorDomain, Metadata: map[string]string{"failure": failure.String()},
+	})
+	if detailErr == nil {
+		err.AddDetail(detail)
+	}
+	return err
 }
 
 // redactSecret hides secret in err's message. A gRPC status keeps its code and
@@ -164,6 +231,10 @@ func providerFailureToAPI(f fudev1.ProviderFailure) apiv1.ProviderFailure {
 		return apiv1.ProviderFailure_PROVIDER_FAILURE_NOT_PUBLIC
 	case fudev1.ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR:
 		return apiv1.ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR
+	case fudev1.ProviderFailure_PROVIDER_FAILURE_ENDPOINT_IN_URL:
+		return apiv1.ProviderFailure_PROVIDER_FAILURE_ENDPOINT_IN_URL
+	case fudev1.ProviderFailure_PROVIDER_FAILURE_INVALID_ADDRESS:
+		return apiv1.ProviderFailure_PROVIDER_FAILURE_INVALID_ADDRESS
 	default:
 		return apiv1.ProviderFailure_PROVIDER_FAILURE_OTHER
 	}
