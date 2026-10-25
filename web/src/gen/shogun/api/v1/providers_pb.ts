@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file shogun/api/v1/providers.proto.
  */
 export const file_shogun_api_v1_providers: GenFile = /*@__PURE__*/
-  fileDesc("Ch1zaG9ndW4vYXBpL3YxL3Byb3ZpZGVycy5wcm90bxINc2hvZ3VuLmFwaS52MSKzAgoIUHJvdmlkZXISEAoIYmFzZV91cmwYASABKAkSDQoFbW9kZWwYAiABKAkSEQoJa2V5X2xhc3Q0GAMgASgJEiIKFWlucHV0X21pY3Jvc19wZXJfbXRvaxgEIAEoA0gAiAEBEiMKFm91dHB1dF9taWNyb3NfcGVyX210b2sYBSABKANIAYgBARIeChFtb250aGx5X3Rva2VuX2NhcBgGIAEoA0gCiAEBEg8KB3ZlcnNpb24YByABKAUSLgoKdXBkYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCGAoWX2lucHV0X21pY3Jvc19wZXJfbXRva0IZChdfb3V0cHV0X21pY3Jvc19wZXJfbXRva0IUChJfbW9udGhseV90b2tlbl9jYXAiFAoSR2V0UHJvdmlkZXJSZXF1ZXN0IlsKE0dldFByb3ZpZGVyUmVzcG9uc2USKQoIcHJvdmlkZXIYASABKAsyFy5zaG9ndW4uYXBpLnYxLlByb3ZpZGVyEhkKEXRva2Vuc190aGlzX21vbnRoGAIgASgDIosCChJTZXRQcm92aWRlclJlcXVlc3QSEAoIYmFzZV91cmwYASABKAkSDQoFbW9kZWwYAiABKAkSDwoHYXBpX2tleRgDIAEoCRIiChVpbnB1dF9taWNyb3NfcGVyX210b2sYBCABKANIAIgBARIjChZvdXRwdXRfbWljcm9zX3Blcl9tdG9rGAUgASgDSAGIAQESHgoRbW9udGhseV90b2tlbl9jYXAYBiABKANIAogBARIPCgd2ZXJzaW9uGAcgASgFQhgKFl9pbnB1dF9taWNyb3NfcGVyX210b2tCGQoXX291dHB1dF9taWNyb3NfcGVyX210b2tCFAoSX21vbnRobHlfdG9rZW5fY2FwIkAKE1NldFByb3ZpZGVyUmVzcG9uc2USKQoIcHJvdmlkZXIYASABKAsyFy5zaG9ndW4uYXBpLnYxLlByb3ZpZGVyIhcKFURlbGV0ZVByb3ZpZGVyUmVxdWVzdCIYChZEZWxldGVQcm92aWRlclJlc3BvbnNlIhUKE1Rlc3RQcm92aWRlclJlcXVlc3QiYgoUVGVzdFByb3ZpZGVyUmVzcG9uc2USCgoCb2sYASABKAgSLwoHZmFpbHVyZRgCIAEoDjIeLnNob2d1bi5hcGkudjEuUHJvdmlkZXJGYWlsdXJlEg0KBW1vZGVsGAMgASgJKpkCCg9Qcm92aWRlckZhaWx1cmUSIAocUFJPVklERVJfRkFJTFVSRV9VTlNQRUNJRklFRBAAEh0KGVBST1ZJREVSX0ZBSUxVUkVfUkVKRUNURUQQARIhCh1QUk9WSURFUl9GQUlMVVJFX1JBVEVfTElNSVRFRBACEh4KGlBST1ZJREVSX0ZBSUxVUkVfTk9UX0ZPVU5EEAMSIAocUFJPVklERVJfRkFJTFVSRV9VTlJFQUNIQUJMRRAEEh8KG1BST1ZJREVSX0ZBSUxVUkVfTk9UX1BVQkxJQxAFEiMKH1BST1ZJREVSX0ZBSUxVUkVfUFJPVklERVJfRVJST1IQBhIaChZQUk9WSURFUl9GQUlMVVJFX09USEVSEAcy9QIKD1Byb3ZpZGVyU2VydmljZRJUCgtHZXRQcm92aWRlchIhLnNob2d1bi5hcGkudjEuR2V0UHJvdmlkZXJSZXF1ZXN0GiIuc2hvZ3VuLmFwaS52MS5HZXRQcm92aWRlclJlc3BvbnNlElQKC1NldFByb3ZpZGVyEiEuc2hvZ3VuLmFwaS52MS5TZXRQcm92aWRlclJlcXVlc3QaIi5zaG9ndW4uYXBpLnYxLlNldFByb3ZpZGVyUmVzcG9uc2USXQoORGVsZXRlUHJvdmlkZXISJC5zaG9ndW4uYXBpLnYxLkRlbGV0ZVByb3ZpZGVyUmVxdWVzdBolLnNob2d1bi5hcGkudjEuRGVsZXRlUHJvdmlkZXJSZXNwb25zZRJXCgxUZXN0UHJvdmlkZXISIi5zaG9ndW4uYXBpLnYxLlRlc3RQcm92aWRlclJlcXVlc3QaIy5zaG9ndW4uYXBpLnYxLlRlc3RQcm92aWRlclJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
+  fileDesc("Ch1zaG9ndW4vYXBpL3YxL3Byb3ZpZGVycy5wcm90bxINc2hvZ3VuLmFwaS52MSKzAgoIUHJvdmlkZXISEAoIYmFzZV91cmwYASABKAkSDQoFbW9kZWwYAiABKAkSEQoJa2V5X2xhc3Q0GAMgASgJEiIKFWlucHV0X21pY3Jvc19wZXJfbXRvaxgEIAEoA0gAiAEBEiMKFm91dHB1dF9taWNyb3NfcGVyX210b2sYBSABKANIAYgBARIeChFtb250aGx5X3Rva2VuX2NhcBgGIAEoA0gCiAEBEg8KB3ZlcnNpb24YByABKAUSLgoKdXBkYXRlZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBCGAoWX2lucHV0X21pY3Jvc19wZXJfbXRva0IZChdfb3V0cHV0X21pY3Jvc19wZXJfbXRva0IUChJfbW9udGhseV90b2tlbl9jYXAiFAoSR2V0UHJvdmlkZXJSZXF1ZXN0IlsKE0dldFByb3ZpZGVyUmVzcG9uc2USKQoIcHJvdmlkZXIYASABKAsyFy5zaG9ndW4uYXBpLnYxLlByb3ZpZGVyEhkKEXRva2Vuc190aGlzX21vbnRoGAIgASgDIosCChJTZXRQcm92aWRlclJlcXVlc3QSEAoIYmFzZV91cmwYASABKAkSDQoFbW9kZWwYAiABKAkSDwoHYXBpX2tleRgDIAEoCRIiChVpbnB1dF9taWNyb3NfcGVyX210b2sYBCABKANIAIgBARIjChZvdXRwdXRfbWljcm9zX3Blcl9tdG9rGAUgASgDSAGIAQESHgoRbW9udGhseV90b2tlbl9jYXAYBiABKANIAogBARIPCgd2ZXJzaW9uGAcgASgFQhgKFl9pbnB1dF9taWNyb3NfcGVyX210b2tCGQoXX291dHB1dF9taWNyb3NfcGVyX210b2tCFAoSX21vbnRobHlfdG9rZW5fY2FwIkAKE1NldFByb3ZpZGVyUmVzcG9uc2USKQoIcHJvdmlkZXIYASABKAsyFy5zaG9ndW4uYXBpLnYxLlByb3ZpZGVyIhcKFURlbGV0ZVByb3ZpZGVyUmVxdWVzdCIYChZEZWxldGVQcm92aWRlclJlc3BvbnNlInkKE1Rlc3RQcm92aWRlclJlcXVlc3QSFQoIYmFzZV91cmwYASABKAlIAIgBARISCgVtb2RlbBgCIAEoCUgBiAEBEhQKB2FwaV9rZXkYAyABKAlIAogBAUILCglfYmFzZV91cmxCCAoGX21vZGVsQgoKCF9hcGlfa2V5InYKFFRlc3RQcm92aWRlclJlc3BvbnNlEgoKAm9rGAEgASgIEi8KB2ZhaWx1cmUYAiABKA4yHi5zaG9ndW4uYXBpLnYxLlByb3ZpZGVyRmFpbHVyZRINCgVtb2RlbBgDIAEoCRISCgpsYXRlbmN5X21zGAQgASgDKuUCCg9Qcm92aWRlckZhaWx1cmUSIAocUFJPVklERVJfRkFJTFVSRV9VTlNQRUNJRklFRBAAEh0KGVBST1ZJREVSX0ZBSUxVUkVfUkVKRUNURUQQARIhCh1QUk9WSURFUl9GQUlMVVJFX1JBVEVfTElNSVRFRBACEh4KGlBST1ZJREVSX0ZBSUxVUkVfTk9UX0ZPVU5EEAMSIAocUFJPVklERVJfRkFJTFVSRV9VTlJFQUNIQUJMRRAEEh8KG1BST1ZJREVSX0ZBSUxVUkVfTk9UX1BVQkxJQxAFEiMKH1BST1ZJREVSX0ZBSUxVUkVfUFJPVklERVJfRVJST1IQBhIaChZQUk9WSURFUl9GQUlMVVJFX09USEVSEAcSJAogUFJPVklERVJfRkFJTFVSRV9FTkRQT0lOVF9JTl9VUkwQCBIkCiBQUk9WSURFUl9GQUlMVVJFX0lOVkFMSURfQUREUkVTUxAJMvUCCg9Qcm92aWRlclNlcnZpY2USVAoLR2V0UHJvdmlkZXISIS5zaG9ndW4uYXBpLnYxLkdldFByb3ZpZGVyUmVxdWVzdBoiLnNob2d1bi5hcGkudjEuR2V0UHJvdmlkZXJSZXNwb25zZRJUCgtTZXRQcm92aWRlchIhLnNob2d1bi5hcGkudjEuU2V0UHJvdmlkZXJSZXF1ZXN0GiIuc2hvZ3VuLmFwaS52MS5TZXRQcm92aWRlclJlc3BvbnNlEl0KDkRlbGV0ZVByb3ZpZGVyEiQuc2hvZ3VuLmFwaS52MS5EZWxldGVQcm92aWRlclJlcXVlc3QaJS5zaG9ndW4uYXBpLnYxLkRlbGV0ZVByb3ZpZGVyUmVzcG9uc2USVwoMVGVzdFByb3ZpZGVyEiIuc2hvZ3VuLmFwaS52MS5UZXN0UHJvdmlkZXJSZXF1ZXN0GiMuc2hvZ3VuLmFwaS52MS5UZXN0UHJvdmlkZXJSZXNwb25zZWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * Provider is the caller's provider as it is shown back: everything except the
@@ -210,6 +210,23 @@ export const DeleteProviderResponseSchema: GenMessage<DeleteProviderResponse> = 
  * @generated from message shogun.api.v1.TestProviderRequest
  */
 export type TestProviderRequest = Message<"shogun.api.v1.TestProviderRequest"> & {
+  /**
+   * Set all three to test details that are not saved; leave all unset to test
+   * the saved provider.
+   *
+   * @generated from field: optional string base_url = 1;
+   */
+  baseUrl?: string | undefined;
+
+  /**
+   * @generated from field: optional string model = 2;
+   */
+  model?: string | undefined;
+
+  /**
+   * @generated from field: optional string api_key = 3;
+   */
+  apiKey?: string | undefined;
 };
 
 /**
@@ -241,6 +258,13 @@ export type TestProviderResponse = Message<"shogun.api.v1.TestProviderResponse">
    * @generated from field: string model = 3;
    */
   model: string;
+
+  /**
+   * latency_ms is how long the provider took to answer, when a call was made.
+   *
+   * @generated from field: int64 latency_ms = 4;
+   */
+  latencyMs: bigint;
 };
 
 /**
@@ -305,6 +329,20 @@ export enum ProviderFailure {
    * @generated from enum value: PROVIDER_FAILURE_OTHER = 7;
    */
   OTHER = 7,
+
+  /**
+   * The address already ends in /chat/completions, which Shogun adds itself.
+   *
+   * @generated from enum value: PROVIDER_FAILURE_ENDPOINT_IN_URL = 8;
+   */
+  ENDPOINT_IN_URL = 8,
+
+  /**
+   * The address is not one Shogun can call: it must be an https address.
+   *
+   * @generated from enum value: PROVIDER_FAILURE_INVALID_ADDRESS = 9;
+   */
+  INVALID_ADDRESS = 9,
 }
 
 /**
@@ -341,6 +379,15 @@ export const ProviderService: GenService<{
    * INVALID_PROVIDER_MODEL, a bad key INVALID_API_KEY, half a price
    * INVALID_PRICE and a cap of 0 or less INVALID_TOKEN_CAP.
    *
+   * A provider that does not work is never saved. When an api_key is sent, the
+   * address, model and key are tested first, as TestProvider does; a failing
+   * test is FailedPrecondition with reason PROVIDER_TEST_FAILED and the
+   * failure's name (a ProviderFailure) in the error metadata under "failure".
+   * With no api_key (keeping the stored key) the address and model must be
+   * unchanged, since the key is not available to test a new one with; changing
+   * them needs the key again (API_KEY_REQUIRED). Editing only prices or the cap
+   * makes no test call.
+   *
    * @generated from rpc shogun.api.v1.ProviderService.SetProvider
    */
   setProvider: {
@@ -365,6 +412,11 @@ export const ProviderService: GenService<{
    * result (ok false and a failure), not an error. No provider is
    * FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
    * token cap is ResourceExhausted with reason BUDGET_EXHAUSTED.
+   *
+   * With base_url, model and api_key all set it tests those details instead,
+   * which need not be saved: the key is used for this call only and is never
+   * stored, logged or returned. Some but not all is INVALID_ARGUMENT with reason
+   * INVALID_REQUEST.
    *
    * @generated from rpc shogun.api.v1.ProviderService.TestProvider
    */

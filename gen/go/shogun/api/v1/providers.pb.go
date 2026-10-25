@@ -39,6 +39,10 @@ const (
 	// The provider failed on its side.
 	ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR ProviderFailure = 6
 	ProviderFailure_PROVIDER_FAILURE_OTHER          ProviderFailure = 7
+	// The address already ends in /chat/completions, which Shogun adds itself.
+	ProviderFailure_PROVIDER_FAILURE_ENDPOINT_IN_URL ProviderFailure = 8
+	// The address is not one Shogun can call: it must be an https address.
+	ProviderFailure_PROVIDER_FAILURE_INVALID_ADDRESS ProviderFailure = 9
 )
 
 // Enum value maps for ProviderFailure.
@@ -52,16 +56,20 @@ var (
 		5: "PROVIDER_FAILURE_NOT_PUBLIC",
 		6: "PROVIDER_FAILURE_PROVIDER_ERROR",
 		7: "PROVIDER_FAILURE_OTHER",
+		8: "PROVIDER_FAILURE_ENDPOINT_IN_URL",
+		9: "PROVIDER_FAILURE_INVALID_ADDRESS",
 	}
 	ProviderFailure_value = map[string]int32{
-		"PROVIDER_FAILURE_UNSPECIFIED":    0,
-		"PROVIDER_FAILURE_REJECTED":       1,
-		"PROVIDER_FAILURE_RATE_LIMITED":   2,
-		"PROVIDER_FAILURE_NOT_FOUND":      3,
-		"PROVIDER_FAILURE_UNREACHABLE":    4,
-		"PROVIDER_FAILURE_NOT_PUBLIC":     5,
-		"PROVIDER_FAILURE_PROVIDER_ERROR": 6,
-		"PROVIDER_FAILURE_OTHER":          7,
+		"PROVIDER_FAILURE_UNSPECIFIED":     0,
+		"PROVIDER_FAILURE_REJECTED":        1,
+		"PROVIDER_FAILURE_RATE_LIMITED":    2,
+		"PROVIDER_FAILURE_NOT_FOUND":       3,
+		"PROVIDER_FAILURE_UNREACHABLE":     4,
+		"PROVIDER_FAILURE_NOT_PUBLIC":      5,
+		"PROVIDER_FAILURE_PROVIDER_ERROR":  6,
+		"PROVIDER_FAILURE_OTHER":           7,
+		"PROVIDER_FAILURE_ENDPOINT_IN_URL": 8,
+		"PROVIDER_FAILURE_INVALID_ADDRESS": 9,
 	}
 )
 
@@ -498,7 +506,12 @@ func (*DeleteProviderResponse) Descriptor() ([]byte, []int) {
 }
 
 type TestProviderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Set all three to test details that are not saved; leave all unset to test
+	// the saved provider.
+	BaseUrl       *string `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3,oneof" json:"base_url,omitempty"`
+	Model         *string `protobuf:"bytes,2,opt,name=model,proto3,oneof" json:"model,omitempty"`
+	ApiKey        *string `protobuf:"bytes,3,opt,name=api_key,json=apiKey,proto3,oneof" json:"api_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -533,13 +546,36 @@ func (*TestProviderRequest) Descriptor() ([]byte, []int) {
 	return file_shogun_api_v1_providers_proto_rawDescGZIP(), []int{7}
 }
 
+func (x *TestProviderRequest) GetBaseUrl() string {
+	if x != nil && x.BaseUrl != nil {
+		return *x.BaseUrl
+	}
+	return ""
+}
+
+func (x *TestProviderRequest) GetModel() string {
+	if x != nil && x.Model != nil {
+		return *x.Model
+	}
+	return ""
+}
+
+func (x *TestProviderRequest) GetApiKey() string {
+	if x != nil && x.ApiKey != nil {
+		return *x.ApiKey
+	}
+	return ""
+}
+
 type TestProviderResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Ok    bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
 	// failure is unspecified when ok.
 	Failure ProviderFailure `protobuf:"varint,2,opt,name=failure,proto3,enum=shogun.api.v1.ProviderFailure" json:"failure,omitempty"`
 	// model is the model that answered, when ok.
-	Model         string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	Model string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	// latency_ms is how long the provider took to answer, when a call was made.
+	LatencyMs     int64 `protobuf:"varint,4,opt,name=latency_ms,json=latencyMs,proto3" json:"latency_ms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -595,6 +631,13 @@ func (x *TestProviderResponse) GetModel() string {
 	return ""
 }
 
+func (x *TestProviderResponse) GetLatencyMs() int64 {
+	if x != nil {
+		return x.LatencyMs
+	}
+	return 0
+}
+
 var File_shogun_api_v1_providers_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_providers_proto_rawDesc = "" +
@@ -631,12 +674,21 @@ const file_shogun_api_v1_providers_proto_rawDesc = "" +
 	"\x13SetProviderResponse\x123\n" +
 	"\bprovider\x18\x01 \x01(\v2\x17.shogun.api.v1.ProviderR\bprovider\"\x17\n" +
 	"\x15DeleteProviderRequest\"\x18\n" +
-	"\x16DeleteProviderResponse\"\x15\n" +
-	"\x13TestProviderRequest\"v\n" +
+	"\x16DeleteProviderResponse\"\x91\x01\n" +
+	"\x13TestProviderRequest\x12\x1e\n" +
+	"\bbase_url\x18\x01 \x01(\tH\x00R\abaseUrl\x88\x01\x01\x12\x19\n" +
+	"\x05model\x18\x02 \x01(\tH\x01R\x05model\x88\x01\x01\x12\x1c\n" +
+	"\aapi_key\x18\x03 \x01(\tH\x02R\x06apiKey\x88\x01\x01B\v\n" +
+	"\t_base_urlB\b\n" +
+	"\x06_modelB\n" +
+	"\n" +
+	"\b_api_key\"\x95\x01\n" +
 	"\x14TestProviderResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x128\n" +
 	"\afailure\x18\x02 \x01(\x0e2\x1e.shogun.api.v1.ProviderFailureR\afailure\x12\x14\n" +
-	"\x05model\x18\x03 \x01(\tR\x05model*\x99\x02\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\x12\x1d\n" +
+	"\n" +
+	"latency_ms\x18\x04 \x01(\x03R\tlatencyMs*\xe5\x02\n" +
 	"\x0fProviderFailure\x12 \n" +
 	"\x1cPROVIDER_FAILURE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19PROVIDER_FAILURE_REJECTED\x10\x01\x12!\n" +
@@ -645,7 +697,9 @@ const file_shogun_api_v1_providers_proto_rawDesc = "" +
 	"\x1cPROVIDER_FAILURE_UNREACHABLE\x10\x04\x12\x1f\n" +
 	"\x1bPROVIDER_FAILURE_NOT_PUBLIC\x10\x05\x12#\n" +
 	"\x1fPROVIDER_FAILURE_PROVIDER_ERROR\x10\x06\x12\x1a\n" +
-	"\x16PROVIDER_FAILURE_OTHER\x10\a2\xf5\x02\n" +
+	"\x16PROVIDER_FAILURE_OTHER\x10\a\x12$\n" +
+	" PROVIDER_FAILURE_ENDPOINT_IN_URL\x10\b\x12$\n" +
+	" PROVIDER_FAILURE_INVALID_ADDRESS\x10\t2\xf5\x02\n" +
 	"\x0fProviderService\x12T\n" +
 	"\vGetProvider\x12!.shogun.api.v1.GetProviderRequest\x1a\".shogun.api.v1.GetProviderResponse\x12T\n" +
 	"\vSetProvider\x12!.shogun.api.v1.SetProviderRequest\x1a\".shogun.api.v1.SetProviderResponse\x12]\n" +
@@ -707,6 +761,7 @@ func file_shogun_api_v1_providers_proto_init() {
 	}
 	file_shogun_api_v1_providers_proto_msgTypes[0].OneofWrappers = []any{}
 	file_shogun_api_v1_providers_proto_msgTypes[3].OneofWrappers = []any{}
+	file_shogun_api_v1_providers_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

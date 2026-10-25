@@ -1029,7 +1029,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/fude/internal/app/provider.go`, `proto/shogun/fude/v1/fude.proto`.
   Done when: `make proto && cd services/fude && go test -race ./...`, `make lint`.
 
-- [ ] **V2.3 Test and save a provider in torii** (M) Needs: V2.2
+- [x] **V2.3 Test and save a provider in torii** (M) Needs: V2.2
   Do: `ProviderService.TestProvider` takes unsaved base URL, model and API key and returns the test result of V2.2. `SetProvider` runs the same test server side and refuses a failing provider, so Save can never store one. Key stays write-only and scrubbed from errors as today.
   Files: `proto/shogun/api/v1/providers.proto`, `services/torii/internal/transport/connectapi/providers.go`.
   Done when: `make proto && cd services/torii && go test -race ./...`.
