@@ -81,22 +81,29 @@ func WithReshaper(completer Completer) Option {
 // filled. A sheet that already has them comes back nil, and the model is not
 // called.
 func (s *Service) reshapeImportCSV(ctx context.Context, data []byte) ([]byte, []ColumnMapping, error) {
+	shaped, shape, err := s.reshapeSheet(ctx, data)
+	return shaped, shape.mappings, err
+}
+
+// reshapeSheet is reshapeImportCSV with the whole shape the model found, so the
+// date order can be handed back to the caller.
+func (s *Service) reshapeSheet(ctx context.Context, data []byte) ([]byte, sheetShape, error) {
 	if len(data) > maxImportBytes {
-		return nil, nil, invalid("IMPORT_TOO_LARGE", "file is larger than %d bytes", maxImportBytes)
+		return nil, sheetShape{}, invalid("IMPORT_TOO_LARGE", "file is larger than %d bytes", maxImportBytes)
 	}
 	sh, err := readSheet(data)
 	if err != nil {
-		return nil, nil, err
+		return nil, sheetShape{}, err
 	}
 	if sh.hasImportHeader() {
-		return nil, nil, nil
+		return nil, sheetShape{}, nil
 	}
 	if s.reshaper == nil {
-		return nil, nil, ErrReshapeOff
+		return nil, sheetShape{}, ErrReshapeOff
 	}
 	prompt, err := reshapePrompt(sh)
 	if err != nil {
-		return nil, nil, err
+		return nil, sheetShape{}, err
 	}
 	res, err := s.reshaper.Complete(ctx, featureImportReshape, llm.Request{
 		System:   reshapeSystem,
@@ -104,17 +111,56 @@ func (s *Service) reshapeImportCSV(ctx context.Context, data []byte) ([]byte, []
 		Cache:    true,
 	})
 	if err != nil {
-		return nil, nil, modelFailure(err)
+		return nil, sheetShape{}, modelFailure(err)
 	}
 	shape, err := parseReshapeAnswer(res.Text, sh.header)
 	if err != nil {
-		return nil, nil, err
+		return nil, sheetShape{}, err
 	}
 	shaped, err := shapeSheet(sh, shape)
 	if err != nil {
-		return nil, nil, err
+		return nil, sheetShape{}, err
 	}
-	return shaped, shape.mappings, nil
+	return shaped, shape, nil
+}
+
+// Reason of the InvalidArgumentError for a column mapping the user sent.
+const reasonInvalidMapping = "INVALID_MAPPING"
+
+// shapeWithMapping writes data in the import columns using the mapping and date
+// order the user chose, with no model involved. The mapping is checked as hard
+// as one from the model.
+func shapeWithMapping(data []byte, mappings []ColumnMapping, dateOrder string) ([]byte, sheetShape, error) {
+	if len(data) > maxImportBytes {
+		return nil, sheetShape{}, invalid("IMPORT_TOO_LARGE", "file is larger than %d bytes", maxImportBytes)
+	}
+	sh, err := readSheet(data)
+	if err != nil {
+		return nil, sheetShape{}, err
+	}
+	order := strings.ToLower(strings.TrimSpace(dateOrder))
+	if _, known := numericDateLayouts[order]; order != "" && !known {
+		return nil, sheetShape{}, invalid(reasonInvalidMapping, "date_order must be dmy, mdy or ymd, or empty")
+	}
+	answer := reshapeAnswer{}
+	for _, m := range mappings {
+		answer.Columns = append(answer.Columns, struct {
+			Target  string   `json:"target"`
+			Sources []string `json:"sources"`
+		}{m.Target, m.Sources})
+	}
+	checked, err := checkMappings(answer, sh.header, func(format string, args ...any) error {
+		return invalid(reasonInvalidMapping, format, args...)
+	})
+	if err != nil {
+		return nil, sheetShape{}, err
+	}
+	shape := sheetShape{mappings: checked, dateOrder: order, statuses: map[string]domain.ContactStatus{}}
+	shaped, err := shapeSheet(sh, shape)
+	if err != nil {
+		return nil, sheetShape{}, err
+	}
+	return shaped, shape, nil
 }
 
 // modelFailure keeps the errors the caller acts on (no provider, no budget, no
@@ -181,7 +227,9 @@ func parseReshapeAnswer(text string, header []string) (sheetShape, error) {
 	if err := json.Unmarshal([]byte(answerJSON(text)), &answer); err != nil {
 		return sheetShape{}, reshapeFailed("the AI provider's answer was not a column mapping")
 	}
-	mappings, err := checkMappings(answer, header)
+	mappings, err := checkMappings(answer, header, func(format string, args ...any) error {
+		return reshapeFailed("the AI provider's mapping is not usable: "+format, args...)
+	})
 	if err != nil {
 		return sheetShape{}, err
 	}
@@ -198,20 +246,23 @@ func parseReshapeAnswer(text string, header []string) (sheetShape, error) {
 	return sheetShape{mappings: mappings, dateOrder: order, statuses: statuses}, nil
 }
 
-func checkMappings(answer reshapeAnswer, header []string) ([]ColumnMapping, error) {
+// checkMappings validates a mapping against the sheet's header. bad builds the
+// error for a mapping that is not usable, so the same rules serve a model's
+// answer and a mapping the user sent, each in its own words.
+func checkMappings(answer reshapeAnswer, header []string, bad func(format string, args ...any) error) ([]ColumnMapping, error) {
 	targets := map[string]bool{}
 	sources := map[string]bool{}
 	mappings := make([]ColumnMapping, 0, len(answer.Columns))
 	for _, column := range answer.Columns {
 		target := strings.ToLower(strings.TrimSpace(column.Target))
 		if !slices.Contains(importColumns, target) || targets[target] {
-			return nil, reshapeFailed("the AI provider mapped an unknown or repeated column %q", column.Target)
+			return nil, bad("%q is not an import column, or is mapped twice", column.Target)
 		}
 		targets[target] = true
 		m := ColumnMapping{Target: target}
 		for _, source := range column.Sources {
 			if !slices.Contains(header, source) || sources[source] {
-				return nil, reshapeFailed("the AI provider named a column the sheet does not have, or used one twice")
+				return nil, bad("%q is not a column of the sheet, or is used twice", source)
 			}
 			sources[source] = true
 			m.Sources = append(m.Sources, source)

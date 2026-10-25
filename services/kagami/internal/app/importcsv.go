@@ -29,6 +29,15 @@ type ImportContactsInput struct {
 	// Reshape maps a sheet with other columns onto the import columns first,
 	// with the owner's AI provider.
 	Reshape bool
+	// Mappings is the user's own column mapping. When set it is used instead of
+	// the AI's, with the same checks, and no model is called whatever Reshape says.
+	Mappings []ColumnMapping
+	// DateOrder is how the sheet writes dates of only numbers (dmy, mdy or ymd)
+	// when Mappings is set; empty reads only dates that are unambiguous.
+	DateOrder string
+	// Selection limits the import to some rows. Nil imports every row. A duplicate
+	// is imported only if it is selected.
+	Selection *RowSelection
 }
 
 // ImportRowError is one row the import could not apply. Row is the 1-based CSV
@@ -41,10 +50,13 @@ type ImportRowError struct {
 
 // ImportReport counts what an import did, or on a dry run would do.
 type ImportReport struct {
+	// RowsTotal counts the rows processed: all of them, or the selected ones.
 	RowsTotal   int32
 	RowsCreated int32
 	RowsUpdated int32
 	RowsFailed  int32
+	// RowsSkipped counts the rows of the file a selection left out.
+	RowsSkipped int32
 	Errors      []ImportRowError
 }
 
@@ -56,6 +68,9 @@ type ImportResult struct {
 	// and Mappings how each column was filled. Both are empty otherwise.
 	ShapedCSV []byte
 	Mappings  []ColumnMapping
+	// DateOrder is the order the sheet's numeric dates were read in, so a screen
+	// that edits the mapping can send it back.
+	DateOrder string
 	// Rows says, for each row, what the import read and whether the person is
 	// already known. It is set on a dry run only, and holds the first
 	// MaxPreviewRows rows of a longer file.
@@ -77,16 +92,27 @@ func (s *Service) ImportContacts(ctx context.Context, in ImportContactsInput) (I
 	}
 	var result ImportResult
 	data := in.CSV
-	if in.Reshape {
-		shaped, mappings, err := s.reshapeImportCSV(ctx, in.CSV)
+	switch {
+	case len(in.Mappings) > 0:
+		shaped, shape, err := shapeWithMapping(in.CSV, in.Mappings, in.DateOrder)
+		if err != nil {
+			return ImportResult{}, err
+		}
+		data, result.ShapedCSV, result.Mappings, result.DateOrder = shaped, shaped, shape.mappings, shape.dateOrder
+	case in.Reshape:
+		shaped, shape, err := s.reshapeSheet(ctx, in.CSV)
 		if err != nil {
 			return ImportResult{}, err
 		}
 		if shaped != nil {
-			data, result.ShapedCSV, result.Mappings = shaped, shaped, mappings
+			data, result.ShapedCSV, result.Mappings, result.DateOrder = shaped, shaped, shape.mappings, shape.dateOrder
 		}
 	}
-	rows, err := parseImportCSV(data)
+	allRows, err := parseImportCSV(data)
+	if err != nil {
+		return ImportResult{}, err
+	}
+	rows, skipped, err := selectRows(allRows, in.Selection)
 	if err != nil {
 		return ImportResult{}, err
 	}
@@ -97,11 +123,12 @@ func (s *Service) ImportContacts(ctx context.Context, in ImportContactsInput) (I
 
 	if in.DryRun {
 		// Read before anything is applied, so a row is judged against the book as it
-		// is now and not as the dry run's own rows would leave it.
-		if result.Rows, err = s.previewImportRows(ctx, store.New(s.pool), owner, rows); err != nil {
+		// is now and not as the dry run's own rows would leave it. Every row is
+		// previewed, selected or not: the user needs to see what they left out.
+		if result.Rows, err = s.previewImportRows(ctx, store.New(s.pool), owner, allRows); err != nil {
 			return ImportResult{}, err
 		}
-		result.PreviewTruncated = len(rows) > len(result.Rows)
+		result.PreviewTruncated = len(allRows) > len(result.Rows)
 	}
 
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
@@ -109,6 +136,7 @@ func (s *Service) ImportContacts(ctx context.Context, in ImportContactsInput) (I
 		if err != nil {
 			return err
 		}
+		report.RowsSkipped = skipped
 		result.Report = report
 		if in.DryRun {
 			return errDryRun

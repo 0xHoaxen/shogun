@@ -84,7 +84,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/kagami/internal/app/importcsv*.go`.
   Done when: `cd services/kagami && go test -race ./internal/app/...`.
 
-- [ ] **V3.3 Import with your choices: kagami** (M) Needs: V3.2
+- [x] **V3.3 Import with your choices: kagami** (M) Needs: V3.2
   Do: `ImportContacts` accepts the user's mapping (overrides the AI's, same validation) and the list of row indexes to import; duplicates are skipped unless ticked. Limit 5,000 rows (reason `IMPORT_TOO_LARGE`).
   Files: `services/kagami/**`, `proto/shogun/kagami/v1/kagami.proto`.
   Done when: `make proto && cd services/kagami && go test -race ./...`.
