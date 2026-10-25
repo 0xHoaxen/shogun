@@ -9,6 +9,7 @@ package apiv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -94,8 +95,12 @@ type Contact struct {
 	NextFollowUp     string                 `protobuf:"bytes,10,opt,name=next_follow_up,json=nextFollowUp,proto3" json:"next_follow_up,omitempty"`
 	Notes            string                 `protobuf:"bytes,11,opt,name=notes,proto3" json:"notes,omitempty"`
 	Version          int32                  `protobuf:"varint,12,opt,name=version,proto3" json:"version,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// relationship is one of recruiter, engineer, manager, alumni, friend, other,
+	// or empty.
+	Relationship  string `protobuf:"bytes,13,opt,name=relationship,proto3" json:"relationship,omitempty"`
+	HowWeMet      string `protobuf:"bytes,14,opt,name=how_we_met,json=howWeMet,proto3" json:"how_we_met,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Contact) Reset() {
@@ -210,6 +215,20 @@ func (x *Contact) GetVersion() int32 {
 		return x.Version
 	}
 	return 0
+}
+
+func (x *Contact) GetRelationship() string {
+	if x != nil {
+		return x.Relationship
+	}
+	return ""
+}
+
+func (x *Contact) GetHowWeMet() string {
+	if x != nil {
+		return x.HowWeMet
+	}
+	return ""
 }
 
 type ListContactsRequest struct {
@@ -343,8 +362,11 @@ type AddContactRequest struct {
 	LinkedinUrl      string                 `protobuf:"bytes,5,opt,name=linkedin_url,json=linkedinUrl,proto3" json:"linkedin_url,omitempty"`
 	PreferredChannel string                 `protobuf:"bytes,6,opt,name=preferred_channel,json=preferredChannel,proto3" json:"preferred_channel,omitempty"`
 	Notes            string                 `protobuf:"bytes,7,opt,name=notes,proto3" json:"notes,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// relationship must be one of the six values or empty (INVALID_RELATIONSHIP).
+	Relationship  string `protobuf:"bytes,8,opt,name=relationship,proto3" json:"relationship,omitempty"`
+	HowWeMet      string `protobuf:"bytes,9,opt,name=how_we_met,json=howWeMet,proto3" json:"how_we_met,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AddContactRequest) Reset() {
@@ -422,6 +444,20 @@ func (x *AddContactRequest) GetPreferredChannel() string {
 func (x *AddContactRequest) GetNotes() string {
 	if x != nil {
 		return x.Notes
+	}
+	return ""
+}
+
+func (x *AddContactRequest) GetRelationship() string {
+	if x != nil {
+		return x.Relationship
+	}
+	return ""
+}
+
+func (x *AddContactRequest) GetHowWeMet() string {
+	if x != nil {
+		return x.HowWeMet
 	}
 	return ""
 }
@@ -574,6 +610,390 @@ func (x *ChangeContactStatusResponse) GetContact() *Contact {
 	return nil
 }
 
+type GetContactRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetContactRequest) Reset() {
+	*x = GetContactRequest{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetContactRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetContactRequest) ProtoMessage() {}
+
+func (x *GetContactRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetContactRequest.ProtoReflect.Descriptor instead.
+func (*GetContactRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetContactRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+// ContactEvent is one line of a contact's history.
+type ContactEvent struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// kind is created, status_changed, message_sent, reply_received or note.
+	Kind    string `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
+	Channel string `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"`
+	// text is the note's text for a note, and empty for other kinds.
+	Text          string                 `protobuf:"bytes,4,opt,name=text,proto3" json:"text,omitempty"`
+	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContactEvent) Reset() {
+	*x = ContactEvent{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContactEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContactEvent) ProtoMessage() {}
+
+func (x *ContactEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContactEvent.ProtoReflect.Descriptor instead.
+func (*ContactEvent) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ContactEvent) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetChannel() string {
+	if x != nil {
+		return x.Channel
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+func (x *ContactEvent) GetOccurredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.OccurredAt
+	}
+	return nil
+}
+
+type GetContactResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	History       []*ContactEvent        `protobuf:"bytes,2,rep,name=history,proto3" json:"history,omitempty"`
+	LinkedJobs    []*JobCard             `protobuf:"bytes,3,rep,name=linked_jobs,json=linkedJobs,proto3" json:"linked_jobs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetContactResponse) Reset() {
+	*x = GetContactResponse{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetContactResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetContactResponse) ProtoMessage() {}
+
+func (x *GetContactResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetContactResponse.ProtoReflect.Descriptor instead.
+func (*GetContactResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *GetContactResponse) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
+func (x *GetContactResponse) GetHistory() []*ContactEvent {
+	if x != nil {
+		return x.History
+	}
+	return nil
+}
+
+func (x *GetContactResponse) GetLinkedJobs() []*JobCard {
+	if x != nil {
+		return x.LinkedJobs
+	}
+	return nil
+}
+
+type AddContactNoteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddContactNoteRequest) Reset() {
+	*x = AddContactNoteRequest{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddContactNoteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddContactNoteRequest) ProtoMessage() {}
+
+func (x *AddContactNoteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddContactNoteRequest.ProtoReflect.Descriptor instead.
+func (*AddContactNoteRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *AddContactNoteRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AddContactNoteRequest) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type AddContactNoteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Note          *ContactEvent          `protobuf:"bytes,1,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddContactNoteResponse) Reset() {
+	*x = AddContactNoteResponse{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddContactNoteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddContactNoteResponse) ProtoMessage() {}
+
+func (x *AddContactNoteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddContactNoteResponse.ProtoReflect.Descriptor instead.
+func (*AddContactNoteResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *AddContactNoteResponse) GetNote() *ContactEvent {
+	if x != nil {
+		return x.Note
+	}
+	return nil
+}
+
+type MarkContactedRequest struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Id      string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Version int32                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	// on is YYYY-MM-DD; empty means today in the owner's time zone.
+	On            string `protobuf:"bytes,3,opt,name=on,proto3" json:"on,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkContactedRequest) Reset() {
+	*x = MarkContactedRequest{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkContactedRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkContactedRequest) ProtoMessage() {}
+
+func (x *MarkContactedRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkContactedRequest.ProtoReflect.Descriptor instead.
+func (*MarkContactedRequest) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *MarkContactedRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *MarkContactedRequest) GetVersion() int32 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *MarkContactedRequest) GetOn() string {
+	if x != nil {
+		return x.On
+	}
+	return ""
+}
+
+type MarkContactedResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Contact       *Contact               `protobuf:"bytes,1,opt,name=contact,proto3" json:"contact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkContactedResponse) Reset() {
+	*x = MarkContactedResponse{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkContactedResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkContactedResponse) ProtoMessage() {}
+
+func (x *MarkContactedResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkContactedResponse.ProtoReflect.Descriptor instead.
+func (*MarkContactedResponse) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *MarkContactedResponse) GetContact() *Contact {
+	if x != nil {
+		return x.Contact
+	}
+	return nil
+}
+
 type ImportContactsRequest struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Filename string                 `protobuf:"bytes,1,opt,name=filename,proto3" json:"filename,omitempty"`
@@ -581,14 +1001,23 @@ type ImportContactsRequest struct {
 	DryRun   bool                   `protobuf:"varint,3,opt,name=dry_run,json=dryRun,proto3" json:"dry_run,omitempty"`
 	// reshape asks the owner's AI provider to map a sheet with other columns
 	// onto the import columns first. A sheet that already has them is not sent.
-	Reshape       bool `protobuf:"varint,4,opt,name=reshape,proto3" json:"reshape,omitempty"`
+	Reshape bool `protobuf:"varint,4,opt,name=reshape,proto3" json:"reshape,omitempty"`
+	// mappings is the caller's own column mapping; when set it is used instead of
+	// the AI's and no model is called (INVALID_MAPPING when it does not fit the
+	// sheet). date_order is dmy, mdy or ymd, or empty.
+	Mappings  []*ColumnMapping `protobuf:"bytes,5,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	DateOrder string           `protobuf:"bytes,6,opt,name=date_order,json=dateOrder,proto3" json:"date_order,omitempty"`
+	// selection limits the import to some rows; unset imports all. A duplicate is
+	// imported only if it is listed. Row numbers are those of the preview, so
+	// preview again after changing the mapping (INVALID_ROW_SELECTION otherwise).
+	Selection     *RowSelection `protobuf:"bytes,7,opt,name=selection,proto3" json:"selection,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ImportContactsRequest) Reset() {
 	*x = ImportContactsRequest{}
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[7]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +1029,7 @@ func (x *ImportContactsRequest) String() string {
 func (*ImportContactsRequest) ProtoMessage() {}
 
 func (x *ImportContactsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[7]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +1042,7 @@ func (x *ImportContactsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportContactsRequest.ProtoReflect.Descriptor instead.
 func (*ImportContactsRequest) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{7}
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ImportContactsRequest) GetFilename() string {
@@ -644,6 +1073,211 @@ func (x *ImportContactsRequest) GetReshape() bool {
 	return false
 }
 
+func (x *ImportContactsRequest) GetMappings() []*ColumnMapping {
+	if x != nil {
+		return x.Mappings
+	}
+	return nil
+}
+
+func (x *ImportContactsRequest) GetDateOrder() string {
+	if x != nil {
+		return x.DateOrder
+	}
+	return ""
+}
+
+func (x *ImportContactsRequest) GetSelection() *RowSelection {
+	if x != nil {
+		return x.Selection
+	}
+	return nil
+}
+
+type RowSelection struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Rows          []int32                `protobuf:"varint,1,rep,packed,name=rows,proto3" json:"rows,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RowSelection) Reset() {
+	*x = RowSelection{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RowSelection) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RowSelection) ProtoMessage() {}
+
+func (x *RowSelection) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RowSelection.ProtoReflect.Descriptor instead.
+func (*RowSelection) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *RowSelection) GetRows() []int32 {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+// ImportPreviewRow is one row of a dry run.
+type ImportPreviewRow struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// row is the 1-based CSV row number, counting the header as row 1.
+	Row      int32  `protobuf:"varint,1,opt,name=row,proto3" json:"row,omitempty"`
+	FullName string `protobuf:"bytes,2,opt,name=full_name,json=fullName,proto3" json:"full_name,omitempty"`
+	Role     string `protobuf:"bytes,3,opt,name=role,proto3" json:"role,omitempty"`
+	Company  string `protobuf:"bytes,4,opt,name=company,proto3" json:"company,omitempty"`
+	Email    string `protobuf:"bytes,5,opt,name=email,proto3" json:"email,omitempty"`
+	// relationship is the file's, or a guess from the role when it has none.
+	Relationship        string `protobuf:"bytes,6,opt,name=relationship,proto3" json:"relationship,omitempty"`
+	RelationshipGuessed bool   `protobuf:"varint,7,opt,name=relationship_guessed,json=relationshipGuessed,proto3" json:"relationship_guessed,omitempty"`
+	// duplicate is true when the person is already in the book (by email,
+	// LinkedIn, or the same name at the same company).
+	Duplicate          bool   `protobuf:"varint,8,opt,name=duplicate,proto3" json:"duplicate,omitempty"`
+	DuplicateContactId string `protobuf:"bytes,9,opt,name=duplicate_contact_id,json=duplicateContactId,proto3" json:"duplicate_contact_id,omitempty"`
+	// duplicate_reason is email, linkedin or name_company.
+	DuplicateReason string `protobuf:"bytes,10,opt,name=duplicate_reason,json=duplicateReason,proto3" json:"duplicate_reason,omitempty"`
+	// repeats_row is the earlier row of this file that is the same person, or 0.
+	RepeatsRow int32 `protobuf:"varint,11,opt,name=repeats_row,json=repeatsRow,proto3" json:"repeats_row,omitempty"`
+	// problem says why the row cannot be imported; empty when it can.
+	Problem       string `protobuf:"bytes,12,opt,name=problem,proto3" json:"problem,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImportPreviewRow) Reset() {
+	*x = ImportPreviewRow{}
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImportPreviewRow) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImportPreviewRow) ProtoMessage() {}
+
+func (x *ImportPreviewRow) ProtoReflect() protoreflect.Message {
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImportPreviewRow.ProtoReflect.Descriptor instead.
+func (*ImportPreviewRow) Descriptor() ([]byte, []int) {
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ImportPreviewRow) GetRow() int32 {
+	if x != nil {
+		return x.Row
+	}
+	return 0
+}
+
+func (x *ImportPreviewRow) GetFullName() string {
+	if x != nil {
+		return x.FullName
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetCompany() string {
+	if x != nil {
+		return x.Company
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRelationship() string {
+	if x != nil {
+		return x.Relationship
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRelationshipGuessed() bool {
+	if x != nil {
+		return x.RelationshipGuessed
+	}
+	return false
+}
+
+func (x *ImportPreviewRow) GetDuplicate() bool {
+	if x != nil {
+		return x.Duplicate
+	}
+	return false
+}
+
+func (x *ImportPreviewRow) GetDuplicateContactId() string {
+	if x != nil {
+		return x.DuplicateContactId
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetDuplicateReason() string {
+	if x != nil {
+		return x.DuplicateReason
+	}
+	return ""
+}
+
+func (x *ImportPreviewRow) GetRepeatsRow() int32 {
+	if x != nil {
+		return x.RepeatsRow
+	}
+	return 0
+}
+
+func (x *ImportPreviewRow) GetProblem() string {
+	if x != nil {
+		return x.Problem
+	}
+	return ""
+}
+
 type ImportRowError struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// row is the 1-based CSV row number, counting the header as row 1.
@@ -656,7 +1290,7 @@ type ImportRowError struct {
 
 func (x *ImportRowError) Reset() {
 	*x = ImportRowError{}
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[8]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -668,7 +1302,7 @@ func (x *ImportRowError) String() string {
 func (*ImportRowError) ProtoMessage() {}
 
 func (x *ImportRowError) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[8]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -681,7 +1315,7 @@ func (x *ImportRowError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportRowError.ProtoReflect.Descriptor instead.
 func (*ImportRowError) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{8}
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ImportRowError) GetRow() int32 {
@@ -706,19 +1340,21 @@ func (x *ImportRowError) GetMessage() string {
 }
 
 type ImportReport struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RowsTotal     int32                  `protobuf:"varint,1,opt,name=rows_total,json=rowsTotal,proto3" json:"rows_total,omitempty"`
-	RowsCreated   int32                  `protobuf:"varint,2,opt,name=rows_created,json=rowsCreated,proto3" json:"rows_created,omitempty"`
-	RowsUpdated   int32                  `protobuf:"varint,3,opt,name=rows_updated,json=rowsUpdated,proto3" json:"rows_updated,omitempty"`
-	RowsFailed    int32                  `protobuf:"varint,4,opt,name=rows_failed,json=rowsFailed,proto3" json:"rows_failed,omitempty"`
-	Errors        []*ImportRowError      `protobuf:"bytes,5,rep,name=errors,proto3" json:"errors,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	RowsTotal   int32                  `protobuf:"varint,1,opt,name=rows_total,json=rowsTotal,proto3" json:"rows_total,omitempty"`
+	RowsCreated int32                  `protobuf:"varint,2,opt,name=rows_created,json=rowsCreated,proto3" json:"rows_created,omitempty"`
+	RowsUpdated int32                  `protobuf:"varint,3,opt,name=rows_updated,json=rowsUpdated,proto3" json:"rows_updated,omitempty"`
+	RowsFailed  int32                  `protobuf:"varint,4,opt,name=rows_failed,json=rowsFailed,proto3" json:"rows_failed,omitempty"`
+	Errors      []*ImportRowError      `protobuf:"bytes,5,rep,name=errors,proto3" json:"errors,omitempty"`
+	// rows_skipped counts rows a selection left out.
+	RowsSkipped   int32 `protobuf:"varint,6,opt,name=rows_skipped,json=rowsSkipped,proto3" json:"rows_skipped,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ImportReport) Reset() {
 	*x = ImportReport{}
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[9]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -730,7 +1366,7 @@ func (x *ImportReport) String() string {
 func (*ImportReport) ProtoMessage() {}
 
 func (x *ImportReport) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[9]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -743,7 +1379,7 @@ func (x *ImportReport) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportReport.ProtoReflect.Descriptor instead.
 func (*ImportReport) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{9}
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ImportReport) GetRowsTotal() int32 {
@@ -781,6 +1417,13 @@ func (x *ImportReport) GetErrors() []*ImportRowError {
 	return nil
 }
 
+func (x *ImportReport) GetRowsSkipped() int32 {
+	if x != nil {
+		return x.RowsSkipped
+	}
+	return 0
+}
+
 type ImportContactsResponse struct {
 	state  protoimpl.MessageState `protogen:"open.v1"`
 	Report *ImportReport          `protobuf:"bytes,1,opt,name=report,proto3" json:"report,omitempty"`
@@ -790,14 +1433,20 @@ type ImportContactsResponse struct {
 	// it. Import it with reshape off to apply exactly what was previewed.
 	ShapedCsv []byte `protobuf:"bytes,3,opt,name=shaped_csv,json=shapedCsv,proto3" json:"shaped_csv,omitempty"`
 	// mappings say which columns of the sheet fill each import column.
-	Mappings      []*ColumnMapping `protobuf:"bytes,4,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	Mappings []*ColumnMapping `protobuf:"bytes,4,rep,name=mappings,proto3" json:"mappings,omitempty"`
+	// date_order is how numeric dates were read; send it back with mappings.
+	DateOrder string `protobuf:"bytes,5,opt,name=date_order,json=dateOrder,proto3" json:"date_order,omitempty"`
+	// rows previews the first 1000 rows of a dry run; rows_truncated says there
+	// were more. The report counts every row.
+	Rows          []*ImportPreviewRow `protobuf:"bytes,6,rep,name=rows,proto3" json:"rows,omitempty"`
+	RowsTruncated bool                `protobuf:"varint,7,opt,name=rows_truncated,json=rowsTruncated,proto3" json:"rows_truncated,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ImportContactsResponse) Reset() {
 	*x = ImportContactsResponse{}
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[10]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -809,7 +1458,7 @@ func (x *ImportContactsResponse) String() string {
 func (*ImportContactsResponse) ProtoMessage() {}
 
 func (x *ImportContactsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[10]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -822,7 +1471,7 @@ func (x *ImportContactsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImportContactsResponse.ProtoReflect.Descriptor instead.
 func (*ImportContactsResponse) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{10}
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ImportContactsResponse) GetReport() *ImportReport {
@@ -853,6 +1502,27 @@ func (x *ImportContactsResponse) GetMappings() []*ColumnMapping {
 	return nil
 }
 
+func (x *ImportContactsResponse) GetDateOrder() string {
+	if x != nil {
+		return x.DateOrder
+	}
+	return ""
+}
+
+func (x *ImportContactsResponse) GetRows() []*ImportPreviewRow {
+	if x != nil {
+		return x.Rows
+	}
+	return nil
+}
+
+func (x *ImportContactsResponse) GetRowsTruncated() bool {
+	if x != nil {
+		return x.RowsTruncated
+	}
+	return false
+}
+
 // ColumnMapping fills one import column from columns of the sheet.
 type ColumnMapping struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -864,7 +1534,7 @@ type ColumnMapping struct {
 
 func (x *ColumnMapping) Reset() {
 	*x = ColumnMapping{}
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[11]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -876,7 +1546,7 @@ func (x *ColumnMapping) String() string {
 func (*ColumnMapping) ProtoMessage() {}
 
 func (x *ColumnMapping) ProtoReflect() protoreflect.Message {
-	mi := &file_shogun_api_v1_contacts_proto_msgTypes[11]
+	mi := &file_shogun_api_v1_contacts_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -889,7 +1559,7 @@ func (x *ColumnMapping) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ColumnMapping.ProtoReflect.Descriptor instead.
 func (*ColumnMapping) Descriptor() ([]byte, []int) {
-	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{11}
+	return file_shogun_api_v1_contacts_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ColumnMapping) GetTarget() string {
@@ -910,7 +1580,7 @@ var File_shogun_api_v1_contacts_proto protoreflect.FileDescriptor
 
 const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\n" +
-	"\x1cshogun/api/v1/contacts.proto\x12\rshogun.api.v1\"\x86\x03\n" +
+	"\x1cshogun/api/v1/contacts.proto\x12\rshogun.api.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18shogun/api/v1/jobs.proto\"\xc8\x03\n" +
 	"\aContact\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
 	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x12\n" +
@@ -924,7 +1594,10 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\x0enext_follow_up\x18\n" +
 	" \x01(\tR\fnextFollowUp\x12\x14\n" +
 	"\x05notes\x18\v \x01(\tR\x05notes\x12\x18\n" +
-	"\aversion\x18\f \x01(\x05R\aversion\"\x9d\x01\n" +
+	"\aversion\x18\f \x01(\x05R\aversion\x12\"\n" +
+	"\frelationship\x18\r \x01(\tR\frelationship\x12\x1c\n" +
+	"\n" +
+	"how_we_met\x18\x0e \x01(\tR\bhowWeMet\"\x9d\x01\n" +
 	"\x13ListContactsRequest\x124\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x1c.shogun.api.v1.ContactStatusR\x06status\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\x12\x1b\n" +
@@ -933,7 +1606,7 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"page_token\x18\x04 \x01(\tR\tpageToken\"r\n" +
 	"\x14ListContactsResponse\x122\n" +
 	"\bcontacts\x18\x01 \x03(\v2\x16.shogun.api.v1.ContactR\bcontacts\x12&\n" +
-	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xe3\x01\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\xa5\x02\n" +
 	"\x11AddContactRequest\x12\x1b\n" +
 	"\tfull_name\x18\x01 \x01(\tR\bfullName\x12\x12\n" +
 	"\x04role\x18\x02 \x01(\tR\x04role\x12!\n" +
@@ -941,7 +1614,10 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\x05email\x18\x04 \x01(\tR\x05email\x12!\n" +
 	"\flinkedin_url\x18\x05 \x01(\tR\vlinkedinUrl\x12+\n" +
 	"\x11preferred_channel\x18\x06 \x01(\tR\x10preferredChannel\x12\x14\n" +
-	"\x05notes\x18\a \x01(\tR\x05notes\"F\n" +
+	"\x05notes\x18\a \x01(\tR\x05notes\x12\"\n" +
+	"\frelationship\x18\b \x01(\tR\frelationship\x12\x1c\n" +
+	"\n" +
+	"how_we_met\x18\t \x01(\tR\bhowWeMet\"F\n" +
 	"\x12AddContactResponse\x120\n" +
 	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\"\x81\x01\n" +
 	"\x1aChangeContactStatusRequest\x12\x0e\n" +
@@ -949,16 +1625,62 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\tto_status\x18\x02 \x01(\x0e2\x1c.shogun.api.v1.ContactStatusR\btoStatus\x12\x18\n" +
 	"\aversion\x18\x03 \x01(\x05R\aversion\"O\n" +
 	"\x1bChangeContactStatusResponse\x120\n" +
-	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\"x\n" +
+	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\"#\n" +
+	"\x11GetContactRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x9d\x01\n" +
+	"\fContactEvent\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x18\n" +
+	"\achannel\x18\x03 \x01(\tR\achannel\x12\x12\n" +
+	"\x04text\x18\x04 \x01(\tR\x04text\x12;\n" +
+	"\voccurred_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"occurredAt\"\xb6\x01\n" +
+	"\x12GetContactResponse\x120\n" +
+	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\x125\n" +
+	"\ahistory\x18\x02 \x03(\v2\x1b.shogun.api.v1.ContactEventR\ahistory\x127\n" +
+	"\vlinked_jobs\x18\x03 \x03(\v2\x16.shogun.api.v1.JobCardR\n" +
+	"linkedJobs\";\n" +
+	"\x15AddContactNoteRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04text\x18\x02 \x01(\tR\x04text\"I\n" +
+	"\x16AddContactNoteResponse\x12/\n" +
+	"\x04note\x18\x01 \x01(\v2\x1b.shogun.api.v1.ContactEventR\x04note\"P\n" +
+	"\x14MarkContactedRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
+	"\aversion\x18\x02 \x01(\x05R\aversion\x12\x0e\n" +
+	"\x02on\x18\x03 \x01(\tR\x02on\"I\n" +
+	"\x15MarkContactedResponse\x120\n" +
+	"\acontact\x18\x01 \x01(\v2\x16.shogun.api.v1.ContactR\acontact\"\x8c\x02\n" +
 	"\x15ImportContactsRequest\x12\x1a\n" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\x12\x10\n" +
 	"\x03csv\x18\x02 \x01(\fR\x03csv\x12\x17\n" +
 	"\adry_run\x18\x03 \x01(\bR\x06dryRun\x12\x18\n" +
-	"\areshape\x18\x04 \x01(\bR\areshape\"T\n" +
+	"\areshape\x18\x04 \x01(\bR\areshape\x128\n" +
+	"\bmappings\x18\x05 \x03(\v2\x1c.shogun.api.v1.ColumnMappingR\bmappings\x12\x1d\n" +
+	"\n" +
+	"date_order\x18\x06 \x01(\tR\tdateOrder\x129\n" +
+	"\tselection\x18\a \x01(\v2\x1b.shogun.api.v1.RowSelectionR\tselection\"\"\n" +
+	"\fRowSelection\x12\x12\n" +
+	"\x04rows\x18\x01 \x03(\x05R\x04rows\"\x92\x03\n" +
+	"\x10ImportPreviewRow\x12\x10\n" +
+	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x1b\n" +
+	"\tfull_name\x18\x02 \x01(\tR\bfullName\x12\x12\n" +
+	"\x04role\x18\x03 \x01(\tR\x04role\x12\x18\n" +
+	"\acompany\x18\x04 \x01(\tR\acompany\x12\x14\n" +
+	"\x05email\x18\x05 \x01(\tR\x05email\x12\"\n" +
+	"\frelationship\x18\x06 \x01(\tR\frelationship\x121\n" +
+	"\x14relationship_guessed\x18\a \x01(\bR\x13relationshipGuessed\x12\x1c\n" +
+	"\tduplicate\x18\b \x01(\bR\tduplicate\x120\n" +
+	"\x14duplicate_contact_id\x18\t \x01(\tR\x12duplicateContactId\x12)\n" +
+	"\x10duplicate_reason\x18\n" +
+	" \x01(\tR\x0fduplicateReason\x12\x1f\n" +
+	"\vrepeats_row\x18\v \x01(\x05R\n" +
+	"repeatsRow\x12\x18\n" +
+	"\aproblem\x18\f \x01(\tR\aproblem\"T\n" +
 	"\x0eImportRowError\x12\x10\n" +
 	"\x03row\x18\x01 \x01(\x05R\x03row\x12\x16\n" +
 	"\x06column\x18\x02 \x01(\tR\x06column\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\xcb\x01\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xee\x01\n" +
 	"\fImportReport\x12\x1d\n" +
 	"\n" +
 	"rows_total\x18\x01 \x01(\x05R\trowsTotal\x12!\n" +
@@ -966,13 +1688,18 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\frows_updated\x18\x03 \x01(\x05R\vrowsUpdated\x12\x1f\n" +
 	"\vrows_failed\x18\x04 \x01(\x05R\n" +
 	"rowsFailed\x125\n" +
-	"\x06errors\x18\x05 \x03(\v2\x1d.shogun.api.v1.ImportRowErrorR\x06errors\"\xc3\x01\n" +
+	"\x06errors\x18\x05 \x03(\v2\x1d.shogun.api.v1.ImportRowErrorR\x06errors\x12!\n" +
+	"\frows_skipped\x18\x06 \x01(\x05R\vrowsSkipped\"\xbe\x02\n" +
 	"\x16ImportContactsResponse\x123\n" +
 	"\x06report\x18\x01 \x01(\v2\x1b.shogun.api.v1.ImportReportR\x06report\x12\x1b\n" +
 	"\timport_id\x18\x02 \x01(\tR\bimportId\x12\x1d\n" +
 	"\n" +
 	"shaped_csv\x18\x03 \x01(\fR\tshapedCsv\x128\n" +
-	"\bmappings\x18\x04 \x03(\v2\x1c.shogun.api.v1.ColumnMappingR\bmappings\"A\n" +
+	"\bmappings\x18\x04 \x03(\v2\x1c.shogun.api.v1.ColumnMappingR\bmappings\x12\x1d\n" +
+	"\n" +
+	"date_order\x18\x05 \x01(\tR\tdateOrder\x123\n" +
+	"\x04rows\x18\x06 \x03(\v2\x1f.shogun.api.v1.ImportPreviewRowR\x04rows\x12%\n" +
+	"\x0erows_truncated\x18\a \x01(\bR\rrowsTruncated\"A\n" +
 	"\rColumnMapping\x12\x16\n" +
 	"\x06target\x18\x01 \x01(\tR\x06target\x12\x18\n" +
 	"\asources\x18\x02 \x03(\tR\asources*\xd7\x01\n" +
@@ -982,12 +1709,16 @@ const file_shogun_api_v1_contacts_proto_rawDesc = "" +
 	"\x1aCONTACT_STATUS_REACHED_OUT\x10\x02\x12'\n" +
 	"#CONTACT_STATUS_CONVERSATION_STARTED\x10\x03\x12\x1a\n" +
 	"\x16CONTACT_STATUS_REPLIED\x10\x04\x12!\n" +
-	"\x1dCONTACT_STATUS_REFERRAL_ASKED\x10\x052\x8a\x03\n" +
+	"\x1dCONTACT_STATUS_REFERRAL_ASKED\x10\x052\x98\x05\n" +
 	"\x0fContactsService\x12W\n" +
 	"\fListContacts\x12\".shogun.api.v1.ListContactsRequest\x1a#.shogun.api.v1.ListContactsResponse\x12Q\n" +
 	"\n" +
 	"AddContact\x12 .shogun.api.v1.AddContactRequest\x1a!.shogun.api.v1.AddContactResponse\x12l\n" +
-	"\x13ChangeContactStatus\x12).shogun.api.v1.ChangeContactStatusRequest\x1a*.shogun.api.v1.ChangeContactStatusResponse\x12]\n" +
+	"\x13ChangeContactStatus\x12).shogun.api.v1.ChangeContactStatusRequest\x1a*.shogun.api.v1.ChangeContactStatusResponse\x12Q\n" +
+	"\n" +
+	"GetContact\x12 .shogun.api.v1.GetContactRequest\x1a!.shogun.api.v1.GetContactResponse\x12]\n" +
+	"\x0eAddContactNote\x12$.shogun.api.v1.AddContactNoteRequest\x1a%.shogun.api.v1.AddContactNoteResponse\x12Z\n" +
+	"\rMarkContacted\x12#.shogun.api.v1.MarkContactedRequest\x1a$.shogun.api.v1.MarkContactedResponse\x12]\n" +
 	"\x0eImportContacts\x12$.shogun.api.v1.ImportContactsRequest\x1a%.shogun.api.v1.ImportContactsResponseB\xaf\x01\n" +
 	"\x11com.shogun.api.v1B\rContactsProtoP\x01Z5github.com/0xHoaxen/shogun/gen/go/shogun/api/v1;apiv1\xa2\x02\x03SAX\xaa\x02\rShogun.Api.V1\xca\x02\rShogun\\Api\\V1\xe2\x02\x19Shogun\\Api\\V1\\GPBMetadata\xea\x02\x0fShogun::Api::V1b\x06proto3"
 
@@ -1004,7 +1735,7 @@ func file_shogun_api_v1_contacts_proto_rawDescGZIP() []byte {
 }
 
 var file_shogun_api_v1_contacts_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_shogun_api_v1_contacts_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
+var file_shogun_api_v1_contacts_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
 var file_shogun_api_v1_contacts_proto_goTypes = []any{
 	(ContactStatus)(0),                  // 0: shogun.api.v1.ContactStatus
 	(*Contact)(nil),                     // 1: shogun.api.v1.Contact
@@ -1014,11 +1745,22 @@ var file_shogun_api_v1_contacts_proto_goTypes = []any{
 	(*AddContactResponse)(nil),          // 5: shogun.api.v1.AddContactResponse
 	(*ChangeContactStatusRequest)(nil),  // 6: shogun.api.v1.ChangeContactStatusRequest
 	(*ChangeContactStatusResponse)(nil), // 7: shogun.api.v1.ChangeContactStatusResponse
-	(*ImportContactsRequest)(nil),       // 8: shogun.api.v1.ImportContactsRequest
-	(*ImportRowError)(nil),              // 9: shogun.api.v1.ImportRowError
-	(*ImportReport)(nil),                // 10: shogun.api.v1.ImportReport
-	(*ImportContactsResponse)(nil),      // 11: shogun.api.v1.ImportContactsResponse
-	(*ColumnMapping)(nil),               // 12: shogun.api.v1.ColumnMapping
+	(*GetContactRequest)(nil),           // 8: shogun.api.v1.GetContactRequest
+	(*ContactEvent)(nil),                // 9: shogun.api.v1.ContactEvent
+	(*GetContactResponse)(nil),          // 10: shogun.api.v1.GetContactResponse
+	(*AddContactNoteRequest)(nil),       // 11: shogun.api.v1.AddContactNoteRequest
+	(*AddContactNoteResponse)(nil),      // 12: shogun.api.v1.AddContactNoteResponse
+	(*MarkContactedRequest)(nil),        // 13: shogun.api.v1.MarkContactedRequest
+	(*MarkContactedResponse)(nil),       // 14: shogun.api.v1.MarkContactedResponse
+	(*ImportContactsRequest)(nil),       // 15: shogun.api.v1.ImportContactsRequest
+	(*RowSelection)(nil),                // 16: shogun.api.v1.RowSelection
+	(*ImportPreviewRow)(nil),            // 17: shogun.api.v1.ImportPreviewRow
+	(*ImportRowError)(nil),              // 18: shogun.api.v1.ImportRowError
+	(*ImportReport)(nil),                // 19: shogun.api.v1.ImportReport
+	(*ImportContactsResponse)(nil),      // 20: shogun.api.v1.ImportContactsResponse
+	(*ColumnMapping)(nil),               // 21: shogun.api.v1.ColumnMapping
+	(*timestamppb.Timestamp)(nil),       // 22: google.protobuf.Timestamp
+	(*JobCard)(nil),                     // 23: shogun.api.v1.JobCard
 }
 var file_shogun_api_v1_contacts_proto_depIdxs = []int32{
 	0,  // 0: shogun.api.v1.Contact.status:type_name -> shogun.api.v1.ContactStatus
@@ -1027,22 +1769,37 @@ var file_shogun_api_v1_contacts_proto_depIdxs = []int32{
 	1,  // 3: shogun.api.v1.AddContactResponse.contact:type_name -> shogun.api.v1.Contact
 	0,  // 4: shogun.api.v1.ChangeContactStatusRequest.to_status:type_name -> shogun.api.v1.ContactStatus
 	1,  // 5: shogun.api.v1.ChangeContactStatusResponse.contact:type_name -> shogun.api.v1.Contact
-	9,  // 6: shogun.api.v1.ImportReport.errors:type_name -> shogun.api.v1.ImportRowError
-	10, // 7: shogun.api.v1.ImportContactsResponse.report:type_name -> shogun.api.v1.ImportReport
-	12, // 8: shogun.api.v1.ImportContactsResponse.mappings:type_name -> shogun.api.v1.ColumnMapping
-	2,  // 9: shogun.api.v1.ContactsService.ListContacts:input_type -> shogun.api.v1.ListContactsRequest
-	4,  // 10: shogun.api.v1.ContactsService.AddContact:input_type -> shogun.api.v1.AddContactRequest
-	6,  // 11: shogun.api.v1.ContactsService.ChangeContactStatus:input_type -> shogun.api.v1.ChangeContactStatusRequest
-	8,  // 12: shogun.api.v1.ContactsService.ImportContacts:input_type -> shogun.api.v1.ImportContactsRequest
-	3,  // 13: shogun.api.v1.ContactsService.ListContacts:output_type -> shogun.api.v1.ListContactsResponse
-	5,  // 14: shogun.api.v1.ContactsService.AddContact:output_type -> shogun.api.v1.AddContactResponse
-	7,  // 15: shogun.api.v1.ContactsService.ChangeContactStatus:output_type -> shogun.api.v1.ChangeContactStatusResponse
-	11, // 16: shogun.api.v1.ContactsService.ImportContacts:output_type -> shogun.api.v1.ImportContactsResponse
-	13, // [13:17] is the sub-list for method output_type
-	9,  // [9:13] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	22, // 6: shogun.api.v1.ContactEvent.occurred_at:type_name -> google.protobuf.Timestamp
+	1,  // 7: shogun.api.v1.GetContactResponse.contact:type_name -> shogun.api.v1.Contact
+	9,  // 8: shogun.api.v1.GetContactResponse.history:type_name -> shogun.api.v1.ContactEvent
+	23, // 9: shogun.api.v1.GetContactResponse.linked_jobs:type_name -> shogun.api.v1.JobCard
+	9,  // 10: shogun.api.v1.AddContactNoteResponse.note:type_name -> shogun.api.v1.ContactEvent
+	1,  // 11: shogun.api.v1.MarkContactedResponse.contact:type_name -> shogun.api.v1.Contact
+	21, // 12: shogun.api.v1.ImportContactsRequest.mappings:type_name -> shogun.api.v1.ColumnMapping
+	16, // 13: shogun.api.v1.ImportContactsRequest.selection:type_name -> shogun.api.v1.RowSelection
+	18, // 14: shogun.api.v1.ImportReport.errors:type_name -> shogun.api.v1.ImportRowError
+	19, // 15: shogun.api.v1.ImportContactsResponse.report:type_name -> shogun.api.v1.ImportReport
+	21, // 16: shogun.api.v1.ImportContactsResponse.mappings:type_name -> shogun.api.v1.ColumnMapping
+	17, // 17: shogun.api.v1.ImportContactsResponse.rows:type_name -> shogun.api.v1.ImportPreviewRow
+	2,  // 18: shogun.api.v1.ContactsService.ListContacts:input_type -> shogun.api.v1.ListContactsRequest
+	4,  // 19: shogun.api.v1.ContactsService.AddContact:input_type -> shogun.api.v1.AddContactRequest
+	6,  // 20: shogun.api.v1.ContactsService.ChangeContactStatus:input_type -> shogun.api.v1.ChangeContactStatusRequest
+	8,  // 21: shogun.api.v1.ContactsService.GetContact:input_type -> shogun.api.v1.GetContactRequest
+	11, // 22: shogun.api.v1.ContactsService.AddContactNote:input_type -> shogun.api.v1.AddContactNoteRequest
+	13, // 23: shogun.api.v1.ContactsService.MarkContacted:input_type -> shogun.api.v1.MarkContactedRequest
+	15, // 24: shogun.api.v1.ContactsService.ImportContacts:input_type -> shogun.api.v1.ImportContactsRequest
+	3,  // 25: shogun.api.v1.ContactsService.ListContacts:output_type -> shogun.api.v1.ListContactsResponse
+	5,  // 26: shogun.api.v1.ContactsService.AddContact:output_type -> shogun.api.v1.AddContactResponse
+	7,  // 27: shogun.api.v1.ContactsService.ChangeContactStatus:output_type -> shogun.api.v1.ChangeContactStatusResponse
+	10, // 28: shogun.api.v1.ContactsService.GetContact:output_type -> shogun.api.v1.GetContactResponse
+	12, // 29: shogun.api.v1.ContactsService.AddContactNote:output_type -> shogun.api.v1.AddContactNoteResponse
+	14, // 30: shogun.api.v1.ContactsService.MarkContacted:output_type -> shogun.api.v1.MarkContactedResponse
+	20, // 31: shogun.api.v1.ContactsService.ImportContacts:output_type -> shogun.api.v1.ImportContactsResponse
+	25, // [25:32] is the sub-list for method output_type
+	18, // [18:25] is the sub-list for method input_type
+	18, // [18:18] is the sub-list for extension type_name
+	18, // [18:18] is the sub-list for extension extendee
+	0,  // [0:18] is the sub-list for field type_name
 }
 
 func init() { file_shogun_api_v1_contacts_proto_init() }
@@ -1050,13 +1807,14 @@ func file_shogun_api_v1_contacts_proto_init() {
 	if File_shogun_api_v1_contacts_proto != nil {
 		return
 	}
+	file_shogun_api_v1_jobs_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_shogun_api_v1_contacts_proto_rawDesc), len(file_shogun_api_v1_contacts_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   12,
+			NumMessages:   21,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

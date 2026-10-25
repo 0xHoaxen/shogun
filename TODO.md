@@ -1056,7 +1056,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/kagami/**`, `proto/shogun/kagami/v1/kagami.proto`.
   Done when: `make proto && cd services/kagami && go test -race ./...`.
 
-- [ ] **V3.4 People API in torii** (S) Needs: V3.1, V3.3
+- [x] **V3.4 People API in torii** (S) Needs: V3.1, V3.3
   Do: the new fields and RPCs on `shogun.api.v1.ContactsService`, reasons kept.
   Files: `proto/shogun/api/v1/contacts.proto`, `services/torii/internal/transport/connectapi/contact*.go`.
   Done when: `make proto && cd services/torii && go test -race ./...`.
