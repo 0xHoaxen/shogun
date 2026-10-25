@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { AddPersonPanel } from "@/components/contacts/add-person-panel";
-import { ImportDialog } from "@/components/contacts/import-dialog";
+import { ImportPanel } from "@/components/contacts/import-panel";
 import { isFollowUpDue } from "@/components/contacts/follow-up";
 import { PeopleList } from "@/components/contacts/people-list";
 import { PersonDetail } from "@/components/contacts/person-detail";
@@ -14,6 +14,7 @@ import {
   relationshipOf,
   type Relationship,
 } from "@/components/contacts/relationship";
+import { useImportPeople } from "@/components/contacts/use-import-people";
 import { useMarkContacted } from "@/components/contacts/use-mark-contacted";
 import { MAX_PEOPLE, usePeople } from "@/components/contacts/use-people";
 import { PageHeader } from "@/components/shell/page-header";
@@ -35,6 +36,7 @@ export function PeopleScreen() {
   const params = useSearchParams();
   const { people, loading, failed, capped, retry } = usePeople();
   const marking = useMarkContacted();
+  const importer = useImportPeople();
   const [filter, setFilter] = useState<Filter>("all");
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -85,6 +87,12 @@ export function PeopleScreen() {
         </div>
       </div>
 
+      {importer.error ? (
+        <p role="alert" className="px-[22px] py-3">
+          {importer.error}
+        </p>
+      ) : null}
+
       {failed ? (
         <div className="flex items-center gap-3 p-[22px]">
           <p role="alert">Couldn&apos;t load your people.</p>
@@ -125,7 +133,7 @@ export function PeopleScreen() {
       )}
 
       <AddPersonPanel open={adding} onOpenChange={setAdding} onAdded={(id) => select(id)} />
-      <ImportDialog open={importing} onOpenChange={setImporting} />
+      <ImportPanel open={importing} onOpenChange={setImporting} onImport={importer.start} />
     </>
   );
 }
