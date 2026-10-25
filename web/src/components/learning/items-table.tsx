@@ -19,7 +19,7 @@ function datesOf(item: LearningItem): string {
 
 export function ItemsTable({ items, busyId, onMove }: ItemsTableProps) {
   return (
-    <div className="overflow-x-auto border-b border-ink">
+    <div className="relative overflow-x-auto border-b border-ink">
       <table className="w-full min-w-[760px] border-collapse text-left">
         <caption className="sr-only">Learning items</caption>
         <thead>

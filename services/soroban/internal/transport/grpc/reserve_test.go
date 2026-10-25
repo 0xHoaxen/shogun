@@ -167,8 +167,8 @@ func TestReserveCopiesDefaultBudgetsOnceUnderConcurrentFirstCalls(t *testing.T) 
 		`SELECT count(*) FROM budgets WHERE owner_id = $1`, h.owner).Scan(&budgets); err != nil {
 		t.Fatalf("count budgets: %v", err)
 	}
-	if budgets != 14 {
-		t.Errorf("owner has %d budgets, want the 14 defaults", budgets)
+	if budgets != 15 {
+		t.Errorf("owner has %d budgets, want the 15 defaults", budgets)
 	}
 }
 

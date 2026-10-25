@@ -23,7 +23,7 @@ export function TextField({ label, id, className, ...inputProps }: TextFieldProp
       <input
         id={fieldId}
         className={cn(
-          "min-h-10 w-full border border-ink bg-field px-2.5 py-2 text-xs text-ink",
+          "min-h-10 w-full border border-line2 bg-bg px-2.5 py-2 text-xs text-text",
           className,
         )}
         {...inputProps}
@@ -48,7 +48,7 @@ export function TextAreaField({ label, id, className, ...textareaProps }: TextAr
       <textarea
         id={fieldId}
         className={cn(
-          "min-h-24 w-full border border-ink bg-field px-2.5 py-2 text-xs leading-relaxed text-ink",
+          "min-h-24 w-full border border-line2 bg-bg px-2.5 py-2 text-xs leading-relaxed text-text",
           className,
         )}
         {...textareaProps}
@@ -63,7 +63,7 @@ export function Select({ className, children, ...selectProps }: SelectHTMLAttrib
   return (
     <div className={cn("relative", className)}>
       <select
-        className="min-h-10 w-full cursor-pointer appearance-none border border-ink bg-field py-2 pr-9 pl-2.5 text-xs text-ink disabled:cursor-not-allowed disabled:text-muted-ink"
+        className="min-h-10 w-full cursor-pointer appearance-none border border-line2 bg-bg py-2 pr-9 pl-2.5 text-xs text-text disabled:cursor-not-allowed disabled:text-muted-foreground"
         {...selectProps}
       >
         {children}
@@ -71,7 +71,7 @@ export function Select({ className, children, ...selectProps }: SelectHTMLAttrib
       <svg
         aria-hidden="true"
         viewBox="0 0 10 6"
-        className="pointer-events-none absolute top-1/2 right-3 h-1.5 w-2.5 -translate-y-1/2 text-ink"
+        className="pointer-events-none absolute top-1/2 right-3 h-1.5 w-2.5 -translate-y-1/2 text-text"
       >
         <path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" />
       </svg>

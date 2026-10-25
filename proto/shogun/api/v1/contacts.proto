@@ -2,6 +2,9 @@ syntax = "proto3";
 
 package shogun.api.v1;
 
+import "google/protobuf/timestamp.proto";
+import "shogun/api/v1/jobs.proto";
+
 // ContactsService is the screen-shaped contact API of the web app. Torii maps
 // it onto kagami. Mutating calls honour the Idempotency-Key request header.
 service ContactsService {
@@ -12,6 +15,16 @@ service ContactsService {
   // ChangeContactStatus moves a contact along the state machine; an invalid
   // move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
   rpc ChangeContactStatus(ChangeContactStatusRequest) returns (ChangeContactStatusResponse);
+  // GetContact returns one contact with its notes and history, newest first, and
+  // the owner's jobs at its company (at most 20).
+  rpc GetContact(GetContactRequest) returns (GetContactResponse);
+  // AddContactNote adds a note. Empty text is INVALID_NOTE and text over 2000
+  // characters NOTE_TOO_LONG. It never conflicts with an edit.
+  rpc AddContactNote(AddContactNoteRequest) returns (AddContactNoteResponse);
+  // MarkContacted records that the owner reached the contact themselves. A
+  // contact not yet reached moves to reached out; otherwise only last_contacted
+  // changes. A future date is INVALID_DATE and a stale version VERSION_CONFLICT.
+  rpc MarkContacted(MarkContactedRequest) returns (MarkContactedResponse);
   // ImportContacts parses a contacts CSV. With dry_run nothing is written and
   // the report is the preview shown before the owner confirms. With reshape a
   // sheet with other columns is first mapped onto the import columns by the
@@ -45,6 +58,10 @@ message Contact {
   string next_follow_up = 10;
   string notes = 11;
   int32 version = 12;
+  // relationship is one of recruiter, engineer, manager, alumni, friend, other,
+  // or empty.
+  string relationship = 13;
+  string how_we_met = 14;
 }
 
 message ListContactsRequest {
@@ -69,6 +86,9 @@ message AddContactRequest {
   string linkedin_url = 5;
   string preferred_channel = 6;
   string notes = 7;
+  // relationship must be one of the six values or empty (INVALID_RELATIONSHIP).
+  string relationship = 8;
+  string how_we_met = 9;
 }
 
 message AddContactResponse {
@@ -85,6 +105,47 @@ message ChangeContactStatusResponse {
   Contact contact = 1;
 }
 
+message GetContactRequest {
+  string id = 1;
+}
+
+// ContactEvent is one line of a contact's history.
+message ContactEvent {
+  string id = 1;
+  // kind is created, status_changed, message_sent, reply_received or note.
+  string kind = 2;
+  string channel = 3;
+  // text is the note's text for a note, and empty for other kinds.
+  string text = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+}
+
+message GetContactResponse {
+  Contact contact = 1;
+  repeated ContactEvent history = 2;
+  repeated JobCard linked_jobs = 3;
+}
+
+message AddContactNoteRequest {
+  string id = 1;
+  string text = 2;
+}
+
+message AddContactNoteResponse {
+  ContactEvent note = 1;
+}
+
+message MarkContactedRequest {
+  string id = 1;
+  int32 version = 2;
+  // on is YYYY-MM-DD; empty means today in the owner's time zone.
+  string on = 3;
+}
+
+message MarkContactedResponse {
+  Contact contact = 1;
+}
+
 message ImportContactsRequest {
   string filename = 1;
   bytes csv = 2;
@@ -92,6 +153,42 @@ message ImportContactsRequest {
   // reshape asks the owner's AI provider to map a sheet with other columns
   // onto the import columns first. A sheet that already has them is not sent.
   bool reshape = 4;
+  // mappings is the caller's own column mapping; when set it is used instead of
+  // the AI's and no model is called (INVALID_MAPPING when it does not fit the
+  // sheet). date_order is dmy, mdy or ymd, or empty.
+  repeated ColumnMapping mappings = 5;
+  string date_order = 6;
+  // selection limits the import to some rows; unset imports all. A duplicate is
+  // imported only if it is listed. Row numbers are those of the preview, so
+  // preview again after changing the mapping (INVALID_ROW_SELECTION otherwise).
+  RowSelection selection = 7;
+}
+
+message RowSelection {
+  repeated int32 rows = 1;
+}
+
+// ImportPreviewRow is one row of a dry run.
+message ImportPreviewRow {
+  // row is the 1-based CSV row number, counting the header as row 1.
+  int32 row = 1;
+  string full_name = 2;
+  string role = 3;
+  string company = 4;
+  string email = 5;
+  // relationship is the file's, or a guess from the role when it has none.
+  string relationship = 6;
+  bool relationship_guessed = 7;
+  // duplicate is true when the person is already in the book (by email,
+  // LinkedIn, or the same name at the same company).
+  bool duplicate = 8;
+  string duplicate_contact_id = 9;
+  // duplicate_reason is email, linkedin or name_company.
+  string duplicate_reason = 10;
+  // repeats_row is the earlier row of this file that is the same person, or 0.
+  int32 repeats_row = 11;
+  // problem says why the row cannot be imported; empty when it can.
+  string problem = 12;
 }
 
 message ImportRowError {
@@ -107,6 +204,8 @@ message ImportReport {
   int32 rows_updated = 3;
   int32 rows_failed = 4;
   repeated ImportRowError errors = 5;
+  // rows_skipped counts rows a selection left out.
+  int32 rows_skipped = 6;
 }
 
 message ImportContactsResponse {
@@ -118,6 +217,12 @@ message ImportContactsResponse {
   bytes shaped_csv = 3;
   // mappings say which columns of the sheet fill each import column.
   repeated ColumnMapping mappings = 4;
+  // date_order is how numeric dates were read; send it back with mappings.
+  string date_order = 5;
+  // rows previews the first 1000 rows of a dry run; rows_truncated says there
+  // were more. The report counts every row.
+  repeated ImportPreviewRow rows = 6;
+  bool rows_truncated = 7;
 }
 
 // ColumnMapping fills one import column from columns of the sheet.

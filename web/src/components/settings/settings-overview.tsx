@@ -10,10 +10,10 @@ export function SettingsOverview() {
   return (
     <ul aria-label="Settings sections" className="flex flex-col">
       {tabs.map((tab) => (
-        <li key={tab.href} className="border-b border-ink">
-          <Link href={tab.href} className="flex flex-col gap-1 p-[22px] hover:bg-strip">
+        <li key={tab.href} className="border-b border-line">
+          <Link href={tab.href} className="flex flex-col gap-1 p-[22px] hover:bg-panel">
             <span className="label font-medium">{tab.label}</span>
-            <span className="text-muted-ink">{tab.summary}</span>
+            <span className="text-muted-foreground">{tab.summary}</span>
           </Link>
         </li>
       ))}

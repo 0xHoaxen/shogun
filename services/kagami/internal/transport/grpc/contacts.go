@@ -113,7 +113,37 @@ func (s *Server) GetContact(ctx context.Context, req *kagamiv1.GetContactRequest
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &kagamiv1.GetContactResponse{Contact: out, Timeline: timeline}, nil
+	names, err := s.namesFor(ctx, detail.LinkedJobs, nil)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	linked := make([]*kagamiv1.Job, 0, len(detail.LinkedJobs))
+	for _, j := range detail.LinkedJobs {
+		linked = append(linked, jobToProto(j, names))
+	}
+	return &kagamiv1.GetContactResponse{Contact: out, Timeline: timeline, LinkedJobs: linked}, nil
+}
+
+// AddContactNote implements kagami.v1.KagamiService.
+func (s *Server) AddContactNote(ctx context.Context, req *kagamiv1.AddContactNoteRequest) (*kagamiv1.AddContactNoteResponse, error) {
+	note, err := s.svc.AddContactNote(ctx, req.GetId(), req.GetText())
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.AddContactNoteResponse{Note: contactEventToProto(note)}, nil
+}
+
+// MarkContacted implements kagami.v1.KagamiService.
+func (s *Server) MarkContacted(ctx context.Context, req *kagamiv1.MarkContactedRequest) (*kagamiv1.MarkContactedResponse, error) {
+	contact, err := s.svc.MarkContacted(ctx, app.MarkContactedInput{ID: req.GetId(), Version: req.GetVersion(), On: req.GetOn()})
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	out, err := s.contactProto(ctx, contact)
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &kagamiv1.MarkContactedResponse{Contact: out}, nil
 }
 
 // ChangeContactStatus implements kagami.v1.KagamiService.

@@ -95,6 +95,59 @@ func (q *Queries) FindContactByLinkedin(ctx context.Context, arg FindContactByLi
 	return i, err
 }
 
+const findContactByNameAndCompany = `-- name: FindContactByNameAndCompany :one
+SELECT c.id, c.owner_id, c.full_name, c.company_id, c.role, c.email, c.linkedin_url, c.x_handle, c.phone, c.relationship, c.how_we_met, c.status, c.preferred_channel, c.last_contacted, c.next_follow_up, c.target_role, c.job_id, c.tags, c.notes, c.idempotency_key, c.version, c.created_at, c.updated_at, c.archived_at FROM contacts c
+JOIN companies co ON co.id = c.company_id AND co.owner_id = c.owner_id
+WHERE c.owner_id = $1
+  AND c.archived_at IS NULL
+  AND co.archived_at IS NULL
+  AND lower(btrim(regexp_replace(c.full_name, '\s+', ' ', 'g'))) = $2::text
+  AND lower(co.name) = lower($3::text)
+ORDER BY c.created_at, c.id
+LIMIT 1
+`
+
+type FindContactByNameAndCompanyParams struct {
+	OwnerID uuid.UUID
+	Name    string
+	Company string
+}
+
+// A contact with the same name, in any case and spacing, at the company with the
+// same name, ignoring case. Read-only: it never creates the company. The
+// oldest match wins.
+func (q *Queries) FindContactByNameAndCompany(ctx context.Context, arg FindContactByNameAndCompanyParams) (Contact, error) {
+	row := q.db.QueryRow(ctx, findContactByNameAndCompany, arg.OwnerID, arg.Name, arg.Company)
+	var i Contact
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.FullName,
+		&i.CompanyID,
+		&i.Role,
+		&i.Email,
+		&i.LinkedinUrl,
+		&i.XHandle,
+		&i.Phone,
+		&i.Relationship,
+		&i.HowWeMet,
+		&i.Status,
+		&i.PreferredChannel,
+		&i.LastContacted,
+		&i.NextFollowUp,
+		&i.TargetRole,
+		&i.JobID,
+		&i.Tags,
+		&i.Notes,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+	)
+	return i, err
+}
+
 const getContact = `-- name: GetContact :one
 SELECT id, owner_id, full_name, company_id, role, email, linkedin_url, x_handle, phone, relationship, how_we_met, status, preferred_channel, last_contacted, next_follow_up, target_role, job_id, tags, notes, idempotency_key, version, created_at, updated_at, archived_at FROM contacts WHERE id = $1 AND owner_id = $2
 `

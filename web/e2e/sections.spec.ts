@@ -7,14 +7,14 @@ import { mockRpc } from "./fixtures";
 
 // Every section of the app, with the route that shows it.
 const ROUTES: Record<keyof typeof SECTIONS, string> = {
-  jobs: "/jobs",
-  contacts: "/contacts",
-  drafts: "/drafts",
-  learning: "/learning",
-  profile: "/profile",
-  discovery: "/discovery",
+  jobs: "/pipeline",
+  contacts: "/people",
+  drafts: "/inbox",
+  learning: "/growth",
+  profile: "/growth",
+  discovery: "/settings/discovery",
   insights: "/insights",
-  notifications: "/notifications",
+  notifications: "/inbox",
   settings: "/settings",
   provider: "/settings/provider",
   mail: "/settings/mail",
@@ -59,7 +59,7 @@ test("every section has copy and a route", () => {
 
 test("a closed explainer stays closed after a reload", async ({ page }) => {
   // Arrange
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
   const about = page.getByTestId("about-jobs");
   await expect(about).toHaveJSProperty("open", true);
 
@@ -70,13 +70,13 @@ test("a closed explainer stays closed after a reload", async ({ page }) => {
 
   // Assert
   await expect(page.getByTestId("about-jobs")).toHaveJSProperty("open", false);
-  await page.goto("/contacts");
+  await page.goto("/people");
   await expect(page.getByTestId("about-contacts")).toHaveJSProperty("open", true);
 });
 
 test("reopening an explainer forgets that it was closed", async ({ page }) => {
   // Arrange
-  await page.goto("/jobs");
+  await page.goto("/pipeline");
   const summary = page.getByTestId("about-jobs").getByText("About this section");
   await summary.click();
   await summary.click();

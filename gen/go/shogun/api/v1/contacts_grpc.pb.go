@@ -22,6 +22,9 @@ const (
 	ContactsService_ListContacts_FullMethodName        = "/shogun.api.v1.ContactsService/ListContacts"
 	ContactsService_AddContact_FullMethodName          = "/shogun.api.v1.ContactsService/AddContact"
 	ContactsService_ChangeContactStatus_FullMethodName = "/shogun.api.v1.ContactsService/ChangeContactStatus"
+	ContactsService_GetContact_FullMethodName          = "/shogun.api.v1.ContactsService/GetContact"
+	ContactsService_AddContactNote_FullMethodName      = "/shogun.api.v1.ContactsService/AddContactNote"
+	ContactsService_MarkContacted_FullMethodName       = "/shogun.api.v1.ContactsService/MarkContacted"
 	ContactsService_ImportContacts_FullMethodName      = "/shogun.api.v1.ContactsService/ImportContacts"
 )
 
@@ -39,6 +42,16 @@ type ContactsServiceClient interface {
 	// ChangeContactStatus moves a contact along the state machine; an invalid
 	// move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
 	ChangeContactStatus(ctx context.Context, in *ChangeContactStatusRequest, opts ...grpc.CallOption) (*ChangeContactStatusResponse, error)
+	// GetContact returns one contact with its notes and history, newest first, and
+	// the owner's jobs at its company (at most 20).
+	GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*GetContactResponse, error)
+	// AddContactNote adds a note. Empty text is INVALID_NOTE and text over 2000
+	// characters NOTE_TOO_LONG. It never conflicts with an edit.
+	AddContactNote(ctx context.Context, in *AddContactNoteRequest, opts ...grpc.CallOption) (*AddContactNoteResponse, error)
+	// MarkContacted records that the owner reached the contact themselves. A
+	// contact not yet reached moves to reached out; otherwise only last_contacted
+	// changes. A future date is INVALID_DATE and a stale version VERSION_CONFLICT.
+	MarkContacted(ctx context.Context, in *MarkContactedRequest, opts ...grpc.CallOption) (*MarkContactedResponse, error)
 	// ImportContacts parses a contacts CSV. With dry_run nothing is written and
 	// the report is the preview shown before the owner confirms. With reshape a
 	// sheet with other columns is first mapped onto the import columns by the
@@ -87,6 +100,36 @@ func (c *contactsServiceClient) ChangeContactStatus(ctx context.Context, in *Cha
 	return out, nil
 }
 
+func (c *contactsServiceClient) GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*GetContactResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetContactResponse)
+	err := c.cc.Invoke(ctx, ContactsService_GetContact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactsServiceClient) AddContactNote(ctx context.Context, in *AddContactNoteRequest, opts ...grpc.CallOption) (*AddContactNoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddContactNoteResponse)
+	err := c.cc.Invoke(ctx, ContactsService_AddContactNote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contactsServiceClient) MarkContacted(ctx context.Context, in *MarkContactedRequest, opts ...grpc.CallOption) (*MarkContactedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkContactedResponse)
+	err := c.cc.Invoke(ctx, ContactsService_MarkContacted_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *contactsServiceClient) ImportContacts(ctx context.Context, in *ImportContactsRequest, opts ...grpc.CallOption) (*ImportContactsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ImportContactsResponse)
@@ -111,6 +154,16 @@ type ContactsServiceServer interface {
 	// ChangeContactStatus moves a contact along the state machine; an invalid
 	// move is FailedPrecondition with reason CONTACT_STATUS_INVALID_TRANSITION.
 	ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error)
+	// GetContact returns one contact with its notes and history, newest first, and
+	// the owner's jobs at its company (at most 20).
+	GetContact(context.Context, *GetContactRequest) (*GetContactResponse, error)
+	// AddContactNote adds a note. Empty text is INVALID_NOTE and text over 2000
+	// characters NOTE_TOO_LONG. It never conflicts with an edit.
+	AddContactNote(context.Context, *AddContactNoteRequest) (*AddContactNoteResponse, error)
+	// MarkContacted records that the owner reached the contact themselves. A
+	// contact not yet reached moves to reached out; otherwise only last_contacted
+	// changes. A future date is INVALID_DATE and a stale version VERSION_CONFLICT.
+	MarkContacted(context.Context, *MarkContactedRequest) (*MarkContactedResponse, error)
 	// ImportContacts parses a contacts CSV. With dry_run nothing is written and
 	// the report is the preview shown before the owner confirms. With reshape a
 	// sheet with other columns is first mapped onto the import columns by the
@@ -137,6 +190,15 @@ func (UnimplementedContactsServiceServer) AddContact(context.Context, *AddContac
 }
 func (UnimplementedContactsServiceServer) ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeContactStatus not implemented")
+}
+func (UnimplementedContactsServiceServer) GetContact(context.Context, *GetContactRequest) (*GetContactResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetContact not implemented")
+}
+func (UnimplementedContactsServiceServer) AddContactNote(context.Context, *AddContactNoteRequest) (*AddContactNoteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddContactNote not implemented")
+}
+func (UnimplementedContactsServiceServer) MarkContacted(context.Context, *MarkContactedRequest) (*MarkContactedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkContacted not implemented")
 }
 func (UnimplementedContactsServiceServer) ImportContacts(context.Context, *ImportContactsRequest) (*ImportContactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ImportContacts not implemented")
@@ -216,6 +278,60 @@ func _ContactsService_ChangeContactStatus_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContactsService_GetContact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetContactRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactsServiceServer).GetContact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactsService_GetContact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactsServiceServer).GetContact(ctx, req.(*GetContactRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactsService_AddContactNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddContactNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactsServiceServer).AddContactNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactsService_AddContactNote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactsServiceServer).AddContactNote(ctx, req.(*AddContactNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContactsService_MarkContacted_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkContactedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContactsServiceServer).MarkContacted(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContactsService_MarkContacted_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContactsServiceServer).MarkContacted(ctx, req.(*MarkContactedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ContactsService_ImportContacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ImportContactsRequest)
 	if err := dec(in); err != nil {
@@ -252,6 +368,18 @@ var ContactsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ChangeContactStatus",
 			Handler:    _ContactsService_ChangeContactStatus_Handler,
+		},
+		{
+			MethodName: "GetContact",
+			Handler:    _ContactsService_GetContact_Handler,
+		},
+		{
+			MethodName: "AddContactNote",
+			Handler:    _ContactsService_AddContactNote_Handler,
+		},
+		{
+			MethodName: "MarkContacted",
+			Handler:    _ContactsService_MarkContacted_Handler,
 		},
 		{
 			MethodName: "ImportContacts",

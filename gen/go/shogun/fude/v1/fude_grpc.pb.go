@@ -63,6 +63,12 @@ type FudeServiceClient interface {
 	// never carry the provider's own text. A caller with no provider is
 	// FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
 	// token cap is ResourceExhausted.
+	//
+	// With base_url, model and api_key set it tests those details instead, which
+	// need not be saved: the key is used for this call only and is never stored,
+	// logged or returned. Setting only some of them is INVALID_ARGUMENT
+	// INVALID_REQUEST; a missing key is API_KEY_REQUIRED. The call is metered like
+	// any other (soroban sees the model name, never the key).
 	TestProvider(ctx context.Context, in *TestProviderRequest, opts ...grpc.CallOption) (*TestProviderResponse, error)
 }
 
@@ -206,6 +212,12 @@ type FudeServiceServer interface {
 	// never carry the provider's own text. A caller with no provider is
 	// FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
 	// token cap is ResourceExhausted.
+	//
+	// With base_url, model and api_key set it tests those details instead, which
+	// need not be saved: the key is used for this call only and is never stored,
+	// logged or returned. Setting only some of them is INVALID_ARGUMENT
+	// INVALID_REQUEST; a missing key is API_KEY_REQUIRED. The call is metered like
+	// any other (soroban sees the model name, never the key).
 	TestProvider(context.Context, *TestProviderRequest) (*TestProviderResponse, error)
 	mustEmbedUnimplementedFudeServiceServer()
 }

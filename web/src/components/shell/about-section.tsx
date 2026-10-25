@@ -69,7 +69,7 @@ export function AboutSection({ about }: AboutSectionProps) {
   );
 
   return (
-    <details open={!closed} data-testid={`about-${about.id}`} className="border-b border-ink bg-strip">
+    <details open={!closed} data-testid={`about-${about.id}`} className="border-b border-line bg-panel">
       <summary
         className="label min-h-11 cursor-pointer px-[22px] py-3 font-medium"
         onClick={(event) => {
@@ -83,15 +83,15 @@ export function AboutSection({ about }: AboutSectionProps) {
       <dl className="grid grid-cols-3 gap-6 px-[22px] pb-5 max-[860px]:grid-cols-1">
         <div>
           <dt className="label mb-1.5 font-medium">Responsibility</dt>
-          <dd className="text-muted-ink">{about.role}</dd>
+          <dd className="text-muted-foreground">{about.role}</dd>
         </div>
         <div>
           <dt className="label mb-1.5 font-medium">What it does</dt>
-          <dd className="text-muted-ink">{about.does}</dd>
+          <dd className="text-muted-foreground">{about.does}</dd>
         </div>
         <div>
           <dt className="label mb-1.5 font-medium">How it helps you</dt>
-          <dd className="text-muted-ink">{about.helps}</dd>
+          <dd className="text-muted-foreground">{about.helps}</dd>
         </div>
       </dl>
     </details>

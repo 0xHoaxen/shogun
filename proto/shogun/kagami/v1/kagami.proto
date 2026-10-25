@@ -23,6 +23,15 @@ service KagamiService {
   rpc ListContacts(ListContactsRequest) returns (ListContactsResponse);
   // GetContact returns the contact with its timeline.
   rpc GetContact(GetContactRequest) returns (GetContactResponse);
+  // AddContactNote adds a note to the contact's timeline and returns it. The text
+  // is trimmed; empty is INVALID_NOTE and more than 2000 characters NOTE_TOO_LONG.
+  // A note does not change the contact, so it never conflicts with an edit.
+  rpc AddContactNote(AddContactNoteRequest) returns (AddContactNoteResponse);
+  // MarkContacted records that the owner reached the contact themselves, outside
+  // Shogun. A contact not yet reached moves to reached_out; for any other status
+  // only last_contacted changes, and a status never moves backwards. A stale
+  // version is VERSION_CONFLICT and a future date INVALID_DATE.
+  rpc MarkContacted(MarkContactedRequest) returns (MarkContactedResponse);
   // ChangeContactStatus fails with CONTACT_STATUS_INVALID_TRANSITION on an
   // invalid move.
   rpc ChangeContactStatus(ChangeContactStatusRequest) returns (ChangeContactStatusResponse);
@@ -248,6 +257,29 @@ message GetContactRequest {
 message GetContactResponse {
   Contact contact = 1;
   repeated ContactEvent timeline = 2;
+  // linked_jobs are the owner's jobs at the contact's company, newest first, at
+  // most 20. Empty when the contact has no company.
+  repeated Job linked_jobs = 3;
+}
+
+message AddContactNoteRequest {
+  string id = 1;
+  string text = 2;
+}
+
+message AddContactNoteResponse {
+  ContactEvent note = 1;
+}
+
+message MarkContactedRequest {
+  string id = 1;
+  int32 version = 2;
+  // on is YYYY-MM-DD; empty means today in the owner's time zone.
+  string on = 3;
+}
+
+message MarkContactedResponse {
+  Contact contact = 1;
 }
 
 message ChangeContactStatusRequest {
@@ -267,6 +299,29 @@ message ImportContactsRequest {
   // reshape asks the caller's AI provider to map a sheet with other columns
   // onto the import columns first. A sheet that already has them is not sent.
   bool reshape = 4;
+  // mappings is the caller's own column mapping of the sheet. When set it is used
+  // instead of the AI's and no model is called, whatever reshape says. It is
+  // checked as the AI's is: every target an import column used once, every source
+  // a column of the sheet used once, full_name filled. A bad one is
+  // INVALID_MAPPING, or IMPORT_NO_NAME_COLUMN when no column holds a name.
+  repeated ColumnMapping mappings = 5;
+  // date_order is how the sheet writes dates made only of numbers (dmy, mdy or
+  // ymd) when mappings is set; empty reads only unambiguous dates. Anything else
+  // is INVALID_MAPPING. The response returns the order the AI found, to send back.
+  string date_order = 6;
+  // selection limits the import to some rows. Unset imports every row. A row that
+  // matches a contact already known is imported (that contact is updated) only
+  // if it is listed.
+  RowSelection selection = 7;
+}
+
+// RowSelection lists the rows of a file to import. Numbers are the 1-based CSV
+// rows of the file that is applied, counting the header as row 1: the numbers the
+// dry-run preview gives. They only mean something for the same file and mapping,
+// so preview again after changing either. A number that is not a row of the file
+// is INVALID_ROW_SELECTION and nothing is applied. An empty list imports nothing.
+message RowSelection {
+  repeated int32 rows = 1;
 }
 
 message ImportRowError {
@@ -282,6 +337,9 @@ message ImportReport {
   int32 rows_updated = 3;
   int32 rows_failed = 4;
   repeated ImportRowError errors = 5;
+  // rows_skipped counts the rows of the file that a selection left out. With a
+  // selection, rows_total counts only the rows processed.
+  int32 rows_skipped = 6;
 }
 
 message ImportContactsResponse {
@@ -293,6 +351,42 @@ message ImportContactsResponse {
   bytes shaped_csv = 3;
   // mappings say which columns of the sheet fill each import column.
   repeated ColumnMapping mappings = 4;
+  // rows says, for each row of the file, what the import read and whether the
+  // person is already known. Set on a dry run only.
+  repeated ImportPreviewRow rows = 5;
+  // rows_truncated is true when the file had more than 1000 rows, so rows holds
+  // only the first 1000. The report still counts them all, and an import applies
+  // them all. (A reshaped sheet travels in this response too, and the two have to
+  // fit gRPC's 4 MiB.)
+  bool rows_truncated = 6;
+  // date_order is the order the sheet's numeric dates were read in (dmy, mdy or
+  // ymd, or empty), set when the sheet was reshaped or mapped.
+  string date_order = 7;
+}
+
+// ImportPreviewRow is one row of a dry run.
+message ImportPreviewRow {
+  // row is the 1-based CSV row number, counting the header as row 1.
+  int32 row = 1;
+  string full_name = 2;
+  string role = 3;
+  string company = 4;
+  string email = 5;
+  // relationship is the one in the file, or a guess from the role (rules on the
+  // words of the title, no AI call) when the file has none.
+  string relationship = 6;
+  bool relationship_guessed = 7;
+  // duplicate is true when the person is already in the book, found by email,
+  // then LinkedIn URL, then the same name at the same company. The import would
+  // update that contact rather than add one.
+  bool duplicate = 8;
+  string duplicate_contact_id = 9;
+  // duplicate_reason is email, linkedin or name_company.
+  string duplicate_reason = 10;
+  // repeats_row is the earlier row of this file that is the same person, or 0.
+  int32 repeats_row = 11;
+  // problem says why the row cannot be imported; empty when it can.
+  string problem = 12;
 }
 
 // ColumnMapping fills one import column from columns of the sheet.

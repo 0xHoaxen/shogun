@@ -17,6 +17,8 @@ const (
 	reasonRateLimited          = "RATE_LIMITED"
 	reasonInvalidTimezone      = "INVALID_TIMEZONE"
 	reasonConfirmationMismatch = "CONFIRMATION_MISMATCH"
+	reasonProviderTestFailed   = "PROVIDER_TEST_FAILED"
+	reasonAPIKeyRequired       = "API_KEY_REQUIRED"
 )
 
 // newError returns a Connect error with a stable ErrorInfo.reason, so clients

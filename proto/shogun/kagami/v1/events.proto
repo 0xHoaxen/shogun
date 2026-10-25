@@ -53,6 +53,13 @@ message ContactStatusChanged {
   string owner_id = 5;
 }
 
+// ContactNoteAdded is the payload of contact.note_added. It has no consumer yet.
+message ContactNoteAdded {
+  string contact_id = 1;
+  string note_id = 2;
+  string owner_id = 3;
+}
+
 // ContactFollowUpDue is the payload of contact.follow_up_due.
 message ContactFollowUpDue {
   string contact_id = 1;

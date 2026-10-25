@@ -27,6 +27,9 @@ type ContactsBackend interface {
 	AddContact(ctx context.Context, in *kagamiv1.AddContactRequest, opts ...grpc.CallOption) (*kagamiv1.AddContactResponse, error)
 	ChangeContactStatus(ctx context.Context, in *kagamiv1.ChangeContactStatusRequest, opts ...grpc.CallOption) (*kagamiv1.ChangeContactStatusResponse, error)
 	ImportContacts(ctx context.Context, in *kagamiv1.ImportContactsRequest, opts ...grpc.CallOption) (*kagamiv1.ImportContactsResponse, error)
+	GetContact(ctx context.Context, in *kagamiv1.GetContactRequest, opts ...grpc.CallOption) (*kagamiv1.GetContactResponse, error)
+	AddContactNote(ctx context.Context, in *kagamiv1.AddContactNoteRequest, opts ...grpc.CallOption) (*kagamiv1.AddContactNoteResponse, error)
+	MarkContacted(ctx context.Context, in *kagamiv1.MarkContactedRequest, opts ...grpc.CallOption) (*kagamiv1.MarkContactedResponse, error)
 }
 
 // ContactsServer implements shogun.api.v1.ContactsService on top of kagami.
@@ -75,6 +78,8 @@ func (s *ContactsServer) AddContact(
 			LinkedinUrl:      in.GetLinkedinUrl(),
 			PreferredChannel: in.GetPreferredChannel(),
 			Notes:            in.GetNotes(),
+			Relationship:     in.GetRelationship(),
+			HowWeMet:         in.GetHowWeMet(),
 		},
 		CompanyName:    in.GetCompanyName(),
 		IdempotencyKey: req.Header().Get(idempotencyKeyHeader),
@@ -111,20 +116,82 @@ func (s *ContactsServer) ImportContacts(
 		return nil, newError(connect.CodeInvalidArgument, reasonImportTooLarge, "the file is too large to import")
 	}
 	resp, err := s.kagami.ImportContacts(ctx, &kagamiv1.ImportContactsRequest{
-		Filename: in.GetFilename(),
-		Csv:      in.GetCsv(),
-		DryRun:   in.GetDryRun(),
-		Reshape:  in.GetReshape(),
+		Filename:  in.GetFilename(),
+		Csv:       in.GetCsv(),
+		DryRun:    in.GetDryRun(),
+		Reshape:   in.GetReshape(),
+		Mappings:  columnMappingsToKagami(in.GetMappings()),
+		DateOrder: in.GetDateOrder(),
+		Selection: rowSelectionToKagami(in.GetSelection()),
 	})
 	if err != nil {
 		return nil, fromGRPC(ctx, s.log, err)
 	}
 	return connect.NewResponse(&apiv1.ImportContactsResponse{
-		Report:    importReportToAPI(resp.GetReport()),
-		ImportId:  resp.GetImportId(),
-		ShapedCsv: resp.GetShapedCsv(),
-		Mappings:  columnMappingsToAPI(resp.GetMappings()),
+		Report:        importReportToAPI(resp.GetReport()),
+		ImportId:      resp.GetImportId(),
+		ShapedCsv:     resp.GetShapedCsv(),
+		Mappings:      columnMappingsToAPI(resp.GetMappings()),
+		DateOrder:     resp.GetDateOrder(),
+		Rows:          importPreviewToAPI(resp.GetRows()),
+		RowsTruncated: resp.GetRowsTruncated(),
 	}), nil
+}
+
+// GetContact returns one contact with its history and the jobs at its company.
+func (s *ContactsServer) GetContact(
+	ctx context.Context, req *connect.Request[apiv1.GetContactRequest],
+) (*connect.Response[apiv1.GetContactResponse], error) {
+	resp, err := s.kagami.GetContact(ctx, &kagamiv1.GetContactRequest{Id: req.Msg.GetId()})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	jobs := make([]*apiv1.JobCard, 0, len(resp.GetLinkedJobs()))
+	for _, j := range resp.GetLinkedJobs() {
+		jobs = append(jobs, jobCardToAPI(j))
+	}
+	return connect.NewResponse(&apiv1.GetContactResponse{
+		Contact: contactToAPI(resp.GetContact()), History: contactEventsToAPI(resp.GetTimeline()), LinkedJobs: jobs,
+	}), nil
+}
+
+// AddContactNote adds a note to a contact's history.
+func (s *ContactsServer) AddContactNote(
+	ctx context.Context, req *connect.Request[apiv1.AddContactNoteRequest],
+) (*connect.Response[apiv1.AddContactNoteResponse], error) {
+	resp, err := s.kagami.AddContactNote(ctx, &kagamiv1.AddContactNoteRequest{Id: req.Msg.GetId(), Text: req.Msg.GetText()})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.AddContactNoteResponse{Note: contactEventToAPI(resp.GetNote())}), nil
+}
+
+// MarkContacted records that the owner reached the contact themselves.
+func (s *ContactsServer) MarkContacted(
+	ctx context.Context, req *connect.Request[apiv1.MarkContactedRequest],
+) (*connect.Response[apiv1.MarkContactedResponse], error) {
+	in := req.Msg
+	resp, err := s.kagami.MarkContacted(ctx, &kagamiv1.MarkContactedRequest{Id: in.GetId(), Version: in.GetVersion(), On: in.GetOn()})
+	if err != nil {
+		return nil, fromGRPC(ctx, s.log, err)
+	}
+	return connect.NewResponse(&apiv1.MarkContactedResponse{Contact: contactToAPI(resp.GetContact())}), nil
+}
+
+func columnMappingsToKagami(in []*apiv1.ColumnMapping) []*kagamiv1.ColumnMapping {
+	out := make([]*kagamiv1.ColumnMapping, 0, len(in))
+	for _, m := range in {
+		out = append(out, &kagamiv1.ColumnMapping{Target: m.GetTarget(), Sources: m.GetSources()})
+	}
+	return out
+}
+
+// rowSelectionToKagami keeps "no selection" distinct from "an empty one".
+func rowSelectionToKagami(in *apiv1.RowSelection) *kagamiv1.RowSelection {
+	if in == nil {
+		return nil
+	}
+	return &kagamiv1.RowSelection{Rows: in.GetRows()}
 }
 
 func columnMappingsToAPI(in []*kagamiv1.ColumnMapping) []*apiv1.ColumnMapping {

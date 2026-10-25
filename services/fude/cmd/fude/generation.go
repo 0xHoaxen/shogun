@@ -117,16 +117,25 @@ func newGeneration(
 	return &generation{
 		queue: queue, close: closeConns, setup: jobs.NewSetup(generator, sampleEmbedder, log),
 		mailer: tsubamemailer.New(tsubamev1.NewTsubameServiceClient(tsubameConn)),
-		tester: app.NewProviderTester(completer),
+		tester: app.NewProviderTester(completer, testerOptions(cfg)...),
 	}, nil
 }
 
 // newCompleter returns the metered model client. It holds no credentials: every
 // call is made with the provider of the user it is for.
-func newCompleter(cfg config.Base, meter llm.Meter, log *slog.Logger) (app.Completer, error) {
+func newCompleter(cfg config.Base, meter llm.Meter, log *slog.Logger) (*llm.Client, error) {
 	llmCfg, err := llm.NewConfig(serviceName)
 	if err != nil {
 		return nil, err
 	}
 	return llm.New(llmCfg, llm.NewOpenAIAPI(llm.ForEnvironment(cfg.Environment)...), meter, llm.WithLogger(log))
+}
+
+// testerOptions lets a tested address be plain http where private addresses are
+// allowed too, which is local development and tests.
+func testerOptions(cfg config.Base) []app.TesterOption {
+	if cfg.Environment == config.EnvLocal || cfg.Environment == config.EnvTest {
+		return []app.TesterOption{app.AllowInsecureAddresses()}
+	}
+	return nil
 }

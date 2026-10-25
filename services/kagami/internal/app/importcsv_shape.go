@@ -75,6 +75,9 @@ func readSheet(data []byte) (sheet, error) {
 		return sheet{}, invalid("IMPORT_EMPTY", "file has no header row")
 	}
 	at := headerIndex(records)
+	if len(records)-at-1 > maxImportRows {
+		return sheet{}, invalid("IMPORT_TOO_LARGE", "file has more than %d rows", maxImportRows)
+	}
 	header := make([]string, len(records[at]))
 	for i, name := range records[at] {
 		header[i] = strings.TrimSpace(name)

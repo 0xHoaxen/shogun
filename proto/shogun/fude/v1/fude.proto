@@ -32,6 +32,12 @@ service FudeService {
   // never carry the provider's own text. A caller with no provider is
   // FailedPrecondition with reason AI_PROVIDER_NOT_CONFIGURED; a spent budget or
   // token cap is ResourceExhausted.
+  //
+  // With base_url, model and api_key set it tests those details instead, which
+  // need not be saved: the key is used for this call only and is never stored,
+  // logged or returned. Setting only some of them is INVALID_ARGUMENT
+  // INVALID_REQUEST; a missing key is API_KEY_REQUIRED. The call is metered like
+  // any other (soroban sees the model name, never the key).
   rpc TestProvider(TestProviderRequest) returns (TestProviderResponse);
 }
 
@@ -231,9 +237,21 @@ enum ProviderFailure {
   // The provider failed on its side.
   PROVIDER_FAILURE_PROVIDER_ERROR = 6;
   PROVIDER_FAILURE_OTHER = 7;
+  // The address already ends in /chat/completions, which Shogun adds itself. No
+  // call is made.
+  PROVIDER_FAILURE_ENDPOINT_IN_URL = 8;
+  // The address is not one Shogun can call (it must be an https address). No
+  // call is made.
+  PROVIDER_FAILURE_INVALID_ADDRESS = 9;
 }
 
-message TestProviderRequest {}
+message TestProviderRequest {
+  // base_url, model and api_key are set together to test details that are not
+  // saved; all unset tests the caller's saved provider.
+  optional string base_url = 1;
+  optional string model = 2;
+  optional string api_key = 3;
+}
 
 message TestProviderResponse {
   bool ok = 1;
@@ -241,4 +259,6 @@ message TestProviderResponse {
   ProviderFailure failure = 2;
   // model is the model that answered, when ok.
   string model = 3;
+  // latency_ms is how long the provider took to answer, when a call was made.
+  int64 latency_ms = 4;
 }

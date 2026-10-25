@@ -31,6 +31,14 @@ type fakeLLM struct {
 	calls   int
 	feature string
 	req     llm.Request
+	// access is the provider of the last CompleteWith.
+	access llm.Access
+}
+
+func (f *fakeLLM) CompleteWith(_ context.Context, feature string, access llm.Access, req llm.Request) (llm.Response, error) {
+	f.calls++
+	f.feature, f.req, f.access = feature, req, access
+	return llm.Response{Text: f.text, Model: access.Model}, f.err
 }
 
 func (f *fakeLLM) Complete(_ context.Context, feature string, req llm.Request) (llm.Response, error) {

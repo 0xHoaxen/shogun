@@ -127,7 +127,7 @@ export function SourceDialog({ open, onOpenChange, source }: SourceDialogProps) 
           />
         )}
         {needsMapping ? (
-          <fieldset className="grid gap-3 border border-ink p-3">
+          <fieldset className="grid gap-3 border border-line2 p-3">
             <legend className="label px-1 text-[11px]">Where each field is, as dot-separated keys</legend>
             {MAPPING_FIELDS.map(([key, label]) => (
               <TextField

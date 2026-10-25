@@ -185,19 +185,24 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | kagami | `UpdateJob` | job, update\_mask, version | Job | torii |
 | kagami | `ChangeJobStatus` | id, to\_status, note, version | Job | torii |
 | kagami | `AddContact` / `UpdateContact` | contact fields, update\_mask | Contact | torii |
-| kagami | `ListContacts` / `GetContact` | status, tag, company\_id, query | Contacts / Contact with timeline | torii |
+| kagami | `ListContacts` / `GetContact` | status, tag, company\_id, query | Contacts / Contact with timeline and linked jobs | torii |
 | kagami | `ChangeContactStatus` | id, to\_status, version | Contact | torii |
-| kagami | `ImportContacts` | csv bytes, dry\_run | ImportReport (per-row errors) | torii |
+| kagami | `ImportContacts` | csv bytes, dry\_run, mappings?, date\_order?, selection? (rows to import) | ImportReport (per-row errors, rows skipped); on a dry run also a preview of the first 1000 rows (what was read, a relationship guessed from the title, and whether the person is already known) | torii |
+| kagami | `AddContactNote` / `MarkContacted` | id, text / id, version, on? | note (timeline entry) / Contact | torii |
+| kagami | `ListStatusProposals` / `AcceptStatusProposal` / `DismissStatusProposal` | state / id | Proposal(s) / Job | torii |
 | kagami | `ListDueFollowUps` | on\_or\_before date | jobs and contacts due | torii, taiko |
 | tsubame | `ConnectAccount` / `CompleteConnect` | provider / oauth code, state | auth URL / Account | torii |
 | tsubame | `ListMessages` | classification, linked\_job\_id | Messages | torii |
 | tsubame | `SyncNow` | account\_id | SyncResult | torii |
+| tsubame | `CancelSend` | send\_id | Send (cancelled), or FailedPrecondition once sending | torii |
 | tsubame | `Send` | hanko token, draft\_id, version, to, subject, body, contact\_id?, job\_id? | SendResult | fude only |
 | fude | `GenerateDraft` | kind, target\_type, target\_id, channel, extra\_context | Draft (state generating) | torii, internal events |
 | fude | `Regenerate` | draft\_id, extra\_context | Draft (new version) | torii |
 | fude | `EditDraft` | draft\_id, subject, body | Draft (new version, created\_by user) | torii |
 | fude | `Approve` | draft\_id, version, body\_sha256 | ApproveResult (sent or copy-ready) | torii only |
 | fude | `Discard` / `ListQueue` / `GetDraft` | draft\_id / state filter | Draft(s) | torii |
+| fude | `DiscardAllPending` | none | count | torii |
+| fude | `TestModel` | unsaved base\_url, model, api\_key | ok or error text | torii |
 | fude | `AddVoiceSample` | channel, text | VoiceSample | torii |
 | taiko | `List` / `MarkRead` / `MarkAllRead` | unread\_only / ids | Notifications | torii |
 | taiko | `Subscribe` | none (server stream) | stream of Notification | torii |
@@ -207,6 +212,8 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | dojo | `GetActivity` | id | Activity with its item | torii, fude |
 | dojo | `GeneratePost` | activity\_ids, channel | Draft id | torii |
 | katana | `SyncGitHub` | none | Snapshot | torii, scheduler |
+| katana | `ParseResume` | resume text (in memory) | proposed profile fields, nothing saved | torii |
+| katana | `SaveProfile` / `GetProfile` / `ListSkills` | ticked fields / none / source | Profile / Profile / Skills | torii |
 | katana | `ListSuggestions` / `AcceptSuggestion` / `DismissSuggestion` | target, state / id | Suggestion(s) | torii |
 | shinobi | `UpsertSource` / `ListSources` / `RunSource` | kind, config, schedule | Source / RunResult | torii |
 | shinobi | `DeleteSource` | id | none (removes the source with its postings and scores) | torii |
@@ -230,10 +237,11 @@ Events are delivered at least once, pushed from the producer's outbox to each co
 
 | Event | Producer | Payload | Consumers |
 | --- | --- | --- | --- |
-| `job.added` | kagami | job\_id, title, company, url, source | fude (cover letter), sensei |
+| `job.added` | kagami | job\_id, title, company, url, source | fude (cover letter), sensei, katana (job skills) |
 | `job.status_changed` | kagami | job\_id, from, to, at | sensei, taiko (offer, interview) |
 | `job.follow_up_due` | kagami | job\_id, due\_on | fude (follow-up), taiko |
 | `contact.added` | kagami | contact\_id, status | sensei |
+| `contact.note_added` | kagami | contact\_id, note\_id, owner\_id | none yet |
 | `contact.status_changed` | kagami | contact\_id, from, to, channel | fude (outreach), sensei |
 | `contact.follow_up_due` | kagami | contact\_id, due\_on | fude (nudge), taiko |
 | `mail.classified` | tsubame | message\_id, classification, confidence, job\_id?, contact\_id? | kagami (job status), taiko, sensei |
@@ -242,9 +250,11 @@ Events are delivered at least once, pushed from the producer's outbox to each co
 | `draft.failed` | fude | draft\_id, reason | taiko |
 | `draft.approved` | fude | draft\_id, version, channel | sensei |
 | `draft.sent` | tsubame | draft\_id, version, contact\_id?, job\_id?, sent\_at | fude (draft to sent), kagami (contact status, last\_contacted), sensei |
+| `draft.send_cancelled` | tsubame | draft\_id, version | fude (draft back to pending) |
 | `draft.send_failed` | tsubame | draft\_id, version, reason | fude (draft back to pending), taiko |
 | `learning.activity_added` | dojo | activity\_id, item\_id, summary | fude (post draft) |
 | `learning.item_completed` | dojo | item\_id, title, kind | katana, fude (post draft) |
+| `profile.updated` | katana | profile\_version | none yet |
 | `profile.suggestion_ready` | katana | suggestion\_id, target | taiko |
 | `discovery.match_found` | shinobi | posting\_id, score, title, company | taiko |
 | cost.threshold\_reached | soroban | budget\_id, scope, period, percent, spent\_micros, limit\_micros | taiko, sensei |
@@ -282,6 +292,8 @@ A hanko is a PASETO `v4.public` token (Ed25519): `fude` holds the only private k
 
 **Verify** (in `tsubame.Send`): signature, `aud`, `exp`, recompute both hashes from the request, then `INSERT INTO sends (token_jti …)`. The unique `token_jti` makes the hanko single use even across replicas. Any failure returns `PermissionDenied` and sends nothing. The `sends` row is committed before the provider is called, so a crash can never lead to a second send: a row left in `sending` is resolved by a reconciler that looks for the `X-Shogun-Draft: <draft_id>:<version>` header in the provider's Sent mail, then records `sent` and emits `draft.sent`, or after ten minutes records `failed` and emits `draft.send_failed`. fude moves the draft from `approved` to `sent` on `draft.sent` and back to `pending` on `draft.send_failed`; it never decides that for itself.
 
+**Undo window (v2).** `Send` still verifies the Hanko and inserts the `sends` row before anything else, with status `held` and `send_after = now + users.undo_seconds`. Only the provider call waits: a River job picks up held rows whose `send_after` has passed (so a restart loses nothing), moves them to `sending` and calls the provider. `CancelSend` moves `held` to `cancelled` and emits `draft.send_cancelled`; it is refused once the row is `sending`. No other code path may call the provider.
+
 **Keys** live in the secret store (`FUDE_HANKO_SIGNING_KEY`, `TSUBAME_HANKO_VERIFY_KEY`) and carry a key id, so rotation keeps two public keys valid for one day. No River worker, schedule or AI step has a code path to `Approve`; a test asserts the signer is referenced from exactly one package.
 
 ## Soroban: cost control
@@ -301,13 +313,15 @@ Soroban (the abacus) is the tenth service: every paid call (Claude tokens today;
 
 | Field | Values |
 | --- | --- |
-| Scope | global, a service (`fude`), or a feature (`fude.cover_letter`, `fude.outreach`, `fude.post`, `tsubame.classify`, `katana.suggest`, `shinobi.score`) |
+| Scope | global, a service (`fude`), or a feature (`fude.cover_letter`, `fude.outreach`, `fude.post`, `tsubame.classify`, `katana.suggest`, `katana.resume_parse`, `katana.job_skills`, `shinobi.score`) |
 | Period | daily or monthly, reset at local midnight (Asia/Kolkata assumed) |
 | Limit | in USD, stored as micro-dollars (`int64`) so there is no float rounding |
 | Mode | `hard` blocks new calls; `soft` only notifies |
 | Thresholds | notify at 50%, 80% and 100% by default, once each per period |
 
 Starting defaults, all editable in the app: global $20 per month hard, `fude` $15 per month hard, every other service $3 per month hard, and each feature $1 per day soft.
+
+**AI provider (v2).** Each user has one provider; every feature uses it through `pkg/llm`. Before it can be saved it is tested with one short call on the unsaved details, metered like any other call. For that test only, `Reserve` takes `unsaved_model` and prices the call by the model name without a saved provider; the key stays with the caller and never reaches soroban, and `pkg/llm` offers `CompleteWith` for it. Without a provider AI features stay off. Resume parsing and job skills have their own budget rows (`katana.resume_parse`, `katana.job_skills`).
 
 **Pricing.** A `prices` table holds per-model rates (input, output, cache read, cache write per million tokens) with an `effective_from` date, so old ledger rows keep the price that applied then. Prices are seeded by migration and changed with `SetPrice`.
 
@@ -320,6 +334,7 @@ Starting defaults, all editable in the app: global $20 per month hard, `fude` $1
 Torii is a backend-for-frontend: the web app speaks ConnectRPC to it, and it speaks gRPC to the services. It owns no business data, only sessions.
 
 - **Public API.** A separate proto package `shogun.api.v1` shaped for screens (`DashboardService.GetToday`, `JobsService`, `ContactsService`, `DraftsService`, `InboxService`, `MailService` for connecting an account, `NotificationsService.Stream`). Internal protos can change without breaking the UI, and one screen is one call. `CostsService` backs the spend and budgets screen.
+- **Settings (v2).** torii also stores the email signature, the undo window (`users.undo_seconds`) and `approval_rules`, and tests a provider before saving it: `ProviderService.SetProvider` runs the same test as `TestProvider` and refuses (`PROVIDER_TEST_FAILED`) a provider that fails, so one that does not work is never stored.
 - **Web client.** `buf generate` also emits TypeScript with `@connectrpc/connect-web` into `web/src/gen`, so the UI is typed end to end. Connect speaks plain HTTP/1.1 JSON, so it is debuggable with `curl`.
 - **Login.** Google OAuth (the same Google account Gmail uses), with an allowlist of one email. On success torii stores a session in `torii.sessions` and sets an `HttpOnly`, `Secure`, `SameSite=Lax` cookie valid for 30 days with sliding renewal.
 - **CSRF.** Connect requires `Content-Type: application/json` or `application/proto` plus a `Connect-Protocol-Version` header, which a cross-site form cannot send; the cookie is also `SameSite`.

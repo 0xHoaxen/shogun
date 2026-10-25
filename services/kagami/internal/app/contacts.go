@@ -47,10 +47,12 @@ type AddContactInput struct {
 	IdempotencyKey string
 }
 
-// ContactDetail is a contact with its timeline, newest event first.
+// ContactDetail is a contact with its timeline, newest event first, and the
+// owner's jobs at the contact's company.
 type ContactDetail struct {
-	Contact  db.Contact
-	Timeline []db.ContactEvent
+	Contact    db.Contact
+	Timeline   []db.ContactEvent
+	LinkedJobs []db.Job
 }
 
 // ListContactsInput is the input of ListContacts. Zero values do not filter.
@@ -239,7 +241,11 @@ func (s *Service) GetContact(ctx context.Context, id string) (ContactDetail, err
 	if err != nil {
 		return ContactDetail{}, err
 	}
-	return ContactDetail{Contact: contact, Timeline: timeline}, nil
+	jobs, err := s.linkedJobs(ctx, repo, owner, contact.CompanyID)
+	if err != nil {
+		return ContactDetail{}, err
+	}
+	return ContactDetail{Contact: contact, Timeline: timeline, LinkedJobs: jobs}, nil
 }
 
 // ListContacts returns one page of contacts, most recently updated first.

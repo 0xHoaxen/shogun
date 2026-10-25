@@ -76,7 +76,7 @@ export function DraftsQueue() {
           <Button onClick={() => drafts.refetch()}>Retry</Button>
         </div>
       ) : (
-        <div className="overflow-x-auto border-b border-ink">
+        <div className="relative overflow-x-auto border-b border-ink">
           <table className="w-full min-w-[860px] border-collapse text-left">
             <thead>
               <tr className="label h-9 bg-ink text-paper">
@@ -105,7 +105,7 @@ export function DraftsQueue() {
                   </td>
                   <td className="px-2.5 py-2.5 text-right">
                     <Link
-                      href={`/drafts/${draft.id}`}
+                      href={`/writing?draft=${draft.id}`}
                       className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold hover:bg-ink hover:text-paper"
                     >
                       {draft.state === DraftState.PENDING ? "Review" : "Open"}

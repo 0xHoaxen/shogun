@@ -38,7 +38,7 @@ export function PostingsPanel() {
 
   return (
     <>
-      <div role="group" aria-label="Lowest score" className="flex flex-wrap border-b border-ink p-[22px] pb-[23px]">
+      <div role="group" aria-label="Lowest score" className="flex flex-wrap border-b border-line2 p-[22px] pb-[23px]">
         {SCORE_FILTERS.map((filter) => (
           <button
             key={filter.value}
@@ -46,8 +46,8 @@ export function PostingsPanel() {
             aria-pressed={minScore === filter.value}
             onClick={() => setMinScore(filter.value)}
             className={cn(
-              "label -mr-px -mb-px inline-flex min-h-9 cursor-pointer items-center border border-ink px-3 font-medium hover:bg-strip",
-              minScore === filter.value && "bg-ink text-paper hover:bg-ink",
+              "label -mr-px -mb-px inline-flex min-h-9 cursor-pointer items-center border border-line2 px-3 font-medium hover:bg-panel",
+              minScore === filter.value && "bg-cream text-on-accent hover:bg-cream",
             )}
           >
             {filter.label}
@@ -56,13 +56,13 @@ export function PostingsPanel() {
       </div>
 
       {save.isError ? (
-        <p role="alert" className="border-b border-ink p-[22px]">
+        <p role="alert" className="border-b border-line2 p-[22px]">
           {discoveryErrorText(save.error, "Couldn't save the posting. Try again.")}
         </p>
       ) : null}
 
       {postings.isError ? (
-        <div className="flex items-center gap-3 border-b border-ink p-[22px]">
+        <div className="flex items-center gap-3 border-b border-line2 p-[22px]">
           <p role="alert">Couldn&apos;t load your postings.</p>
           <Button onClick={() => postings.refetch()}>Retry</Button>
         </div>
@@ -77,12 +77,12 @@ export function PostingsPanel() {
             />
           ))}
           {postings.isSuccess && rows.length === 0 ? (
-            <p className="border-b border-ink p-[22px] text-muted-ink">
+            <p className="border-b border-line2 p-[22px] text-muted-foreground">
               Nothing here yet. Add a source and set what you are looking for.
             </p>
           ) : null}
           {postings.hasNextPage ? (
-            <div className="border-b border-ink p-[22px]">
+            <div className="border-b border-line2 p-[22px]">
               <Button disabled={postings.isFetchingNextPage} onClick={() => postings.fetchNextPage()}>
                 Load more
               </Button>
@@ -103,22 +103,22 @@ interface PostingCardProps {
 function PostingCard({ posting, busy, onSave }: PostingCardProps) {
   const where = [posting.company, posting.location].filter(Boolean).join(" · ");
   return (
-    <article aria-label={posting.title} className="grid gap-2 border-b border-ink p-[22px]">
+    <article aria-label={posting.title} className="grid gap-2 border-b border-line2 p-[22px]">
       <div className="flex flex-wrap items-center gap-2">
         <b>{posting.title}</b>
         {posting.scored ? (
-          <span className="label inline-flex min-h-5 items-center border border-ink px-2 text-[11px]">
+          <span className="label inline-flex min-h-5 items-center border border-line2 px-2 text-[11px]">
             {percent(posting.score)}
           </span>
         ) : (
-          <span className="label inline-flex min-h-5 items-center border border-dashed border-ink px-2 text-[11px]">
+          <span className="label inline-flex min-h-5 items-center border border-dashed border-line2 px-2 text-[11px]">
             Not scored yet
           </span>
         )}
       </div>
-      {where ? <p className="text-muted-ink">{where}</p> : null}
+      {where ? <p className="text-muted-foreground">{where}</p> : null}
       {posting.reasons.length > 0 ? (
-        <ul aria-label="Why" className="list-disc pl-5 text-[11px] text-muted-ink">
+        <ul aria-label="Why" className="list-disc pl-5 text-[11px] text-muted-foreground">
           {posting.reasons.map((reason) => (
             <li key={reason}>{reason}</li>
           ))}
@@ -131,7 +131,7 @@ function PostingCard({ posting, busy, onSave }: PostingCardProps) {
           </a>
         ) : null}
         {posting.savedJobId ? (
-          <Link href="/jobs" className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold">
+          <Link href="/pipeline" className="label inline-flex min-h-9 items-center border border-line2 px-3 font-bold">
             Saved to the board
           </Link>
         ) : (

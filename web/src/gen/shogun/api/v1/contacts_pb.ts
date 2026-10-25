@@ -4,13 +4,17 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
+import type { JobCard } from "./jobs_pb";
+import { file_shogun_api_v1_jobs } from "./jobs_pb";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file shogun/api/v1/contacts.proto.
  */
 export const file_shogun_api_v1_contacts: GenFile = /*@__PURE__*/
-  fileDesc("ChxzaG9ndW4vYXBpL3YxL2NvbnRhY3RzLnByb3RvEg1zaG9ndW4uYXBpLnYxIooCCgdDb250YWN0EgoKAmlkGAEgASgJEhEKCWZ1bGxfbmFtZRgCIAEoCRIMCgRyb2xlGAMgASgJEhQKDGNvbXBhbnlfbmFtZRgEIAEoCRIsCgZzdGF0dXMYBSABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFZW1haWwYBiABKAkSFAoMbGlua2VkaW5fdXJsGAcgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAggASgJEhYKDmxhc3RfY29udGFjdGVkGAkgASgJEhYKDm5leHRfZm9sbG93X3VwGAogASgJEg0KBW5vdGVzGAsgASgJEg8KB3ZlcnNpb24YDCABKAUieQoTTGlzdENvbnRhY3RzUmVxdWVzdBIsCgZzdGF0dXMYASABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFcXVlcnkYAiABKAkSEQoJcGFnZV9zaXplGAMgASgFEhIKCnBhZ2VfdG9rZW4YBCABKAkiWQoUTGlzdENvbnRhY3RzUmVzcG9uc2USKAoIY29udGFjdHMYASADKAsyFi5zaG9ndW4uYXBpLnYxLkNvbnRhY3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIpkBChFBZGRDb250YWN0UmVxdWVzdBIRCglmdWxsX25hbWUYASABKAkSDAoEcm9sZRgCIAEoCRIUCgxjb21wYW55X25hbWUYAyABKAkSDQoFZW1haWwYBCABKAkSFAoMbGlua2VkaW5fdXJsGAUgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAYgASgJEg0KBW5vdGVzGAcgASgJIj0KEkFkZENvbnRhY3RSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0ImoKGkNoYW5nZUNvbnRhY3RTdGF0dXNSZXF1ZXN0EgoKAmlkGAEgASgJEi8KCXRvX3N0YXR1cxgCIAEoDjIcLnNob2d1bi5hcGkudjEuQ29udGFjdFN0YXR1cxIPCgd2ZXJzaW9uGAMgASgFIkYKG0NoYW5nZUNvbnRhY3RTdGF0dXNSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0IlgKFUltcG9ydENvbnRhY3RzUmVxdWVzdBIQCghmaWxlbmFtZRgBIAEoCRILCgNjc3YYAiABKAwSDwoHZHJ5X3J1bhgDIAEoCBIPCgdyZXNoYXBlGAQgASgIIj4KDkltcG9ydFJvd0Vycm9yEgsKA3JvdxgBIAEoBRIOCgZjb2x1bW4YAiABKAkSDwoHbWVzc2FnZRgDIAEoCSKSAQoMSW1wb3J0UmVwb3J0EhIKCnJvd3NfdG90YWwYASABKAUSFAoMcm93c19jcmVhdGVkGAIgASgFEhQKDHJvd3NfdXBkYXRlZBgDIAEoBRITCgtyb3dzX2ZhaWxlZBgEIAEoBRItCgZlcnJvcnMYBSADKAsyHS5zaG9ndW4uYXBpLnYxLkltcG9ydFJvd0Vycm9yIpwBChZJbXBvcnRDb250YWN0c1Jlc3BvbnNlEisKBnJlcG9ydBgBIAEoCzIbLnNob2d1bi5hcGkudjEuSW1wb3J0UmVwb3J0EhEKCWltcG9ydF9pZBgCIAEoCRISCgpzaGFwZWRfY3N2GAMgASgMEi4KCG1hcHBpbmdzGAQgAygLMhwuc2hvZ3VuLmFwaS52MS5Db2x1bW5NYXBwaW5nIjAKDUNvbHVtbk1hcHBpbmcSDgoGdGFyZ2V0GAEgASgJEg8KB3NvdXJjZXMYAiADKAkq1wEKDUNvbnRhY3RTdGF0dXMSHgoaQ09OVEFDVF9TVEFUVVNfVU5TUEVDSUZJRUQQABIeChpDT05UQUNUX1NUQVRVU19OT1RfUkVBQ0hFRBABEh4KGkNPTlRBQ1RfU1RBVFVTX1JFQUNIRURfT1VUEAISJwojQ09OVEFDVF9TVEFUVVNfQ09OVkVSU0FUSU9OX1NUQVJURUQQAxIaChZDT05UQUNUX1NUQVRVU19SRVBMSUVEEAQSIQodQ09OVEFDVF9TVEFUVVNfUkVGRVJSQUxfQVNLRUQQBTKKAwoPQ29udGFjdHNTZXJ2aWNlElcKDExpc3RDb250YWN0cxIiLnNob2d1bi5hcGkudjEuTGlzdENvbnRhY3RzUmVxdWVzdBojLnNob2d1bi5hcGkudjEuTGlzdENvbnRhY3RzUmVzcG9uc2USUQoKQWRkQ29udGFjdBIgLnNob2d1bi5hcGkudjEuQWRkQ29udGFjdFJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkFkZENvbnRhY3RSZXNwb25zZRJsChNDaGFuZ2VDb250YWN0U3RhdHVzEikuc2hvZ3VuLmFwaS52MS5DaGFuZ2VDb250YWN0U3RhdHVzUmVxdWVzdBoqLnNob2d1bi5hcGkudjEuQ2hhbmdlQ29udGFjdFN0YXR1c1Jlc3BvbnNlEl0KDkltcG9ydENvbnRhY3RzEiQuc2hvZ3VuLmFwaS52MS5JbXBvcnRDb250YWN0c1JlcXVlc3QaJS5zaG9ndW4uYXBpLnYxLkltcG9ydENvbnRhY3RzUmVzcG9uc2ViBnByb3RvMw");
+  fileDesc("ChxzaG9ndW4vYXBpL3YxL2NvbnRhY3RzLnByb3RvEg1zaG9ndW4uYXBpLnYxIrQCCgdDb250YWN0EgoKAmlkGAEgASgJEhEKCWZ1bGxfbmFtZRgCIAEoCRIMCgRyb2xlGAMgASgJEhQKDGNvbXBhbnlfbmFtZRgEIAEoCRIsCgZzdGF0dXMYBSABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFZW1haWwYBiABKAkSFAoMbGlua2VkaW5fdXJsGAcgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAggASgJEhYKDmxhc3RfY29udGFjdGVkGAkgASgJEhYKDm5leHRfZm9sbG93X3VwGAogASgJEg0KBW5vdGVzGAsgASgJEg8KB3ZlcnNpb24YDCABKAUSFAoMcmVsYXRpb25zaGlwGA0gASgJEhIKCmhvd193ZV9tZXQYDiABKAkieQoTTGlzdENvbnRhY3RzUmVxdWVzdBIsCgZzdGF0dXMYASABKA4yHC5zaG9ndW4uYXBpLnYxLkNvbnRhY3RTdGF0dXMSDQoFcXVlcnkYAiABKAkSEQoJcGFnZV9zaXplGAMgASgFEhIKCnBhZ2VfdG9rZW4YBCABKAkiWQoUTGlzdENvbnRhY3RzUmVzcG9uc2USKAoIY29udGFjdHMYASADKAsyFi5zaG9ndW4uYXBpLnYxLkNvbnRhY3QSFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIsMBChFBZGRDb250YWN0UmVxdWVzdBIRCglmdWxsX25hbWUYASABKAkSDAoEcm9sZRgCIAEoCRIUCgxjb21wYW55X25hbWUYAyABKAkSDQoFZW1haWwYBCABKAkSFAoMbGlua2VkaW5fdXJsGAUgASgJEhkKEXByZWZlcnJlZF9jaGFubmVsGAYgASgJEg0KBW5vdGVzGAcgASgJEhQKDHJlbGF0aW9uc2hpcBgIIAEoCRISCgpob3dfd2VfbWV0GAkgASgJIj0KEkFkZENvbnRhY3RSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0ImoKGkNoYW5nZUNvbnRhY3RTdGF0dXNSZXF1ZXN0EgoKAmlkGAEgASgJEi8KCXRvX3N0YXR1cxgCIAEoDjIcLnNob2d1bi5hcGkudjEuQ29udGFjdFN0YXR1cxIPCgd2ZXJzaW9uGAMgASgFIkYKG0NoYW5nZUNvbnRhY3RTdGF0dXNSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0Ih8KEUdldENvbnRhY3RSZXF1ZXN0EgoKAmlkGAEgASgJIngKDENvbnRhY3RFdmVudBIKCgJpZBgBIAEoCRIMCgRraW5kGAIgASgJEg8KB2NoYW5uZWwYAyABKAkSDAoEdGV4dBgEIAEoCRIvCgtvY2N1cnJlZF9hdBgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAimAEKEkdldENvbnRhY3RSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0EiwKB2hpc3RvcnkYAiADKAsyGy5zaG9ndW4uYXBpLnYxLkNvbnRhY3RFdmVudBIrCgtsaW5rZWRfam9icxgDIAMoCzIWLnNob2d1bi5hcGkudjEuSm9iQ2FyZCIxChVBZGRDb250YWN0Tm90ZVJlcXVlc3QSCgoCaWQYASABKAkSDAoEdGV4dBgCIAEoCSJDChZBZGRDb250YWN0Tm90ZVJlc3BvbnNlEikKBG5vdGUYASABKAsyGy5zaG9ndW4uYXBpLnYxLkNvbnRhY3RFdmVudCI/ChRNYXJrQ29udGFjdGVkUmVxdWVzdBIKCgJpZBgBIAEoCRIPCgd2ZXJzaW9uGAIgASgFEgoKAm9uGAMgASgJIkAKFU1hcmtDb250YWN0ZWRSZXNwb25zZRInCgdjb250YWN0GAEgASgLMhYuc2hvZ3VuLmFwaS52MS5Db250YWN0IswBChVJbXBvcnRDb250YWN0c1JlcXVlc3QSEAoIZmlsZW5hbWUYASABKAkSCwoDY3N2GAIgASgMEg8KB2RyeV9ydW4YAyABKAgSDwoHcmVzaGFwZRgEIAEoCBIuCghtYXBwaW5ncxgFIAMoCzIcLnNob2d1bi5hcGkudjEuQ29sdW1uTWFwcGluZxISCgpkYXRlX29yZGVyGAYgASgJEi4KCXNlbGVjdGlvbhgHIAEoCzIbLnNob2d1bi5hcGkudjEuUm93U2VsZWN0aW9uIhwKDFJvd1NlbGVjdGlvbhIMCgRyb3dzGAEgAygFIoUCChBJbXBvcnRQcmV2aWV3Um93EgsKA3JvdxgBIAEoBRIRCglmdWxsX25hbWUYAiABKAkSDAoEcm9sZRgDIAEoCRIPCgdjb21wYW55GAQgASgJEg0KBWVtYWlsGAUgASgJEhQKDHJlbGF0aW9uc2hpcBgGIAEoCRIcChRyZWxhdGlvbnNoaXBfZ3Vlc3NlZBgHIAEoCBIRCglkdXBsaWNhdGUYCCABKAgSHAoUZHVwbGljYXRlX2NvbnRhY3RfaWQYCSABKAkSGAoQZHVwbGljYXRlX3JlYXNvbhgKIAEoCRITCgtyZXBlYXRzX3JvdxgLIAEoBRIPCgdwcm9ibGVtGAwgASgJIj4KDkltcG9ydFJvd0Vycm9yEgsKA3JvdxgBIAEoBRIOCgZjb2x1bW4YAiABKAkSDwoHbWVzc2FnZRgDIAEoCSKoAQoMSW1wb3J0UmVwb3J0EhIKCnJvd3NfdG90YWwYASABKAUSFAoMcm93c19jcmVhdGVkGAIgASgFEhQKDHJvd3NfdXBkYXRlZBgDIAEoBRITCgtyb3dzX2ZhaWxlZBgEIAEoBRItCgZlcnJvcnMYBSADKAsyHS5zaG9ndW4uYXBpLnYxLkltcG9ydFJvd0Vycm9yEhQKDHJvd3Nfc2tpcHBlZBgGIAEoBSL3AQoWSW1wb3J0Q29udGFjdHNSZXNwb25zZRIrCgZyZXBvcnQYASABKAsyGy5zaG9ndW4uYXBpLnYxLkltcG9ydFJlcG9ydBIRCglpbXBvcnRfaWQYAiABKAkSEgoKc2hhcGVkX2NzdhgDIAEoDBIuCghtYXBwaW5ncxgEIAMoCzIcLnNob2d1bi5hcGkudjEuQ29sdW1uTWFwcGluZxISCgpkYXRlX29yZGVyGAUgASgJEi0KBHJvd3MYBiADKAsyHy5zaG9ndW4uYXBpLnYxLkltcG9ydFByZXZpZXdSb3cSFgoOcm93c190cnVuY2F0ZWQYByABKAgiMAoNQ29sdW1uTWFwcGluZxIOCgZ0YXJnZXQYASABKAkSDwoHc291cmNlcxgCIAMoCSrXAQoNQ29udGFjdFN0YXR1cxIeChpDT05UQUNUX1NUQVRVU19VTlNQRUNJRklFRBAAEh4KGkNPTlRBQ1RfU1RBVFVTX05PVF9SRUFDSEVEEAESHgoaQ09OVEFDVF9TVEFUVVNfUkVBQ0hFRF9PVVQQAhInCiNDT05UQUNUX1NUQVRVU19DT05WRVJTQVRJT05fU1RBUlRFRBADEhoKFkNPTlRBQ1RfU1RBVFVTX1JFUExJRUQQBBIhCh1DT05UQUNUX1NUQVRVU19SRUZFUlJBTF9BU0tFRBAFMpgFCg9Db250YWN0c1NlcnZpY2USVwoMTGlzdENvbnRhY3RzEiIuc2hvZ3VuLmFwaS52MS5MaXN0Q29udGFjdHNSZXF1ZXN0GiMuc2hvZ3VuLmFwaS52MS5MaXN0Q29udGFjdHNSZXNwb25zZRJRCgpBZGRDb250YWN0EiAuc2hvZ3VuLmFwaS52MS5BZGRDb250YWN0UmVxdWVzdBohLnNob2d1bi5hcGkudjEuQWRkQ29udGFjdFJlc3BvbnNlEmwKE0NoYW5nZUNvbnRhY3RTdGF0dXMSKS5zaG9ndW4uYXBpLnYxLkNoYW5nZUNvbnRhY3RTdGF0dXNSZXF1ZXN0Giouc2hvZ3VuLmFwaS52MS5DaGFuZ2VDb250YWN0U3RhdHVzUmVzcG9uc2USUQoKR2V0Q29udGFjdBIgLnNob2d1bi5hcGkudjEuR2V0Q29udGFjdFJlcXVlc3QaIS5zaG9ndW4uYXBpLnYxLkdldENvbnRhY3RSZXNwb25zZRJdCg5BZGRDb250YWN0Tm90ZRIkLnNob2d1bi5hcGkudjEuQWRkQ29udGFjdE5vdGVSZXF1ZXN0GiUuc2hvZ3VuLmFwaS52MS5BZGRDb250YWN0Tm90ZVJlc3BvbnNlEloKDU1hcmtDb250YWN0ZWQSIy5zaG9ndW4uYXBpLnYxLk1hcmtDb250YWN0ZWRSZXF1ZXN0GiQuc2hvZ3VuLmFwaS52MS5NYXJrQ29udGFjdGVkUmVzcG9uc2USXQoOSW1wb3J0Q29udGFjdHMSJC5zaG9ndW4uYXBpLnYxLkltcG9ydENvbnRhY3RzUmVxdWVzdBolLnNob2d1bi5hcGkudjEuSW1wb3J0Q29udGFjdHNSZXNwb25zZWIGcHJvdG8z", [file_google_protobuf_timestamp, file_shogun_api_v1_jobs]);
 
 /**
  * Contact is one row of the contact table.
@@ -77,6 +81,19 @@ export type Contact = Message<"shogun.api.v1.Contact"> & {
    * @generated from field: int32 version = 12;
    */
   version: number;
+
+  /**
+   * relationship is one of recruiter, engineer, manager, alumni, friend, other,
+   * or empty.
+   *
+   * @generated from field: string relationship = 13;
+   */
+  relationship: string;
+
+  /**
+   * @generated from field: string how_we_met = 14;
+   */
+  howWeMet: string;
 };
 
 /**
@@ -182,6 +199,18 @@ export type AddContactRequest = Message<"shogun.api.v1.AddContactRequest"> & {
    * @generated from field: string notes = 7;
    */
   notes: string;
+
+  /**
+   * relationship must be one of the six values or empty (INVALID_RELATIONSHIP).
+   *
+   * @generated from field: string relationship = 8;
+   */
+  relationship: string;
+
+  /**
+   * @generated from field: string how_we_met = 9;
+   */
+  howWeMet: string;
 };
 
 /**
@@ -253,6 +282,178 @@ export const ChangeContactStatusResponseSchema: GenMessage<ChangeContactStatusRe
   messageDesc(file_shogun_api_v1_contacts, 6);
 
 /**
+ * @generated from message shogun.api.v1.GetContactRequest
+ */
+export type GetContactRequest = Message<"shogun.api.v1.GetContactRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.GetContactRequest.
+ * Use `create(GetContactRequestSchema)` to create a new message.
+ */
+export const GetContactRequestSchema: GenMessage<GetContactRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 7);
+
+/**
+ * ContactEvent is one line of a contact's history.
+ *
+ * @generated from message shogun.api.v1.ContactEvent
+ */
+export type ContactEvent = Message<"shogun.api.v1.ContactEvent"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * kind is created, status_changed, message_sent, reply_received or note.
+   *
+   * @generated from field: string kind = 2;
+   */
+  kind: string;
+
+  /**
+   * @generated from field: string channel = 3;
+   */
+  channel: string;
+
+  /**
+   * text is the note's text for a note, and empty for other kinds.
+   *
+   * @generated from field: string text = 4;
+   */
+  text: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp occurred_at = 5;
+   */
+  occurredAt?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message shogun.api.v1.ContactEvent.
+ * Use `create(ContactEventSchema)` to create a new message.
+ */
+export const ContactEventSchema: GenMessage<ContactEvent> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 8);
+
+/**
+ * @generated from message shogun.api.v1.GetContactResponse
+ */
+export type GetContactResponse = Message<"shogun.api.v1.GetContactResponse"> & {
+  /**
+   * @generated from field: shogun.api.v1.Contact contact = 1;
+   */
+  contact?: Contact | undefined;
+
+  /**
+   * @generated from field: repeated shogun.api.v1.ContactEvent history = 2;
+   */
+  history: ContactEvent[];
+
+  /**
+   * @generated from field: repeated shogun.api.v1.JobCard linked_jobs = 3;
+   */
+  linkedJobs: JobCard[];
+};
+
+/**
+ * Describes the message shogun.api.v1.GetContactResponse.
+ * Use `create(GetContactResponseSchema)` to create a new message.
+ */
+export const GetContactResponseSchema: GenMessage<GetContactResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 9);
+
+/**
+ * @generated from message shogun.api.v1.AddContactNoteRequest
+ */
+export type AddContactNoteRequest = Message<"shogun.api.v1.AddContactNoteRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string text = 2;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.AddContactNoteRequest.
+ * Use `create(AddContactNoteRequestSchema)` to create a new message.
+ */
+export const AddContactNoteRequestSchema: GenMessage<AddContactNoteRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 10);
+
+/**
+ * @generated from message shogun.api.v1.AddContactNoteResponse
+ */
+export type AddContactNoteResponse = Message<"shogun.api.v1.AddContactNoteResponse"> & {
+  /**
+   * @generated from field: shogun.api.v1.ContactEvent note = 1;
+   */
+  note?: ContactEvent | undefined;
+};
+
+/**
+ * Describes the message shogun.api.v1.AddContactNoteResponse.
+ * Use `create(AddContactNoteResponseSchema)` to create a new message.
+ */
+export const AddContactNoteResponseSchema: GenMessage<AddContactNoteResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 11);
+
+/**
+ * @generated from message shogun.api.v1.MarkContactedRequest
+ */
+export type MarkContactedRequest = Message<"shogun.api.v1.MarkContactedRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+
+  /**
+   * @generated from field: int32 version = 2;
+   */
+  version: number;
+
+  /**
+   * on is YYYY-MM-DD; empty means today in the owner's time zone.
+   *
+   * @generated from field: string on = 3;
+   */
+  on: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.MarkContactedRequest.
+ * Use `create(MarkContactedRequestSchema)` to create a new message.
+ */
+export const MarkContactedRequestSchema: GenMessage<MarkContactedRequest> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 12);
+
+/**
+ * @generated from message shogun.api.v1.MarkContactedResponse
+ */
+export type MarkContactedResponse = Message<"shogun.api.v1.MarkContactedResponse"> & {
+  /**
+   * @generated from field: shogun.api.v1.Contact contact = 1;
+   */
+  contact?: Contact | undefined;
+};
+
+/**
+ * Describes the message shogun.api.v1.MarkContactedResponse.
+ * Use `create(MarkContactedResponseSchema)` to create a new message.
+ */
+export const MarkContactedResponseSchema: GenMessage<MarkContactedResponse> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 13);
+
+/**
  * @generated from message shogun.api.v1.ImportContactsRequest
  */
 export type ImportContactsRequest = Message<"shogun.api.v1.ImportContactsRequest"> & {
@@ -278,6 +479,29 @@ export type ImportContactsRequest = Message<"shogun.api.v1.ImportContactsRequest
    * @generated from field: bool reshape = 4;
    */
   reshape: boolean;
+
+  /**
+   * mappings is the caller's own column mapping; when set it is used instead of
+   * the AI's and no model is called (INVALID_MAPPING when it does not fit the
+   * sheet). date_order is dmy, mdy or ymd, or empty.
+   *
+   * @generated from field: repeated shogun.api.v1.ColumnMapping mappings = 5;
+   */
+  mappings: ColumnMapping[];
+
+  /**
+   * @generated from field: string date_order = 6;
+   */
+  dateOrder: string;
+
+  /**
+   * selection limits the import to some rows; unset imports all. A duplicate is
+   * imported only if it is listed. Row numbers are those of the preview, so
+   * preview again after changing the mapping (INVALID_ROW_SELECTION otherwise).
+   *
+   * @generated from field: shogun.api.v1.RowSelection selection = 7;
+   */
+  selection?: RowSelection | undefined;
 };
 
 /**
@@ -285,7 +509,111 @@ export type ImportContactsRequest = Message<"shogun.api.v1.ImportContactsRequest
  * Use `create(ImportContactsRequestSchema)` to create a new message.
  */
 export const ImportContactsRequestSchema: GenMessage<ImportContactsRequest> = /*@__PURE__*/
-  messageDesc(file_shogun_api_v1_contacts, 7);
+  messageDesc(file_shogun_api_v1_contacts, 14);
+
+/**
+ * @generated from message shogun.api.v1.RowSelection
+ */
+export type RowSelection = Message<"shogun.api.v1.RowSelection"> & {
+  /**
+   * @generated from field: repeated int32 rows = 1;
+   */
+  rows: number[];
+};
+
+/**
+ * Describes the message shogun.api.v1.RowSelection.
+ * Use `create(RowSelectionSchema)` to create a new message.
+ */
+export const RowSelectionSchema: GenMessage<RowSelection> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 15);
+
+/**
+ * ImportPreviewRow is one row of a dry run.
+ *
+ * @generated from message shogun.api.v1.ImportPreviewRow
+ */
+export type ImportPreviewRow = Message<"shogun.api.v1.ImportPreviewRow"> & {
+  /**
+   * row is the 1-based CSV row number, counting the header as row 1.
+   *
+   * @generated from field: int32 row = 1;
+   */
+  row: number;
+
+  /**
+   * @generated from field: string full_name = 2;
+   */
+  fullName: string;
+
+  /**
+   * @generated from field: string role = 3;
+   */
+  role: string;
+
+  /**
+   * @generated from field: string company = 4;
+   */
+  company: string;
+
+  /**
+   * @generated from field: string email = 5;
+   */
+  email: string;
+
+  /**
+   * relationship is the file's, or a guess from the role when it has none.
+   *
+   * @generated from field: string relationship = 6;
+   */
+  relationship: string;
+
+  /**
+   * @generated from field: bool relationship_guessed = 7;
+   */
+  relationshipGuessed: boolean;
+
+  /**
+   * duplicate is true when the person is already in the book (by email,
+   * LinkedIn, or the same name at the same company).
+   *
+   * @generated from field: bool duplicate = 8;
+   */
+  duplicate: boolean;
+
+  /**
+   * @generated from field: string duplicate_contact_id = 9;
+   */
+  duplicateContactId: string;
+
+  /**
+   * duplicate_reason is email, linkedin or name_company.
+   *
+   * @generated from field: string duplicate_reason = 10;
+   */
+  duplicateReason: string;
+
+  /**
+   * repeats_row is the earlier row of this file that is the same person, or 0.
+   *
+   * @generated from field: int32 repeats_row = 11;
+   */
+  repeatsRow: number;
+
+  /**
+   * problem says why the row cannot be imported; empty when it can.
+   *
+   * @generated from field: string problem = 12;
+   */
+  problem: string;
+};
+
+/**
+ * Describes the message shogun.api.v1.ImportPreviewRow.
+ * Use `create(ImportPreviewRowSchema)` to create a new message.
+ */
+export const ImportPreviewRowSchema: GenMessage<ImportPreviewRow> = /*@__PURE__*/
+  messageDesc(file_shogun_api_v1_contacts, 16);
 
 /**
  * @generated from message shogun.api.v1.ImportRowError
@@ -314,7 +642,7 @@ export type ImportRowError = Message<"shogun.api.v1.ImportRowError"> & {
  * Use `create(ImportRowErrorSchema)` to create a new message.
  */
 export const ImportRowErrorSchema: GenMessage<ImportRowError> = /*@__PURE__*/
-  messageDesc(file_shogun_api_v1_contacts, 8);
+  messageDesc(file_shogun_api_v1_contacts, 17);
 
 /**
  * @generated from message shogun.api.v1.ImportReport
@@ -344,6 +672,13 @@ export type ImportReport = Message<"shogun.api.v1.ImportReport"> & {
    * @generated from field: repeated shogun.api.v1.ImportRowError errors = 5;
    */
   errors: ImportRowError[];
+
+  /**
+   * rows_skipped counts rows a selection left out.
+   *
+   * @generated from field: int32 rows_skipped = 6;
+   */
+  rowsSkipped: number;
 };
 
 /**
@@ -351,7 +686,7 @@ export type ImportReport = Message<"shogun.api.v1.ImportReport"> & {
  * Use `create(ImportReportSchema)` to create a new message.
  */
 export const ImportReportSchema: GenMessage<ImportReport> = /*@__PURE__*/
-  messageDesc(file_shogun_api_v1_contacts, 9);
+  messageDesc(file_shogun_api_v1_contacts, 18);
 
 /**
  * @generated from message shogun.api.v1.ImportContactsResponse
@@ -383,6 +718,26 @@ export type ImportContactsResponse = Message<"shogun.api.v1.ImportContactsRespon
    * @generated from field: repeated shogun.api.v1.ColumnMapping mappings = 4;
    */
   mappings: ColumnMapping[];
+
+  /**
+   * date_order is how numeric dates were read; send it back with mappings.
+   *
+   * @generated from field: string date_order = 5;
+   */
+  dateOrder: string;
+
+  /**
+   * rows previews the first 1000 rows of a dry run; rows_truncated says there
+   * were more. The report counts every row.
+   *
+   * @generated from field: repeated shogun.api.v1.ImportPreviewRow rows = 6;
+   */
+  rows: ImportPreviewRow[];
+
+  /**
+   * @generated from field: bool rows_truncated = 7;
+   */
+  rowsTruncated: boolean;
 };
 
 /**
@@ -390,7 +745,7 @@ export type ImportContactsResponse = Message<"shogun.api.v1.ImportContactsRespon
  * Use `create(ImportContactsResponseSchema)` to create a new message.
  */
 export const ImportContactsResponseSchema: GenMessage<ImportContactsResponse> = /*@__PURE__*/
-  messageDesc(file_shogun_api_v1_contacts, 10);
+  messageDesc(file_shogun_api_v1_contacts, 19);
 
 /**
  * ColumnMapping fills one import column from columns of the sheet.
@@ -414,7 +769,7 @@ export type ColumnMapping = Message<"shogun.api.v1.ColumnMapping"> & {
  * Use `create(ColumnMappingSchema)` to create a new message.
  */
 export const ColumnMappingSchema: GenMessage<ColumnMapping> = /*@__PURE__*/
-  messageDesc(file_shogun_api_v1_contacts, 11);
+  messageDesc(file_shogun_api_v1_contacts, 20);
 
 /**
  * @generated from enum shogun.api.v1.ContactStatus
@@ -494,6 +849,40 @@ export const ContactsService: GenService<{
     methodKind: "unary";
     input: typeof ChangeContactStatusRequestSchema;
     output: typeof ChangeContactStatusResponseSchema;
+  },
+  /**
+   * GetContact returns one contact with its notes and history, newest first, and
+   * the owner's jobs at its company (at most 20).
+   *
+   * @generated from rpc shogun.api.v1.ContactsService.GetContact
+   */
+  getContact: {
+    methodKind: "unary";
+    input: typeof GetContactRequestSchema;
+    output: typeof GetContactResponseSchema;
+  },
+  /**
+   * AddContactNote adds a note. Empty text is INVALID_NOTE and text over 2000
+   * characters NOTE_TOO_LONG. It never conflicts with an edit.
+   *
+   * @generated from rpc shogun.api.v1.ContactsService.AddContactNote
+   */
+  addContactNote: {
+    methodKind: "unary";
+    input: typeof AddContactNoteRequestSchema;
+    output: typeof AddContactNoteResponseSchema;
+  },
+  /**
+   * MarkContacted records that the owner reached the contact themselves. A
+   * contact not yet reached moves to reached out; otherwise only last_contacted
+   * changes. A future date is INVALID_DATE and a stale version VERSION_CONFLICT.
+   *
+   * @generated from rpc shogun.api.v1.ContactsService.MarkContacted
+   */
+  markContacted: {
+    methodKind: "unary";
+    input: typeof MarkContactedRequestSchema;
+    output: typeof MarkContactedResponseSchema;
   },
   /**
    * ImportContacts parses a contacts CSV. With dry_run nothing is written and

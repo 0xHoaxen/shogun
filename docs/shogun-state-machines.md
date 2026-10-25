@@ -101,3 +101,33 @@ stateDiagram-v2
 ```
 
 Starting stamps `started_on` once; finishing stamps `completed_on` and emits `learning.item_completed`; moving back to `planned` clears both dates and reopening clears `completed_on`. Any other move is `FailedPrecondition` with reason `ITEM_STATUS_INVALID_TRANSITION`.
+
+## Send (tsubame, v2)
+
+```mermaid
+stateDiagram-v2
+    [*] --> held: Send verified the Hanko
+    held --> sending: send_after reached
+    held --> cancelled: CancelSend
+    sending --> sent
+    sending --> failed
+```
+
+| From | Allowed to | Who moves it |
+| --- | --- | --- |
+| held | sending | tsubame's release job once `send_after` has passed, including after a restart |
+| held | cancelled | you, through `CancelSend`, before `send_after` |
+| sending | sent, failed | the provider result, or the reconciler (see Hanko in the LLD) |
+
+The Hanko is verified, and the `sends` row inserted, when `Send` is called, so the hold never skips a check and `token_jti` still makes the token single use. `draft.sent` fires only on `sent`, `draft.send_failed` only on `failed`. A cancelled send emits `draft.send_cancelled`, and fude moves the draft from `approved` back to `pending`. Once a row has left `held`, `CancelSend` is refused. An `undo_seconds` of 0 skips the hold (`send_after` is now).
+
+## Status proposal (kagami, v2)
+
+```mermaid
+stateDiagram-v2
+    [*] --> open
+    open --> accepted: you accept
+    open --> dismissed: you dismiss
+```
+
+Accepting runs the normal `ChangeJobStatus` for the proposal's `to_status`, so the job state machine still decides whether the move is legal; an illegal move leaves the proposal `open` and returns `FailedPrecondition`. Proposals are created from `mail.classified` and deduped on the source event id. Nothing moves a job by itself.

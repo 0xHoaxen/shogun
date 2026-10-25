@@ -1,8 +1,18 @@
+import { redirect } from "next/navigation";
+
 import { PageHeader } from "@/components/shell/page-header";
 import { SECTIONS } from "@/content/sections";
 import { SettingsOverview } from "@/components/settings/settings-overview";
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export default async function SettingsPage({ searchParams }: SettingsPageProps) {
+  // V1.2 briefly served Discovery as a query on this page.
+  if ((await searchParams).tab === "discovery") {
+    redirect("/settings/discovery");
+  }
   return (
     <>
       <PageHeader about={SECTIONS.settings}

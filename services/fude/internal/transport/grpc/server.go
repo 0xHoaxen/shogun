@@ -151,15 +151,26 @@ func (s *Server) Approve(ctx context.Context, req *fudev1.ApproveRequest) (*fude
 }
 
 // TestProvider implements fude.v1.FudeService.
-func (s *Server) TestProvider(ctx context.Context, _ *fudev1.TestProviderRequest) (*fudev1.TestProviderResponse, error) {
+func (s *Server) TestProvider(ctx context.Context, req *fudev1.TestProviderRequest) (*fudev1.TestProviderResponse, error) {
 	if s.tester == nil {
 		return nil, status.Error(codes.Unimplemented, "provider tests are not set up")
 	}
-	res, err := s.tester.Test(ctx)
+	details, err := app.DetailsOrNil(req.BaseUrl, req.Model, req.ApiKey)
 	if err != nil {
 		return nil, toStatus(err)
 	}
-	return &fudev1.TestProviderResponse{Ok: res.OK, Failure: failureToProto(res.Failure), Model: res.Model}, nil
+	var res app.ProviderTestResult
+	if details == nil {
+		res, err = s.tester.Test(ctx)
+	} else {
+		res, err = s.tester.TestDetails(ctx, *details)
+	}
+	if err != nil {
+		return nil, toStatus(err)
+	}
+	return &fudev1.TestProviderResponse{
+		Ok: res.OK, Failure: failureToProto(res.Failure), Model: res.Model, LatencyMs: res.Latency.Milliseconds(),
+	}, nil
 }
 
 // failureToProto maps a failure kind to the wire enum. A kind added later and
@@ -180,6 +191,10 @@ func failureToProto(kind llm.FailureKind) fudev1.ProviderFailure {
 		return fudev1.ProviderFailure_PROVIDER_FAILURE_NOT_PUBLIC
 	case llm.FailureProviderError:
 		return fudev1.ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR
+	case app.FailureEndpointInURL:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_ENDPOINT_IN_URL
+	case app.FailureInvalidAddress:
+		return fudev1.ProviderFailure_PROVIDER_FAILURE_INVALID_ADDRESS
 	default:
 		return fudev1.ProviderFailure_PROVIDER_FAILURE_OTHER
 	}

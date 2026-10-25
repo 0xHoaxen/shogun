@@ -51,6 +51,38 @@ type Owner struct {
 	UpdatedAt time.Time
 }
 
+type Profile struct {
+	OwnerID         uuid.UUID
+	Name            string
+	Headline        string
+	Location        string
+	Email           string
+	YearsExperience *float64
+	Version         int32
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+type ProfileRole struct {
+	OwnerID    uuid.UUID
+	Position   int32
+	Title      string
+	Company    string
+	StartMonth *string
+	EndMonth   *string
+	IsCurrent  bool
+}
+
+type Skill struct {
+	OwnerID   uuid.UUID
+	NameKey   string
+	Name      string
+	Level     int16
+	Source    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type Suggestion struct {
 	ID        uuid.UUID
 	OwnerID   uuid.UUID

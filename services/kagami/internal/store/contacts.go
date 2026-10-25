@@ -99,6 +99,17 @@ func (r *Repo) UpdateContact(ctx context.Context, arg db.UpdateContactParams) (d
 	return c, nil
 }
 
+// FindContactByNameAndCompany returns the owner's contact with this normalised
+// name (see domain.NormalizeName) at the company called company, or ErrNotFound.
+// It never creates the company.
+func (r *Repo) FindContactByNameAndCompany(ctx context.Context, owner uuid.UUID, normalizedName, company string) (db.Contact, error) {
+	c, err := r.q.FindContactByNameAndCompany(ctx, db.FindContactByNameAndCompanyParams{OwnerID: owner, Name: normalizedName, Company: company})
+	if err != nil {
+		return db.Contact{}, fmt.Errorf("find contact by name and company: %w", mapErr(err))
+	}
+	return c, nil
+}
+
 // UpdateContactStatus writes the status when arg.Version is current. A stale
 // version is ErrVersionConflict.
 func (r *Repo) UpdateContactStatus(ctx context.Context, arg db.UpdateContactStatusParams) (db.Contact, error) {

@@ -1,3 +1,4 @@
+// Used only by the login and legal pages; the signed-in shell has its own sidebar.
 interface RailProps {
   // The rotated page name along the bottom edge, for example "JOB PIPELINE".
   label: string;

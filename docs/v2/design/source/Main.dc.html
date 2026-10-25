@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Shogun Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=DM+Serif+Display&amp;family=Noto+Serif+JP:wght@700&amp;display=swap">
+<style>
+body{margin:0;background:#1C1C1A}
+.page{--bg:#1C1C1A;--panel:rgba(38,38,35,.62);--line:#34342F;--line2:#4A4942;--text:#ECE6D3;--muted:#ABA694;--cream:#D8D0B8;--ink:#1C1C1A;--hi-text:var(--accent);--hi-fill:var(--accent);
+ color:var(--text);font-family:'Inter Tight',system-ui,sans-serif;font-size:14px;line-height:22px;min-height:1400px;position:relative;
+ background:
+  radial-gradient(1100px 520px at 88% -8%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 62%),
+  radial-gradient(900px 600px at -5% 105%, rgba(216,208,184,.10), transparent 60%),
+  radial-gradient(rgba(236,230,211,.07) 1px, transparent 1.3px) 0 0/16px 16px,
+  #1C1C1A}
+.page ::selection{background:var(--accent);color:var(--ink)}
+a{color:inherit;text-decoration:none}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;font-variant-numeric:tabular-nums}
+.eye{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--hi-text)}
+.lbl{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mut{color:var(--muted)}
+.rw{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;border-bottom:1px dashed var(--line2)}
+.gut{background:repeating-linear-gradient(135deg, rgba(236,230,211,.07) 0 1px, transparent 1px 8px)}
+.gut.l{border-right:1px dashed var(--line2)}.gut.r{border-left:1px dashed var(--line2)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:20px;padding:0 24px;min-height:64px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px;letter-spacing:-.01em}
+.strip{flex:1 1 320px;display:flex;align-items:center;gap:12px;min-width:0;height:36px;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+.leader{flex-grow:1;height:8px;background:radial-gradient(var(--muted) 1px, transparent 1.4px) 0 0/8px 4px;opacity:.6}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;padding:0 16px;border:1px solid var(--line2);background:transparent;color:var(--text);font:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;box-sizing:border-box;border-radius:0}
+.btn:hover{border-color:var(--text)}
+.btn.cream{background:var(--cream);border-color:var(--cream);color:var(--ink);font-weight:600;letter-spacing:.04em;text-transform:uppercase;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
+.btn.cream:hover{background:#E6DFC9}
+.btn.acc{background:var(--accent);border-color:var(--accent);color:var(--ink)}
+.btn.sm{min-height:28px;padding:0 10px;font-size:12px}
+.btn:focus-visible,.ic:focus-visible,.sw:focus-visible,.nv:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+kbd{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:0 5px;border:1px solid var(--line2);color:var(--muted)}
+.body{display:grid;grid-template-columns:200px minmax(0,1fr);transition:grid-template-columns .22s ease}
+.body.c{grid-template-columns:60px minmax(0,1fr)}
+.body.c .lab{display:none}
+.body.c .nv{gap:4px;padding:0 10px}
+.side{border-right:1px dashed var(--line2);overflow:hidden}
+.tog{display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 16px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer;white-space:nowrap}
+.tog:hover{color:var(--text)}
+.body.c .tog{padding:0;justify-content:center}
+.crop{position:absolute;right:-110px;bottom:-150px;width:440px;height:440px;color:color-mix(in srgb, var(--accent) 34%, #2B2B28);pointer-events:none}
+.nv{display:flex;align-items:center;gap:14px;height:44px;padding:0 16px;border-bottom:1px solid var(--line);color:var(--text);font-weight:500}
+.nv span.n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+.nv:hover{background:rgba(236,230,211,.05)}
+.nv.on{background:var(--panel);box-shadow:inset 2px 0 0 var(--accent)}
+.nv .cnt{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--accent);color:var(--ink);padding:0 6px;line-height:18px}
+.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);border-bottom:1px dashed var(--line2)}
+.h1{margin:0;font-size:52px;line-height:56px;font-weight:500;letter-spacing:-.035em}
+.h1 .dim{color:var(--muted)}
+.arcs{border-left:1px dashed var(--line2);min-height:280px;position:relative;overflow:hidden;background:radial-gradient(rgba(236,230,211,.12) 1px, transparent 1.3px) 0 0/5px 5px}
+.cust{display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:14px 24px;border-bottom:1px dashed var(--line2);background:var(--panel);backdrop-filter:blur(6px)}
+.sw{width:22px;height:22px;border:2px solid transparent;cursor:pointer;padding:0}
+.sw.on{border-color:var(--text)}
+.seg{display:inline-flex;border:1px solid var(--line2)}
+.seg button{min-height:28px;padding:0 10px;border:0;border-right:1px solid var(--line2);background:transparent;color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:11px;text-transform:uppercase;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--cream);color:var(--ink)}
+.add{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border:1px dashed var(--line2);background:transparent;color:var(--muted);font:inherit;font-size:12px;cursor:pointer}
+.add:hover{color:var(--text)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:24px}
+.w{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(6px);min-width:0;display:flex;flex-direction:column;color:var(--text);position:relative}
+.w.l{grid-column:span 2}
+.w.edit{outline:1px dashed var(--line2);outline-offset:3px}
+.w.s-accent{--panel:var(--accent);--text:#1C1C1A;--muted:rgba(28,28,26,.72);--line:rgba(28,28,26,.22);--line2:rgba(28,28,26,.4);--hi-text:#1C1C1A;--hi-fill:#1C1C1A;background:var(--accent) repeating-linear-gradient(135deg, rgba(0,0,0,.07) 0 1px, transparent 1px 7px);border-color:var(--accent)}
+.w.s-cream{--panel:#D8D0B8;--text:#1C1C1A;--muted:#55513F;--line:rgba(28,28,26,.18);--line2:rgba(28,28,26,.35);--hi-text:#1C1C1A;--hi-fill:#1C1C1A;background:#D8D0B8;border-color:#D8D0B8}
+.wh{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);min-height:50px;box-sizing:border-box}
+.ic{width:28px;height:28px;border:1px solid var(--line2);background:transparent;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.ic:hover{color:var(--text)}
+.li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:var(--rowpad) 16px;border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.d-comfy{--rowpad:12px}.d-compact{--rowpad:7px}
+.ttl{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{display:inline-flex;align-items:center;min-height:20px;padding:0 6px;border:1px solid var(--line2);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text)}
+.bar{height:8px;background:var(--line)}
+.fill{height:8px;background:var(--hi-fill)}
+.segs{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:3px}
+.sg{height:16px;background:var(--line)}
+.sg.on{background:var(--hi-fill)}
+.heat{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px}
+.hc{aspect-ratio:1;background:var(--line)}
+.hc.on{background:var(--hi-fill)}
+.hc.mid{background:var(--hi-fill);opacity:.45}
+.big{font-size:30px;line-height:34px;font-weight:600;letter-spacing:-.03em}
+.band{background:var(--accent);color:#1C1C1A;border-bottom:1px dashed var(--line2)}
+.band .gut{background:repeating-linear-gradient(135deg, rgba(0,0,0,.14) 0 1px, transparent 1px 6px);border-color:rgba(28,28,26,.35)}
+.bandin{display:grid;grid-template-columns:200px minmax(0,1fr)}
+.mark-cell{display:flex;align-items:center;justify-content:center;border-right:1px dashed rgba(28,28,26,.35);background:repeating-linear-gradient(135deg, rgba(0,0,0,.08) 0 1px, transparent 1px 6px)}
+.wordmark{font-family:'DM Serif Display',serif;font-size:220px;line-height:.82;letter-spacing:-.03em;padding:12px 24px 0;overflow:hidden;white-space:nowrap;position:relative;
+ -webkit-mask-image:linear-gradient(180deg,#000 55%,rgba(0,0,0,.55));mask-image:linear-gradient(180deg,#000 55%,rgba(0,0,0,.55))}
+.halftone{position:absolute;inset:0;background:radial-gradient(rgba(232,105,60,.0) 0, transparent 0),radial-gradient(var(--accent) 1.1px, transparent 1.6px) 0 0/5px 5px;-webkit-mask-image:linear-gradient(180deg,transparent 45%,#000);mask-image:linear-gradient(180deg,transparent 45%,#000);pointer-events:none}
+.legal{display:flex;flex-wrap:wrap;gap:24px;justify-content:space-between;padding:14px 24px}
+@media (max-width:860px){
+ .rw{grid-template-columns:12px minmax(0,1fr) 12px}
+ .body,.body.c,.bandin,.hero{grid-template-columns:minmax(0,1fr)}
+ .tog{display:none}.body.c .lab{display:inline}
+ .side{border-right:0;border-bottom:1px dashed var(--line2);display:flex;flex-wrap:wrap}.nv{flex:1 1 140px}
+ .arcs{border-left:0;border-top:1px dashed var(--line2);min-height:160px}
+ .grid{grid-template-columns:minmax(0,1fr);padding:16px}.w.l{grid-column:span 1}
+ .h1{font-size:36px;line-height:40px}.wordmark{font-size:110px}.mark-cell{min-height:80px;border-right:0}
+ .btn,.ic,.seg button,.add,.nv{min-height:44px}.ic{width:44px}
+}
+.strip{padding:0 12px;background:transparent;transition:background .3s ease,border-color .3s ease;color:var(--text)}
+.strip{position:relative;overflow:hidden;isolation:isolate}
+.strip::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 6%, transparent) 65%, transparent);transform:translateX(-101%);transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.strip:hover::before,.strip:focus-visible::before{transform:translateX(0)}
+.strip:hover{border-color:color-mix(in srgb, var(--accent) 50%, var(--line2))}
+@media (prefers-reduced-motion: reduce){.strip::before{transition:none}}
+.strip:hover .leader{opacity:1}
+.strip .go-i{transition:transform .2s ease}.strip:hover .go-i{transform:translateX(3px)}
+.strip > *{flex-shrink:0;white-space:nowrap}
+.strip > .nx{flex-shrink:1;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.strip > .leader{flex:1 1 24px;min-width:24px}
+@media (max-width:1180px){.strip .hide-sm{display:none}}
+.go{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line2);color:var(--muted);transition:color .2s,border-color .2s,background .2s}
+.go:hover{color:var(--ink);background:var(--accent);border-color:var(--accent)}
+@media (max-width:860px){.hide-sm{display:none}}
+.ln{position:absolute;background:var(--line2);pointer-events:none}
+.ln.v{width:1px}.ln.h{height:1px}
+.nd{position:absolute;width:5px;height:5px;border-radius:50%;background:color-mix(in srgb, var(--accent) 45%, #ECE6D3)}
+.ln.v .nd.s{top:-2px;left:-2px}.ln.v .nd.e{bottom:-2px;left:-2px}
+.ln.h .nd.s{left:-2px;top:-2px}.ln.h .nd.e{right:-2px;top:-2px}
+.pk{position:absolute;width:5px;height:5px;border-radius:50%;background:color-mix(in srgb, var(--accent) 45%, #ECE6D3);box-shadow:0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);opacity:0}
+.ln.v .pk{left:-2px;animation:dv 3.6s cubic-bezier(.5,0,.6,1) infinite}
+.ln.h .pk{top:-2px;animation:dh 4.2s cubic-bezier(.5,0,.6,1) infinite}
+.d2{animation-delay:-1.3s!important}.d3{animation-delay:-2.4s!important}
+@keyframes dv{0%{top:-2px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:calc(100% - 3px);opacity:0}}
+@keyframes dh{0%{left:-2px;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:calc(100% - 3px);opacity:0}}
+@media (prefers-reduced-motion: reduce){.pk{animation:none;display:none}}
+.l1{top:0;bottom:262px;right:210px}.l2{top:0;bottom:262px;right:120px}.l3{left:0;right:302px;bottom:170px}.l4{left:0;right:302px;bottom:90px}
+.mark-cell{position:relative;overflow:hidden}
+.mark-cell .ln,.mcrop{display:none}
+.mcrop{position:absolute;right:-110px;top:40px;width:260px;height:260px;color:rgba(28,28,26,.82);pointer-events:none}
+.ln.ink{background:rgba(28,28,26,.45)}.ln.ink .nd,.ln.ink .pk{background:#1C1C1A;box-shadow:none}
+.m1{left:0;right:134px;top:120px}.m2{left:0;right:134px;top:200px}.m3{top:0;height:56px;right:64px}
+@media (max-width:860px){
+ .top{gap:10px;padding:10px 12px}.top .brand{margin-right:auto}.top .strip{order:5;flex:1 1 100%}
+ .side{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.side::-webkit-scrollbar{display:none}
+ .nv{flex:0 0 auto;border-bottom:0;border-right:1px solid var(--line);padding:0 14px;gap:8px}
+ .nv.on{box-shadow:inset 0 -2px 0 var(--accent)}.nv .cnt{margin-left:4px}
+}
+@media (max-width:860px){
+ .hero > div:first-child{padding:28px 16px 24px !important}
+ .arcs{min-height:220px}.crop{width:300px;height:300px;right:-60px;bottom:-120px}
+ .l1{bottom:161px;right:150px}.l2{bottom:161px;right:90px}.l3{right:221px;bottom:110px}.l4{right:221px;bottom:50px}
+ .mark-cell{min-height:200px;border-bottom:1px dashed rgba(28,28,26,.35)}
+ .mcrop{display:block}.mlogo{display:none}
+ .wordmark{font-size:96px;padding:8px 16px 0}
+}
+.top{gap:10px}
+.top .strip{height:36px;box-sizing:border-box;border:1px solid var(--line2)}
+.top .btn{height:36px;min-height:36px}
+.hero{position:relative;display:block !important;min-height:460px;overflow:hidden;isolation:isolate}
+.hero > .htext{position:relative;z-index:2;max-width:620px}
+.hero > .htext::before{content:"";position:absolute;inset:0 -120px 0 0;z-index:-1;background:linear-gradient(90deg, rgba(28,28,26,.82) 55%, transparent);pointer-events:none}
+.asc{position:absolute;inset:0;z-index:1;pointer-events:none}
+.asc canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+@media (max-width:1100px){.hero > .htext{max-width:560px}}
+@media (max-width:860px){
+ .hero{min-height:0}
+ .hero > .htext{max-width:none}
+ .hero > .htext::before{inset:0;background:linear-gradient(180deg, rgba(28,28,26,.35), rgba(28,28,26,.6))}
+}
+/* v2 look: transparent cards, dashed rules, dotted marks */
+.page{--dotoff:color-mix(in srgb, var(--muted) 30%, transparent)}
+.w:not(.s-accent):not(.s-cream){background:transparent !important;backdrop-filter:none !important;border:1px dashed var(--line2) !important}
+.w:not(.s-accent):not(.s-cream) .wh{border-bottom:1px dashed var(--line2)}
+.w:not(.s-accent):not(.s-cream) .li,.w:not(.s-accent):not(.s-cream) .lgi,.w:not(.s-accent):not(.s-cream) .acct,.pgs td,.tbl th,.tbl td{border-bottom-style:dashed !important;border-bottom-color:var(--line2) !important}
+.meta,.links{background:transparent !important;backdrop-filter:none !important;border:1px dashed var(--line2) !important}
+.mc,.links a{border-color:var(--line2) !important;border-right-style:dashed !important;border-bottom-style:dashed !important}
+.card{background:transparent !important;backdrop-filter:none !important;border-style:dashed !important;border-color:var(--line2) !important}
+.card.on{border-style:solid !important;border-color:var(--accent) !important}
+.bar,.sbar,.stages i,.segs i,.sg,.heat i,.hc,.dual{background:radial-gradient(circle, var(--dotoff) 1.4px, transparent 1.9px) 0 50%/5px 5px !important;height:10px}
+.bar > i,.fill,.dual i,.stages i.on,.segs i.on,.sg.on,.heat i.l2,.hc.on{background:radial-gradient(circle, var(--hi, var(--hi-fill, var(--accent))) 1.5px, transparent 2px) 0 50%/5px 5px !important;height:10px}
+.heat i.l1,.hc.mid{background:radial-gradient(circle, color-mix(in srgb, var(--hi, var(--hi-fill, var(--accent))) 55%, transparent) 1.5px, transparent 2px) 0 50%/5px 5px !important;opacity:1 !important}
+.segs i,.sg{height:16px !important}.heat i,.hc{height:auto}
+.w.s-accent,.w.s-cream{--dotoff:rgba(28,28,26,.22)}
+.dual b{background:var(--text) !important}
+.paper{background:var(--cream)}
+</style>
+</helmet>
+<div class="page {{ density }}" style="--accent: {{ accent }}">
+
+<div class="rw">
+<div class="gut l"></div>
+<header class="top">
+<a href="Main.dc.html" class="brand" aria-label="Shogun home">
+<svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="2" width="28" height="28" rx="3" fill="none" stroke="var(--accent)" stroke-width="2.4"></rect><text x="16" y="22.5" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="700" font-size="17" fill="var(--accent)">将</text></svg>
+<span>shogun</span>
+</a>
+<a class="strip" href="Inbox.dc.html" aria-label="Next up: reply to Priya Raman. 4 items need you. Open inbox."><span class="lbl" style="color: var(--accent)">Next</span><span class="mono nx">Reply to Priya Raman · Halden Labs · 2h</span><span class="leader" aria-hidden="true"></span><span class="mono mut hide-sm">Synced 2m ago</span><span class="mono" style="color: var(--accent)">4 need you</span><svg class="go-i" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+<button type="button" class="btn sm" aria-label="Search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M19 11a8 8 0 1 1-16 0a8 8 0 1 1 16 0zM21 21l-4.3-4.3"></path></svg><span class="hide-sm">Search</span> <kbd class="hide-sm">⌘K</kbd></button>
+<button type="button" class="{{ custCls }}" onClick="{{ toggleEdit }}" aria-pressed="{{ editPressed }}">{{ custLabel }}</button>
+</header>
+<div class="gut r"></div>
+</div>
+
+<div class="rw">
+<div class="gut l"></div>
+<div class="{{ bodyCls }}">
+<nav class="side" aria-label="Main">
+<button type="button" class="tog" onClick="{{ toggleSide }}" aria-expanded="{{ sideOpen }}" aria-label="{{ togLabel }}"><span aria-hidden="true">{{ togIcon }}</span><span class="lab">Collapse</span></button>
+<a href="Main.dc.html" class="nv on" aria-current="page" title="Dashboard"><span class="n">01</span><span class="lab">Dashboard</span></a>
+<a href="Inbox.dc.html" class="nv" title="Inbox"><span class="n">02</span><span class="lab">Inbox</span><span class="cnt">4</span></a>
+<a href="Pipeline.dc.html" class="nv" title="Pipeline"><span class="n">03</span><span class="lab">Pipeline</span></a>
+<a href="People.dc.html" class="nv" title="People"><span class="n">04</span><span class="lab">People</span></a>
+<a href="Writing.dc.html" class="nv" title="Writing"><span class="n">05</span><span class="lab">Writing</span></a>
+<a href="Growth.dc.html" class="nv" title="Growth"><span class="n">06</span><span class="lab">Growth</span></a>
+<a href="Insights.dc.html" class="nv" title="Insights"><span class="n">07</span><span class="lab">Insights</span></a>
+<a href="Settings.dc.html" class="nv" title="Settings"><span class="n">08</span><span class="lab">Settings</span></a>
+</nav>
+<main style="min-width: 0">
+<section class="hero">
+<div class="asc" aria-hidden="true"><canvas class="asc-cv"></canvas></div>
+<div class="htext" style="padding: 48px 32px 36px; display: flex; flex-direction: column; gap: 18px">
+<div class="lbl">Fri 23 Oct · Good evening</div>
+<h1 class="h1">Four things need you.<br><span class="dim">The rest is handled.</span></h1>
+<p class="mut" style="margin: 0; max-width: 52ch">Two emails to send, one cover letter to approve and one status change to confirm. Shogun kept your pipeline, follow-ups and matches up to date on its own.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px"><a class="btn cream" href="Inbox.dc.html" style="min-width: 240px; min-height: 48px">Open inbox</a></div>
+</div>
+</section>
+
+<sc-if value="{{ edit }}" hint-placeholder-val="{{ false }}">
+<section class="cust" aria-label="Customize dashboard">
+<div style="display: flex; align-items: center; gap: 10px"><span class="lbl">Page scheme</span>
+<sc-for list="{{ swatches }}" as="s" hint-placeholder-count="4"><button type="button" class="{{ s.cls }}" style="background: {{ s.hex }}" onClick="{{ s.pick }}" aria-label="{{ s.name }}" aria-pressed="{{ s.pressed }}"></button></sc-for>
+</div>
+<div style="display: flex; align-items: center; gap: 10px"><span class="lbl">Density</span>
+<div class="seg" role="group" aria-label="Density"><button type="button" class="{{ comfyCls }}" onClick="{{ setComfy }}">Comfortable</button><button type="button" class="{{ compactCls }}" onClick="{{ setCompact }}">Compact</button></div>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px"><span class="lbl">Add widget</span>
+<sc-for list="{{ hidden }}" as="h" hint-placeholder-count="1"><button type="button" class="add" onClick="{{ h.show }}">+ {{ h.title }}</button></sc-for>
+<sc-if value="{{ noHidden }}" hint-placeholder-val="{{ true }}"><span class="mut" style="font-size: 12px">All widgets are on the board</span></sc-if>
+</div>
+<div style="flex-grow: 1"></div>
+<button type="button" class="btn sm" onClick="{{ reset }}">Reset</button>
+</section>
+</sc-if>
+
+<div class="grid">
+<sc-for list="{{ widgets }}" as="w" hint-placeholder-count="6">
+<section class="{{ w.cls }}" aria-label="{{ w.title }}">
+<header class="wh">
+<span class="eye">{{ w.num }}</span><span style="font-weight: 600">{{ w.title }}</span>
+<div style="flex-grow: 1"></div>
+<sc-if value="{{ w.edit }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="ic" onClick="{{ w.left }}" aria-label="Move {{ w.title }} earlier"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
+<button type="button" class="ic" onClick="{{ w.right }}" aria-label="Move {{ w.title }} later"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button type="button" class="ic" onClick="{{ w.resize }}" aria-label="{{ w.sizeLabel }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="{{ w.sizeIcon }}"></path></svg></button>
+<button type="button" class="ic" onClick="{{ w.recolor }}" aria-label="Change {{ w.title }} colour scheme"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"></circle><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"></path></svg></button>
+<button type="button" class="ic" onClick="{{ w.hide }}" aria-label="Hide {{ w.title }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg></button>
+</sc-if>
+<sc-if value="{{ w.view }}" hint-placeholder-val="{{ true }}"><a href="{{ w.href }}" class="go" aria-label="Open {{ w.title }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"></path></svg></a></sc-if>
+</header>
+
+<sc-if value="{{ w.isNeeds }}" hint-placeholder-val="{{ false }}"><div>
+<sc-for list="{{ needs }}" as="n" hint-placeholder-count="4"><div class="li"><div style="min-width: 0"><div class="ttl">{{ n.title }}</div><div class="sub">{{ n.meta }}</div></div><a class="btn sm" href="Inbox.dc.html">{{ n.cta }}</a></div></sc-for>
+</div></sc-if>
+
+<sc-if value="{{ w.isPipe }}" hint-placeholder-val="{{ false }}"><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="5"><div style="display: grid; grid-template-columns: 92px minmax(0, 1fr) 24px; gap: 12px; align-items: center"><span class="lbl">{{ s.name }}</span><div class="bar"><div class="fill" style="width: {{ s.pct }}"></div></div><span class="mono" style="text-align: right">{{ s.n }}</span></div></sc-for>
+<div class="sub">Halden Labs moved to Interview from an email, 5h ago</div>
+</div></sc-if>
+
+<sc-if value="{{ w.isFollow }}" hint-placeholder-val="{{ false }}"><div>
+<sc-for list="{{ follows }}" as="f" hint-placeholder-count="3"><div class="li"><div style="min-width: 0"><div class="ttl">{{ f.who }}</div><div class="sub">{{ f.job }}</div></div><span class="tag">{{ f.due }}</span></div></sc-for>
+</div></sc-if>
+
+<sc-if value="{{ w.isBudget }}" hint-placeholder-val="{{ false }}"><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="big">$6.40</span><span class="mut">of $20.00</span></div>
+<div class="segs" aria-hidden="true"><sc-for list="{{ segs }}" as="g" hint-placeholder-count="20"><span class="{{ g.cls }}"></span></sc-for></div>
+<div class="mono" style="color: var(--muted)">Day 23 of 31 · on track</div>
+</div></sc-if>
+
+<sc-if value="{{ w.isMatch }}" hint-placeholder-val="{{ false }}"><div>
+<sc-for list="{{ matches }}" as="m" hint-placeholder-count="3"><div class="li"><div style="min-width: 0"><div class="ttl">{{ m.role }}</div><div class="sub">{{ m.company }}</div></div><span class="mono" style="font-weight: 500">{{ m.score }}</span></div></sc-for>
+</div></sc-if>
+
+<sc-if value="{{ w.isLearn }}" hint-placeholder-val="{{ false }}"><div style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="big">12 days</span><span class="mut">logging streak</span></div>
+<div class="heat" aria-hidden="true"><sc-for list="{{ heat }}" as="c" hint-placeholder-count="28"><span class="{{ c.cls }}"></span></sc-for></div>
+<div class="sub">Last: Kubernetes operator reconcile loops</div>
+</div></sc-if>
+
+<sc-if value="{{ w.isAuto }}" hint-placeholder-val="{{ false }}"><div>
+<sc-for list="{{ autos }}" as="a" hint-placeholder-count="2"><div class="li"><div style="min-width: 0"><div class="ttl">{{ a.title }}</div><div class="sub">{{ a.meta }}</div></div><button type="button" class="btn sm">Undo</button></div></sc-for>
+</div></sc-if>
+</section>
+</sc-for>
+</div>
+</main>
+</div>
+<div class="gut r"></div>
+</div>
+
+<div class="rw band">
+<div class="gut l"></div>
+<div class="bandin">
+<div class="mark-cell" aria-hidden="true"><span class="ln h m1 ink" aria-hidden="true"><span class="nd s"></span><span class="nd e"></span><span class="pk "></span></span><span class="ln h m2 ink" aria-hidden="true"><span class="nd s"></span><span class="nd e"></span><span class="pk d2"></span></span><span class="ln v m3 ink" aria-hidden="true"><span class="nd s"></span><span class="nd e"></span><span class="pk d3"></span></span><svg class="mlogo" width="80" height="80" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="3" fill="none" stroke="#1C1C1A" stroke-width="2.4"></rect><text x="16" y="22.5" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="700" font-size="17" fill="#1C1C1A">将</text></svg><svg class="mcrop" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"></rect><text x="16" y="22.5" text-anchor="middle" font-family="Noto Serif JP, serif" font-weight="700" font-size="17" fill="currentColor">将</text></svg></div>
+<div style="min-width: 0">
+<div style="display: flex; flex-wrap: wrap; border-bottom: 1px dashed rgba(28,28,26,.35)">
+<div style="padding: 22px 32px; min-width: 150px"><div style="font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -.03em">Watching</div><div style="color: rgba(28,28,26,.75)">Inbox status</div></div>
+<div style="padding: 22px 32px; min-width: 150px"><div style="font-size: 30px; line-height: 34px; font-weight: 600; letter-spacing: -.03em">17</div><div style="color: rgba(28,28,26,.75)">Active roles</div></div>
+<div style="padding: 22px 32px; flex: 1 1 320px; border-left: 1px dashed rgba(28,28,26,.35)"><p class="mono" style="margin: 0; font-size: 13px; line-height: 20px">Shogun runs your job hunt in the background. It tracks roles, reads replies and drafts what you send. Nothing leaves without your approval.</p></div>
+</div>
+<div class="wordmark" aria-hidden="true">Shogun<div class="halftone"></div></div>
+</div>
+</div>
+<div class="gut r"></div>
+</div>
+
+<div class="rw" style="border-bottom: 0">
+<div class="gut l"></div>
+<footer class="legal"><span class="lbl">Shogun · personal career ops</span><span class="lbl">Shortcuts · Changelog · Privacy</span></footer>
+<div class="gut r"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1400}}'>
+const W = {
+  needs:  { title:'Needs you',    href:'Inbox.dc.html', flag:'isNeeds' },
+  pipe:   { title:'Pipeline',     href:'#', flag:'isPipe' },
+  follow: { title:'Follow-ups',   href:'#', flag:'isFollow' },
+  budget: { title:'AI budget',    href:'#', flag:'isBudget' },
+  match:  { title:'New matches',  href:'#', flag:'isMatch' },
+  learn:  { title:'Learning',     href:'#', flag:'isLearn' },
+  auto:   { title:'Done for you', href:'#', flag:'isAuto' }
+};
+const DEFAULT = [
+  { id:'needs', size:'l', on:true, scheme:'dark' }, { id:'budget', size:'s', on:true, scheme:'accent' },
+  { id:'pipe', size:'s', on:true, scheme:'dark' }, { id:'follow', size:'s', on:true, scheme:'dark' }, { id:'match', size:'s', on:true, scheme:'cream' },
+  { id:'learn', size:'s', on:false, scheme:'dark' }, { id:'auto', size:'l', on:false, scheme:'dark' }
+];
+const SCHEMES = ['dark','accent','cream'];
+const AC = 84, AR = 30;
+const SWATCHES = [['Ember','#E8693C'],['Moss','#9DAE6C'],['Tide','#6FA8BE'],['Plum','#C08AB0']];
+const FLAGS = ['isNeeds','isPipe','isFollow','isBudget','isMatch','isLearn','isAuto'];
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { edit:false, layout: DEFAULT.map(x => ({ ...x })), accent:'#E8693C', density:'comfy' }; }
+  move(i, d) {
+    const on = this.state.layout.filter(x => x.on); const j = i + d; if (j < 0 || j >= on.length) return;
+    const L = this.state.layout.slice(); const ia = L.indexOf(on[i]), ib = L.indexOf(on[j]); L[ia] = on[j]; L[ib] = on[i];
+    this.setState({ layout: L });
+  }
+  patch(id, p) { this.setState({ layout: this.state.layout.map(x => x.id === id ? { ...x, ...p } : x) }); }
+  componentDidMount() {
+    const ART = ["", "                                                                                     41", "                                                                                   154", "                                                                                  3454", "                                                                             2233145541", "                                                                           24444434432", "                                                                        244556665553", "                                                                          154552", "                                                                     3444345321                31         133331", "                                                  23                245554541 21             1242         23333", "                                                  43                44455441  341           44441", "         44", "         13                                  3212          12      34344443 2332         343132       332", "         23                                  32 41         34     14545555543343        345422        44", "        1453                                43  22        343     15555555522221  1353  4433", "        4444                               354            4554    3555555553232  35551  44", "         144                               4534            455   34455555565566425644          13", "          152                              34352     42    44   3  313212424354432232    12 2  34", "          253                              33352     3433334532241143423343444446433   1244    25                    332", "           342                  1          33453    134554545443522445344432321343     3331     3 1                 2321", "            24                 463         15665   46555644465656665676676", "                                 422        2535   454633253 26465434536363  44      35352  44   333       23    352", "                  1                     1   24333324433443443444444442 1 1            1 1   1                     1", "                  3322                  11 24443434544444555544555554", "                   34431                   45555434555545555545555554", "                    344453              1 14555533555555554444455455421111111112222211111   11212121    1112", "           44   33    465653       22 145345565656555355554455355556441 2554445555655543    4556554     555551", " 22         133 2441   345542      34245534555555553455455531 35541 13413555453455355542   254433123    355551", " 142         24213553  145543      35455532444555554555443433333223344314555554554355553  24532  342    25554", "  354        144425553  35554      1455553144455565665443145532 255553 1455555543124545412453   3443    24442", "   2564      3455665543  4554       25456524567525656654", "     3551    15655666554  254       5556555446541 45555554555556554323555555555555555553", "       22      34444211312f434fgg4 11444444434442114443342244444321 13343434444222224442 121 12122221  221", "                2244  3532f545hhhf2513555554445544343344542224322221342414235422222345542355224444553  22", "             1       fiii5hih5iiiigif35555555555555555555555544542  455556555545454455554555435555552", "                   3iiiiiiiiiiiiiiiig25544334445445444445544444442 344445445544444445554244442444444", "                  1ii                 42       32       45        34       32        2        41", "             1311312f4      5gge14h2  4423444234433344335533344444433433334443        3443323442 32", "             342241 3g3    1gig3 4i3  3423454344444444434434434444445423433431        3444423431143", "             4   32  3h1 22  hi1 3i4      44  24      33   34  23  361 12                53  43  23", "         42246456644iiih3e14hih44242if   365444554556664 46546655566666654            6556556446553", "         43324534552  6iii43h4h44336if     123455544555442135544444565544ii2         46643556345452", "         11221212221   1341 323  1 242      2  12212222221  111122222212443          2332222311222", "", "          24344442  4h33hh35h2    13fh1df3 3433 333444444333444331                344432444443242", "          35444552 3iiiii3  2hiiiiiif        12  245555554445544443332         14555543555555444", "           144452  fii55hiiifhiiihiiiiiii5 5i4 3334555544343355554344311123344432 135554445554353", "     11      121   14421333412344444444442 353 11   122221   11111  11 1           1111111111  32", "      343", "        32          41   3i6iiiiii4     3iiiif  1562566553445554135556664 1244445431 1565433 giiiiiii", "         2331       42                giiihiiiii32245566665544665541566665352    13565644giii3 3iiihiii2", "          2451      21           23335iiiiii6iih41455543553555324553 2555545554455556ih2 hiiiih414iihgihf", "            2                   145g6gghhhg6fg6f21334432442321  2443  122334344443433fg2 45fgf54  45f3f7f1", "                                e44ihiiihighgh11  224545554    12343      11 4465344 5i44g         2hgghf", "                              4iiiiiiige5iiiiiih24345555555  1444223325455342 355553 4iiiiiif  5f4iiiiiiii2", "                               hihiif3ighiiiiiii31444444442  22 145441   13444414441   fiiiiig3   giiiiii2", "                                                                                             1hihihihihi5", "                               23321332  22212 2321   22222222222   333333332 221            1higggggggg4", "                              3iiiihiii22hhh5g3iih4  455555565453  3iiiiiiiih24543           1hi", "                           4h  h5 1i2                  11  1          ii2 ff 1h2", "                        hiiiiiif4iiii2fi5                          42  2giiiiiii51", "                  3gggggiiiiiiifghg31 5ii5                         gh1  15iiii4g42gggf2", "                 4fhiiiihiiiihh4if2   4iii5 12                    1hh4    fiih fffhiiig2", "                                         iig    14     452    1i5                 fi1    fi", "                                  34       23343453322 2433133454  35e  23  2332   1     2e", "                                  35344444435541            134452143545552  453", "                                   144124132 21 21 33 13 22 2    22 31142141241", "                                    33 2412312212224423423324313232142131 41", "                                        2565546655555556555556535655532", "                                                        351", "                                            3445444444445555443231", "                                             233554544344544541", "                                                13444   14113"];
+    const SRC = "CONST SHOGUN=REQUIRE('./CORE');DRAFT.APPROVE(YOU);NOTHING_LEAVES_WITHOUT_YOU;INBOX.REVIEW(7);PIPELINE.MOVE(ROLE,INTERVIEW);SEND.HOLD(10S);UNDO();将;LETTER.WRITE({TONE:'WARM'});MATCH.SCORE>=80;FOLLOW_UP.DUE(TODAY);";
+    const GW = 120, GH = ART.length;
+    const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hash = (x, y) => (((x * 73856093) ^ (y * 19349663)) >>> 0) % 1000;
+    let t0 = performance.now();
+    const draw = now => {
+      const cv = document.querySelector('.asc-cv'); if (!cv) { this.raf = requestAnimationFrame(draw); return; }
+      const box = cv.parentNode.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const W = Math.round(box.width), H = Math.round(box.height); if (!W || !H) { this.raf = requestAnimationFrame(draw); return; }
+      if (cv.width !== W * dpr || cv.height !== H * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+      const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+      const page = cv.closest('.page'); const cs = getComputedStyle(page || document.body);
+      const acc = (cs.getPropertyValue('--accent') || '#E8693C').trim();
+      const narrow = window.matchMedia ? window.matchMedia('(max-width:860px)').matches : W < 700;
+      // cell size: fit the figure to the height on wide screens, to the width on phones
+      const pad = narrow ? 20 : 40; let ch = Math.min((H - pad * 2) / GH, ((W - pad * 2) / GW) / .55, narrow ? 99 : (H * .8) / GH); const cw = ch * .55;
+      const fw = cw * GW, fh = ch * GH;
+      const ox = narrow ? (W - fw) / 2 : Math.max(W * .42, W - fw - pad * 2), oy = (H - fh) / 2; const dim = narrow ? .5 : 1;
+      const t = still ? 0 : (now - t0) / 1000;
+      g.font = '600 ' + (ch * 1.02).toFixed(2) + 'px "IBM Plex Mono", monospace'; g.textBaseline = 'top'; g.textAlign = 'left';
+      // full-width background field of faint code
+      const cols = Math.ceil(W / cw), rows = Math.ceil(H / ch), step = Math.floor(t * 3);
+      g.fillStyle = acc;
+      for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+        const h = hash(x, y); if (h > 22) continue;
+        const a = ((h + step) % 14 === 0) ? .4 : .1; g.globalAlpha = a * dim;
+        g.fillText(SRC[(h * 7 + step) % SRC.length], x * cw, y * ch);
+      }
+      // the figure: code scrolls through it, a light band sweeps down, cells flicker
+      const scroll = Math.floor(t * 7), band = ((t / 8) % 1 * 2.2 - .2) * GH;
+      for (let y = 0; y < GH; y++) {
+        const row = ART[y]; const glitch = !still && hash(y, Math.floor(t * 1.6)) < 7 ? (hash(y, 1) % 5 - 2) * cw : 0;
+        for (let x = 0; x < row.length; x++) {
+          const c = row[x]; if (c === ' ') continue;
+          const hi = c >= 'a'; const lv = hi ? c.charCodeAt(0) - 96 : +c;
+          const near = Math.max(0, 1 - Math.abs(y - band) / 5);
+          const fl = still ? 1 : (hash(x + scroll, y) < 30 ? .35 : 1);
+          let a = (.5 + lv / 9 * .5) * fl + near * .5; if (a > 1) a = 1;
+          g.globalAlpha = a * dim; g.fillStyle = hi || near > .7 ? '#ECE6D3' : acc;
+          g.fillText(SRC[(x + y * 37 + scroll) % SRC.length], ox + x * cw + glitch, oy + y * ch);
+        }
+      }
+      g.globalAlpha = 1;
+      if (!still) this.raf = requestAnimationFrame(draw);
+    };
+    this.raf = requestAnimationFrame(draw);
+    if (still) { this.onRs = () => requestAnimationFrame(draw); window.addEventListener('resize', this.onRs); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => requestAnimationFrame(draw));
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); if (this.onRs) window.removeEventListener('resize', this.onRs); }
+  renderVals() {
+    const s = this.state;
+    const widgets = s.layout.filter(x => x.on).map((x, i) => {
+      const meta = W[x.id];
+      const o = { title: meta.title, href: meta.href, num: String(i + 1).padStart(2, '0'),
+        cls: 'w s-' + x.scheme + (x.size === 'l' ? ' l' : '') + (s.edit ? ' edit' : ''), edit: s.edit, view: !s.edit,
+        sizeLabel: x.size === 'l' ? 'Make ' + meta.title + ' narrow' : 'Make ' + meta.title + ' wide',
+        sizeIcon: x.size === 'l' ? 'M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7' : 'M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7',
+        left: () => this.move(i, -1), right: () => this.move(i, 1),
+        resize: () => this.patch(x.id, { size: x.size === 'l' ? 's' : 'l' }),
+        recolor: () => this.patch(x.id, { scheme: SCHEMES[(SCHEMES.indexOf(x.scheme) + 1) % SCHEMES.length] }),
+        hide: () => this.patch(x.id, { on:false }) };
+      FLAGS.forEach(f => { o[f] = f === meta.flag; });
+      return o;
+    });
+    const hidden = s.layout.filter(x => !x.on).map(x => ({ title: W[x.id].title, show: () => this.patch(x.id, { on:true }) }));
+    return {
+      bodyCls: s.collapsed ? 'body c' : 'body', sideOpen: s.collapsed ? 'false' : 'true',
+      togIcon: s.collapsed ? '»' : '«', togLabel: s.collapsed ? 'Expand sidebar' : 'Collapse sidebar',
+      toggleSide: () => this.setState({ collapsed: !s.collapsed }),
+      accent: s.accent, density: s.density === 'compact' ? 'd-compact' : 'd-comfy',
+      edit: s.edit, editPressed: s.edit ? 'true' : 'false',
+      custCls: s.edit ? 'btn sm acc' : 'btn sm', custLabel: s.edit ? 'Done' : 'Customize',
+      toggleEdit: () => this.setState({ edit: !s.edit }),
+      swatches: SWATCHES.map(([name, hex]) => ({ name, hex, cls: s.accent === hex ? 'sw on' : 'sw', pressed: s.accent === hex ? 'true' : 'false', pick: () => this.setState({ accent: hex }) })),
+      comfyCls: s.density === 'comfy' ? 'on' : '', compactCls: s.density === 'compact' ? 'on' : '',
+      setComfy: () => this.setState({ density:'comfy' }), setCompact: () => this.setState({ density:'compact' }),
+      hidden, noHidden: hidden.length === 0,
+      reset: () => this.setState({ layout: DEFAULT.map(x => ({ ...x })), accent:'#E8693C', density:'comfy' }),
+      widgets,
+      stages: [['Saved',8],['Applied',5],['Shortlisted',2],['Interview',1],['Offer',0]].map(([n, c]) => ({ name:n, n:String(c), pct: Math.round(c / 8 * 100) + '%' })),
+      heat: Array.from({ length: 28 }, (_, i) => ({ cls: i >= 16 ? 'hc on' : (i % 3 === 0 ? 'hc mid' : 'hc') })),
+      segs: Array.from({ length: 20 }, (_, i) => ({ cls: i < 6 ? 'sg on' : 'sg' })),
+      needs: [
+        { title:'Reply to Priya Raman', meta:'email · Halden Labs · 2h', cta:'Review' },
+        { title:'Cover letter, Senior Backend Engineer', meta:'Northwind · v2 ready', cta:'Review' },
+        { title:'Follow up with Lumen', meta:'email · due today', cta:'Review' },
+        { title:'Halden Labs moved to Interview', meta:'from inbox · keep or undo', cta:'Confirm' }
+      ],
+      follows: [
+        { who:'Lumen', job:'Backend Engineer · applied 9 Oct', due:'Today' },
+        { who:'Arjun Mehta', job:'Referral · Quayside', due:'Mon' },
+        { who:'Tessellate', job:'SRE · applied 14 Oct', due:'Wed' }
+      ],
+      matches: [
+        { role:'Go Developer', company:'Brightline · Remote', score:'81' },
+        { role:'Platform Engineer', company:'Kestrel · Bengaluru', score:'77' },
+        { role:'Backend Engineer, Payments', company:'Orbit · Remote', score:'72' }
+      ],
+      autos: [
+        { title:'Halden Labs moved to Interview', meta:'from email · 5h ago' },
+        { title:'Corvid marked Rejected', meta:'from email · yesterday' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

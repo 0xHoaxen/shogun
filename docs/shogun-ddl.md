@@ -67,10 +67,25 @@ CREATE TABLE users (
   status        text        NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled')),
   gmail_allowed boolean     NOT NULL DEFAULT false,  -- admin-approved while the Google app is unverified
   timezone      text        NOT NULL DEFAULT 'Asia/Kolkata',
+  signature     text        NOT NULL DEFAULT '',     -- v2: appended to email drafts by fude
+  undo_seconds  int         NOT NULL DEFAULT 10 CHECK (undo_seconds BETWEEN 0 AND 60),  -- v2: send hold
   version       int         NOT NULL DEFAULT 1,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now(),
   archived_at   timestamptz
+);
+
+-- v2: which drafts may be approved without a manual look. The Hanko rule is
+-- unchanged: a rule only pre-ticks the approve checklist, it never signs.
+CREATE TABLE approval_rules (
+  id          uuid PRIMARY KEY,
+  owner_id    uuid NOT NULL,
+  kind        text NOT NULL,                -- draft kind, for example follow_up
+  channel     text NOT NULL,
+  enabled     boolean NOT NULL DEFAULT true,
+  version     int  NOT NULL DEFAULT 1,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (owner_id, kind, channel)
 );
 ```
 
@@ -140,7 +155,7 @@ CREATE TABLE contacts (
   linkedin_url      text,
   x_handle          text,
   phone             text,
-  relationship      text,                     -- recruiter | engineer | manager | alumni | friend | other
+  relationship      text CHECK (relationship IN ('recruiter','engineer','manager','alumni','friend','other')),
   how_we_met        text,
   status            text NOT NULL DEFAULT 'not_reached'
                     CHECK (status IN ('not_reached','reached_out','conversation_started','replied','referral_asked')),
@@ -187,7 +202,26 @@ CREATE TABLE imports (
   errors       jsonb NOT NULL DEFAULT '[]',  -- [{row, column, message}]
   created_at   timestamptz NOT NULL DEFAULT now()
 );
+
+-- v2: a suggested job status move (for example from a classified mail). Nothing
+-- changes the job until the user accepts it in the Inbox.
+CREATE TABLE status_proposals (
+  id                uuid PRIMARY KEY,
+  owner_id          uuid NOT NULL,
+  job_id            uuid NOT NULL REFERENCES jobs(id),
+  from_status       text NOT NULL,
+  to_status         text NOT NULL,
+  reason            text NOT NULL,
+  source_event_id   uuid,                   -- mail.classified event that raised it, for dedupe
+  state             text NOT NULL DEFAULT 'open' CHECK (state IN ('open','accepted','dismissed')),
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  decided_at        timestamptz
+);
+CREATE UNIQUE INDEX status_proposals_source ON status_proposals (owner_id, source_event_id) WHERE source_event_id IS NOT NULL;
+CREATE INDEX status_proposals_open ON status_proposals (owner_id, created_at DESC) WHERE state = 'open';
 ```
+
+A contact note is a `contact_events` row with `kind = 'note'` and the text in `payload`; adding one emits `contact.note_added`.
 
 ## tsubame
 
@@ -242,11 +276,13 @@ CREATE TABLE sends (
   token_jti           uuid NOT NULL UNIQUE, -- makes each Hanko single use
   to_addrs            citext[] NOT NULL,
   provider_message_id text,
-  status              text NOT NULL CHECK (status IN ('sending','sent','failed')),
+  status              text NOT NULL CHECK (status IN ('held','sending','sent','failed','cancelled')),
+  send_after          timestamptz,          -- v2: undo window end; the provider is not called before it
   error               text,
   created_at          timestamptz NOT NULL DEFAULT now(),
   sent_at             timestamptz
 );
+CREATE INDEX sends_held ON sends (send_after) WHERE status = 'held';
 ```
 
 ## fude
@@ -413,6 +449,49 @@ CREATE TABLE github_accounts (
   key_id           text  NOT NULL,
   connected_at     timestamptz NOT NULL DEFAULT now()
 );
+
+-- v2: the user's profile, filled from a resume read in memory (no file is stored).
+-- Only fields the user ticked are saved.
+CREATE TABLE profiles (
+  owner_id    uuid PRIMARY KEY,
+  headline    text NOT NULL DEFAULT '',
+  summary     text NOT NULL DEFAULT '',
+  location    text NOT NULL DEFAULT '',
+  version     int  NOT NULL DEFAULT 1,
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE profile_roles (
+  id          uuid PRIMARY KEY,
+  owner_id    uuid NOT NULL,
+  company     text NOT NULL,
+  title       text NOT NULL,
+  starts_on   date,
+  ends_on     date,                         -- null means current
+  summary     text NOT NULL DEFAULT '',
+  position    int  NOT NULL DEFAULT 0
+);
+CREATE INDEX profile_roles_owner ON profile_roles (owner_id, position);
+
+CREATE TABLE skills (
+  id          uuid PRIMARY KEY,
+  owner_id    uuid NOT NULL,
+  name        citext NOT NULL,
+  source      text NOT NULL CHECK (source IN ('resume','github','manual')),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (owner_id, name)
+);
+
+-- Skills asked for by a tracked job, extracted once per job in the background.
+CREATE TABLE job_skills (
+  id          uuid PRIMARY KEY,
+  owner_id    uuid NOT NULL,
+  job_id      uuid NOT NULL,                -- kagami id, no FK
+  skill       citext NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (owner_id, job_id, skill)
+);
+CREATE INDEX job_skills_skill ON job_skills (owner_id, skill);
 ```
 
 ## shinobi
@@ -514,6 +593,7 @@ CREATE TABLE providers (
   key_last4              text  NOT NULL,
   input_micros_per_mtok  bigint,            -- optional, for models not in prices
   output_micros_per_mtok bigint,
+  monthly_token_cap      bigint CHECK (monthly_token_cap > 0),   -- optional; null means unlimited
   version                int   NOT NULL DEFAULT 1,
   updated_at             timestamptz NOT NULL DEFAULT now()
 );
