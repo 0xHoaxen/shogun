@@ -1088,7 +1088,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/katana/internal/app/resume*.go`, `pkg/llm/config.go`, `services/soroban/migrations/`.
   Done when: `cd services/katana && go test -race ./...`, `cd pkg && go test -race ./llm/...`.
 
-- [ ] **V4.3 Profile and skills store: katana** (M) Needs: V4.2
+- [x] **V4.3 Profile and skills store: katana** (M) Needs: V4.2
   Do: tables `profiles` (one per owner), `profile_roles`, `skills` (name, level 0 to 10, source). `SaveProfile` writes only what the user kept; an existing skill's level only goes up. `GetProfile`, `ListSkills`. Event `profile.updated`.
   Files: `services/katana/migrations/`, `services/katana/internal/store/**`, `proto/shogun/katana/v1/*.proto`, `pkg/bus/routes.go`.
   Done when: `make proto && cd services/katana && go test -race ./...`.
