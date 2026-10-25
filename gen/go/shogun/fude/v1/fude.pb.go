@@ -317,6 +317,12 @@ const (
 	// The provider failed on its side.
 	ProviderFailure_PROVIDER_FAILURE_PROVIDER_ERROR ProviderFailure = 6
 	ProviderFailure_PROVIDER_FAILURE_OTHER          ProviderFailure = 7
+	// The address already ends in /chat/completions, which Shogun adds itself. No
+	// call is made.
+	ProviderFailure_PROVIDER_FAILURE_ENDPOINT_IN_URL ProviderFailure = 8
+	// The address is not one Shogun can call (it must be an https address). No
+	// call is made.
+	ProviderFailure_PROVIDER_FAILURE_INVALID_ADDRESS ProviderFailure = 9
 )
 
 // Enum value maps for ProviderFailure.
@@ -330,16 +336,20 @@ var (
 		5: "PROVIDER_FAILURE_NOT_PUBLIC",
 		6: "PROVIDER_FAILURE_PROVIDER_ERROR",
 		7: "PROVIDER_FAILURE_OTHER",
+		8: "PROVIDER_FAILURE_ENDPOINT_IN_URL",
+		9: "PROVIDER_FAILURE_INVALID_ADDRESS",
 	}
 	ProviderFailure_value = map[string]int32{
-		"PROVIDER_FAILURE_UNSPECIFIED":    0,
-		"PROVIDER_FAILURE_REJECTED":       1,
-		"PROVIDER_FAILURE_RATE_LIMITED":   2,
-		"PROVIDER_FAILURE_NOT_FOUND":      3,
-		"PROVIDER_FAILURE_UNREACHABLE":    4,
-		"PROVIDER_FAILURE_NOT_PUBLIC":     5,
-		"PROVIDER_FAILURE_PROVIDER_ERROR": 6,
-		"PROVIDER_FAILURE_OTHER":          7,
+		"PROVIDER_FAILURE_UNSPECIFIED":     0,
+		"PROVIDER_FAILURE_REJECTED":        1,
+		"PROVIDER_FAILURE_RATE_LIMITED":    2,
+		"PROVIDER_FAILURE_NOT_FOUND":       3,
+		"PROVIDER_FAILURE_UNREACHABLE":     4,
+		"PROVIDER_FAILURE_NOT_PUBLIC":      5,
+		"PROVIDER_FAILURE_PROVIDER_ERROR":  6,
+		"PROVIDER_FAILURE_OTHER":           7,
+		"PROVIDER_FAILURE_ENDPOINT_IN_URL": 8,
+		"PROVIDER_FAILURE_INVALID_ADDRESS": 9,
 	}
 )
 
@@ -1673,7 +1683,12 @@ func (x *AddVoiceSampleResponse) GetSample() *VoiceSample {
 }
 
 type TestProviderRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// base_url, model and api_key are set together to test details that are not
+	// saved; all unset tests the caller's saved provider.
+	BaseUrl       *string `protobuf:"bytes,1,opt,name=base_url,json=baseUrl,proto3,oneof" json:"base_url,omitempty"`
+	Model         *string `protobuf:"bytes,2,opt,name=model,proto3,oneof" json:"model,omitempty"`
+	ApiKey        *string `protobuf:"bytes,3,opt,name=api_key,json=apiKey,proto3,oneof" json:"api_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1708,13 +1723,36 @@ func (*TestProviderRequest) Descriptor() ([]byte, []int) {
 	return file_shogun_fude_v1_fude_proto_rawDescGZIP(), []int{21}
 }
 
+func (x *TestProviderRequest) GetBaseUrl() string {
+	if x != nil && x.BaseUrl != nil {
+		return *x.BaseUrl
+	}
+	return ""
+}
+
+func (x *TestProviderRequest) GetModel() string {
+	if x != nil && x.Model != nil {
+		return *x.Model
+	}
+	return ""
+}
+
+func (x *TestProviderRequest) GetApiKey() string {
+	if x != nil && x.ApiKey != nil {
+		return *x.ApiKey
+	}
+	return ""
+}
+
 type TestProviderResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Ok    bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
 	// failure is unspecified when ok.
 	Failure ProviderFailure `protobuf:"varint,2,opt,name=failure,proto3,enum=shogun.fude.v1.ProviderFailure" json:"failure,omitempty"`
 	// model is the model that answered, when ok.
-	Model         string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	Model string `protobuf:"bytes,3,opt,name=model,proto3" json:"model,omitempty"`
+	// latency_ms is how long the provider took to answer, when a call was made.
+	LatencyMs     int64 `protobuf:"varint,4,opt,name=latency_ms,json=latencyMs,proto3" json:"latency_ms,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1768,6 +1806,13 @@ func (x *TestProviderResponse) GetModel() string {
 		return x.Model
 	}
 	return ""
+}
+
+func (x *TestProviderResponse) GetLatencyMs() int64 {
+	if x != nil {
+		return x.LatencyMs
+	}
+	return 0
 }
 
 var File_shogun_fude_v1_fude_proto protoreflect.FileDescriptor
@@ -1874,12 +1919,21 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\achannel\x18\x01 \x01(\x0e2\x17.shogun.fude.v1.ChannelR\achannel\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\"M\n" +
 	"\x16AddVoiceSampleResponse\x123\n" +
-	"\x06sample\x18\x01 \x01(\v2\x1b.shogun.fude.v1.VoiceSampleR\x06sample\"\x15\n" +
-	"\x13TestProviderRequest\"w\n" +
+	"\x06sample\x18\x01 \x01(\v2\x1b.shogun.fude.v1.VoiceSampleR\x06sample\"\x91\x01\n" +
+	"\x13TestProviderRequest\x12\x1e\n" +
+	"\bbase_url\x18\x01 \x01(\tH\x00R\abaseUrl\x88\x01\x01\x12\x19\n" +
+	"\x05model\x18\x02 \x01(\tH\x01R\x05model\x88\x01\x01\x12\x1c\n" +
+	"\aapi_key\x18\x03 \x01(\tH\x02R\x06apiKey\x88\x01\x01B\v\n" +
+	"\t_base_urlB\b\n" +
+	"\x06_modelB\n" +
+	"\n" +
+	"\b_api_key\"\x96\x01\n" +
 	"\x14TestProviderResponse\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok\x129\n" +
 	"\afailure\x18\x02 \x01(\x0e2\x1f.shogun.fude.v1.ProviderFailureR\afailure\x12\x14\n" +
-	"\x05model\x18\x03 \x01(\tR\x05model*\xa4\x01\n" +
+	"\x05model\x18\x03 \x01(\tR\x05model\x12\x1d\n" +
+	"\n" +
+	"latency_ms\x18\x04 \x01(\x03R\tlatencyMs*\xa4\x01\n" +
 	"\tDraftKind\x12\x1a\n" +
 	"\x16DRAFT_KIND_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17DRAFT_KIND_COVER_LETTER\x10\x01\x12\x17\n" +
@@ -1912,7 +1966,7 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\rVersionAuthor\x12\x1e\n" +
 	"\x1aVERSION_AUTHOR_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11VERSION_AUTHOR_AI\x10\x01\x12\x17\n" +
-	"\x13VERSION_AUTHOR_USER\x10\x02*\x99\x02\n" +
+	"\x13VERSION_AUTHOR_USER\x10\x02*\xe5\x02\n" +
 	"\x0fProviderFailure\x12 \n" +
 	"\x1cPROVIDER_FAILURE_UNSPECIFIED\x10\x00\x12\x1d\n" +
 	"\x19PROVIDER_FAILURE_REJECTED\x10\x01\x12!\n" +
@@ -1921,7 +1975,9 @@ const file_shogun_fude_v1_fude_proto_rawDesc = "" +
 	"\x1cPROVIDER_FAILURE_UNREACHABLE\x10\x04\x12\x1f\n" +
 	"\x1bPROVIDER_FAILURE_NOT_PUBLIC\x10\x05\x12#\n" +
 	"\x1fPROVIDER_FAILURE_PROVIDER_ERROR\x10\x06\x12\x1a\n" +
-	"\x16PROVIDER_FAILURE_OTHER\x10\a2\xdc\x06\n" +
+	"\x16PROVIDER_FAILURE_OTHER\x10\a\x12$\n" +
+	" PROVIDER_FAILURE_ENDPOINT_IN_URL\x10\b\x12$\n" +
+	" PROVIDER_FAILURE_INVALID_ADDRESS\x10\t2\xdc\x06\n" +
 	"\vFudeService\x12\\\n" +
 	"\rGenerateDraft\x12$.shogun.fude.v1.GenerateDraftRequest\x1a%.shogun.fude.v1.GenerateDraftResponse\x12S\n" +
 	"\n" +
@@ -2043,6 +2099,7 @@ func file_shogun_fude_v1_fude_proto_init() {
 	if File_shogun_fude_v1_fude_proto != nil {
 		return
 	}
+	file_shogun_fude_v1_fude_proto_msgTypes[21].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

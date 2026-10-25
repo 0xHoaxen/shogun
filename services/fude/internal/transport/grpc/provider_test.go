@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,6 +25,10 @@ type fakeCompleter struct {
 }
 
 func (f fakeCompleter) Complete(context.Context, string, llm.Request) (llm.Response, error) {
+	return f.resp, f.err
+}
+
+func (f fakeCompleter) CompleteWith(context.Context, string, llm.Access, llm.Request) (llm.Response, error) {
 	return f.resp, f.err
 }
 
@@ -104,5 +109,70 @@ func TestTestProviderNeedsAnIdentityAndATester(t *testing.T) {
 	}
 	if unwired == nil {
 		t.Error("TestProvider answered with no tester wired")
+	}
+}
+
+func s(v string) *string { return &v }
+
+func TestTestProviderWithDetailsTestsThemAndReportsLatency(t *testing.T) {
+	h := newHarnessWith(t, testerOf(llm.Response{Text: "ok", Model: "my-llama-70b"}, nil))
+
+	res, err := h.client.TestProvider(h.ctx(t), &fudev1.TestProviderRequest{
+		BaseUrl: s("https://api.example.com/v1"), Model: s("my-llama-70b"), ApiKey: s("sk-typed-key-9876"),
+	})
+
+	if err != nil || !res.GetOk() || res.GetModel() != "my-llama-70b" || res.GetLatencyMs() < 0 {
+		t.Fatalf("res %v, err %v; want a working provider", res, err)
+	}
+}
+
+func TestTestProviderWithDetailsNamesAnAddressThatCannotWork(t *testing.T) {
+	h := newHarnessWith(t, testerOf(llm.Response{Model: "m"}, nil))
+	tests := map[string]fudev1.ProviderFailure{
+		"https://api.example.com/v1/chat/completions": fudev1.ProviderFailure_PROVIDER_FAILURE_ENDPOINT_IN_URL,
+		"http://api.example.com/v1":                   fudev1.ProviderFailure_PROVIDER_FAILURE_INVALID_ADDRESS,
+	}
+	for address, want := range tests {
+		t.Run(address, func(t *testing.T) {
+			res, err := h.client.TestProvider(h.ctx(t), &fudev1.TestProviderRequest{
+				BaseUrl: s(address), Model: s("m"), ApiKey: s("k"),
+			})
+
+			if err != nil || res.GetOk() || res.GetFailure() != want {
+				t.Fatalf("res %v, err %v; want ok=false with %v", res, err, want)
+			}
+		})
+	}
+}
+
+func TestTestProviderWithSomeDetailsOrNoKeyIsRefused(t *testing.T) {
+	h := newHarnessWith(t, testerOf(llm.Response{Model: "m"}, nil))
+	tests := []struct {
+		name   string
+		req    *fudev1.TestProviderRequest
+		reason string
+	}{
+		{"only the key", &fudev1.TestProviderRequest{ApiKey: s("k")}, "INVALID_REQUEST"},
+		{"address and model", &fudev1.TestProviderRequest{BaseUrl: s("https://a.example.com"), Model: s("m")}, "INVALID_REQUEST"},
+		{"blank key", &fudev1.TestProviderRequest{BaseUrl: s("https://a.example.com"), Model: s("m"), ApiKey: s("")}, "API_KEY_REQUIRED"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := h.client.TestProvider(h.ctx(t), tt.req)
+
+			requireStatus(t, err, codes.InvalidArgument, tt.reason)
+		})
+	}
+}
+
+func TestTestProviderWithDetailsNeverEchoesTheKeyInAnError(t *testing.T) {
+	h := newHarnessWith(t, testerOf(llm.Response{}, &llm.BudgetError{BudgetID: "b-1"}))
+
+	_, err := h.client.TestProvider(h.ctx(t), &fudev1.TestProviderRequest{
+		BaseUrl: s("https://api.example.com/v1"), Model: s("m"), ApiKey: s("sk-typed-key-9876"),
+	})
+
+	if err == nil || strings.Contains(err.Error(), "sk-typed-key-9876") {
+		t.Fatalf("err = %v, want a refusal that does not repeat the key", err)
 	}
 }
