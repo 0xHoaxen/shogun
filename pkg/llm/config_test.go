@@ -13,7 +13,7 @@ func TestNewConfigListsOnlyTheServicesFeatures(t *testing.T) {
 	}{
 		{"fude", []string{"fude.cover_letter", "fude.outreach", "fude.post", "fude.test_connection"}},
 		{"tsubame", []string{"tsubame.classify"}},
-		{"katana", []string{"katana.suggest"}},
+		{"katana", []string{"katana.suggest", "katana.resume_parse"}},
 		{"shinobi", []string{"shinobi.score"}},
 	}
 	for _, tt := range tests {

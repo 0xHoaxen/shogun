@@ -116,7 +116,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `services/katana/internal/resume/**`.
   Done when: `cd services/katana && go test -race ./...`, `make lint`.
 
-- [ ] **V4.2 Resume parsing with AI: katana** (M) Needs: V4.1
+- [x] **V4.2 Resume parsing with AI: katana** (M) Needs: V4.1
   Do: feature `katana.resume_parse` in `pkg/llm` config and a soroban seed-migration budget row (`TODO(owner)` to confirm amounts). `ParseResume` returns name, headline, location, email, years of experience, roles (title, company, start, end), skills with a 0 to 10 evidence score, and per field a `needs_check` flag with a reason. Strict JSON validation like `importcsv_reshape.go`; the resume is data in the prompt, never instructions; cap text length. Stores nothing.
   Files: `services/katana/internal/app/resume*.go`, `pkg/llm/config.go`, `services/soroban/migrations/`.
   Done when: `cd services/katana && go test -race ./...`, `cd pkg && go test -race ./llm/...`.

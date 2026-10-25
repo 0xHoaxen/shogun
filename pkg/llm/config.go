@@ -38,6 +38,7 @@ func defaultFeatures() map[string]FeatureConfig {
 		"fude.test_connection":  {MaxTokens: 16},
 		"tsubame.classify":      {MaxTokens: 512},
 		"katana.suggest":        {MaxTokens: 4096},
+		"katana.resume_parse":   {MaxTokens: 3072},
 		"kagami.import_reshape": {MaxTokens: 1024},
 		"shinobi.score":         {MaxTokens: 1024},
 	}
