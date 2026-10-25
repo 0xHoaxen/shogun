@@ -2,7 +2,7 @@
 
 24 Oct 2026 · owner: sboy99 · compared against `0xHoaxen/shogun` `main` at `8c72f87`.
 
-v2 is mostly a new web front end over the backend that already exists, plus three backend features: several AI models with test-before-save, a richer People record and import, and resume parsing into a stored profile. The tasks are in `TODO-phase13.md`; the design is in `design/`.
+v2 is mostly a new web front end over the backend that already exists, plus three backend features: a tested AI provider (test before save), a richer People record and import, and resume parsing into a stored profile. The tasks are in `TODO-phase13.md`; the design is in `design/`.
 
 ## Owner decisions (final)
 
@@ -18,6 +18,7 @@ v2 is mostly a new web front end over the backend that already exists, plus thre
 | D8 | Undo window for approved email | Yes, in v2. Held send inside tsubame, Hanko checks unchanged. |
 | D9 | Google Calendar | "Coming soon" in Connected accounts. Planned for v3. |
 | D10 | Discovery sources, Spend, GitHub, admin Users | Keep them as Settings tabs Discovery, Spend and Users (admins), GitHub in Connected accounts. Done in the design (`Settings.dc.html`). |
+| D11 | One AI provider or several? | One per user, as today. Several models, an active switch and per-feature routing (D3) come later. The mock's model list, "In use" tag and Use/Remove controls are not built. |
 
 Still open, marked `TODO(owner)` where they land: final hero art (D7), which logo mark ships (the mock uses A, Kabuto), and the page after sign-in (default `/dashboard`).
 
@@ -33,13 +34,13 @@ Still open, marked `TODO(owner)` where they land: final hero art (D7), which log
 | Writing | `/drafts/[id]`, learning post dialog | Studio list, tone and length, approve checklist | Regenerate tone and length (fude) |
 | Growth | `/learning` + `/profile` | Profile card, resume flow, skills table, heatmap, Close the gap | katana resume, profile, skills, job skills |
 | Insights | `/insights` funnel + outreach | KPI deltas, weekly chart, drop-off, by-source table, noticed list | sensei by source |
-| Settings | 8 sub-pages | v2 tabs, approval rules, undo window, signature, AI models list, appearance, delete drafts, Discovery/Spend/Users tabs and GitHub row | soroban, fude, torii, tsubame |
+| Settings | 8 sub-pages | v2 tabs, approval rules, undo window, signature, AI provider (test before save), appearance, delete drafts, Discovery/Spend/Users tabs and GitHub row | soroban, fude, torii, tsubame |
 
 ## Data model and API
 
 | Service | Migration | API | Events |
 | --- | --- | --- | --- |
-| soroban | `models` (many per owner, one active), `model_settings` (cap), budget rows for `katana.resume_parse`, `katana.job_skills` | List, add, set active, remove models | none |
+| soroban | budget rows for `katana.resume_parse`, `katana.job_skills`; the `providers` row stays as it is | none | none |
 | fude | none | Test unsaved details; Regenerate tone and length; `DiscardAllPending`; signature on email drafts | none |
 | kagami | relationship CHECK; `status_proposals` | Contact relationship, how you know them, last contacted; `GetContact` with notes, history, linked jobs; `AddContactNote`, `MarkContacted`; import preview rows, mapping override, ticked rows; proposals | `contact.note_added` |
 | katana | `profiles`, `profile_roles`, `skills`, `job_skills` | `ParseResume`, `SaveProfile`, `GetProfile`, `ListSkills` | `profile.updated`; consumes `job.added` |
@@ -62,7 +63,6 @@ Every new call goes through `pkg/llm` (metered by soroban, fails closed) with a 
 | Risk | Mitigation |
 | --- | --- |
 | A held send weakens the approval gate | Token checks stay in `tsubame.Send`; the hold only delays the provider call; tests for cancel, late cancel, restart, double send, edit after approval. |
-| Users lose their provider in the move to `models` | Migration copies rows; `ProviderService` keeps working; migration test with real-shaped rows. |
 | Real-stack e2e is already flaky (P11.5e3) | Find or isolate it before V6.2. |
 | Resume text carries instructions or junk | Strict schema, length caps, user checks every field. |
 | Dark theme contrast on small mono labels | 4.5:1 check on every token pair in V1.1. |

@@ -225,7 +225,6 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | soroban | Commit / Release | reservation\_id, actual token counts / reservation\_id | LedgerEntry / empty | pkg/llm in any service |
 | soroban | GetSpend | from, to, group\_by (service, feature, model, day) | cost and token totals | torii, sensei |
 | soroban | SetBudget / ListBudgets | scope, period, limit\_micros, mode, thresholds | Budget(s) with current spend | torii |
-| soroban | ListModels / AddModel / SetActiveModel / RemoveModel | model fields / id | Model(s), key never returned | torii |
 | soroban | SetPrice / ListPrices | model, rates, effective\_from | Price(s) | torii |
 
 Every service also serves `grpc.health.v1.Health` and server reflection (reflection off in production). Proto changes are checked by `buf breaking` against `main`, so a field can be added freely but never renumbered or removed inside `v1`.
@@ -322,7 +321,7 @@ Soroban (the abacus) is the tenth service: every paid call (Claude tokens today;
 
 Starting defaults, all editable in the app: global $20 per month hard, `fude` $15 per month hard, every other service $3 per month hard, and each feature $1 per day soft.
 
-**Models (v2).** A user can store several models and mark one active; every feature uses the active one. `pkg/llm` reads it through the unchanged `ProviderService`. A model is tested with one short call on unsaved details before it can be added, and that call is metered like any other. Without an active model AI features stay off. Resume parsing and job skills have their own budget rows (`katana.resume_parse`, `katana.job_skills`).
+**AI provider (v2).** Each user has one provider; every feature uses it through `pkg/llm`. Before it can be saved it is tested with one short call on the unsaved details, metered like any other call. Without a provider AI features stay off. Resume parsing and job skills have their own budget rows (`katana.resume_parse`, `katana.job_skills`).
 
 **Pricing.** A `prices` table holds per-model rates (input, output, cache read, cache write per million tokens) with an `effective_from` date, so old ledger rows keep the price that applied then. Prices are seeded by migration and changed with `SetPrice`.
 
