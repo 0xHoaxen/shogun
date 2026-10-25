@@ -1041,7 +1041,7 @@ v2 rules on top of `AGENTS.md`:
 
 ### V3. People
 
-- [ ] **V3.1 Contact fields and notes: kagami** (M) Needs: V0.1
+- [x] **V3.1 Contact fields and notes: kagami** (M) Needs: V0.1
   Do: expose `relationship` (recruiter, engineer, manager, alumni, friend, other; decision D5, add a CHECK in a new migration after mapping unknown values to other), `how_we_met`, `last_contacted` on Contact. `GetContact` returns notes and history from `contact_events` and jobs linked by company. New `AddContactNote` (event `contact.note_added`) and `MarkContacted` (status to reached out when allowed, sets `last_contacted`).
   Files: `services/kagami/**`, `proto/shogun/kagami/v1/*.proto`, `pkg/bus/routes.go`.
   Done when: `make proto && cd services/kagami && go test -race ./...`, `make lint`.

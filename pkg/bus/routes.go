@@ -13,6 +13,8 @@ var routes = map[string][]string{
 	"contact.added":          {"sensei"},
 	"contact.status_changed": {"fude", "sensei"},
 	"contact.follow_up_due":  {"taiko", "sensei"},
+	// contact.note_added has no consumer yet; kagami writes it so one can be added
+	// without changing the producer.
 	"draft.ready":            {"taiko"},
 	"draft.failed":           {"taiko"},
 	"draft.approved":         {"sensei"},

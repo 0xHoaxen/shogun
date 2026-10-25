@@ -185,10 +185,10 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | kagami | `UpdateJob` | job, update\_mask, version | Job | torii |
 | kagami | `ChangeJobStatus` | id, to\_status, note, version | Job | torii |
 | kagami | `AddContact` / `UpdateContact` | contact fields, update\_mask | Contact | torii |
-| kagami | `ListContacts` / `GetContact` | status, tag, company\_id, query | Contacts / Contact with timeline | torii |
+| kagami | `ListContacts` / `GetContact` | status, tag, company\_id, query | Contacts / Contact with timeline and linked jobs | torii |
 | kagami | `ChangeContactStatus` | id, to\_status, version | Contact | torii |
 | kagami | `ImportContacts` | csv bytes, dry\_run | ImportReport (per-row errors) | torii |
-| kagami | `AddContactNote` / `MarkContacted` | contact\_id, text / contact\_id, on | Contact | torii |
+| kagami | `AddContactNote` / `MarkContacted` | id, text / id, version, on? | note (timeline entry) / Contact | torii |
 | kagami | `ListStatusProposals` / `AcceptStatusProposal` / `DismissStatusProposal` | state / id | Proposal(s) / Job | torii |
 | kagami | `ListDueFollowUps` | on\_or\_before date | jobs and contacts due | torii, taiko |
 | tsubame | `ConnectAccount` / `CompleteConnect` | provider / oauth code, state | auth URL / Account | torii |
@@ -241,7 +241,7 @@ Events are delivered at least once, pushed from the producer's outbox to each co
 | `job.status_changed` | kagami | job\_id, from, to, at | sensei, taiko (offer, interview) |
 | `job.follow_up_due` | kagami | job\_id, due\_on | fude (follow-up), taiko |
 | `contact.added` | kagami | contact\_id, status | sensei |
-| `contact.note_added` | kagami | contact\_id, note\_id | sensei |
+| `contact.note_added` | kagami | contact\_id, note\_id, owner\_id | none yet |
 | `contact.status_changed` | kagami | contact\_id, from, to, channel | fude (outreach), sensei |
 | `contact.follow_up_due` | kagami | contact\_id, due\_on | fude (nudge), taiko |
 | `mail.classified` | tsubame | message\_id, classification, confidence, job\_id?, contact\_id? | kagami (job status), taiko, sensei |

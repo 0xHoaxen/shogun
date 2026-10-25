@@ -28,6 +28,8 @@ const (
 	KagamiService_UpdateContact_FullMethodName       = "/shogun.kagami.v1.KagamiService/UpdateContact"
 	KagamiService_ListContacts_FullMethodName        = "/shogun.kagami.v1.KagamiService/ListContacts"
 	KagamiService_GetContact_FullMethodName          = "/shogun.kagami.v1.KagamiService/GetContact"
+	KagamiService_AddContactNote_FullMethodName      = "/shogun.kagami.v1.KagamiService/AddContactNote"
+	KagamiService_MarkContacted_FullMethodName       = "/shogun.kagami.v1.KagamiService/MarkContacted"
 	KagamiService_ChangeContactStatus_FullMethodName = "/shogun.kagami.v1.KagamiService/ChangeContactStatus"
 	KagamiService_ImportContacts_FullMethodName      = "/shogun.kagami.v1.KagamiService/ImportContacts"
 	KagamiService_ListDueFollowUps_FullMethodName    = "/shogun.kagami.v1.KagamiService/ListDueFollowUps"
@@ -55,6 +57,15 @@ type KagamiServiceClient interface {
 	ListContacts(ctx context.Context, in *ListContactsRequest, opts ...grpc.CallOption) (*ListContactsResponse, error)
 	// GetContact returns the contact with its timeline.
 	GetContact(ctx context.Context, in *GetContactRequest, opts ...grpc.CallOption) (*GetContactResponse, error)
+	// AddContactNote adds a note to the contact's timeline and returns it. The text
+	// is trimmed; empty is INVALID_NOTE and more than 2000 characters NOTE_TOO_LONG.
+	// A note does not change the contact, so it never conflicts with an edit.
+	AddContactNote(ctx context.Context, in *AddContactNoteRequest, opts ...grpc.CallOption) (*AddContactNoteResponse, error)
+	// MarkContacted records that the owner reached the contact themselves, outside
+	// Shogun. A contact not yet reached moves to reached_out; for any other status
+	// only last_contacted changes, and a status never moves backwards. A stale
+	// version is VERSION_CONFLICT and a future date INVALID_DATE.
+	MarkContacted(ctx context.Context, in *MarkContactedRequest, opts ...grpc.CallOption) (*MarkContactedResponse, error)
 	// ChangeContactStatus fails with CONTACT_STATUS_INVALID_TRANSITION on an
 	// invalid move.
 	ChangeContactStatus(ctx context.Context, in *ChangeContactStatusRequest, opts ...grpc.CallOption) (*ChangeContactStatusResponse, error)
@@ -166,6 +177,26 @@ func (c *kagamiServiceClient) GetContact(ctx context.Context, in *GetContactRequ
 	return out, nil
 }
 
+func (c *kagamiServiceClient) AddContactNote(ctx context.Context, in *AddContactNoteRequest, opts ...grpc.CallOption) (*AddContactNoteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddContactNoteResponse)
+	err := c.cc.Invoke(ctx, KagamiService_AddContactNote_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *kagamiServiceClient) MarkContacted(ctx context.Context, in *MarkContactedRequest, opts ...grpc.CallOption) (*MarkContactedResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(MarkContactedResponse)
+	err := c.cc.Invoke(ctx, KagamiService_MarkContacted_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *kagamiServiceClient) ChangeContactStatus(ctx context.Context, in *ChangeContactStatusRequest, opts ...grpc.CallOption) (*ChangeContactStatusResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ChangeContactStatusResponse)
@@ -227,6 +258,15 @@ type KagamiServiceServer interface {
 	ListContacts(context.Context, *ListContactsRequest) (*ListContactsResponse, error)
 	// GetContact returns the contact with its timeline.
 	GetContact(context.Context, *GetContactRequest) (*GetContactResponse, error)
+	// AddContactNote adds a note to the contact's timeline and returns it. The text
+	// is trimmed; empty is INVALID_NOTE and more than 2000 characters NOTE_TOO_LONG.
+	// A note does not change the contact, so it never conflicts with an edit.
+	AddContactNote(context.Context, *AddContactNoteRequest) (*AddContactNoteResponse, error)
+	// MarkContacted records that the owner reached the contact themselves, outside
+	// Shogun. A contact not yet reached moves to reached_out; for any other status
+	// only last_contacted changes, and a status never moves backwards. A stale
+	// version is VERSION_CONFLICT and a future date INVALID_DATE.
+	MarkContacted(context.Context, *MarkContactedRequest) (*MarkContactedResponse, error)
 	// ChangeContactStatus fails with CONTACT_STATUS_INVALID_TRANSITION on an
 	// invalid move.
 	ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error)
@@ -274,6 +314,12 @@ func (UnimplementedKagamiServiceServer) ListContacts(context.Context, *ListConta
 }
 func (UnimplementedKagamiServiceServer) GetContact(context.Context, *GetContactRequest) (*GetContactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetContact not implemented")
+}
+func (UnimplementedKagamiServiceServer) AddContactNote(context.Context, *AddContactNoteRequest) (*AddContactNoteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddContactNote not implemented")
+}
+func (UnimplementedKagamiServiceServer) MarkContacted(context.Context, *MarkContactedRequest) (*MarkContactedResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MarkContacted not implemented")
 }
 func (UnimplementedKagamiServiceServer) ChangeContactStatus(context.Context, *ChangeContactStatusRequest) (*ChangeContactStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeContactStatus not implemented")
@@ -470,6 +516,42 @@ func _KagamiService_GetContact_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KagamiService_AddContactNote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddContactNoteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).AddContactNote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_AddContactNote_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).AddContactNote(ctx, req.(*AddContactNoteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KagamiService_MarkContacted_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkContactedRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KagamiServiceServer).MarkContacted(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: KagamiService_MarkContacted_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KagamiServiceServer).MarkContacted(ctx, req.(*MarkContactedRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KagamiService_ChangeContactStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ChangeContactStatusRequest)
 	if err := dec(in); err != nil {
@@ -584,6 +666,14 @@ var KagamiService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetContact",
 			Handler:    _KagamiService_GetContact_Handler,
+		},
+		{
+			MethodName: "AddContactNote",
+			Handler:    _KagamiService_AddContactNote_Handler,
+		},
+		{
+			MethodName: "MarkContacted",
+			Handler:    _KagamiService_MarkContacted_Handler,
 		},
 		{
 			MethodName: "ChangeContactStatus",
