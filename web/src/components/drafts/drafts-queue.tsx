@@ -76,7 +76,7 @@ export function DraftsQueue() {
           <Button onClick={() => drafts.refetch()}>Retry</Button>
         </div>
       ) : (
-        <div className="overflow-x-auto border-b border-ink">
+        <div className="relative overflow-x-auto border-b border-ink">
           <table className="w-full min-w-[860px] border-collapse text-left">
             <thead>
               <tr className="label h-9 bg-ink text-paper">

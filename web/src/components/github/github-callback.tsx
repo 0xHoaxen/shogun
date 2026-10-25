@@ -66,12 +66,12 @@ export function GitHubCallback() {
   return (
     <>
       <PageHeader title="GitHub." description="Finishing the connection with GitHub." />
-      <section className="grid gap-3.5 border-b border-ink p-[22px]">
+      <section className="grid gap-3.5 border-b border-line2 p-[22px]">
         {body}
         <div>
           <Link
             href="/settings/github"
-            className="label inline-flex min-h-9 items-center border border-ink px-3 font-bold hover:bg-ink hover:text-paper"
+            className="label inline-flex min-h-9 items-center border border-line2 px-3 font-bold hover:bg-cream hover:text-on-accent"
           >
             Back to GitHub settings
           </Link>

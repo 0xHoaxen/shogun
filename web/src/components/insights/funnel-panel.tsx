@@ -51,7 +51,7 @@ export function FunnelPanel() {
           <Button onClick={() => funnel.refetch()}>Retry</Button>
         </div>
       ) : (
-        <div className="overflow-x-auto border-b border-ink">
+        <div className="relative overflow-x-auto border-b border-ink">
           <table className="w-full min-w-[860px] border-collapse text-left">
             <caption className="sr-only">Job funnel</caption>
             <thead>

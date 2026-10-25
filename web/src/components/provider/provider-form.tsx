@@ -18,7 +18,6 @@ export const providerQueryKey = createConnectQueryKey({
 });
 
 const WHOLE_NUMBER = /^\d+$/;
-const INPUT_CLASS = "border-line2 bg-bg text-text";
 
 // A field the user may leave empty: undefined for empty, null for a bad entry.
 function optional<T>(text: string, parse: (text: string) => T | null): T | undefined | null {
@@ -133,7 +132,6 @@ export function ProviderForm({ provider }: FormProps) {
           label="Base URL"
           type="url"
           value={baseUrl}
-          className={INPUT_CLASS}
           placeholder="https://api.openai.com/v1"
           autoComplete="off"
           spellCheck={false}
@@ -142,7 +140,6 @@ export function ProviderForm({ provider }: FormProps) {
         <TextField
           label="Model name"
           value={model}
-          className={INPUT_CLASS}
           placeholder="gpt-4o-mini"
           autoComplete="off"
           spellCheck={false}
@@ -156,8 +153,7 @@ export function ProviderForm({ provider }: FormProps) {
               label="API key"
               type={showKey ? "text" : "password"}
               value={apiKey}
-              className={INPUT_CLASS}
-              placeholder={provider ? `Keep the key ending ${provider.keyLast4}` : "sk-..."}
+                  placeholder={provider ? `Keep the key ending ${provider.keyLast4}` : "sk-..."}
               autoComplete="off"
               spellCheck={false}
               onChange={(event) => setApiKey(event.target.value)}
@@ -180,15 +176,13 @@ export function ProviderForm({ provider }: FormProps) {
             label="Input price ($ per million tokens)"
             inputMode="decimal"
             value={inputPrice}
-            className={INPUT_CLASS}
-            onChange={(event) => setInputPrice(event.target.value)}
+              onChange={(event) => setInputPrice(event.target.value)}
           />
           <TextField
             label="Output price ($ per million tokens)"
             inputMode="decimal"
             value={outputPrice}
-            className={INPUT_CLASS}
-            onChange={(event) => setOutputPrice(event.target.value)}
+              onChange={(event) => setOutputPrice(event.target.value)}
           />
         </div>
         <p className="text-muted-foreground">
@@ -199,7 +193,6 @@ export function ProviderForm({ provider }: FormProps) {
           label="Monthly token limit"
           inputMode="numeric"
           value={cap}
-          className={INPUT_CLASS}
           placeholder="No limit"
           onChange={(event) => setCap(event.target.value)}
         />

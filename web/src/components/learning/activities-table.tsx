@@ -14,7 +14,7 @@ interface ActivitiesTableProps {
 
 export function ActivitiesTable({ activities, itemTitles, selected, atLimit, onToggle }: ActivitiesTableProps) {
   return (
-    <div className="overflow-x-auto border-b border-ink">
+    <div className="relative overflow-x-auto border-b border-ink">
       <table className="w-full min-w-[760px] border-collapse text-left">
         <caption className="sr-only">Learning activities</caption>
         <thead>

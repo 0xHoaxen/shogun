@@ -1,4 +1,5 @@
-import { DiscoveryScreen } from "@/components/discovery/discovery-screen";
+import { redirect } from "next/navigation";
+
 import { PageHeader } from "@/components/shell/page-header";
 import { SECTIONS } from "@/content/sections";
 import { SettingsOverview } from "@/components/settings/settings-overview";
@@ -8,10 +9,9 @@ interface SettingsPageProps {
 }
 
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
-  const { tab } = await searchParams;
-  // The Discovery tab replaces this in V0.2; until then /discovery redirects here.
-  if (tab === "discovery") {
-    return <DiscoveryScreen />;
+  // V1.2 briefly served Discovery as a query on this page.
+  if ((await searchParams).tab === "discovery") {
+    redirect("/settings/discovery");
   }
   return (
     <>

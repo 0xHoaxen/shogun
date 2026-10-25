@@ -987,7 +987,7 @@ v2 rules on top of `AGENTS.md`:
   Files: `docs/*.md`.
   Done when: docs reviewed in the PR; `make lint`.
 
-- [ ] **V0.2 Settings tabs for Discovery, Spend, Users and GitHub** (M) Needs: V1.3
+- [x] **V0.2 Settings tabs for Discovery, Spend, Users and GitHub** (M) Needs: V1.3
   Do: decision D10. The design now has them: see `Settings.dc.html` (tabs `discovery`, `spend`, `users`, and the Accounts list) and `desktop-Settings-tab-*.png`. Rebuild today's discovery sources and preferences (`web/src/components/discovery`), spend and budgets (`components/spend`), admin users (`components/admin`, admins only) and GitHub (`components/github`, a row in Connected accounts) in that look, on the same APIs as today.
   Files: `web/src/components/settings/**`, the four component folders above.
   Done when: web checks.

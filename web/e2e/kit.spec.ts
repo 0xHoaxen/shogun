@@ -41,11 +41,14 @@ test("the side panel closes with its × button and keeps Tab inside", async ({ p
   await page.getByRole("button", { name: "Open panel" }).click();
   const panel = page.getByRole("dialog", { name: "Bulk import" });
 
+  // The dialog moves focus in once it has opened; wait for that before tabbing.
+  await expect.poll(() => panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+
   // Act
   for (let i = 0; i < 6; i++) await page.keyboard.press("Tab");
 
-  // Assert
-  expect(await panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+  // Assert: focus may rest on a trap guard for a frame, so check where it settles.
+  await expect.poll(() => panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
 
   // Act
   await panel.getByRole("button", { name: "Close" }).click();

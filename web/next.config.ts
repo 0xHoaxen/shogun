@@ -42,7 +42,7 @@ const movedRoutes: ReadonlyArray<readonly [string, string]> = [
   ["/learning", "/growth"],
   ["/profile", "/growth"],
   ["/notifications", "/inbox"],
-  ["/discovery", "/settings?tab=discovery"],
+  ["/discovery", "/settings/discovery"],
 ];
 
 const nextConfig: NextConfig = {

@@ -12,7 +12,7 @@ const ROUTES: Record<keyof typeof SECTIONS, string> = {
   drafts: "/inbox",
   learning: "/growth",
   profile: "/growth",
-  discovery: "/settings?tab=discovery",
+  discovery: "/settings/discovery",
   insights: "/insights",
   notifications: "/inbox",
   settings: "/settings",

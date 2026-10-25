@@ -198,7 +198,7 @@ export function JobsBoard() {
         </div>
       ) : (
         <DndContext sensors={sensors} onDragStart={() => setNotice(null)} onDragEnd={handleDragEnd}>
-          <div className="overflow-x-auto border-b border-ink">
+          <div className="relative overflow-x-auto border-b border-ink">
             <div className="grid min-w-[1010px] grid-cols-[repeat(6,minmax(168px,1fr))]">
               {columns.map((column) => (
                 <Column key={column.status} column={column} />
