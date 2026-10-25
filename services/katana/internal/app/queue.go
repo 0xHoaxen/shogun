@@ -23,4 +23,6 @@ type SuggestInput struct {
 // that calls for a run and the run itself succeed or fail together.
 type Queue interface {
 	EnqueueSuggest(ctx context.Context, tx pgx.Tx, in SuggestInput) error
+	// EnqueueJobSkills asks for a saved job to be read for the skills it asks for.
+	EnqueueJobSkills(ctx context.Context, tx pgx.Tx, owner, job uuid.UUID) error
 }

@@ -9,4 +9,6 @@ var PurgeStatements = []string{
 	`DELETE FROM profiles WHERE owner_id = $1`,
 	`DELETE FROM profile_roles WHERE owner_id = $1`,
 	`DELETE FROM skills WHERE owner_id = $1`,
+	`DELETE FROM job_skills WHERE owner_id = $1`,
+	`DELETE FROM job_skill_runs WHERE owner_id = $1`,
 }

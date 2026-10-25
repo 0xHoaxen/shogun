@@ -7,7 +7,7 @@ import "slices"
 // names (for example "taiko"). Entries are added together with the producer
 // and consumer of each event, as listed in the Shogun LLD event catalog.
 var routes = map[string][]string{
-	"job.added":              {"fude", "sensei"},
+	"job.added":              {"fude", "katana", "sensei"},
 	"job.status_changed":     {"sensei"},
 	"job.follow_up_due":      {"taiko", "sensei"},
 	"contact.added":          {"sensei"},

@@ -15,6 +15,7 @@ import (
 
 	dojov1 "github.com/0xHoaxen/shogun/gen/go/shogun/dojo/v1"
 	eventsv1 "github.com/0xHoaxen/shogun/gen/go/shogun/events/v1"
+	kagamiv1 "github.com/0xHoaxen/shogun/gen/go/shogun/kagami/v1"
 	"github.com/0xHoaxen/shogun/pkg/bus"
 	"github.com/0xHoaxen/shogun/pkg/postgres"
 	"github.com/0xHoaxen/shogun/pkg/postgres/postgrestest"
@@ -33,12 +34,20 @@ type learnt struct {
 type fakeLearner struct {
 	mu   sync.Mutex
 	runs []learnt
+	jobs [][2]uuid.UUID
 }
 
 func (f *fakeLearner) LearnedItem(_ context.Context, _ pgx.Tx, owner uuid.UUID, item domain.LearnedItem) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.runs = append(f.runs, learnt{owner, item})
+	return nil
+}
+
+func (f *fakeLearner) JobAdded(_ context.Context, _ pgx.Tx, owner, job uuid.UUID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.jobs = append(f.jobs, [2]uuid.UUID{owner, job})
 	return nil
 }
 
@@ -119,6 +128,51 @@ func TestEventsThatCannotBeHandledAreAcknowledgedWithoutARun(t *testing.T) {
 
 			if err != nil || len(learner.runs) != 0 {
 				t.Fatalf("err %v, runs %d; want a quiet acknowledgement", err, len(learner.runs))
+			}
+		})
+	}
+}
+
+func deliverJobAdded(t *testing.T, sink *bus.SinkServer, id string, payload proto.Message) error {
+	t.Helper()
+	packed, err := anypb.New(payload)
+	if err != nil {
+		t.Fatalf("pack: %v", err)
+	}
+	_, err = sink.Deliver(context.Background(), &eventsv1.DeliverRequest{Envelope: &eventsv1.Envelope{
+		Id: id, Type: events.TypeJobAdded, Source: "kagami", Payload: packed,
+	}})
+	return err
+}
+
+func TestJobAddedAsksForTheJobToBeReadOnceEvenWhenDeliveredTwice(t *testing.T) {
+	sink, learner := newSink(t)
+	owner, job := uuid.New(), uuid.New()
+	payload := &kagamiv1.JobAdded{OwnerId: owner.String(), JobId: job.String(), Title: "Backend Engineer"}
+	id := uuid.NewString()
+
+	first := deliverJobAdded(t, sink, id, payload)
+	again := deliverJobAdded(t, sink, id, payload)
+
+	if first != nil || again != nil || len(learner.jobs) != 1 || learner.jobs[0] != [2]uuid.UUID{owner, job} {
+		t.Fatalf("errs %v %v, jobs %v; want one read for the job", first, again, learner.jobs)
+	}
+}
+
+func TestJobAddedEventsThatCannotBeHandledAreAcknowledgedWithoutARead(t *testing.T) {
+	tests := map[string]proto.Message{
+		"bad owner":               &kagamiv1.JobAdded{OwnerId: "nope", JobId: uuid.NewString()},
+		"bad job id":              &kagamiv1.JobAdded{OwnerId: uuid.NewString(), JobId: "nope"},
+		"payload of another type": wrapperspb.String("x"),
+	}
+	for name, payload := range tests {
+		t.Run(name, func(t *testing.T) {
+			sink, learner := newSink(t)
+
+			err := deliverJobAdded(t, sink, uuid.NewString(), payload)
+
+			if err != nil || len(learner.jobs) != 0 {
+				t.Fatalf("err %v, jobs %d; want a quiet acknowledgement", err, len(learner.jobs))
 			}
 		})
 	}

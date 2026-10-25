@@ -144,7 +144,7 @@ func run(ctx context.Context, lookup config.LookupFunc, overrides relayOverrides
 		appOpts = append(appOpts, app.WithOAuth(oauth))
 	}
 	svc := app.NewService(pool, gh, nil, appOpts...)
-	scheduled := jobs.NewSetup(svc, svc, svc, jobs.ContextEnqueuer{}, time.Now, log)
+	scheduled := jobs.NewSetup(svc, svc, svc, jobs.ContextEnqueuer{}, time.Now, log).WithJobSkills(svc, time.Now, log)
 
 	sink, err := bus.NewSinkServer(pool, owners.WithHandlers(events.Handlers(svc, log), log, owners.WithPurge(owners.PurgeSQL(store.PurgeStatements...))), log)
 	if err != nil {

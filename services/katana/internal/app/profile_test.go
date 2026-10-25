@@ -138,14 +138,15 @@ func TestSkillLevelsOnlyGoUpAndSkillsNotSentAreKept(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	skills, err := svc.ListSkills(ctx, owner)
+	list, err := svc.ListSkills(ctx, owner)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []app.ProfileSkill{
-		{Name: "Go", Level: 7, Source: app.SourceResume},
-		{Name: "Rust", Level: 6, Source: app.SourceManual},
-		{Name: "Python", Level: 4, Source: app.SourceManual},
+	skills := list.Skills
+	want := []app.SkillRow{
+		{Name: "Go", Level: 7, Source: app.SourceResume, Have: true},
+		{Name: "Rust", Level: 6, Source: app.SourceManual, Have: true},
+		{Name: "Python", Level: 4, Source: app.SourceManual, Have: true},
 	}
 	if len(skills) != len(want) {
 		t.Fatalf("skills = %+v, want %+v", skills, want)
@@ -168,8 +169,8 @@ func TestOneOwnerNeverSeesAnothersProfileOrSkills(t *testing.T) {
 	if _, err := svc.GetProfile(ctx, b); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("profile of b: %v, want not found", err)
 	}
-	if skills, err := svc.ListSkills(ctx, b); err != nil || len(skills) != 0 {
-		t.Errorf("skills of b: %+v, %v", skills, err)
+	if list, err := svc.ListSkills(ctx, b); err != nil || len(list.Skills) != 0 {
+		t.Errorf("skills of b: %+v, %v", list, err)
 	}
 }
 

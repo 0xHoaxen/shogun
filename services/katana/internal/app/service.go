@@ -40,6 +40,9 @@ type Service struct {
 	queue Queue
 	llm   Completer
 	log   *slog.Logger
+
+	// Set by WithJobSkills.
+	jobs JobSource
 }
 
 // NewService returns a Service on pool. github may be nil when GitHub is not

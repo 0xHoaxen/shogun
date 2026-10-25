@@ -53,6 +53,8 @@ type fakeQueue struct {
 	err  error
 }
 
+func (q *fakeQueue) EnqueueJobSkills(context.Context, pgx.Tx, uuid.UUID, uuid.UUID) error { return nil }
+
 func (q *fakeQueue) EnqueueSuggest(_ context.Context, _ pgx.Tx, in app.SuggestInput) error {
 	if q.err != nil {
 		return q.err

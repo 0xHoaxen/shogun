@@ -39,6 +39,8 @@ func TestPurgeRemovesEverythingTheUserOwnsIncludingTheTokenAndNothingElse(t *tes
 			`INSERT INTO profiles (owner_id, name) VALUES ($1, 'Priya')`,
 			`INSERT INTO profile_roles (owner_id, position, title) VALUES ($1, 0, 'Engineer')`,
 			`INSERT INTO skills (owner_id, name_key, name, level, source) VALUES ($1, 'go', 'Go', 5, 'resume')`,
+			`INSERT INTO job_skill_runs (owner_id, job_id) VALUES ($1, gen_random_uuid())`,
+			`INSERT INTO job_skills (owner_id, job_id, name_key, name) VALUES ($1, gen_random_uuid(), 'go', 'Go')`,
 		} {
 			if _, err := pool.Exec(context.Background(), stmt, owner); err != nil {
 				t.Fatalf("seed %q: %v", stmt, err)
@@ -53,6 +55,8 @@ func TestPurgeRemovesEverythingTheUserOwnsIncludingTheTokenAndNothingElse(t *tes
 		"profiles":         `SELECT count(*) FROM profiles WHERE owner_id = $1`,
 		"profile_roles":    `SELECT count(*) FROM profile_roles WHERE owner_id = $1`,
 		"skills":           `SELECT count(*) FROM skills WHERE owner_id = $1`,
+		"job_skill_runs":   `SELECT count(*) FROM job_skill_runs WHERE owner_id = $1`,
+		"job_skills":       `SELECT count(*) FROM job_skills WHERE owner_id = $1`,
 	})
 }
 
