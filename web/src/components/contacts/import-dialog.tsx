@@ -61,10 +61,10 @@ function RowErrors({ report }: { report: ImportReport }) {
     return null;
   }
   return (
-    <div className="max-h-56 overflow-auto border border-ink">
+    <div className="max-h-56 overflow-auto border border-line2">
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="label bg-ink text-paper">
+          <tr className="label bg-cream text-on-accent">
             <th className="px-2.5 py-1.5 font-medium">Row</th>
             <th className="px-2.5 py-1.5 font-medium">Column</th>
             <th className="px-2.5 py-1.5 font-medium">Problem</th>
@@ -72,7 +72,7 @@ function RowErrors({ report }: { report: ImportReport }) {
         </thead>
         <tbody>
           {report.errors.map((rowError) => (
-            <tr key={`${rowError.row}-${rowError.column}`} className="border-t border-ink">
+            <tr key={`${rowError.row}-${rowError.column}`} className="border-t border-line2">
               <td className="px-2.5 py-1.5">{rowError.row}</td>
               <td className="px-2.5 py-1.5">{rowError.column}</td>
               <td className="px-2.5 py-1.5">{rowError.message}</td>
@@ -183,7 +183,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
               // Until the provider is known it is not clear whether to reshape.
               disabled={run.isPending || provider.isPending}
               onChange={handleFile}
-              className="block w-full min-w-0 border border-ink bg-field p-2 text-xs"
+              className="block w-full min-w-0 border border-line2 bg-bg p-2 text-xs"
             />
           </div>
         ) : null}
@@ -211,7 +211,7 @@ export function ImportDialog({ open, onOpenChange }: ImportDialogProps) {
         ) : null}
 
         {problem ? (
-          <p role="alert" className="border border-ink bg-strip px-3 py-2 wrap-anywhere">
+          <p role="alert" className="border border-line2 bg-panel px-3 py-2 wrap-anywhere">
             {problem}
           </p>
         ) : null}

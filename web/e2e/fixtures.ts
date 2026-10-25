@@ -21,6 +21,7 @@ const HTTP_STATUS = {
   invalid_argument: 400,
   failed_precondition: 400,
   aborted: 409,
+  already_exists: 409,
   resource_exhausted: 429,
   unavailable: 503,
   internal: 500,

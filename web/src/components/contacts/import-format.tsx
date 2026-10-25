@@ -47,19 +47,19 @@ const TEMPLATE_HREF = `data:text/csv;charset=utf-8,${encodeURIComponent(TEMPLATE
 // filled-in template to start from.
 export function ImportFormat() {
   return (
-    <div className="grid gap-2 border border-ink bg-field p-3 text-xs">
+    <div className="grid gap-2 border border-line2 bg-bg p-3 text-xs">
       <p>
         The first row must name these {IMPORT_COLUMNS.length} columns, in this order. Only{" "}
         <code>full_name</code> needs a value; leave the rest blank if unknown.
       </p>
       <ol aria-label="Columns" className="flex flex-wrap gap-1">
         {IMPORT_COLUMNS.map((column) => (
-          <li key={column} className="border border-ink bg-paper px-1.5 py-0.5">
+          <li key={column} className="border border-line2 bg-bg px-1.5 py-0.5">
             <code>{column}</code>
           </li>
         ))}
       </ol>
-      <p className="text-muted-ink">
+      <p className="text-muted-foreground">
         Dates are YYYY-MM-DD. Separate tags with <code>;</code>. Status is one of not_reached,
         reached_out, conversation_started, replied or referral_asked.
       </p>

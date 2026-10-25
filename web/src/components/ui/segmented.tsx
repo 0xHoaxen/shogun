@@ -16,7 +16,7 @@ interface SegmentedProps<T extends string> {
 // aria-pressed and filled cream.
 export function Segmented<T extends string>({ label, options, value, onChange }: SegmentedProps<T>) {
   return (
-    <div role="group" aria-label={label} className="inline-flex max-w-full self-start border border-line2">
+    <div role="group" aria-label={label} className="inline-flex max-w-full flex-wrap self-start border border-line2">
       {options.map((option) => {
         const on = option.value === value;
         return (
