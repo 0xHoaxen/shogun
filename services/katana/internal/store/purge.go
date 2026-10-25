@@ -6,4 +6,7 @@ var PurgeStatements = []string{
 	`DELETE FROM suggestions WHERE owner_id = $1`,
 	`DELETE FROM github_snapshots WHERE owner_id = $1`,
 	`DELETE FROM github_accounts WHERE owner_id = $1`,
+	`DELETE FROM profiles WHERE owner_id = $1`,
+	`DELETE FROM profile_roles WHERE owner_id = $1`,
+	`DELETE FROM skills WHERE owner_id = $1`,
 }

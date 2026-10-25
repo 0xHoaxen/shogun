@@ -13,3 +13,11 @@ message ProfileSuggestionReady {
   // owner_id lets consumers act for the owner without a caller identity.
   string owner_id = 3;
 }
+
+// ProfileUpdated is the payload of profile.updated: the owner saved their
+// profile. It has no consumer yet.
+message ProfileUpdated {
+  string owner_id = 1;
+  // version is the profile's version after the save.
+  int32 version = 2;
+}

@@ -36,6 +36,9 @@ func TestPurgeRemovesEverythingTheUserOwnsIncludingTheTokenAndNothingElse(t *tes
 			`INSERT INTO github_accounts (owner_id, login, token_ciphertext, key_id) VALUES ($1, 'octocat', '\x01', 'k')`,
 			`INSERT INTO github_snapshots (id, owner_id, repos, contributions) VALUES (gen_random_uuid(), $1, '[]', '{}')`,
 			`INSERT INTO suggestions (id, owner_id, target, section, after, reason) VALUES (gen_random_uuid(), $1, 'resume', 'skills', 'Go', 'because')`,
+			`INSERT INTO profiles (owner_id, name) VALUES ($1, 'Priya')`,
+			`INSERT INTO profile_roles (owner_id, position, title) VALUES ($1, 0, 'Engineer')`,
+			`INSERT INTO skills (owner_id, name_key, name, level, source) VALUES ($1, 'go', 'Go', 5, 'resume')`,
 		} {
 			if _, err := pool.Exec(context.Background(), stmt, owner); err != nil {
 				t.Fatalf("seed %q: %v", stmt, err)
@@ -47,6 +50,9 @@ func TestPurgeRemovesEverythingTheUserOwnsIncludingTheTokenAndNothingElse(t *tes
 		"github_accounts":  `SELECT count(*) FROM github_accounts WHERE owner_id = $1`,
 		"github_snapshots": `SELECT count(*) FROM github_snapshots WHERE owner_id = $1`,
 		"suggestions":      `SELECT count(*) FROM suggestions WHERE owner_id = $1`,
+		"profiles":         `SELECT count(*) FROM profiles WHERE owner_id = $1`,
+		"profile_roles":    `SELECT count(*) FROM profile_roles WHERE owner_id = $1`,
+		"skills":           `SELECT count(*) FROM skills WHERE owner_id = $1`,
 	})
 }
 
