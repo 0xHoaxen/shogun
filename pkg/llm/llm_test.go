@@ -487,3 +487,104 @@ func TestATokenCapRefusalWaitsForTheMonthLikeABudgetDoes(t *testing.T) {
 		t.Errorf("the model was called %d times after a refusal", len(api.Created))
 	}
 }
+
+// theUsersDetails are details a user typed and has not saved.
+var theUsersDetails = llm.Access{BaseURL: "https://typed.example.com/v1", Model: "my-llama-70b", APIKey: "sk-typed-key-9876"}
+
+func TestCompleteWithCallsTheGivenProviderAndMetersTheModelOnly(t *testing.T) {
+	// Arrange
+	api, meter := okAPI(), &llmtest.Meter{ReservationID: "res-9"}
+	c := newClient(t, api, meter)
+
+	// Act
+	resp, err := c.CompleteWith(ownerCtx("owner-1"), "fude.test_connection", theUsersDetails, userRequest("ok?"))
+	// Assert
+	if err != nil {
+		t.Fatalf("CompleteWith: %v", err)
+	}
+	if resp.Model != "my-llama-70b" || resp.Text != "Dear team" {
+		t.Fatalf("resp = %+v, want the typed model and the answer", resp)
+	}
+	if len(api.Accesses) != 1 || api.Accesses[0] != theUsersDetails {
+		t.Fatalf("called with %v, want the details the user typed", api.Accesses)
+	}
+	reserved := meter.Reserved[0]
+	if reserved.GetUnsavedModel() != "my-llama-70b" || reserved.GetFeature() != "fude.test_connection" {
+		t.Fatalf("reserved %v, want the model name under the test feature", reserved)
+	}
+	if strings.Contains(reserved.String(), "sk-typed-key-9876") || strings.Contains(reserved.String(), "typed.example.com") {
+		t.Fatalf("soroban was told the key or address: %v", reserved)
+	}
+	if len(meter.Committed) != 1 || meter.Committed[0].GetReservationId() != "res-9" || meter.Committed[0].GetUsage().GetInputTokens() != 900 {
+		t.Fatalf("committed %v, want the real usage on res-9", meter.Committed)
+	}
+}
+
+func TestCompleteWithReleasesTheHoldWhenTheCallFails(t *testing.T) {
+	api, meter := &llmtest.API{CreateErr: errors.New("boom")}, &llmtest.Meter{ReservationID: "res-3"}
+	c := newClient(t, api, meter)
+
+	_, err := c.CompleteWith(ownerCtx("owner-1"), "fude.test_connection", theUsersDetails, userRequest("ok?"))
+
+	if err == nil || len(meter.Released) != 1 || meter.Released[0].GetReservationId() != "res-3" || len(meter.Committed) != 0 {
+		t.Fatalf("err %v, released %v, committed %v; want the hold given back and nothing committed", err, meter.Released, meter.Committed)
+	}
+}
+
+func TestCompleteWithNeverCallsTheModelWhenTheBudgetIsSpent(t *testing.T) {
+	api, meter := okAPI(), &llmtest.Meter{ReserveErr: budgetRefusal()}
+	c := newClient(t, api, meter)
+
+	_, err := c.CompleteWith(ownerCtx("owner-1"), "fude.test_connection", theUsersDetails, userRequest("ok?"))
+
+	if !errors.Is(err, llm.ErrBudgetExhausted) || len(api.Created) != 0 {
+		t.Fatalf("err %v, calls %d; want a budget refusal and no call", err, len(api.Created))
+	}
+}
+
+func TestCompleteWithNeedsAddressModelAndKey(t *testing.T) {
+	for name, access := range map[string]llm.Access{
+		"no address": {Model: "m", APIKey: "k"},
+		"no model":   {BaseURL: "https://x.example.com", APIKey: "k"},
+		"no key":     {BaseURL: "https://x.example.com", Model: "m"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			api, meter := okAPI(), &llmtest.Meter{}
+			c := newClient(t, api, meter)
+
+			_, err := c.CompleteWith(ownerCtx("owner-1"), "fude.test_connection", access, userRequest("ok?"))
+
+			if !errors.Is(err, llm.ErrProviderNotConfigured) || len(meter.Reserved) != 0 || len(api.Created) != 0 {
+				t.Fatalf("err %v; want a refusal before anything is held or called", err)
+			}
+		})
+	}
+}
+
+func TestCompleteWithNeverUsesTheCache(t *testing.T) {
+	api, meter := okAPI(), &llmtest.Meter{}
+	c := newClient(t, api, meter, llm.WithCache(llm.NewMemoryCache(time.Now)))
+	req := userRequest("ok?")
+	req.Cache = true
+
+	for range 2 {
+		if _, err := c.CompleteWith(ownerCtx("owner-1"), "fude.test_connection", theUsersDetails, req); err != nil {
+			t.Fatalf("CompleteWith: %v", err)
+		}
+	}
+
+	if len(api.Created) != 2 {
+		t.Fatalf("%d calls, want 2: a test must really reach the provider every time", len(api.Created))
+	}
+}
+
+func TestCompleteWithRejectsAnUnknownFeatureBeforeHoldingAnything(t *testing.T) {
+	api, meter := okAPI(), &llmtest.Meter{}
+	c := newClient(t, api, meter)
+
+	_, err := c.CompleteWith(ownerCtx("owner-1"), "fude.nope", theUsersDetails, userRequest("ok?"))
+
+	if !errors.Is(err, llm.ErrUnknownFeature) || len(meter.Reserved) != 0 {
+		t.Fatalf("err %v, reserved %d; want ErrUnknownFeature and no hold", err, len(meter.Reserved))
+	}
+}

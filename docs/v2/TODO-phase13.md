@@ -52,7 +52,12 @@ v2 rules on top of `AGENTS.md`:
 - [x] **V2.1 Several models per user: soroban** (M)
   Dropped: one AI provider per user for now (D11). The existing `providers` row, `SetProvider`, `GetProvider` and `DeleteProvider` stay as they are.
 
-- [ ] **V2.2 Test unsaved details** (M) Needs: V0.1
+- [x] **V2.2a Meter a test of unsaved details** (S) Needs: V2.0
+  Do: found while planning V2.2: `Reserve` returns the saved provider and fails for a user with none, so a first-time user could not be tested. Add `ReserveRequest.unsaved_model` (add-only), allowed for `fude.test_connection` only, which prices and holds the call by model name without opening a provider (a saved provider's token cap still applies); add `pkg/llm` `Client.CompleteWith(ctx, feature, access, req)`. The key never reaches soroban.
+  Files: `proto/shogun/soroban/v1/soroban.proto`, `services/soroban/internal/app/reserve.go`, `pkg/llm/llm.go`.
+  Done when: `make proto && cd services/soroban && go test -race ./...`, `cd pkg && go test -race ./llm/...`, `make lint`.
+
+- [ ] **V2.2 Test unsaved details** (M) Needs: V2.2a
   Do: a test that takes base URL, model and API key (not stored), makes one short call through `pkg/llm` with `netguard`, and returns ok, failure kind, latency and the model that answered. API key required; private and local addresses refused as `NOT_PUBLIC` (decision D2). Add failure kinds for a base URL ending in `/chat/completions`. Counted against the caller's budget like today's test.
   Files: `services/fude/internal/app/provider.go`, `proto/shogun/fude/v1/fude.proto`.
   Done when: `make proto && cd services/fude && go test -race ./...`, `make lint`.

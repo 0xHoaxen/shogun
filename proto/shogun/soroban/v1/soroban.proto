@@ -91,6 +91,13 @@ message ReserveRequest {
   string model = 3 [deprecated = true];
   int32 est_input_tokens = 4;
   int32 est_output_tokens = 5;
+  // unsaved_model is for a connection test of provider details the user has not
+  // saved yet, so they have no provider to reserve against. The caller makes the
+  // call with its own address and key; soroban never receives the key and only
+  // prices the call by this model name and holds its cost. Allowed for the
+  // feature fude.test_connection only (INVALID_REQUEST otherwise). The response
+  // then carries no provider. A saved provider's monthly token cap still applies.
+  optional string unsaved_model = 6;
 }
 
 message ReserveResponse {

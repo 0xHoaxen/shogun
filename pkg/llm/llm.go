@@ -113,16 +113,9 @@ func New(cfg Config, api API, meter Meter, opts ...Option) (*Client, error) {
 // Complete runs req for feature. The context must carry the owner's identity
 // (authz.WithIdentity), which the meter call is signed with.
 func (c *Client) Complete(ctx context.Context, feature string, req Request) (Response, error) {
-	fc, ok := c.cfg.Features[feature]
-	if !ok {
-		return Response{}, fmt.Errorf("%w: %q", ErrUnknownFeature, feature)
-	}
-	if err := validate(req); err != nil {
+	call, err := c.callFor(feature, req)
+	if err != nil {
 		return Response{}, err
-	}
-	call := CallRequest{System: req.System, Messages: req.Messages, MaxTokens: fc.MaxTokens}
-	if req.MaxTokens > 0 {
-		call.MaxTokens = req.MaxTokens
 	}
 
 	// A cached answer belongs to the user who paid for it, and only to them. A
@@ -140,10 +133,59 @@ func (c *Client) Complete(ctx context.Context, feature string, req Request) (Res
 		}
 	}
 
-	reservationID, access, err := c.reserve(ctx, feature, call)
+	reservationID, access, err := c.reserve(ctx, feature, call, "")
 	if err != nil {
 		return Response{}, err
 	}
+	resp, err := c.run(ctx, reservationID, access, call)
+	if err != nil {
+		return Response{}, err
+	}
+	if key != "" {
+		c.cache.Set(key, resp, c.cfg.CacheTTL)
+	}
+	return resp, nil
+}
+
+// CompleteWith runs req for feature with the given provider instead of the
+// caller's saved one, for a connection test of details the user has not saved.
+// The cost is still reserved and committed with soroban, which learns only the
+// model name, never the key; soroban allows this for the test feature alone. The
+// answer is never cached. Like Complete, the context must carry the identity.
+func (c *Client) CompleteWith(ctx context.Context, feature string, access Access, req Request) (Response, error) {
+	if access.BaseURL == "" || access.Model == "" || access.APIKey == "" {
+		return Response{}, ErrProviderNotConfigured
+	}
+	call, err := c.callFor(feature, req)
+	if err != nil {
+		return Response{}, err
+	}
+	reservationID, _, err := c.reserve(ctx, feature, call, access.Model)
+	if err != nil {
+		return Response{}, err
+	}
+	return c.run(ctx, reservationID, access, call)
+}
+
+// callFor checks req and builds what is sent for feature.
+func (c *Client) callFor(feature string, req Request) (CallRequest, error) {
+	fc, ok := c.cfg.Features[feature]
+	if !ok {
+		return CallRequest{}, fmt.Errorf("%w: %q", ErrUnknownFeature, feature)
+	}
+	if err := validate(req); err != nil {
+		return CallRequest{}, err
+	}
+	call := CallRequest{System: req.System, Messages: req.Messages, MaxTokens: fc.MaxTokens}
+	if req.MaxTokens > 0 {
+		call.MaxTokens = req.MaxTokens
+	}
+	return call, nil
+}
+
+// run makes the call a reservation allows, then commits its usage, or releases
+// the hold if the call failed.
+func (c *Client) run(ctx context.Context, reservationID string, access Access, call CallRequest) (Response, error) {
 	result, err := c.api.Create(ctx, access, call)
 	if err != nil {
 		c.release(ctx, reservationID)
@@ -153,12 +195,7 @@ func (c *Client) Complete(ctx context.Context, feature string, req Request) (Res
 	if result.Refused {
 		return Response{}, ErrRefused
 	}
-
-	resp := Response{Text: result.Text, Model: access.Model, StopReason: result.StopReason, Usage: result.Usage}
-	if key != "" {
-		c.cache.Set(key, resp, c.cfg.CacheTTL)
-	}
-	return resp, nil
+	return Response{Text: result.Text, Model: access.Model, StopReason: result.StopReason, Usage: result.Usage}, nil
 }
 
 func validate(req Request) error {
@@ -178,19 +215,29 @@ func validate(req Request) error {
 // estimate is made here, not by the provider: counting tokens would need the
 // user's key before their budget has been checked, and many OpenAI-compatible
 // providers have no token-counting endpoint at all.
-func (c *Client) reserve(ctx context.Context, feature string, call CallRequest) (string, Access, error) {
+//
+// unsavedModel is set for a test of details the user has not saved: soroban then
+// prices the call by that model and hands back no provider.
+func (c *Client) reserve(ctx context.Context, feature string, call CallRequest, unsavedModel string) (string, Access, error) {
 	estimate := EstimateInputTokens(call.System, call.Messages)
 	if call.System != "" {
 		estimate += estimate / cacheWriteSurchargeDivisor
 	}
-	res, err := c.meter.Reserve(ctx, &sorobanv1.ReserveRequest{
+	req := &sorobanv1.ReserveRequest{
 		Service:         c.cfg.Service,
 		Feature:         feature,
 		EstInputTokens:  estimate,
 		EstOutputTokens: call.MaxTokens,
-	})
+	}
+	if unsavedModel != "" {
+		req.UnsavedModel = &unsavedModel
+	}
+	res, err := c.meter.Reserve(ctx, req)
 	if err != nil {
 		return "", Access{}, reserveError(err)
+	}
+	if unsavedModel != "" {
+		return res.GetReservationId(), Access{}, nil
 	}
 	provider := res.GetProvider()
 	access := Access{BaseURL: provider.GetBaseUrl(), Model: provider.GetModel(), APIKey: provider.GetApiKey()}

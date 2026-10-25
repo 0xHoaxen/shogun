@@ -36,6 +36,9 @@ type ReserveInput struct {
 	Feature         string
 	EstInputTokens  int32
 	EstOutputTokens int32
+	// UnsavedModel, when set, reserves for a connection test of details the user
+	// has not saved: the call is priced by this model and no provider is opened.
+	UnsavedModel string
 }
 
 // ReserveResult is a held reservation.
@@ -74,7 +77,7 @@ func (s *Service) Reserve(ctx context.Context, in ReserveInput) (ReserveResult, 
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
 		// The provider comes first: a user with none has no AI features, and
 		// nothing may be written for them.
-		provider, err := s.reservableProvider(ctx, repo, owner, in, now)
+		provider, err := s.providerFor(ctx, repo, owner, in, now)
 		if err != nil {
 			return err
 		}
@@ -134,6 +137,40 @@ func (s *Service) reservableProvider(ctx context.Context, repo *store.Repo, owne
 	return provider, nil
 }
 
+// featureTestConnection is the one feature allowed to reserve without a saved
+// provider, because a connection test is how a first provider gets saved.
+const featureTestConnection = "fude.test_connection"
+
+// providerFor returns what a reservation is made against: the owner's saved
+// provider, or for a connection test of unsaved details just the model to price.
+func (s *Service) providerFor(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInput, now time.Time) (ProviderSecret, error) {
+	if in.UnsavedModel == "" {
+		return s.reservableProvider(ctx, repo, owner, in, now)
+	}
+	return s.unsavedProvider(ctx, repo, owner, in, now)
+}
+
+// unsavedProvider prices a connection test by the model being tested. It opens
+// no key. A saved provider's monthly token cap still counts, so a test cannot be
+// used to get around it; its row is locked like any reservation's.
+func (s *Service) unsavedProvider(ctx context.Context, repo *store.Repo, owner uuid.UUID, in ReserveInput, now time.Time) (ProviderSecret, error) {
+	row, err := repo.GetProviderForUpdate(ctx, owner)
+	var capTokens *int64
+	switch {
+	case err == nil:
+		capTokens = row.MonthlyTokenCap
+	case errors.Is(err, store.ErrNotFound):
+		// A first provider: nothing saved, so no cap.
+	default:
+		return ProviderSecret{}, err
+	}
+	est := int64(in.EstInputTokens) + int64(in.EstOutputTokens)
+	if err := s.checkTokenCap(ctx, repo, owner, capTokens, est, now); err != nil {
+		return ProviderSecret{}, err
+	}
+	return ProviderSecret{Model: in.UnsavedModel}, nil
+}
+
 func validateReserve(in ReserveInput) error {
 	if in.Service == "" || in.Feature == "" {
 		return invalid(ReasonInvalidRequest, "service and feature are required")
@@ -143,6 +180,14 @@ func validateReserve(in ReserveInput) error {
 	}
 	if in.EstInputTokens < 0 || in.EstOutputTokens < 0 {
 		return invalid(ReasonInvalidTokens, "token estimates must not be negative")
+	}
+	if in.UnsavedModel != "" {
+		if in.Feature != featureTestConnection {
+			return invalid(ReasonInvalidRequest, "only %s may reserve without a saved provider", featureTestConnection)
+		}
+		if err := domain.ValidateModel(in.UnsavedModel); err != nil {
+			return invalid(ReasonInvalidProviderModel, "the model name is not valid")
+		}
 	}
 	return nil
 }
