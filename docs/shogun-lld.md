@@ -187,7 +187,7 @@ Each service exposes one `<Name>Service` in `shogun.<name>.v1` (for example `kag
 | kagami | `AddContact` / `UpdateContact` | contact fields, update\_mask | Contact | torii |
 | kagami | `ListContacts` / `GetContact` | status, tag, company\_id, query | Contacts / Contact with timeline and linked jobs | torii |
 | kagami | `ChangeContactStatus` | id, to\_status, version | Contact | torii |
-| kagami | `ImportContacts` | csv bytes, dry\_run | ImportReport (per-row errors); on a dry run also a preview of the first 1000 rows (what was read, a relationship guessed from the title, and whether the person is already known) | torii |
+| kagami | `ImportContacts` | csv bytes, dry\_run, mappings?, date\_order?, selection? (rows to import) | ImportReport (per-row errors, rows skipped); on a dry run also a preview of the first 1000 rows (what was read, a relationship guessed from the title, and whether the person is already known) | torii |
 | kagami | `AddContactNote` / `MarkContacted` | id, text / id, version, on? | note (timeline entry) / Contact | torii |
 | kagami | `ListStatusProposals` / `AcceptStatusProposal` / `DismissStatusProposal` | state / id | Proposal(s) / Job | torii |
 | kagami | `ListDueFollowUps` | on\_or\_before date | jobs and contacts due | torii, taiko |
