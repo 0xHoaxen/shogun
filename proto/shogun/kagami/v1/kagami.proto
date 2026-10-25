@@ -325,6 +325,39 @@ message ImportContactsResponse {
   bytes shaped_csv = 3;
   // mappings say which columns of the sheet fill each import column.
   repeated ColumnMapping mappings = 4;
+  // rows says, for each row of the file, what the import read and whether the
+  // person is already known. Set on a dry run only.
+  repeated ImportPreviewRow rows = 5;
+  // rows_truncated is true when the file had more than 1000 rows, so rows holds
+  // only the first 1000. The report still counts them all, and an import applies
+  // them all. (A reshaped sheet travels in this response too, and the two have to
+  // fit gRPC's 4 MiB.)
+  bool rows_truncated = 6;
+}
+
+// ImportPreviewRow is one row of a dry run.
+message ImportPreviewRow {
+  // row is the 1-based CSV row number, counting the header as row 1.
+  int32 row = 1;
+  string full_name = 2;
+  string role = 3;
+  string company = 4;
+  string email = 5;
+  // relationship is the one in the file, or a guess from the role (rules on the
+  // words of the title, no AI call) when the file has none.
+  string relationship = 6;
+  bool relationship_guessed = 7;
+  // duplicate is true when the person is already in the book, found by email,
+  // then LinkedIn URL, then the same name at the same company. The import would
+  // update that contact rather than add one.
+  bool duplicate = 8;
+  string duplicate_contact_id = 9;
+  // duplicate_reason is email, linkedin or name_company.
+  string duplicate_reason = 10;
+  // repeats_row is the earlier row of this file that is the same person, or 0.
+  int32 repeats_row = 11;
+  // problem says why the row cannot be imported; empty when it can.
+  string problem = 12;
 }
 
 // ColumnMapping fills one import column from columns of the sheet.

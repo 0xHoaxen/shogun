@@ -56,6 +56,12 @@ type ImportResult struct {
 	// and Mappings how each column was filled. Both are empty otherwise.
 	ShapedCSV []byte
 	Mappings  []ColumnMapping
+	// Rows says, for each row, what the import read and whether the person is
+	// already known. It is set on a dry run only, and holds the first
+	// MaxPreviewRows rows of a longer file.
+	Rows []PreviewRow
+	// PreviewTruncated is true when the file had more rows than Rows holds.
+	PreviewTruncated bool
 }
 
 // ImportContacts adds the contacts of a CSV and updates the ones already in
@@ -87,6 +93,15 @@ func (s *Service) ImportContacts(ctx context.Context, in ImportContactsInput) (I
 	filename := strings.TrimSpace(in.Filename)
 	if filename == "" {
 		filename = defaultImportFilename
+	}
+
+	if in.DryRun {
+		// Read before anything is applied, so a row is judged against the book as it
+		// is now and not as the dry run's own rows would leave it.
+		if result.Rows, err = s.previewImportRows(ctx, store.New(s.pool), owner, rows); err != nil {
+			return ImportResult{}, err
+		}
+		result.PreviewTruncated = len(rows) > len(result.Rows)
 	}
 
 	err = s.inTx(ctx, func(tx pgx.Tx, repo *store.Repo) error {
