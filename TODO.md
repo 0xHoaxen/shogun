@@ -1078,7 +1078,7 @@ v2 rules on top of `AGENTS.md`:
 
 ### V4. Growth and resume
 
-- [ ] **V4.1 Resume text extraction: katana** (M) Needs: V0.1
+- [x] **V4.1 Resume text extraction: katana** (M) Needs: V0.1
   Do: decision D4. Read PDF, DOCX and TXT up to 10 MB in memory only; never write the file to disk or the database. DOCX via `archive/zip` + `encoding/xml`; PDF needs a library, name it and say why in the PR. Reject scanned PDFs with no text (`RESUME_NO_TEXT`).
   Files: `services/katana/internal/resume/**`.
   Done when: `cd services/katana && go test -race ./...`, `make lint`.

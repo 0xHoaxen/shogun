@@ -5,6 +5,7 @@ go 1.26.10
 require (
 	github.com/0xHoaxen/shogun/gen/go v0.0.0
 	github.com/0xHoaxen/shogun/pkg v0.0.0
+	github.com/dslipak/pdf v0.0.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/riverqueue/river v0.49.0
