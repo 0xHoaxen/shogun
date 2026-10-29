@@ -25,7 +25,7 @@ require (
 	buf.build/go/spdx v0.2.0 // indirect
 	buf.build/go/standard v0.1.0 // indirect
 	cel.dev/expr v0.25.2 // indirect
-	connectrpc.com/connect v1.21.0 // indirect
+	connectrpc.com/connect v1.21.1 // indirect
 	connectrpc.com/otelconnect v0.7.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3 // indirect
