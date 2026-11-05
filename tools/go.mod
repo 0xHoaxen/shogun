@@ -24,8 +24,8 @@ require (
 	buf.build/go/protoyaml v0.6.0 // indirect
 	buf.build/go/spdx v0.2.0 // indirect
 	buf.build/go/standard v0.1.0 // indirect
-	cel.dev/expr v0.25.2 // indirect
-	connectrpc.com/connect v1.21.0 // indirect
+	cel.dev/expr v0.25.3 // indirect
+	connectrpc.com/connect v1.21.1 // indirect
 	connectrpc.com/otelconnect v0.7.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3 // indirect
@@ -79,7 +79,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.11.0 // indirect
+	github.com/jackc/pgx/v5 v5.12.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.3 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
@@ -164,7 +164,7 @@ require (
 	golang.org/x/tools v0.52.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261005182115-fad411399dd8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8 // indirect
-	google.golang.org/grpc v1.84.0 // indirect
+	google.golang.org/grpc v1.85.0 // indirect
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect

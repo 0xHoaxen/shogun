@@ -3,17 +3,17 @@ module github.com/0xHoaxen/shogun/services/torii
 go 1.26.10
 
 require (
-	connectrpc.com/connect v1.21.0
+	connectrpc.com/connect v1.21.1
 	github.com/0xHoaxen/shogun/gen/go v0.0.0
 	github.com/0xHoaxen/shogun/pkg v0.0.0
 	github.com/coreos/go-oidc/v3 v3.21.0
-	github.com/go-jose/go-jose/v4 v4.1.5
+	github.com/go-jose/go-jose/v4 v4.1.7
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v5 v5.11.0
+	github.com/jackc/pgx/v5 v5.12.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/time v0.16.0
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261005182115-fad411399dd8
-	google.golang.org/grpc v1.84.0
+	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 )
 
